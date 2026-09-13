@@ -1,0 +1,4 @@
+out/*.pdf.tmp
+__pycache__/
+*.pyc
+.~lock*
