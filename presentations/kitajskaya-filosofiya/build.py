@@ -14,7 +14,6 @@ from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
-from pptx.oxml.ns import qn
 
 from PIL import ImageFont
 
@@ -42,7 +41,6 @@ BRONZE     = RGBColor(0x8C, 0x7B, 0x5F)
 
 # ── шрифты ──────────────────────────────────────────────────────────────────
 FONT = "Arial"                # требование заказчика
-EA   = "Microsoft YaHei"      # подстановка для иероглифов
 
 
 LIB = "/usr/share/fonts/truetype/liberation/LiberationSans-%s.ttf"
@@ -113,12 +111,8 @@ def para(tf, text, size, *, bold=False, color=INK, align=PP_ALIGN.LEFT,
     f.bold = bold
     f.italic = italic
     f.color.rgb = color
-    # восточноазиатская подстановка для иероглифов
-    rPr = r._r.get_or_add_rPr()
-    ea = rPr.makeelement(qn("a:ea"), {"typeface": EA})
-    rPr.append(ea)
-    if spc:
-        rPr.set("spc", str(int(spc * 100)))
+    if spc:                      # разрядка — штатный атрибут OOXML
+        r._r.get_or_add_rPr().set("spc", str(int(spc * 100)))
     return p
 
 
@@ -130,17 +124,13 @@ def block(tf, lines, size, **kw):
     return out
 
 
-def rect(slide, x, y, w, h, color, transparency=None):
+def rect(slide, x, y, w, h, color):
     sh = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(x), Inches(y),
                                 Inches(w), Inches(h))
     sh.fill.solid()
     sh.fill.fore_color.rgb = color
     sh.line.fill.background()
     sh.shadow.inherit = False
-    if transparency:
-        sp = sh.fill.fore_color._xFill.find(qn("a:srgbClr"))
-        alpha = sp.makeelement(qn("a:alpha"), {"val": str(int((1 - transparency) * 100000))})
-        sp.append(alpha)
     return sh
 
 
@@ -270,7 +260,7 @@ def s_cover(prs, d, num):
     background(s, "cover.png")
 
     band = 3.58
-    rect(s, 0, band, SW, SH - band, PAPER, transparency=0.04)
+    rect(s, 0, band, SW, SH - band, PAPER)
     rule(s, 0, band, SW, color=HAIR, h=0.012)
 
     y = band + 0.52
@@ -290,7 +280,7 @@ def s_cover(prs, d, num):
     tf = textbox(s, 7.95, y + 0.08, 4.3, qh + 0.2)
     para(tf, "«%s»" % d["quote"], 14.5, color=INK_SOFT, line=1.55, italic=True,
          first=True)
-    tf = textbox(s, 7.95, y + 0.42 + qh, 4.3, 0.3)
+    tf = textbox(s, 7.95, y + 0.58 + qh, 4.3, 0.3)
     para(tf, d["quote_author"], 10, color=MUTED, spc=2.4, first=True, caps=True)
     tf = textbox(s, 7.95, y + 2.14, 4.3, 0.3)
     para(tf, d["meta"], 11, color=MUTED, spc=2.0, first=True)
@@ -661,7 +651,7 @@ def s_conclusion(prs, d, num):
 def s_end(prs, d, num):
     s = blank(prs)
     background(s, "section.png")
-    rect(s, 0, 2.55, SW, 2.60, PAPER, transparency=0.08)
+    rect(s, 0, 2.55, SW, 2.60, PAPER)
     rule(s, 0, 2.55, SW, color=HAIR, h=0.010)
     rule(s, 0, 5.15, SW, color=HAIR, h=0.010)
 
