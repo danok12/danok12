@@ -7,6 +7,8 @@
 
     python3 build.py
 """
+import argparse
+import importlib
 import os
 from PIL import Image
 from pptx import Presentation
@@ -232,6 +234,8 @@ def bullets(slide, items, x, y, w, *, size=16, line=1.32, gap=0.26,
 
 
 def lead_line(slide, text, x, y, w, size=16, color=GREEN):
+    if not text:
+        return y
     h = text_h(text, size, w, 1.34, italic=True)
     tf = textbox(slide, x, y, w, h + 0.08)
     para(tf, text, size, color=color, italic=True, line=1.34, first=True)
@@ -267,12 +271,14 @@ def s_cover(prs, d, num):
     tf = textbox(s, M, y, 6.2, 0.3)
     para(tf, d["kicker"], 10.5, color=MUTED, spc=3.4, first=True)
 
-    tf = textbox(s, M, y + 0.44, 6.6, 1.6)
-    for i, ln in enumerate(d["title"].split("\n")):
+    tl = d["title"].split("\n")
+    tf = textbox(s, M, y + 0.44, 6.6, len(tl) * 0.62 + 0.2)
+    for i, ln in enumerate(tl):
         para(tf, ln, 40, bold=True, color=INK, spc=1.2, line=1.06, first=(i == 0))
 
-    rule(s, M, y + 1.92, 2.0, color=BRONZE)
-    tf = textbox(s, M, y + 2.14, 6.0, 0.4)
+    ty = y + 0.44 + len(tl) * 40 * 1.06 / 72.0 + 0.34   # линейка идёт за заголовком
+    rule(s, M, ty, 2.0, color=BRONZE)
+    tf = textbox(s, M, ty + 0.22, 6.0, 0.4)
     para(tf, d["subtitle"], 19, color=INK_SOFT, spc=0.6, first=True)
 
     qh = text_h("«%s»" % d["quote"], 14.5, 4.3, 1.55, italic=True)
@@ -286,8 +292,9 @@ def s_cover(prs, d, num):
     para(tf, d["meta"], 11, color=MUTED, spc=2.0, first=True)
 
     tf = textbox(s, SW - 1.5, 0.58, 0.9, 2.2)
-    para(tf, "道", 28, color=RGBColor(0x55, 0x57, 0x50), align=PP_ALIGN.CENTER, first=True)
-    para(tf, "德", 28, color=RGBColor(0x55, 0x57, 0x50), align=PP_ALIGN.CENTER, before=6)
+    for i, gl in enumerate(d.get("mark", "道德")):
+        para(tf, gl, 28, color=RGBColor(0x55, 0x57, 0x50),
+             align=PP_ALIGN.CENTER, first=(i == 0), before=(0 if i == 0 else 6))
     notes(s, d["notes"])
     return s
 
@@ -613,7 +620,9 @@ def s_advice(prs, d, num):
     y0 = lead_line(s, d["lead"], M, y0 - 0.06, 9.5, size=15) + 0.04
 
     half = (len(d["items"]) + 1) // 2
-    cw, step = 5.55, 0.84
+    cw = 5.55
+    # шаг подбирается так, чтобы список занял полосу целиком, а не сбился вверх
+    step = min(1.15, max(0.84, (SH - 1.15 - y0) / half))
     for i, it in enumerate(d["items"]):
         col, row = (0, i) if i < half else (1, i - half)
         x = M + col * (cw + 0.60)
@@ -681,21 +690,31 @@ LAYOUTS = {
 }
 
 
-def main():
+def build(module="content", name="kitajskaya-filosofiya"):
+    src = importlib.import_module(module)
     prs = Presentation()
     prs.slide_width = Inches(SW)
     prs.slide_height = Inches(SH)
 
-    for i, d in enumerate(content.SLIDES, 1):
+    for i, d in enumerate(src.SLIDES, 1):
         LAYOUTS[d["layout"]](prs, d, i)
 
-    prs.core_properties.title = content.DECK["title"]
-    prs.core_properties.subject = content.DECK["subject"]
+    prs.core_properties.title = src.DECK["title"]
+    prs.core_properties.subject = src.DECK["subject"]
 
     os.makedirs(OUT, exist_ok=True)
-    path = os.path.join(OUT, "kitajskaya-filosofiya.pptx")
+    path = os.path.join(OUT, name + ".pptx")
     prs.save(path)
-    print("готово:", path, "— слайдов:", len(prs.slides.__iter__.__self__._sldIdLst))
+    print("готово:", path, "— слайдов:", len(src.SLIDES))
+    return path
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Сборка презентации")
+    ap.add_argument("--content", default="content", help="модуль с текстами")
+    ap.add_argument("--out", default="kitajskaya-filosofiya", help="имя файла без расширения")
+    a = ap.parse_args()
+    build(a.content, a.out)
 
 
 if __name__ == "__main__":
