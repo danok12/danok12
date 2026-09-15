@@ -1,0 +1,16 @@
+{
+  "version": "2026-09-demo",
+  "items": [
+    {"id": "rus",  "name": "Русский язык",          "short": "Рус",   "mandatory": true},
+    {"id": "math", "name": "Математика (профильная)","short": "Матем.","mandatory": false},
+    {"id": "phys", "name": "Физика",                 "short": "Физ",   "mandatory": false},
+    {"id": "inf",  "name": "Информатика и ИКТ",      "short": "Инф",   "mandatory": false},
+    {"id": "chem", "name": "Химия",                  "short": "Хим",   "mandatory": false},
+    {"id": "bio",  "name": "Биология",               "short": "Био",   "mandatory": false},
+    {"id": "hist", "name": "История",                "short": "Ист",   "mandatory": false},
+    {"id": "soc",  "name": "Обществознание",         "short": "Общ",   "mandatory": false},
+    {"id": "lit",  "name": "Литература",             "short": "Лит",   "mandatory": false},
+    {"id": "geo",  "name": "География",              "short": "Геогр", "mandatory": false},
+    {"id": "lang", "name": "Иностранный язык",       "short": "Ин.яз", "mandatory": false}
+  ]
+}

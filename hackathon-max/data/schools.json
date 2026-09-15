@@ -1,0 +1,52 @@
+{
+  "version": "2026-09-demo",
+  "kind": "ДЕМОНСТРАЦИОННЫЕ ДАННЫЕ",
+  "source_note": "Школы, наборы профилей, коды классов и сроки — вымышленные, подготовлены для проверки MVP. В пилоте эти данные вводит куратор школы или они загружаются из региональной информационной системы.",
+  "updated_at": "2026-09-15",
+  "schools": [
+    {
+      "id": "kzn-114",
+      "name": "Лицей № 114",
+      "city": "Казань",
+      "region": "Республика Татарстан",
+      "admission": {
+        "deadline": "2027-05-25",
+        "description": "Приём заявлений на индивидуальный отбор в 10-е профильные классы",
+        "info_url": "https://example.edu.tatar/lyceum114/priem-10",
+        "updated_at": "2026-09-15",
+        "updated_by": "куратор школы (демо-данные)"
+      },
+      "classes": [
+        {"code": "9A-114", "title": "9А", "curator_code": "KUR-114-9A"},
+        {"code": "9B-114", "title": "9Б", "curator_code": "KUR-114-9B"}
+      ],
+      "profiles": [
+        {"id": "tech", "name": "Технологический",        "advanced": ["math","phys","inf"],      "electives": ["chem"],              "seats": 25},
+        {"id": "nat",  "name": "Естественно-научный",     "advanced": ["math","chem","bio"],      "electives": ["phys"],              "seats": 25},
+        {"id": "soc",  "name": "Социально-экономический", "advanced": ["math","soc","geo"],       "electives": ["inf","lang"],        "seats": 25},
+        {"id": "hum",  "name": "Гуманитарный",            "advanced": ["hist","soc","lit","lang"],"electives": ["math"],              "seats": 25},
+        {"id": "uni",  "name": "Универсальный",           "advanced": ["math"],                   "electives": ["inf","soc","bio","hist"], "seats": 30}
+      ]
+    },
+    {
+      "id": "alm-7",
+      "name": "СОШ № 7",
+      "city": "Альметьевск",
+      "region": "Республика Татарстан",
+      "admission": {
+        "deadline": "2027-05-20",
+        "description": "Приём заявлений на индивидуальный отбор в 10-й профильный класс",
+        "info_url": "https://example.edu.tatar/school7/priem-10",
+        "updated_at": "2026-09-15",
+        "updated_by": "куратор школы (демо-данные)"
+      },
+      "classes": [
+        {"code": "9A-ALM7", "title": "9А", "curator_code": "KUR-ALM7-9A"}
+      ],
+      "profiles": [
+        {"id": "tech", "name": "Технологический",        "advanced": ["math","phys","inf"], "electives": [],      "seats": 25},
+        {"id": "uni",  "name": "Универсальный",           "advanced": ["math"],              "electives": ["soc"], "seats": 25}
+      ]
+    }
+  ]
+}

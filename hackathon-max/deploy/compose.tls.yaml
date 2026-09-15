@@ -1,0 +1,31 @@
+# Публикация решения по своему домену с автоматическим сертификатом.
+# Применяется поверх compose.yaml:
+#
+#   SITE_ADDRESS=profil10.example.ru \
+#   PUBLIC_BASE_URL=https://profil10.example.ru \
+#   docker compose -f compose.yaml -f deploy/compose.tls.yaml up -d --build
+#
+# Домен должен быть направлен A-записью на IP этого сервера, порты 80 и 443
+# открыты: Caddy получает сертификат Let's Encrypt сам, при первом запуске.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?укажите домен, направленный на этот сервер}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  caddy-data:
+  caddy-config:
