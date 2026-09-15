@@ -1,0 +1,538 @@
+openapi: 3.1.0
+info:
+  title: Профиль 10 — API
+  description: Сервис подбора профиля обучения в 10 классе по направлениям подготовки, которые интересны
+    ученику. Данные справочников в MVP демонстрационные.
+  version: 1.0.0
+paths:
+  /api/meta:
+    get:
+      tags:
+      - Справочники
+      summary: Версии и происхождение данных
+      operationId: meta_api_meta_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Meta Api Meta Get
+  /api/catalog/subjects:
+    get:
+      tags:
+      - Справочники
+      summary: Предметы ЕГЭ
+      operationId: subjects_api_catalog_subjects_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Subjects Api Catalog Subjects Get
+  /api/catalog/fields:
+    get:
+      tags:
+      - Справочники
+      summary: Направления подготовки (УГСН)
+      operationId: fields_api_catalog_fields_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Fields Api Catalog Fields Get
+  /api/classes/{class_code}:
+    get:
+      tags:
+      - Справочники
+      summary: Школа и профили по коду класса
+      operationId: school_by_class_api_classes__class_code__get
+      parameters:
+      - name: class_code
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 3
+          maxLength: 32
+          title: Class Code
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response School By Class Api Classes  Class Code  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/sessions:
+    post:
+      tags:
+      - Анкета ученика
+      summary: Начать анкету
+      operationId: create_session_api_sessions_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionCreated'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/sessions/{session_id}:
+    get:
+      tags:
+      - Анкета ученика
+      summary: Состояние анкеты
+      operationId: read_session_api_sessions__session_id__get
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 8
+          title: Session Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Read Session Api Sessions  Session Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - Анкета ученика
+      summary: Сохранить выбор ученика
+      operationId: patch_session_api_sessions__session_id__patch
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 8
+          title: Session Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionPatch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Patch Session Api Sessions  Session Id  Patch
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/sessions/{session_id}/match:
+    post:
+      tags:
+      - Анкета ученика
+      summary: Рассчитать сравнение профилей
+      operationId: match_for_session_api_sessions__session_id__match_post
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 8
+          title: Session Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionPatch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Match For Session Api Sessions  Session Id  Match Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/match:
+    post:
+      tags:
+      - Анкета ученика
+      summary: Расчёт без анкеты (для проверки и отладки)
+      operationId: match_stateless_api_match_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Match Stateless Api Match Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/sessions/{session_id}/decision:
+    post:
+      tags:
+      - Анкета ученика
+      summary: Зафиксировать профиль и получить карточку в чат
+      operationId: decide_api_sessions__session_id__decision_post
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 8
+          title: Session Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Decision'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Decide Api Sessions  Session Id  Decision Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/school/auth:
+    post:
+      tags:
+      - Роль школы
+      summary: Вход куратора по коду
+      operationId: curator_auth_api_school_auth_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CuratorAuth'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Curator Auth Api School Auth Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/school/{class_code}/analytics:
+    get:
+      tags:
+      - Роль школы
+      summary: Обезличенный агрегат по классу
+      operationId: analytics_api_school__class_code__analytics_get
+      parameters:
+      - name: class_code
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 3
+          maxLength: 32
+          title: Class Code
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Analytics Api School  Class Code  Analytics Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/health:
+    get:
+      tags:
+      - Служебное
+      summary: Проверка готовности
+      operationId: health_api_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Health Api Health Get
+components:
+  schemas:
+    CuratorAuth:
+      properties:
+        curator_code:
+          type: string
+          maxLength: 48
+          minLength: 3
+          title: Curator Code
+      type: object
+      required:
+      - curator_code
+      title: CuratorAuth
+    Decision:
+      properties:
+        profile_id:
+          type: string
+          maxLength: 32
+          minLength: 1
+          title: Profile Id
+        remind:
+          type: boolean
+          title: Remind
+          default: true
+      type: object
+      required:
+      - profile_id
+      title: Decision
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    MatchRequest:
+      properties:
+        class_code:
+          type: string
+          maxLength: 32
+          minLength: 3
+          title: Class Code
+        fields:
+          items:
+            type: string
+          type: array
+          maxItems: 32
+          minItems: 1
+          title: Fields
+        extra_subjects:
+          items:
+            type: string
+          type: array
+          maxItems: 11
+          title: Extra Subjects
+      type: object
+      required:
+      - class_code
+      - fields
+      title: MatchRequest
+    SessionCreate:
+      properties:
+        max_user_id:
+          type: string
+          maxLength: 64
+          minLength: 1
+          title: Max User Id
+          description: Идентификатор пользователя в MAX
+        chat_id:
+          anyOf:
+          - type: string
+            maxLength: 64
+          - type: 'null'
+          title: Chat Id
+          description: Чат для ответных сообщений бота
+        class_code:
+          type: string
+          maxLength: 32
+          minLength: 3
+          title: Class Code
+          description: Код класса от классного руководителя
+      type: object
+      required:
+      - max_user_id
+      - class_code
+      title: SessionCreate
+    SessionCreated:
+      properties:
+        session_id:
+          type: string
+          title: Session Id
+        token:
+          type: string
+          title: Token
+        miniapp_url:
+          type: string
+          title: Miniapp Url
+        school:
+          type: object
+          title: School
+        profiles:
+          items:
+            type: object
+          type: array
+          title: Profiles
+        admission:
+          type: object
+          title: Admission
+      type: object
+      required:
+      - session_id
+      - token
+      - miniapp_url
+      - school
+      - profiles
+      - admission
+      title: SessionCreated
+    SessionPatch:
+      properties:
+        selected_fields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            maxItems: 32
+          - type: 'null'
+          title: Selected Fields
+        extra_subjects:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            maxItems: 11
+          - type: 'null'
+          title: Extra Subjects
+        initial_profile:
+          anyOf:
+          - type: string
+            maxLength: 32
+          - type: 'null'
+          title: Initial Profile
+      type: object
+      title: SessionPatch
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+servers:
+- url: https://example.org
+  description: Публичный адрес решения (заполняется при развёртывании)
+- url: http://localhost:8080
+  description: Локальный запуск через docker compose

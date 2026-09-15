@@ -1,0 +1,294 @@
+# Описание обязательных проверок API решения «Профиль 10».
+# Формат: версия конфигурации, идентификация решения, базовый адрес,
+# перечень проверок с методом, путём, параметрами, ролью, статус-кодами
+# и ожидаемым форматом ответа.
+
+config_version: "1.0"
+
+solution:
+  name: "Профиль 10"
+  track: "Образовательные решения"
+  description: >-
+    Подбор профиля обучения в 10 классе: какие направления подготовки
+    остаются доступны при каждом профиле школы и какой предмет нужно
+    добрать, чтобы вернуть закрывшиеся.
+
+# Заполняется при развёртывании; относительно него строятся все пути ниже.
+base_url: "https://example.org"
+
+# Тестовые учётные данные. Персональных данных нет: роль ученика
+# определяется токеном анкеты, роль школы — кодом куратора.
+test_accounts:
+  - role: anonymous
+    description: "Без авторизации: справочники и данные класса по коду"
+    credentials: {}
+  - role: student
+    description: >-
+      Токен анкеты. Выдаётся в ответе POST /api/sessions (поле token) и
+      передаётся в заголовке Authorization: Bearer <token>.
+    credentials:
+      class_code: "9A-114"
+      max_user_id: "test-student-1"
+  - role: curator
+    description: >-
+      Токен классного руководителя. Выдаётся в ответе POST /api/school/auth
+      и передаётся в заголовке Authorization: Bearer <token>.
+    credentials:
+      curator_code: "KUR-114-9A"
+
+test_data:
+  kind: "демонстрационные (синтетические) данные"
+  files:
+    - path: "data/subjects.json"  # предметы ЕГЭ
+    - path: "data/fields.json"    # направления подготовки и вступительные испытания
+    - path: "data/schools.json"   # школы, профили, коды классов и сроки
+  note: >-
+    Справочник вступительных испытаний — модельный, построен по структуре
+    перечня вступительных испытаний. Школы, коды классов и сроки вымышлены.
+    Перед пилотом заменяются официальной выгрузкой и данными школы.
+
+checks:
+  - id: health
+    title: "Сервис готов"
+    method: GET
+    path: /api/health
+    role: anonymous
+    request: {}
+    expected_status: [200]
+    response:
+      content_type: application/json
+      required_fields: [status, fields, schools, data_version]
+      expect:
+        status: "ok"
+
+  - id: meta
+    title: "Происхождение данных объявлено"
+    method: GET
+    path: /api/meta
+    role: anonymous
+    request: {}
+    expected_status: [200]
+    response:
+      content_type: application/json
+      required_fields: [product, data, disclaimer]
+      expect:
+        data.demo_data: true
+
+  - id: catalog_fields
+    title: "Справочник направлений подготовки"
+    method: GET
+    path: /api/catalog/fields
+    role: anonymous
+    request: {}
+    expected_status: [200]
+    response:
+      content_type: application/json
+      required_fields: [version, updated_at, source_note, groups, items]
+      items_schema:
+        required_fields: [code, name, group, required, choice]
+      min_items: 30
+
+  - id: class_lookup
+    title: "Школа и профили по коду класса"
+    method: GET
+    path: /api/classes/{class_code}
+    role: anonymous
+    request:
+      path_params:
+        class_code: "9A-114"
+    expected_status: [200]
+    response:
+      content_type: application/json
+      required_fields: [class, school, admission, profiles]
+      items_schema:
+        profiles:
+          required_fields: [id, name, advanced]
+
+  - id: class_lookup_not_found
+    title: "Неизвестный код класса отклоняется с подсказкой"
+    method: GET
+    path: /api/classes/{class_code}
+    role: anonymous
+    request:
+      path_params:
+        class_code: "NO-SUCH-CLASS"
+    expected_status: [404]
+    response:
+      content_type: application/json
+      required_fields: [detail]
+      expect:
+        detail.error: "class_not_found"
+
+  - id: session_create
+    title: "Создание анкеты и ссылки на мини-приложение"
+    method: POST
+    path: /api/sessions
+    role: anonymous
+    request:
+      headers:
+        Content-Type: application/json
+      body:
+        max_user_id: "test-student-1"
+        chat_id: "test-chat-1"
+        class_code: "9A-114"
+    expected_status: [201]
+    response:
+      content_type: application/json
+      required_fields: [session_id, token, miniapp_url, school, profiles, admission]
+      note: "token и session_id из ответа используются в последующих проверках"
+
+  - id: match
+    title: "Расчёт сравнения профилей по выбранным направлениям"
+    method: POST
+    path: /api/sessions/{session_id}/match
+    role: student
+    request:
+      path_params:
+        session_id: "{{session_create.session_id}}"
+      headers:
+        Authorization: "Bearer {{session_create.token}}"
+        Content-Type: application/json
+      body:
+        selected_fields: ["09.00.00", "38.00.00", "40.00.00", "31.00.00", "45.00.00"]
+        extra_subjects: []
+        initial_profile: "tech"
+    expected_status: [200]
+    response:
+      content_type: application/json
+      required_fields: [school, class, admission, selected_fields, subjects, profiles, data]
+      items_schema:
+        profiles:
+          required_fields:
+            [profile_id, profile_name, advanced, available, total, full, fraction, percent, fields, advice]
+          fields:
+            required_fields: [code, name, status, gap_required, gap_options]
+            enum:
+              status: [full, partial, none]
+      expect:
+        profiles[?profile_id=='tech'].available: 2
+        profiles[?profile_id=='tech'].total: 5
+        profiles[?profile_id=='tech'].percent: 40.0
+
+  - id: match_unknown_field
+    title: "Неизвестный код направления отклоняется"
+    method: POST
+    path: /api/sessions/{session_id}/match
+    role: student
+    request:
+      path_params:
+        session_id: "{{session_create.session_id}}"
+      headers:
+        Authorization: "Bearer {{session_create.token}}"
+        Content-Type: application/json
+      body:
+        selected_fields: ["99.00.00"]
+    expected_status: [422]
+    response:
+      content_type: application/json
+      required_fields: [detail]
+      expect:
+        detail.error: "unknown_field"
+
+  - id: match_without_token
+    title: "Доступ к чужой анкете закрыт"
+    method: POST
+    path: /api/sessions/{session_id}/match
+    role: anonymous
+    request:
+      path_params:
+        session_id: "{{session_create.session_id}}"
+      headers:
+        Content-Type: application/json
+      body:
+        selected_fields: ["09.00.00"]
+    expected_status: [401]
+    response:
+      content_type: application/json
+      required_fields: [detail]
+
+  - id: decision
+    title: "Фиксация профиля, карточка в чат и напоминание о сроке"
+    method: POST
+    path: /api/sessions/{session_id}/decision
+    role: student
+    request:
+      path_params:
+        session_id: "{{session_create.session_id}}"
+      headers:
+        Authorization: "Bearer {{session_create.token}}"
+        Content-Type: application/json
+      body:
+        profile_id: "tech"
+        remind: true
+    expected_status: [200]
+    response:
+      content_type: application/json
+      required_fields: [ok, card, reminder_at, chosen]
+      expect:
+        ok: true
+
+  - id: match_stateless
+    title: "Расчёт без анкеты (проверка ядра)"
+    method: POST
+    path: /api/match
+    role: anonymous
+    request:
+      headers:
+        Content-Type: application/json
+      body:
+        class_code: "9A-114"
+        fields: ["09.00.00", "31.00.00"]
+        extra_subjects: []
+    expected_status: [200]
+    response:
+      content_type: application/json
+      required_fields: [profiles, subjects, data]
+
+  - id: curator_auth
+    title: "Вход классного руководителя по коду"
+    method: POST
+    path: /api/school/auth
+    role: anonymous
+    request:
+      headers:
+        Content-Type: application/json
+      body:
+        curator_code: "KUR-114-9A"
+    expected_status: [200]
+    response:
+      content_type: application/json
+      required_fields: [token, class, school]
+
+  - id: analytics
+    title: "Обезличенный агрегат по классу с порогом k-анонимности"
+    method: GET
+    path: /api/school/{class_code}/analytics
+    role: curator
+    request:
+      path_params:
+        class_code: "9A-114"
+      headers:
+        Authorization: "Bearer {{curator_auth.token}}"
+    expected_status: [200]
+    response:
+      content_type: application/json
+      required_fields: [class, school, started, filled, k_anonymity_threshold, privacy_note, status]
+      note: >-
+        При числе заполненных анкет меньше порога поле status равно
+        insufficient_data и разрезы не выдаются; при достижении порога
+        status равен ok и появляются top_fields, profile_demand,
+        uncovered_fields, best_elective, changed_mind.
+      forbidden_fields: [max_user_id]
+
+  - id: analytics_without_token
+    title: "Агрегат недоступен без токена куратора"
+    method: GET
+    path: /api/school/{class_code}/analytics
+    role: anonymous
+    request:
+      path_params:
+        class_code: "9A-114"
+    expected_status: [401]
+    response:
+      content_type: application/json
+      required_fields: [detail]

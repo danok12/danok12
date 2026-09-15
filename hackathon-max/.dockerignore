@@ -1,0 +1,17 @@
+**/node_modules
+**/dist
+**/__pycache__
+**/*.pyc
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+!.env.demo
+docs/*.pdf
+tests
+*.sqlite3
+*.sqlite3-*
+.pytest_cache
+README.md
+api/app/static

@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; }
+    a { color: #4d5ae5; } a:hover { color: #3a45c4; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #f4f5f9; color: #171a25; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; font-size: 16px; line-height: 1.5;">
+
+  <div style="display: flex; flex-direction: column; gap: 12px; padding: 20px 16px 0;">
+
+    <div style="display: flex; align-items: center; gap: 8px; color: #4d5ae5; font-size: 14px; font-weight: 600;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4d5ae5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"></path></svg>
+      <span>Изменить выбор направлений</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <div style="font-size: 19px; font-weight: 700; letter-spacing: -0.01em;">Сравнение профилей</div>
+      <div style="font-size: 13px; color: #6b7183;">По 5 выбранным направлениям. Чем выше доля — тем больше ваших направлений останется доступно после 11 класса.</div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: #6b7183;">
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #1f9d55;"></span>доступны все вузы</span>
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: linear-gradient(90deg, #b07500 50%, #e3e5ed 50%);"></span>часть вузов</span>
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #c0392b;"></span>недоступно</span>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #e3e5ed; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+      <div style="font-size: 14px; font-weight: 700;">Готовы добрать предмет элективом?</div>
+      <div style="font-size: 13px; color: #6b7183;">Отметьте — пересчитаем все профили с учётом этого.</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; padding-top: 2px;">
+        <span style="padding: 9px 13px; border-radius: 999px; background: #4d5ae5; color: #ffffff; font-size: 14px;">✓ Обществознание</span>
+        <span style="padding: 9px 13px; border-radius: 999px; border: 1px solid #e3e5ed; background: #ffffff; font-size: 14px;">+ Физика</span>
+        <span style="padding: 9px 13px; border-radius: 999px; border: 1px solid #e3e5ed; background: #ffffff; font-size: 14px;">+ Химия</span>
+        <span style="padding: 9px 13px; border-radius: 999px; border: 1px solid #e3e5ed; background: #ffffff; font-size: 14px;">+ Биология</span>
+      </div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #4d5ae5; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <div style="font-size: 17px; font-weight: 700;">Технологический</div>
+          <div style="font-size: 13px; color: #6b7183;">Углублённо: математика, физика, информатика</div>
+        </div>
+        <div style="text-align: right; flex: none;">
+          <div style="font-size: 26px; font-weight: 700; letter-spacing: -0.02em;">3/5</div>
+          <div style="font-size: 13px; color: #6b7183;">60%</div>
+        </div>
+      </div>
+
+      <div style="height: 8px; border-radius: 999px; background: #f0f1f6; overflow: hidden;">
+        <div style="width: 60%; height: 100%; border-radius: 999px; background: #4d5ae5;"></div>
+      </div>
+
+      <div style="display: flex; flex-direction: column;">
+        <div style="display: flex; gap: 8px; padding: 7px 0; font-size: 14px;">
+          <span style="flex: none; width: 14px; color: #b07500;">◐</span>
+          <span>Информатика и вычислительная техника <span style="color: #6b7183;">— доступна часть вузов</span></span>
+        </div>
+        <div style="display: flex; gap: 8px; padding: 7px 0; border-top: 1px solid #e3e5ed; font-size: 14px;">
+          <span style="flex: none; width: 14px; color: #b07500;">◐</span>
+          <span>Экономика и управление <span style="color: #6b7183;">— доступна часть вузов</span></span>
+        </div>
+        <div style="display: flex; gap: 8px; padding: 7px 0; border-top: 1px solid #e3e5ed; font-size: 14px;">
+          <span style="flex: none; width: 14px; color: #b07500;">◐</span>
+          <span>Юриспруденция <span style="color: #6b7183;">— доступна часть вузов</span></span>
+        </div>
+        <div style="display: flex; gap: 8px; padding: 7px 0; border-top: 1px solid #e3e5ed; font-size: 14px;">
+          <span style="flex: none; width: 14px; color: #c0392b;">○</span>
+          <span>Клиническая медицина <span style="color: #6b7183;">— не хватает: химия, биология</span></span>
+        </div>
+        <div style="display: flex; gap: 8px; padding: 7px 0; border-top: 1px solid #e3e5ed; font-size: 14px;">
+          <span style="flex: none; width: 14px; color: #c0392b;">○</span>
+          <span>Языкознание и литературоведение <span style="color: #6b7183;">— не хватает: иностранный язык</span></span>
+        </div>
+      </div>
+
+      <div style="background: #eceefe; border-radius: 10px; padding: 10px 12px; font-size: 14px;">
+        <b>Что спросить в школе.</b> Если добрать иностранный язык (такого электива в школе пока нет), вернётся ещё одно направление.
+      </div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #e3e5ed; border-radius: 14px; padding: 14px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <div style="font-size: 17px; font-weight: 700;">Естественно-научный</div>
+        <div style="font-size: 13px; color: #6b7183;">Углублённо: математика, химия, биология</div>
+      </div>
+      <div style="text-align: right; flex: none;">
+        <div style="font-size: 26px; font-weight: 700; letter-spacing: -0.02em;">3/5</div>
+        <div style="font-size: 13px; color: #6b7183;">60%</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
