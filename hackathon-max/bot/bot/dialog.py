@@ -58,9 +58,13 @@ UNKNOWN = (
 class Dialog:
     """Обработчик одного обновления. Возвращает (text, buttons) для ответа."""
 
-    def __init__(self, api: ApiClient, miniapp_hint: str = "Открыть подбор") -> None:
+    def __init__(self, api: ApiClient, miniapp_hint: str = "Открыть подбор",
+                 bot_identity: dict | None = None) -> None:
         self.api = api
         self.miniapp_hint = miniapp_hint
+        # username и user_id бота из ответа /me: нужны кнопке open_app,
+        # потому что мини-приложение привязано к боту, а не к произвольному адресу
+        self.bot_identity = bot_identity or {}
 
     # --- точка входа ----------------------------------------------------
     def handle(self, event: dict) -> tuple[str, list[list[dict]] | None]:
@@ -152,7 +156,7 @@ class Dialog:
             "их удобнее выбирать на отдельном экране, там же будет сравнение профилей.\n\n"
             "Выбрать можно до 8 направлений. Результат вернётся сюда, в чат."
         )
-        return text, [[button_miniapp(self.miniapp_hint, data["miniapp_url"])]]
+        return text, [[button_miniapp(self.miniapp_hint, data["miniapp_url"], **self.bot_identity)]]
 
     def _resume(self, user_id: str) -> tuple[str, list[list[dict]] | None] | None:
         """Если у пользователя уже есть анкета — предлагаем продолжить, а не начинать заново."""

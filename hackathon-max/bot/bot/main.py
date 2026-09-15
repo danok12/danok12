@@ -105,13 +105,15 @@ def main() -> None:
     else:
         log.error("API не отвечает — бот запускается, но сценарий будет отдавать ошибку")
 
+    identity: dict = {}
     try:
         me = max_client.get_me()
-        log.info("Бот подключён к MAX: %s", me.get("username") or me.get("name") or me)
+        identity = {"bot_username": me.get("username"), "bot_id": me.get("user_id")}
+        log.info("Бот подключён к MAX: %s (id %s)", me.get("username") or me.get("name"), me.get("user_id"))
     except MaxApiError as exc:
         log.error("Не удалось подтвердить токен в MAX: %s", exc)
 
-    dialog = Dialog(api)
+    dialog = Dialog(api, bot_identity=identity)
 
     def stop(*_: object) -> None:
         log.info("Получен сигнал остановки")
