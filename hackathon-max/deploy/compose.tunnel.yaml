@@ -1,0 +1,22 @@
+# Публикация без домена и без оплаты — через туннель Cloudflare.
+# Подходит на период проверки, когда покупать домен не хочется.
+#
+#   docker compose -f compose.yaml -f deploy/compose.tunnel.yaml up -d --build
+#   docker compose -f compose.yaml -f deploy/compose.tunnel.yaml logs tunnel | grep trycloudflare
+#
+# Полученный адрес вида https://<случайное-имя>.trycloudflare.com нужно
+# положить в PUBLIC_BASE_URL и перезапустить api — из него строится ссылка
+# на мини-приложение, которую бот кладёт в кнопку.
+#
+# ВАЖНО: адрес живёт, пока запущен туннель, и меняется при перезапуске.
+# Для сдачи это приемлемо только если контейнер не перезапускается;
+# постоянный адрес даёт способ со своим доменом.
+
+services:
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --url http://api:8080
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped

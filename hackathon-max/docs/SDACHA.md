@@ -48,15 +48,14 @@
 ## Перед загрузкой прогнать
 
 ```bash
-docker compose --env-file .env.demo --profile demo up --build -d
-pip install -r requirements-dev.txt
-python3 -m pytest tests -q
-python3 tools/api_contract_check.py --base http://localhost:8080
-INTERNAL_KEY=demo-only-not-a-secret-1111111111 REMINDER_DEMO_DELAY=20 \
-  python3 tools/scenario_check.py
+bash tools/check_all.sh
 ```
 
-Ожидается: `31 passed`, `пройдено 14, не пройдено 0`, `успешно 35, неуспешно 0`.
+Скрипт поднимет контейнеры, дождётся готовности API и прогонит все три
+проверки. Ожидается «Всё сошлось: решение работает» и по шагам:
+`31 passed`, `пройдено 14, не пройдено 0`, `успешно 35, неуспешно 0`.
+
+Развёртывание с публичным HTTPS-адресом — [DEPLOY.md](DEPLOY.md).
 
 ## Риск, который закрывается только токеном
 

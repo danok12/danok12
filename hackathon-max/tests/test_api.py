@@ -10,10 +10,13 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "api"))
 
-os.environ.setdefault("APP_SECRET", "test-secret")
-os.environ.setdefault("INTERNAL_KEY", "test-internal")
-os.environ.setdefault("DB_PATH", str(Path(tempfile.mkdtemp()) / "test.sqlite3"))
-os.environ.setdefault("PUBLIC_BASE_URL", "https://example.org")
+# Значения задаются жёстко, а не через setdefault: иначе переменные окружения
+# запущенного рядом сервиса (INTERNAL_KEY, DB_PATH) протекали бы в тесты —
+# ключ не совпадал бы с заголовком в тесте, а база писалась бы поверх рабочей.
+os.environ["APP_SECRET"] = "test-secret"
+os.environ["INTERNAL_KEY"] = "test-internal"
+os.environ["DB_PATH"] = str(Path(tempfile.mkdtemp()) / "test.sqlite3")
+os.environ["PUBLIC_BASE_URL"] = "https://example.org"
 
 from fastapi.testclient import TestClient    # noqa: E402
 from app.main import app                     # noqa: E402

@@ -1,0 +1,13 @@
+# Обратный прокси с автоматическим сертификатом Let's Encrypt.
+# Адрес берётся из переменной SITE_ADDRESS (домен, направленный на этот сервер).
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	# Мини-приложение и API живут в одном сервисе: /app/ — статика, /api — REST.
+	reverse_proxy api:8080
+
+	log {
+		output stdout
+		format console
+	}
+}

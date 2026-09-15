@@ -114,6 +114,23 @@ docker compose --env-file .env.demo --profile demo up --build
 Бот работает с ним вместо `https://botapi.max.ru`, и весь сценарий, включая
 доставку карточки и напоминание, проходится целиком локально.
 
+### Публикация в интернете
+
+Мини-приложение MAX открывается только по HTTPS, поэтому для работы с
+настоящей платформой нужен публичный адрес. Боту публичный адрес не нужен:
+он работает длинным опросом и входящих соединений не принимает.
+
+```bash
+# свой домен, сертификат выпускается автоматически
+SITE_ADDRESS=profil10.example.ru PUBLIC_BASE_URL=https://profil10.example.ru \
+docker compose -f compose.yaml -f deploy/compose.tls.yaml up -d --build
+
+# либо без домена — туннель, адрес берётся из логов
+docker compose -f compose.yaml -f deploy/compose.tunnel.yaml up -d --build
+```
+
+Подробности, оговорки и порядок проверки — в [docs/DEPLOY.md](docs/DEPLOY.md).
+
 ### Остановка и повторный запуск
 
 ```bash
@@ -231,17 +248,26 @@ k-анонимности. Школа `9A-ALM7` имеет всего два пр
 
 ### Автоматически
 
+Одной командой — скрипт поднимет контейнеры, дождётся готовности и прогонит
+все три проверки:
+
+```bash
+bash tools/check_all.sh
+```
+
+По шагам:
+
 ```bash
 docker compose --env-file .env.demo --profile demo up --build -d
 pip install -r requirements-dev.txt
 
-python3 -m pytest tests -q                       # ядро расчёта и API (26 тестов)
+python3 -m pytest tests -q                       # ядро расчёта, API и формат кнопок (31 тест)
 python3 tools/api_contract_check.py --base http://localhost:8080   # проверки из DATA-API.yaml
 INTERNAL_KEY=demo-only-not-a-secret-1111111111 REMINDER_DEMO_DELAY=20 \
   python3 tools/scenario_check.py                # сквозной сценарий через чат-бота
 ```
 
-Ожидаемый результат: `26 passed`, `пройдено 14, не пройдено 0`,
+Ожидаемый результат: `31 passed`, `пройдено 14, не пройдено 0`,
 `Итог: успешно 35, неуспешно 0`.
 
 ### Вручную, в MAX
