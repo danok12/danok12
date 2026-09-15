@@ -106,6 +106,7 @@ SLIDES.append("""
       <b>Репозиторий</b><span>[ССЫЛКА НА РЕПОЗИТОРИЙ], commit [COMMIT HASH]</span>
     </div>
     <p class="xsmall">Значения MAX_BOT_TOKEN, APP_SECRET и INTERNAL_KEY передаются отдельно: рабочие секреты в репозиторий не коммитятся.</p>
+    <p class="xsmall">Команда TeamRoulette № 870. Контакт по вопросам проверки: [ИМЯ, ТЕЛЕФОН ИЛИ ПОЧТА].</p>
   </div>
   <div class="card">
     <h3>Тестовые данные (персональных данных нет)</h3>
@@ -132,10 +133,11 @@ SLIDES.append("""
   <h1>Профиль 10</h1>
   <p class="lead" style="max-width:56ch">Показывает девятикласснику, какие направления в вузах останутся ему
   доступны при каждом профиле его школы — и какой один предмет вернёт то, что закрывается.</p>
-  <div style="display:flex;gap:40px;margin-top:10px">
-    <div><div class="kicker" style="color:#8fa5a3">Команда</div><p style="color:#f2efe9">[НАЗВАНИЕ КОМАНДЫ]</p></div>
-    <div><div class="kicker" style="color:#8fa5a3">Состав и роли</div>
-      <p style="color:#f2efe9">[ИМЯ] — продукт · [ИМЯ] — бэкенд · [ИМЯ] — фронтенд · [ИМЯ] — аналитика</p></div>
+  <div style="display:flex;gap:56px;margin-top:10px">
+    <div><div class="kicker" style="color:#8fa5a3">Команда</div>
+      <p style="color:#f2efe9">TeamRoulette · №&thinsp;870</p></div>
+    <div><div class="kicker" style="color:#8fa5a3">Состав</div>
+      <p style="color:#f2efe9">Константин Антуганов · Даниил Буев · Трофим Горский · Борислав Бондарев</p></div>
   </div>
 </div>
 """, )
