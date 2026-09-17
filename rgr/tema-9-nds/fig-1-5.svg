@@ -1,61 +1,104 @@
-<svg viewBox="0 0 640 520" role="img" aria-label="Относительные угловые деформации на трёх плоскостях" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1020 424" role="img" aria-label="Угловые деформации: три куба со сдвигом в плоскостях xOy, yOz и zOx" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="a15" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
 <path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
 <marker id="axm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
 <path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
 </defs>
-<line x1="65.9" y1="418.7" x2="119.9" y2="418.7" class="ax" marker-end="url(#a15)"/>
-<text x="136.1" y="422.7" class="ax-lbl" text-anchor="middle">x</text>
-<line x1="65.9" y1="418.7" x2="32.4" y2="442.4" class="ax" marker-end="url(#a15)"/>
-<text x="22.4" y="453.6" class="ax-lbl" text-anchor="middle">y</text>
-<line x1="65.9" y1="418.7" x2="65.9" y2="364.7" class="ax" marker-end="url(#a15)"/>
-<text x="65.9" y="352.5" class="ax-lbl" text-anchor="middle">z</text>
-<line x1="299.5" y1="245.2" x2="232.5" y2="292.8" class="hid"/>
-<line x1="232.5" y1="292.8" x2="232.5" y2="184.8" class="hid"/>
-<line x1="232.5" y1="184.8" x2="299.5" y2="137.2" class="hid"/>
-<line x1="299.5" y1="137.2" x2="299.5" y2="245.2" class="hid"/>
-<line x1="299.5" y1="245.2" x2="407.5" y2="245.2" class="hid"/>
-<line x1="407.5" y1="245.2" x2="407.5" y2="137.2" class="hid"/>
-<line x1="407.5" y1="137.2" x2="299.5" y2="137.2" class="hid"/>
-<line x1="299.5" y1="137.2" x2="299.5" y2="245.2" class="hid"/>
-<line x1="299.5" y1="245.2" x2="407.5" y2="245.2" class="hid"/>
-<line x1="407.5" y1="245.2" x2="340.5" y2="292.8" class="hid"/>
-<line x1="340.5" y1="292.8" x2="232.5" y2="292.8" class="hid"/>
-<line x1="232.5" y1="292.8" x2="299.5" y2="245.2" class="hid"/>
-<polygon points="407.5,245.2 340.5,292.8 340.5,184.8 407.5,137.2" class="elem-lite"/>
-<polygon points="232.5,292.8 340.5,292.8 340.5,184.8 232.5,184.8" class="elem-lite"/>
-<polygon points="299.5,137.2 407.5,137.2 340.5,184.8 232.5,184.8" class="elem-lite"/>
-<polygon points="404.1,254.2 349.3,295.0 336.3,189.9 391.2,149.2" class="deformed"/>
-<polygon points="248.8,280.8 349.3,295.0 336.3,189.9 235.9,175.8" class="deformed"/>
-<polygon points="290.7,135.0 391.2,149.2 336.3,189.9 235.9,175.8" class="deformed"/>
-<line x1="299.5" y1="137.2" x2="407.5" y2="137.2" class="edge-ref"/>
-<line x1="290.7" y1="135.0" x2="391.2" y2="149.2" class="edge-def"/>
-<line x1="299.5" y1="137.2" x2="232.5" y2="184.8" class="edge-ref"/>
-<line x1="290.7" y1="135.0" x2="235.9" y2="175.8" class="edge-def"/>
-<circle cx="299.5" cy="137.2" r="2.6" class="dot"/>
-<line x1="320.0" y1="90.0" x2="320.0" y2="158.0" class="leader"/>
-<text x="320.0" y="44.0" class="cap" text-anchor="middle">плоскость xOy</text>
-<text x="320.0" y="62.0" class="lbl-s" text-anchor="middle">γ<tspan class='sub'>xy</tspan> = +112,50·10⁻⁵</text>
-<text x="320.0" y="78.0" class="cap" text-anchor="middle">прямой угол уменьшился</text>
-<line x1="407.5" y1="245.2" x2="340.5" y2="292.8" class="edge-ref"/>
-<line x1="404.1" y1="254.2" x2="349.3" y2="295.0" class="edge-def"/>
-<line x1="407.5" y1="245.2" x2="407.5" y2="137.2" class="edge-ref"/>
-<line x1="404.1" y1="254.2" x2="391.2" y2="149.2" class="edge-def"/>
-<circle cx="407.5" cy="245.2" r="2.6" class="dot"/>
-<line x1="442.0" y1="202.0" x2="380.0" y2="212.0" class="leader"/>
-<text x="446.0" y="164.0" class="cap" text-anchor="start">плоскость yOz</text>
-<text x="446.0" y="182.0" class="lbl-s" text-anchor="start">γ<tspan class='sub'>yz</tspan> = +62,50·10⁻⁵</text>
-<text x="446.0" y="198.0" class="cap" text-anchor="start">прямой угол уменьшился</text>
-<line x1="232.5" y1="292.8" x2="340.5" y2="292.8" class="edge-ref"/>
-<line x1="248.8" y1="280.8" x2="349.3" y2="295.0" class="edge-def"/>
-<line x1="232.5" y1="292.8" x2="232.5" y2="184.8" class="edge-ref"/>
-<line x1="248.8" y1="280.8" x2="235.9" y2="175.8" class="edge-def"/>
-<circle cx="232.5" cy="292.8" r="2.6" class="dot"/>
-<line x1="202.0" y1="326.0" x2="284.0" y2="250.0" class="leader"/>
-<text x="196.0" y="314.0" class="cap" text-anchor="end">плоскость xOz</text>
-<text x="196.0" y="332.0" class="lbl-s" text-anchor="end">γ<tspan class='sub'>zx</tspan> = −81,25·10⁻⁵</text>
-<text x="196.0" y="348.0" class="cap" text-anchor="end">прямой угол увеличился</text>
-<text x="320.0" y="484.0" class="cap" text-anchor="middle">сплошные рёбра — до деформации, штриховые — после</text>
-<text x="320.0" y="500.0" class="cap" text-anchor="middle">углы показаны увеличенными примерно в 200 раз</text>
+<text x="182.0" y="34.0" class="cap" text-anchor="middle">плоскость xOy</text>
+<text x="182.0" y="56.0" class="lbl" text-anchor="middle">γ<tspan class='sub'>xy</tspan> = +112,50·10⁻⁵</text>
+<text x="182.0" y="74.0" class="cap" text-anchor="middle">прямой угол уменьшился</text>
+<line x1="60.0" y1="368.0" x2="90.0" y2="368.0" class="ax" marker-end="url(#axm)"/>
+<text x="98.4" y="372.0" class="ax-lbl" text-anchor="middle">x</text>
+<line x1="60.0" y1="368.0" x2="41.4" y2="381.2" class="ax" marker-end="url(#axm)"/>
+<text x="36.2" y="388.9" class="ax-lbl" text-anchor="middle">y</text>
+<line x1="60.0" y1="368.0" x2="60.0" y2="338.0" class="ax" marker-end="url(#axm)"/>
+<text x="60.0" y="333.6" class="ax-lbl" text-anchor="middle">z</text>
+<line x1="168.3" y1="269.9" x2="97.7" y2="320.1" class="hid"/>
+<line x1="97.7" y1="320.1" x2="97.7" y2="206.1" class="hid"/>
+<line x1="97.7" y1="206.1" x2="168.3" y2="155.9" class="hid"/>
+<line x1="168.3" y1="155.9" x2="168.3" y2="269.9" class="hid"/>
+<line x1="168.3" y1="269.9" x2="282.3" y2="269.9" class="hid"/>
+<line x1="282.3" y1="269.9" x2="282.3" y2="155.9" class="hid"/>
+<line x1="282.3" y1="155.9" x2="168.3" y2="155.9" class="hid"/>
+<line x1="168.3" y1="155.9" x2="168.3" y2="269.9" class="hid"/>
+<line x1="168.3" y1="269.9" x2="282.3" y2="269.9" class="hid"/>
+<line x1="282.3" y1="269.9" x2="211.7" y2="320.1" class="hid"/>
+<line x1="211.7" y1="320.1" x2="97.7" y2="320.1" class="hid"/>
+<line x1="97.7" y1="320.1" x2="168.3" y2="269.9" class="hid"/>
+<polygon points="282.3,269.9 211.7,320.1 211.7,206.1 282.3,155.9" class="elem-lite"/>
+<polygon points="97.7,320.1 211.7,320.1 211.7,206.1 97.7,206.1" class="elem-lite"/>
+<polygon points="168.3,155.9 282.3,155.9 211.7,206.1 97.7,206.1" class="elem-lite"/>
+<polygon points="266.9,269.9 227.1,320.1 227.1,206.1 266.9,155.9" class="deformed"/>
+<polygon points="113.0,320.1 227.1,320.1 227.1,206.1 113.0,206.1" class="deformed"/>
+<polygon points="152.9,155.9 266.9,155.9 227.1,206.1 113.0,206.1" class="deformed"/>
+<polygon points="152.9,155.9 266.9,155.9 227.1,206.1 113.0,206.1" class="face-hi"/>
+<polyline points="194.6,206.1 205.2,198.6 222.3,198.6" class="right-angle"/>
+<path d="M 194.0 206.1 Q 227.1 206.1 238.6 191.5" class="arc-def"/>
+<circle cx="227.1" cy="206.1" r="3" class="vertex"/>
+<line x1="342.0" y1="22.0" x2="342.0" y2="392.0" class="sep"/>
+<text x="516.0" y="34.0" class="cap" text-anchor="middle">плоскость yOz</text>
+<text x="516.0" y="56.0" class="lbl" text-anchor="middle">γ<tspan class='sub'>yz</tspan> = +62,50·10⁻⁵</text>
+<text x="516.0" y="74.0" class="cap" text-anchor="middle">прямой угол уменьшился</text>
+<line x1="394.0" y1="368.0" x2="424.0" y2="368.0" class="ax" marker-end="url(#axm)"/>
+<text x="432.4" y="372.0" class="ax-lbl" text-anchor="middle">x</text>
+<line x1="394.0" y1="368.0" x2="375.4" y2="381.2" class="ax" marker-end="url(#axm)"/>
+<text x="370.2" y="388.9" class="ax-lbl" text-anchor="middle">y</text>
+<line x1="394.0" y1="368.0" x2="394.0" y2="338.0" class="ax" marker-end="url(#axm)"/>
+<text x="394.0" y="333.6" class="ax-lbl" text-anchor="middle">z</text>
+<line x1="502.3" y1="269.9" x2="431.7" y2="320.1" class="hid"/>
+<line x1="431.7" y1="320.1" x2="431.7" y2="206.1" class="hid"/>
+<line x1="431.7" y1="206.1" x2="502.3" y2="155.9" class="hid"/>
+<line x1="502.3" y1="155.9" x2="502.3" y2="269.9" class="hid"/>
+<line x1="502.3" y1="269.9" x2="616.3" y2="269.9" class="hid"/>
+<line x1="616.3" y1="269.9" x2="616.3" y2="155.9" class="hid"/>
+<line x1="616.3" y1="155.9" x2="502.3" y2="155.9" class="hid"/>
+<line x1="502.3" y1="155.9" x2="502.3" y2="269.9" class="hid"/>
+<line x1="502.3" y1="269.9" x2="616.3" y2="269.9" class="hid"/>
+<line x1="616.3" y1="269.9" x2="545.7" y2="320.1" class="hid"/>
+<line x1="545.7" y1="320.1" x2="431.7" y2="320.1" class="hid"/>
+<line x1="431.7" y1="320.1" x2="502.3" y2="269.9" class="hid"/>
+<polygon points="616.3,269.9 545.7,320.1 545.7,206.1 616.3,155.9" class="elem-lite"/>
+<polygon points="431.7,320.1 545.7,320.1 545.7,206.1 431.7,206.1" class="elem-lite"/>
+<polygon points="502.3,155.9 616.3,155.9 545.7,206.1 431.7,206.1" class="elem-lite"/>
+<polygon points="621.6,266.2 551.0,316.3 540.4,209.8 611.0,159.7" class="deformed"/>
+<polygon points="437.0,316.3 551.0,316.3 540.4,209.8 426.4,209.8" class="deformed"/>
+<polygon points="497.0,159.7 611.0,159.7 540.4,209.8 426.4,209.8" class="deformed"/>
+<polygon points="621.6,266.2 551.0,316.3 540.4,209.8 611.0,159.7" class="face-hi"/>
+<polyline points="556.3,198.6 556.3,215.7 545.7,223.2" class="right-angle"/>
+<path d="M 560.9 195.3 Q 540.4 209.8 543.4 240.7" class="arc-def"/>
+<circle cx="540.4" cy="209.8" r="3" class="vertex"/>
+<line x1="676.0" y1="22.0" x2="676.0" y2="392.0" class="sep"/>
+<text x="850.0" y="34.0" class="cap" text-anchor="middle">плоскость zOx</text>
+<text x="850.0" y="56.0" class="lbl" text-anchor="middle">γ<tspan class='sub'>zx</tspan> = −81,25·10⁻⁵</text>
+<text x="850.0" y="74.0" class="cap" text-anchor="middle">прямой угол увеличился</text>
+<line x1="728.0" y1="368.0" x2="758.0" y2="368.0" class="ax" marker-end="url(#axm)"/>
+<text x="766.4" y="372.0" class="ax-lbl" text-anchor="middle">x</text>
+<line x1="728.0" y1="368.0" x2="709.4" y2="381.2" class="ax" marker-end="url(#axm)"/>
+<text x="704.2" y="388.9" class="ax-lbl" text-anchor="middle">y</text>
+<line x1="728.0" y1="368.0" x2="728.0" y2="338.0" class="ax" marker-end="url(#axm)"/>
+<text x="728.0" y="333.6" class="ax-lbl" text-anchor="middle">z</text>
+<line x1="836.3" y1="269.9" x2="765.7" y2="320.1" class="hid"/>
+<line x1="765.7" y1="320.1" x2="765.7" y2="206.1" class="hid"/>
+<line x1="765.7" y1="206.1" x2="836.3" y2="155.9" class="hid"/>
+<line x1="836.3" y1="155.9" x2="836.3" y2="269.9" class="hid"/>
+<line x1="836.3" y1="269.9" x2="950.3" y2="269.9" class="hid"/>
+<line x1="950.3" y1="269.9" x2="950.3" y2="155.9" class="hid"/>
+<line x1="950.3" y1="155.9" x2="836.3" y2="155.9" class="hid"/>
+<line x1="836.3" y1="155.9" x2="836.3" y2="269.9" class="hid"/>
+<line x1="836.3" y1="269.9" x2="950.3" y2="269.9" class="hid"/>
+<line x1="950.3" y1="269.9" x2="879.7" y2="320.1" class="hid"/>
+<line x1="879.7" y1="320.1" x2="765.7" y2="320.1" class="hid"/>
+<line x1="765.7" y1="320.1" x2="836.3" y2="269.9" class="hid"/>
+<polygon points="950.3,269.9 879.7,320.1 879.7,206.1 950.3,155.9" class="elem-lite"/>
+<polygon points="765.7,320.1 879.7,320.1 879.7,206.1 765.7,206.1" class="elem-lite"/>
+<polygon points="836.3,155.9 950.3,155.9 879.7,206.1 765.7,206.1" class="elem-lite"/>
+<polygon points="950.3,281.0 879.7,331.2 879.7,217.2 950.3,167.0" class="deformed"/>
+<polygon points="765.7,309.0 879.7,331.2 879.7,217.2 765.7,195.0" class="deformed"/>
+<polygon points="836.3,144.8 950.3,167.0 879.7,217.2 765.7,195.0" class="deformed"/>
+<polygon points="765.7,309.0 879.7,331.2 879.7,217.2 765.7,195.0" class="face-hi"/>
+<polyline points="879.7,223.2 862.6,223.2 862.6,206.1" class="right-angle"/>
+<path d="M 879.7 250.3 Q 879.7 217.2 846.6 210.7" class="arc-def"/>
+<circle cx="879.7" cy="217.2" r="3" class="vertex"/>
+<text x="510.0" y="412.0" class="cap" text-anchor="middle">сплошной контур — до деформации, штриховой — после; закрашена грань, лежащая в рассматриваемой плоскости; углы увеличены примерно в 240 раз</text>
 </svg>

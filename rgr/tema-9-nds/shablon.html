@@ -116,6 +116,11 @@ svg .tau-val{font-size:12.5px; fill:var(--ochre)}
 svg .ax-lbl{font-size:13px; fill:var(--ink-soft)}
 svg .ang{font-size:12.5px; fill:var(--ink-soft)}
 svg .cap{font-size:11.5px; fill:var(--ink-faint)}
+svg .sep{stroke:var(--line-soft); stroke-width:1; fill:none}
+svg .face-hi{fill:var(--ochre); fill-opacity:.18; stroke:var(--ochre); stroke-width:1.8}
+svg .right-angle{fill:none; stroke:var(--petrol); stroke-width:2}
+svg .arc-def{fill:none; stroke:var(--ochre); stroke-width:2.2}
+svg .vertex{fill:var(--ochre)}
 .sum{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); margin:0 0 18px}
 .sum section{background:var(--surface); border:1px solid var(--line-soft); border-radius:3px; padding:15px 17px}
 .sum h5{font-family:var(--f-mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase;
@@ -424,14 +429,18 @@ l<sub>i</sub>² + m<sub>i</sub>² + n<sub>i</sub>² = 1,000 (0,99986; 1,00003; 0
 <p>Величина γ<sub>ij</sub> показывает изменение прямого угла между соответствующими
 осями: если знак <strong>«+»</strong>, прямой угол <strong>уменьшился</strong>;
 если знак <strong>«−»</strong> — <strong>увеличился</strong>. Каждая из трёх угловых
-деформаций относится к своей координатной плоскости, поэтому все три видны на одном
-пространственном изображении элемента: верхняя грань лежит в плоскости xOy, правая —
-в yOz, передняя — в xOz.</p>
+деформаций относится к своей координатной плоскости, поэтому показываю их на трёх
+отдельных элементах: у первого сдвиг в плоскости xOy, у второго — в yOz, у третьего —
+в zOx. Закрашенная грань каждого куба и лежит в соответствующей плоскости, а у ближней
+к наблюдателю вершины видно, как исходный прямой угол превращается в острый (γ &gt; 0)
+или тупой (γ &lt; 0).</p>
 
 <figure>__FIG_1_5__
-<figcaption>Рис. 1.5 — относительные угловые деформации на трёх координатных
-плоскостях. Сплошные рёбра — до деформации, штриховые — после; углы показаны
-увеличенными примерно в 200 раз (масштаб условный).</figcaption></figure>
+<figcaption>Рис. 1.5 — относительные угловые деформации: три элемента, на каждом
+показан сдвиг в своей координатной плоскости. Закрашена грань, лежащая в этой
+плоскости; у ближней вершины отмечены исходный прямой угол и угол после деформации.
+Сплошной контур — до деформации, штриховой — после; углы увеличены примерно в 240 раз
+(масштаб условный).</figcaption></figure>
 
 <h3><span class="n">7</span>Полная удельная потенциальная энергия упругой деформации</h3>
 
