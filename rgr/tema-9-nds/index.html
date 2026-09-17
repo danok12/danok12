@@ -1,0 +1,539 @@
+<title>Тема 9 — НДС в точке</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --paper:#EDF2F1; --surface:#FFFFFF; --surface-2:#E3ECEA;
+  --ink:#0F3238; --ink-soft:#54737A; --ink-faint:#7C989D;
+  --petrol:#0B5F66; --petrol-2:#0E8891; --petrol-wash:#DCEAE9;
+  --ochre:#A8491A; --ochre-wash:#F6E6DB;
+  --line:#C9DAD8; --line-soft:#DDE8E6;
+  --f-head:'Spectral',Georgia,'Times New Roman',serif;
+  --f-body:'Source Sans 3','Segoe UI',system-ui,sans-serif;
+  --f-mono:'JetBrains Mono','DejaVu Sans Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0A1618; --surface:#0F2326; --surface-2:#142C2F;
+    --ink:#DDE9E7; --ink-soft:#93ADAC; --ink-faint:#6E8A8A;
+    --petrol:#5CC2C9; --petrol-2:#87DBE1; --petrol-wash:#123035;
+    --ochre:#E9924F; --ochre-wash:#312014;
+    --line:#1F3C3F; --line-soft:#182F32;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0A1618; --surface:#0F2326; --surface-2:#142C2F;
+  --ink:#DDE9E7; --ink-soft:#93ADAC; --ink-faint:#6E8A8A;
+  --petrol:#5CC2C9; --petrol-2:#87DBE1; --petrol-wash:#123035;
+  --ochre:#E9924F; --ochre-wash:#312014;
+  --line:#1F3C3F; --line-soft:#182F32;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--f-body); font-size:17px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:780px; margin:0 auto; padding-inline:18px; padding-block:40px 72px}
+
+/* ---------- шапка ---------- */
+.eyebrow{
+  font-family:var(--f-mono); font-size:12px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--petrol); margin:0 0 10px
+}
+h1{
+  font-family:var(--f-head); font-weight:600; font-size:clamp(28px,6vw,40px);
+  line-height:1.16; margin:0 0 12px; text-wrap:balance; letter-spacing:-.01em
+}
+.lede{color:var(--ink-soft); margin:0; max-width:60ch}
+.rule{height:2px; background:var(--petrol); opacity:.5; margin:26px 0 0; border:0}
+
+/* ---------- заголовки ---------- */
+h2{
+  font-family:var(--f-head); font-weight:600; font-size:26px; line-height:1.25;
+  margin:52px 0 6px; padding-top:22px; border-top:1px solid var(--line);
+  text-wrap:balance
+}
+h2 .zad{
+  display:block; font-family:var(--f-mono); font-size:11.5px; font-weight:400;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--petrol); margin-bottom:8px
+}
+h3{
+  font-family:var(--f-head); font-weight:600; font-size:20px; line-height:1.3;
+  margin:38px 0 10px; display:flex; gap:12px; align-items:baseline; text-wrap:balance
+}
+h3 .n{
+  flex:none; font-family:var(--f-mono); font-size:13px; font-weight:600;
+  color:var(--surface); background:var(--petrol); border-radius:3px;
+  padding:3px 7px; line-height:1.2
+}
+h4{font-family:var(--f-body); font-weight:600; font-size:17px; margin:24px 0 6px; color:var(--petrol)}
+p{margin:0 0 14px; max-width:65ch}
+strong{font-weight:600}
+em{font-style:italic}
+
+/* ---------- формулы ---------- */
+.f{
+  font-family:var(--f-mono); font-size:14.5px; line-height:1.85;
+  background:var(--surface); border:1px solid var(--line-soft);
+  border-left:3px solid var(--petrol); border-radius:2px;
+  padding:13px 16px; margin:0 0 16px; overflow-x:auto;
+  font-variant-numeric:tabular-nums; white-space:pre-wrap
+}
+.f b{font-weight:600; color:var(--petrol)}
+.f .cm{color:var(--ink-faint); font-style:normal}
+code{
+  font-family:var(--f-mono); font-size:.92em; background:var(--surface-2);
+  padding:1px 5px; border-radius:3px
+}
+
+/* ---------- матрица ---------- */
+.mx{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:0 0 18px}
+.mx .name{font-family:var(--f-mono); font-size:15px}
+.matrix{
+  position:relative; display:inline-grid; gap:4px 20px; padding:8px 16px;
+  font-family:var(--f-mono); font-size:14.5px; font-variant-numeric:tabular-nums;
+  justify-items:end
+}
+.matrix::before,.matrix::after{
+  content:''; position:absolute; top:0; bottom:0; width:8px;
+  border:2px solid var(--petrol)
+}
+.matrix::before{left:0; border-right:0}
+.matrix::after{right:0; border-left:0}
+.m2{grid-template-columns:repeat(2,minmax(46px,auto))}
+.unit{font-family:var(--f-mono); font-size:13px; color:var(--ink-soft)}
+
+/* ---------- таблицы ---------- */
+.tw{overflow-x:auto; margin:0 0 18px; border:1px solid var(--line-soft); border-radius:3px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:15px; font-variant-numeric:tabular-nums}
+caption{
+  caption-side:top; text-align:left; padding:11px 14px 9px; font-size:13.5px;
+  color:var(--ink-soft); border-bottom:1px solid var(--line-soft)
+}
+th,td{padding:8px 14px; text-align:right; border-bottom:1px solid var(--line-soft)}
+th:first-child,td:first-child{text-align:left}
+thead th{
+  font-family:var(--f-mono); font-size:11.5px; font-weight:400; letter-spacing:.07em;
+  text-transform:uppercase; color:var(--petrol); background:var(--petrol-wash)
+}
+tbody tr:last-child td{border-bottom:0}
+tr.accept td{font-weight:600; background:var(--surface-2)}
+td.mono,th.mono{font-family:var(--f-mono); font-size:13.5px}
+
+/* ---------- выводы ---------- */
+.out{
+  background:var(--petrol-wash); border-left:3px solid var(--petrol);
+  padding:14px 17px; margin:0 0 18px; border-radius:0 3px 3px 0
+}
+.out.warn{background:var(--ochre-wash); border-left-color:var(--ochre)}
+.out p:last-child{margin-bottom:0}
+.out .tag{
+  font-family:var(--f-mono); font-size:11px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--petrol); display:block; margin-bottom:5px
+}
+.out.warn .tag{color:var(--ochre)}
+.note{
+  border-left:2px solid var(--line); padding:2px 0 2px 16px; margin:0 0 18px;
+  color:var(--ink-soft); font-size:15.5px
+}
+.note strong{color:var(--ink)}
+.note p:last-child{margin-bottom:0}
+
+/* ---------- рисунки ---------- */
+figure{
+  margin:0 0 20px; background:var(--surface); border:1px solid var(--line-soft);
+  border-radius:3px; padding:14px 14px 0
+}
+figure svg{display:block; width:100%; height:auto; max-width:100%}
+figcaption{
+  font-size:13.5px; color:var(--ink-soft); padding:4px 2px 13px;
+  border-top:1px solid var(--line-soft); margin-top:10px
+}
+svg .elem{fill:var(--petrol-wash); stroke:var(--petrol); stroke-width:1.8}
+svg .ghost{fill:none; stroke:var(--line); stroke-width:1.4; stroke-dasharray:5 4}
+svg .sig{stroke:var(--petrol); stroke-width:2.2; fill:none}
+svg .tau{stroke:var(--ochre); stroke-width:2; fill:none}
+svg .ax{stroke:var(--ink-soft); stroke-width:1.4; fill:none}
+svg .norm{stroke:var(--ink-faint); stroke-width:1.2; stroke-dasharray:4 4}
+svg .arc{stroke:var(--ink-soft); stroke-width:1.2; fill:none}
+svg .dot{fill:var(--ink-soft)}
+svg text{font-family:var(--f-mono); fill:var(--ink)}
+svg .lbl{font-size:15px}
+svg .sub{font-size:11px}
+svg .val{font-size:12.5px; fill:var(--ink-soft)}
+svg .tau-lbl{font-size:15px; fill:var(--ochre)}
+svg .tau-sub{font-size:11px; fill:var(--ochre)}
+svg .tau-val{font-size:12.5px; fill:var(--ochre)}
+svg .ax-lbl{font-size:13px; fill:var(--ink-soft)}
+svg .ang{font-size:12.5px; fill:var(--ink-soft)}
+svg .cap{font-size:12px; fill:var(--ink-faint)}
+
+/* ---------- итоги ---------- */
+.sum{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); margin:0 0 18px}
+.sum section{background:var(--surface); border:1px solid var(--line-soft); border-radius:3px; padding:15px 17px}
+.sum h5{
+  font-family:var(--f-mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--petrol); margin:0 0 9px; font-weight:400
+}
+.sum ul{margin:0; padding-left:18px}
+.sum li{margin-bottom:5px; font-size:15.5px}
+.sum li:last-child{margin-bottom:0}
+.kv{font-family:var(--f-mono); font-size:13.5px; font-variant-numeric:tabular-nums}
+footer{margin-top:44px; padding-top:18px; border-top:1px solid var(--line); color:var(--ink-faint); font-size:14px}
+</style>
+
+<div class="wrap">
+
+<p class="eyebrow">Тема № 9 · расчётно-графическая работа</p>
+<h1>Исследование напряжённо-деформированного состояния в окрестности точки</h1>
+<p class="lede">Продолжение расчёта: задача&nbsp;1 — пункты&nbsp;7–8, задача&nbsp;2 — пункты&nbsp;1–3.
+Порядок действий и обозначения повторяют разбор на практическом занятии.</p>
+<hr class="rule">
+
+<div class="tw"><table>
+<caption>Характеристики материала, общие для обеих задач</caption>
+<thead><tr><th>E, МПа</th><th>G, МПа</th><th>R, МПа</th><th>γ<sub>c</sub></th><th>ν</th></tr></thead>
+<tbody><tr class="accept"><td class="mono">2,1·10⁵</td><td class="mono">0,8·10⁵</td><td class="mono">210</td><td class="mono">0,9</td><td class="mono">0,3</td></tr></tbody>
+</table></div>
+
+<div class="note"><p><strong>Единицы удельной энергии.</strong> В тетради энергия записана в МПа:
+1&nbsp;МДж/м³&nbsp;=&nbsp;1&nbsp;МПа, поскольку Дж/м³ = Н·м/м³ = Н/м² = Па. Ниже стоит МДж/м³,
+чтобы не путать энергию с напряжением — числа те же.</p></div>
+
+<h2><span class="zad">Задача 1 · трёхосное напряжённое состояние</span>Продолжение: энергия и прочность</h2>
+
+<p>Из предыдущих пунктов уже получено:</p>
+
+<div class="tw"><table>
+<caption>Таблица 1 — исходные данные и результаты пп. 1–2</caption>
+<thead><tr><th>величина</th><th>значение</th></tr></thead>
+<tbody>
+<tr><td>σ<sub>x</sub>; σ<sub>y</sub>; σ<sub>z</sub></td><td class="mono">−80; 60; −60 МПа</td></tr>
+<tr><td>τ<sub>xy</sub>; τ<sub>yz</sub>; τ<sub>zx</sub></td><td class="mono">90; 50; −65 МПа</td></tr>
+<tr><td>I<sub>1н</sub></td><td class="mono">−80 МПа</td></tr>
+<tr><td>I<sub>2н</sub></td><td class="mono">−18425 МПа²</td></tr>
+<tr><td>I<sub>3н</sub></td><td class="mono">135500 МПа³</td></tr>
+<tr class="accept"><td>σ₁; σ₂; σ₃</td><td class="mono">105,96; −7,15; −178,81 МПа</td></tr>
+</tbody>
+</table></div>
+
+<p>В расчёт подставляются неокруглённые корни: σ₁ = 105,9582; σ₂ = −7,1519; σ₃ = −178,8063 МПа.</p>
+
+<h3><span class="n">7</span>Полная удельная потенциальная энергия упругой деформации</h3>
+
+<p>Удельная энергия — энергия, приходящаяся на единицу объёма. Она складывается
+из двух составляющих: энергии изменения объёма и энергии изменения формы.</p>
+
+<div class="f"><b>U₀ = U₀<sup>об</sup> + U₀<sup>ф</sup></b></div>
+
+<h4>Полная энергия</h4>
+<div class="f">U₀ = 1/(2E) · [σ₁² + σ₂² + σ₃² − 2ν·(σ₁σ₂ + σ₂σ₃ + σ₃σ₁)]</div>
+
+<p>Обе суммы в квадратных скобках — это в точности инварианты тензора напряжений,
+поэтому беру их не через округлённые корни, а точно:</p>
+
+<div class="f">σ₁² + σ₂² + σ₃²   = I₁н² − 2·I₂н = (−80)² − 2·(−18425) = 6400 + 36850 = <b>43250 МПа²</b>
+σ₁σ₂ + σ₂σ₃ + σ₃σ₁ = I₂н                                          = <b>−18425 МПа²</b></div>
+
+<div class="f">U₀ = [43250 − 2·0,3·(−18425)] / (2·2,1·10⁵) =
+   = (43250 + 11055) / 4,2·10⁵ = 54305 / 4,2·10⁵ = <b>0,1293 МДж/м³</b></div>
+
+<h4>Энергия изменения формы</h4>
+<div class="f">U₀<sup>ф</sup> = (1 + ν)/(6E) · [(σ₁ − σ₂)² + (σ₂ − σ₃)² + (σ₃ − σ₁)²]</div>
+
+<div class="f">σ₁ − σ₂ = 113,1101 МПа;   σ₂ − σ₃ = 171,6544 МПа;   σ₃ − σ₁ = −284,7646 МПа</div>
+
+<p>Сумма квадратов разностей тоже выражается через инварианты точно:</p>
+
+<div class="f">(σ₁−σ₂)² + (σ₂−σ₃)² + (σ₃−σ₁)² = 2·(I₁н² − 3·I₂н) = 2·(6400 + 55275) = <b>123350 МПа²</b>
+<span class="cm">контроль по корням: 113,1101² + 171,6544² + 284,7646² = 123350,0 — сходится</span></div>
+
+<div class="f">U₀<sup>ф</sup> = 1,3 / (6·2,1·10⁵) · 123350 = 1,3·123350 / 1,26·10⁶ = <b>0,12727 МДж/м³</b></div>
+
+<h4>Энергия изменения объёма</h4>
+<div class="f">U₀<sup>об</sup> = U₀ − U₀<sup>ф</sup> = 0,12930 − 0,12727 = <b>0,00203 МДж/м³</b>
+<span class="cm">проверка по независимой формуле:</span>
+U₀<sup>об</sup> = (1 − 2ν)/(6E) · I₁н² = 0,4·6400 / 1,26·10⁶ = <b>0,00203 МДж/м³</b> — совпало точно</div>
+
+<div class="out"><span class="tag">Вывод</span>
+<p>U₀ = 0,1293 МДж/м³ <strong>&gt;</strong> U₀<sup>ф</sup> = 0,12727 МДж/м³. На формоизменение
+уходит 98,4&nbsp;% всей энергии, на изменение объёма — 1,6&nbsp;%: состояние близко
+к чистому сдвигу (первый инвариант мал по сравнению со вторым).</p></div>
+
+<div class="note"><p><strong>Про модуль сдвига G.</strong> Ту же энергию можно записать через компоненты
+σ<sub>x</sub>…τ<sub>zx</sub>: U₀ = 1/(2E)·[σ<sub>x</sub>²+σ<sub>y</sub>²+σ<sub>z</sub>² −
+2ν(σ<sub>x</sub>σ<sub>y</sub>+σ<sub>y</sub>σ<sub>z</sub>+σ<sub>z</sub>σ<sub>x</sub>)] +
+1/(2G)·(τ<sub>xy</sub>²+τ<sub>yz</sub>²+τ<sub>zx</sub>²). При G из задания (0,8·10⁵) получится
+0,03752 + 0,09266 = 0,13018 МДж/м³ — на 0,68&nbsp;% больше. Это не ошибка: в задании G округлён,
+а согласованное с E и ν значение G = E/[2(1+ν)] = 0,80769·10⁵ МПа даёт 0,03752 + 0,09177 =
+0,1293 МДж/м³ — ровно тот же результат, что и по главным напряжениям.
+<strong>В отчёт идёт 0,1293 МДж/м³:</strong> формула по главным напряжениям от G не зависит.</p></div>
+
+<h3><span class="n">8</span>Проверка условия прочности по IV теории</h3>
+
+<p><strong>Формулировка.</strong> Опасное состояние наступает тогда, когда удельная энергия
+формоизменения достигает того же значения, что и в момент наступления опасного состояния
+при простом одноосном напряжённом состоянии. Используется модель Фёппля — Мизеса.</p>
+
+<div class="f">σ<sub>экв</sub><sup>IV</sup> = (1/√2) · √[(σ₁ − σ₂)² + (σ₂ − σ₃)² + (σ₃ − σ₁)²] ≤ R·γ<sub>c</sub></div>
+
+<div class="f">σ<sub>экв</sub><sup>IV</sup> = (1/√2)·√123350 = √61675 = <b>248,34 МПа</b>
+R·γ<sub>c</sub> = 210·0,9 = <b>189,0 МПа</b></div>
+
+<div class="out warn"><span class="tag">Условие прочности не выполняется</span>
+<p>σ<sub>экв</sub><sup>IV</sup> = 248,34 МПа <strong>&gt; R·γ<sub>c</sub> = 189,0 МПа</strong> —
+расчётное напряжение превышает предельное в 1,314 раза, то есть на <strong>31,4&nbsp;%</strong>.
+Прочность тела в окрестности рассматриваемой точки не обеспечена: нужно либо снизить уровень
+напряжений, либо применить сталь с более высоким расчётным сопротивлением R.</p></div>
+
+<div class="note"><p><strong>Связь пунктов 7 и 8.</strong> U₀<sup>ф</sup> = σ<sub>экв</sub>²/(6G) =
+248,3445² / (6·0,80769·10⁵) = 0,12727 МДж/м³ — то же число, что в п. 7. Это и есть содержание
+энергетической теории: σ<sub>экв</sub> — одноосное напряжение с такой же энергией формоизменения.</p></div>
+
+<h2><span class="zad">Задача 2 · двухосное напряжённое состояние</span>Плоское напряжённое состояние</h2>
+
+<p>По условию σ<sub>z</sub> = 0; τ<sub>zx</sub> = τ<sub>xz</sub> = 0; τ<sub>zy</sub> = τ<sub>yz</sub> = 0,
+а σ<sub>x</sub> ≠ 0, σ<sub>y</sub> ≠ 0, τ<sub>xy</sub> ≠ 0. Такое состояние возникает
+в тонкой пластине (h ≪ a, b), нагруженной по контуру.</p>
+
+<div class="tw"><table>
+<caption>Таблица 2 — компоненты напряжённого состояния, МПа</caption>
+<thead><tr><th>источник</th><th>σ<sub>x</sub></th><th>σ<sub>y</sub></th><th>τ<sub>xy</sub></th></tr></thead>
+<tbody>
+<tr><td>строка № 29</td><td class="mono">−85</td><td class="mono">—</td><td class="mono">—</td></tr>
+<tr><td>строка № 8</td><td class="mono">—</td><td class="mono">−30</td><td class="mono">—</td></tr>
+<tr><td>строка № 25</td><td class="mono">—</td><td class="mono">—</td><td class="mono">−30</td></tr>
+<tr class="accept"><td>принято к расчёту</td><td class="mono">−85</td><td class="mono">−30</td><td class="mono">−30</td></tr>
+</tbody>
+</table></div>
+
+<h3><span class="n">1</span>Тензор напряжений и напряжения на гранях элемента</h3>
+
+<p>По закону парности касательных напряжений τ<sub>xy</sub> = τ<sub>yx</sub> = −30 МПа.
+Для двухосного состояния тензор вырождается в матрицу 2×2:</p>
+
+<div class="mx">
+  <span class="name">T<sub>н</sub> =</span>
+  <span class="matrix m2"><span>σ<sub>x</sub></span><span>τ<sub>xy</sub></span><span>τ<sub>yx</sub></span><span>σ<sub>y</sub></span></span>
+  <span class="name">=</span>
+  <span class="matrix m2"><span>−85</span><span>−30</span><span>−30</span><span>−30</span></span>
+  <span class="unit">[МПа]</span>
+</div>
+
+<p>Оба нормальных напряжения отрицательны, поэтому стрелки направлены <strong>к граням</strong>
+(сжатие); касательные напряжения тоже отрицательны и потому направлены противоположно
+положительному направлению осей.</p>
+
+<figure>
+<svg viewBox="0 0 460 360" role="img" aria-label="Напряжения на гранях элемента: sigma x, sigma y, tau xy" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="46.0" y1="44.0" x2="126.0" y2="44.0" class="ax" marker-end="url(#ah1)"/>
+<text x="133.0" y="48.0" class="ax-lbl" text-anchor="middle">x</text>
+<line x1="46.0" y1="44.0" x2="46.0" y2="124.0" class="ax" marker-end="url(#ah1)"/>
+<text x="46.0" y="140.0" class="ax-lbl" text-anchor="middle">y</text>
+<circle cx="46" cy="44" r="2.5" class="dot"/>
+<rect x="169" y="124" width="132" height="132" class="elem"/>
+<line x1="359.0" y1="190.0" x2="307.0" y2="190.0" class="sig" marker-end="url(#ah1)"/>
+<line x1="111.0" y1="190.0" x2="163.0" y2="190.0" class="sig" marker-end="url(#ah1)"/>
+<text x="367.0" y="181.0" class="lbl" text-anchor="start">σ</text>
+<text x="376.0" y="185.0" class="sub" text-anchor="start">x</text>
+<text x="367.0" y="202.0" class="val" text-anchor="start">−85</text>
+<line x1="235.0" y1="72.0" x2="235.0" y2="118.0" class="sig" marker-end="url(#ah1)"/>
+<line x1="235.0" y1="308.0" x2="235.0" y2="262.0" class="sig" marker-end="url(#ah1)"/>
+<text x="243.0" y="66.0" class="lbl" text-anchor="start">σ</text>
+<text x="252.0" y="70.0" class="sub" text-anchor="start">y</text>
+<text x="281.0" y="66.0" class="val" text-anchor="start">−30</text>
+<line x1="315.0" y1="234.0" x2="315.0" y2="146.0" class="tau" marker-end="url(#ah1)"/>
+<line x1="155.0" y1="146.0" x2="155.0" y2="234.0" class="tau" marker-end="url(#ah1)"/>
+<line x1="279.0" y1="270.0" x2="191.0" y2="270.0" class="tau" marker-end="url(#ah1)"/>
+<line x1="191.0" y1="110.0" x2="279.0" y2="110.0" class="tau" marker-end="url(#ah1)"/>
+<text x="321.0" y="138.0" class="tau-lbl" text-anchor="start">τ</text>
+<text x="329.0" y="142.0" class="tau-sub" text-anchor="start">xy</text>
+<text x="321.0" y="157.0" class="tau-val" text-anchor="start">−30</text>
+<text x="149.0" y="290.0" class="tau-lbl" text-anchor="end">τ</text>
+<text x="157.0" y="294.0" class="tau-sub" text-anchor="end">yx</text>
+</svg>
+<figcaption>Рис. 2.1 — заданные напряжения на гранях элемента, МПа. Ось y направлена вниз,
+как на схеме элемента в тетради.</figcaption>
+</figure>
+
+<h3><span class="n">2</span>Главные напряжения</h3>
+
+<p>Используем кубическое уравнение</p>
+
+<div class="f">σ³ − I₁н·σ² + I₂н·σ − I₃н = 0                                        <b>(1)</b></div>
+
+<p>где для двухосного состояния</p>
+
+<div class="f">I₁н = σ<sub>x</sub> + σ<sub>y</sub>       = −85 + (−30)          = <b>−115 МПа</b>
+I₂н = σ<sub>x</sub>·σ<sub>y</sub> − τ<sub>xy</sub>² = (−85)·(−30) − (−30)² = 2550 − 900 = <b>1650 МПа²</b>
+I₃н = <b>0</b>  <span class="cm">— при двухосном состоянии третьего инварианта нет:
+       определитель матрицы с нулевой строкой и столбцом равен нулю</span></div>
+
+<p>Уравнение (1) распадается:</p>
+
+<div class="f">σ·(σ² − I₁н·σ + I₂н) = 0   →   σ = 0   или   σ² + 115σ + 1650 = 0     <b>(2)</b></div>
+
+<p>Корень σ = 0 отвечает площадке с нормалью z: по условию на ней нет ни нормальных,
+ни касательных напряжений, значит ось z — главная. Квадратное уравнение из (2)
+даёт два оставшихся корня:</p>
+
+<div class="f">σ<sub>1,2</sub> = I₁н/2 ± √[(I₁н/2)² − I₂н] = (σ<sub>x</sub>+σ<sub>y</sub>)/2 ± √[((σ<sub>x</sub>−σ<sub>y</sub>)/2)² + τ<sub>xy</sub>²]   <b>(3)</b></div>
+
+<div class="f">(σ<sub>x</sub> + σ<sub>y</sub>)/2 = (−85 − 30)/2 = −57,5 МПа
+(σ<sub>x</sub> − σ<sub>y</sub>)/2 = (−85 + 30)/2 = −27,5 МПа
+√[(−27,5)² + (−30)²] = √(756,25 + 900) = √1656,25 = 40,6971 МПа
+
+σ′  = −57,5 + 40,70 = <b>−16,80 МПа</b>
+σ″ = −57,5 − 40,70 = <b>−98,20 МПа</b></div>
+
+<p>Располагаем все три корня от большего к меньшему (σ₁ ≥ σ₂ ≥ σ₃):</p>
+
+<div class="out"><span class="tag">Главные напряжения</span>
+<p class="kv">σ₁ = 0;&nbsp;&nbsp;&nbsp;σ₂ = −16,80 МПа;&nbsp;&nbsp;&nbsp;σ₃ = −98,20 МПа</p></div>
+
+<div class="note"><p>В примере из тетради оба плоских корня были ненулевыми и разного знака,
+поэтому они и оказались σ₁ и σ₂. Здесь оба отрицательны, так что нулевой корень —
+наибольший, и он становится σ₁. Для дальнейших пунктов (τ<sub>max</sub>, σ<sub>экв</sub>)
+нумерация важна, поэтому она выписана явно.</p></div>
+
+<div class="tw"><table>
+<caption>Таблица 3 — проверка по инвариантам</caption>
+<thead><tr><th>инвариант</th><th>через компоненты</th><th>через главные напряжения</th></tr></thead>
+<tbody>
+<tr><td>I₁н</td><td class="mono">σ<sub>x</sub>+σ<sub>y</sub> = −115</td><td class="mono">0 − 16,8029 − 98,1971 = −115 МПа</td></tr>
+<tr><td>I₂н</td><td class="mono">σ<sub>x</sub>σ<sub>y</sub> − τ<sub>xy</sub>² = 1650</td><td class="mono">0 + 1650,0 + 0 = 1650 МПа²</td></tr>
+<tr><td>I₃н</td><td class="mono">0</td><td class="mono">σ₁·σ₂·σ₃ = 0</td></tr>
+</tbody>
+</table></div>
+
+<p>Все инварианты совпали — главные напряжения найдены верно. Оба ненулевых главных
+напряжения отрицательны, третье равно нулю, значит вид напряжённого состояния —
+<strong>двухосное сжатие</strong>.</p>
+
+<h3><span class="n">3</span>Углы наклона главных площадок к оси x</h3>
+
+<p>На главной площадке касательных напряжений нет, поэтому для двухосного состояния
+условия на нормали дают систему:</p>
+
+<div class="f">(σ<sub>x</sub> − σ<sub>i</sub>)·l<sub>i</sub> + τ<sub>xy</sub>·m<sub>i</sub> = 0      <b>(a)</b>
+τ<sub>yx</sub>·l<sub>i</sub> + (σ<sub>y</sub> − σ<sub>i</sub>)·m<sub>i</sub> = 0      <b>(b)</b>                    <b>(4)</b></div>
+
+<p>где l<sub>i</sub> = cos(σ<sub>i</sub>^x), m<sub>i</sub> = cos(σ<sub>i</sub>^y) — направляющие
+косинусы нормали к i-й главной площадке. Ось y направлена вниз, поэтому</p>
+
+<div class="f">l<sub>i</sub> = cos α<sub>i</sub>;   m<sub>i</sub> = cos(α<sub>i</sub> + 90°) = −sin α<sub>i</sub></div>
+
+<p>Подставляем в (b) и делим на cos α<sub>i</sub>:</p>
+
+<div class="f">τ<sub>yx</sub>·cos α<sub>i</sub> − (σ<sub>y</sub> − σ<sub>i</sub>)·sin α<sub>i</sub> = 0   →   <b>tg α<sub>i</sub> = τ<sub>yx</sub> / (σ<sub>y</sub> − σ<sub>i</sub>)</b>   <b>(5)</b></div>
+
+<div class="f"><span class="cm">при i = 2  (σ₂ = −16,80 МПа):</span>
+tg α₂ = −30 / (−30 + 16,8029) = −30 / (−13,1971) =  2,2732   →   <b>α₂ = +66,26°</b>
+
+<span class="cm">при i = 3  (σ₃ = −98,20 МПа):</span>
+tg α₃ = −30 / (−30 + 98,1971) = −30 /   68,1971  = −0,4399   →   <b>α₃ = −23,74°</b></div>
+
+<p><strong>Проверка.</strong> Главные площадки взаимно перпендикулярны, поэтому</p>
+
+<div class="f">|α₂| + |α₃| = 66,26° + 23,74° = <b>90,00°</b>  ✓</div>
+
+<p>Дополнительная проверка — подстановкой найденных косинусов обратно в систему (4):</p>
+
+<div class="tw"><table>
+<caption>Таблица 4 — контроль направляющих косинусов</caption>
+<thead><tr><th>нормаль</th><th>l = cos α</th><th>m = −sin α</th><th>l² + m²</th><th>ур. (a)</th><th>ур. (b)</th></tr></thead>
+<tbody>
+<tr><td>ν₂ (σ₂), α = 66,26°</td><td class="mono">0,40266</td><td class="mono">−0,91535</td><td class="mono">1,000000</td><td class="mono">0,000000</td><td class="mono">0,000000</td></tr>
+<tr><td>ν₃ (σ₃), α = −23,74°</td><td class="mono">0,91535</td><td class="mono">0,40266</td><td class="mono">1,000000</td><td class="mono">0,000000</td><td class="mono">0,000000</td></tr>
+</tbody>
+</table></div>
+
+<p>Оба уравнения обращаются в нуль — углы найдены верно. Третья главная площадка —
+это площадка с нормалью z (σ₁ = 0): она совпадает с плоскостью пластины
+и перпендикулярна двум найденным.</p>
+
+<figure>
+<svg viewBox="0 0 520 400" role="img" aria-label="Главные площадки и главные напряжения sigma 2 и sigma 3" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="90.0" y1="200.0" x2="412.0" y2="200.0" class="ax" marker-end="url(#ah2)"/>
+<text x="422.0" y="205.0" class="ax-lbl" text-anchor="middle">x</text>
+<line x1="250.0" y1="200.0" x2="250.0" y2="346.0" class="ax" marker-end="url(#ah2)"/>
+<text x="236.0" y="350.0" class="ax-lbl" text-anchor="middle">y</text>
+<polygon points="329.1,169.2 219.2,120.9 170.9,230.8 280.8,279.1" class="elem"/>
+<line x1="202.5" y1="308.0" x2="297.5" y2="92.0" class="norm"/>
+<line x1="295.1" y1="97.5" x2="277.0" y2="138.7" class="sig" marker-end="url(#ah2)"/>
+<line x1="204.9" y1="302.5" x2="223.0" y2="261.3" class="sig" marker-end="url(#ah2)"/>
+<text x="311.2" y="60.9" class="lbl" text-anchor="middle">σ₂</text>
+<text x="311.2" y="78.9" class="val" text-anchor="middle">−16,80 МПа</text>
+<line x1="142.0" y1="152.5" x2="358.0" y2="247.5" class="norm"/>
+<line x1="352.5" y1="245.1" x2="311.3" y2="227.0" class="sig" marker-end="url(#ah2)"/>
+<line x1="147.5" y1="154.9" x2="188.7" y2="173.0" class="sig" marker-end="url(#ah2)"/>
+<text x="389.1" y="261.2" class="lbl" text-anchor="middle">σ₃</text>
+<text x="389.1" y="279.2" class="val" text-anchor="middle">−98,20 МПа</text>
+<path d="M 346 200 A 96 96 0 0 0 288.6 112.1" class="arc"/>
+<text x="343.1" y="147.2" class="ang" text-anchor="start">α₂ = 66,26°</text>
+<path d="M 312 200 A 62 62 0 0 1 306.8 225.0" class="arc"/>
+<text x="373.4" y="228.7" class="ang" text-anchor="start">α₃ = −23,74°</text>
+</svg>
+<figcaption>Рис. 2.2 — главный элемент. От оси x вверх отложен угол α₂ = 66,26°,
+перпендикулярно ему — направление α₃ = −23,74°. Оба главных напряжения сжимающие,
+поэтому стрелки направлены к граням.</figcaption>
+</figure>
+
+<div class="note"><p><strong>Построение — как «Рисунок 2» в тетради.</strong> В разобранном
+на занятии примере σ₁ = 100 МПа было растягивающим, и стрелки шли <em>от</em> грани,
+а σ₂ = −25 МПа — сжимающим, стрелки шли <em>к</em> грани. Здесь растягивающих главных
+напряжений нет вовсе, поэтому обе пары стрелок направлены внутрь.</p></div>
+
+<div class="note"><p><strong>Сверка с «школьной» формулой.</strong> Тот же результат даёт
+tg 2α₀ = 2τ<sub>xy</sub>/(σ<sub>x</sub> − σ<sub>y</sub>) = −60/−55 = 1,0909 → 2α₀ = 47,49°,
+α₀ = 23,74°. Эта формула записана для системы с осью y <strong>вверх</strong> и углом против
+часовой стрелки: там σ₃ = −98,20 МПа лежит под +23,74°, а σ₂ = −16,80 МПа — под 113,74°.
+Формула (5) из тетради использует ось y <strong>вниз</strong>, поэтому углы получаются
+зеркальными: −23,74° и +66,26°. Взаимное расположение площадок и величины напряжений
+одинаковы, различается только знак отсчёта угла. <strong>В отчёт идут углы по формуле (5)</strong>,
+а рисунок выполняется в тех же осях, что и схема элемента.</p></div>
+
+<h2><span class="zad">Итог</span>Сводка ответов</h2>
+
+<div class="sum">
+<section>
+  <h5>Задача 1 — пп. 7–8</h5>
+  <ul>
+    <li class="kv">U₀ = 0,1293 МДж/м³</li>
+    <li class="kv">U₀<sup>ф</sup> = 0,12727 МДж/м³</li>
+    <li class="kv">U₀<sup>об</sup> = 0,00203 МДж/м³</li>
+    <li class="kv">U₀ &gt; U₀<sup>ф</sup></li>
+    <li class="kv">σ<sub>экв</sub><sup>IV</sup> = 248,34 МПа &gt; R·γ<sub>c</sub> = 189,0 МПа</li>
+    <li>прочность не обеспечена, превышение 31,4 %</li>
+  </ul>
+</section>
+<section>
+  <h5>Задача 2 — пп. 1–3</h5>
+  <ul>
+    <li class="kv">T<sub>н</sub> = | −85 −30; −30 −30 | МПа</li>
+    <li class="kv">I₁н = −115 МПа; I₂н = 1650 МПа²; I₃н = 0</li>
+    <li class="kv">σ₁ = 0; σ₂ = −16,80; σ₃ = −98,20 МПа</li>
+    <li>вид состояния — двухосное сжатие</li>
+    <li class="kv">α₂ = +66,26°; α₃ = −23,74°; |α₂|+|α₃| = 90°</li>
+  </ul>
+</section>
+</div>
+
+<div class="note"><p><strong>Что дальше по задаче 2.</strong> В тетради разбор доведён
+до «Рисунка 2», то есть до главного элемента. Следующие пункты — экстремальные касательные
+напряжения, напряжения на наклонной площадке, круг Мора, деформации, удельная энергия
+и проверка прочности — считаются по тем же формулам, что и в задаче 1; их можно оформить,
+как только станет понятен требуемый порядок.</p></div>
+
+<footer>Все числовые значения пересчитаны программой <code>raschet.py</code> в точной
+арифметике (дроби), корни уравнений — с 50 знаками; в тексте приведены округления.</footer>
+
+</div>
