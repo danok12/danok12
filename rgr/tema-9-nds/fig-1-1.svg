@@ -1,0 +1,50 @@
+<svg viewBox="0 0 640 470" role="img" aria-label="Напряжения на гранях элементарного параллелепипеда" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a11" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
+<marker id="axm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="74.0" y1="404.0" x2="112.0" y2="404.0" class="ax" marker-end="url(#axm)"/>
+<text x="122.6" y="408.0" class="ax-lbl" text-anchor="middle">x</text>
+<line x1="74.0" y1="404.0" x2="50.4" y2="420.7" class="ax" marker-end="url(#axm)"/>
+<text x="43.8" y="429.4" class="ax-lbl" text-anchor="middle">y</text>
+<line x1="74.0" y1="404.0" x2="74.0" y2="366.0" class="ax" marker-end="url(#axm)"/>
+<text x="74.0" y="359.4" class="ax-lbl" text-anchor="middle">z</text>
+<line x1="298.0" y1="254.5" x2="226.0" y2="305.5" class="hid"/>
+<line x1="226.0" y1="305.5" x2="226.0" y2="189.5" class="hid"/>
+<line x1="226.0" y1="189.5" x2="298.0" y2="138.5" class="hid"/>
+<line x1="298.0" y1="138.5" x2="298.0" y2="254.5" class="hid"/>
+<line x1="298.0" y1="254.5" x2="414.0" y2="254.5" class="hid"/>
+<line x1="414.0" y1="254.5" x2="414.0" y2="138.5" class="hid"/>
+<line x1="414.0" y1="138.5" x2="298.0" y2="138.5" class="hid"/>
+<line x1="298.0" y1="138.5" x2="298.0" y2="254.5" class="hid"/>
+<line x1="298.0" y1="254.5" x2="414.0" y2="254.5" class="hid"/>
+<line x1="414.0" y1="254.5" x2="342.0" y2="305.5" class="hid"/>
+<line x1="342.0" y1="305.5" x2="226.0" y2="305.5" class="hid"/>
+<line x1="226.0" y1="305.5" x2="298.0" y2="254.5" class="hid"/>
+<polygon points="414.0,254.5 342.0,305.5 342.0,189.5 414.0,138.5" class="elem"/>
+<polygon points="226.0,305.5 342.0,305.5 342.0,189.5 226.0,189.5" class="elem"/>
+<polygon points="298.0,138.5 414.0,138.5 342.0,189.5 226.0,189.5" class="elem"/>
+<line x1="447.6" y1="222.0" x2="383.8" y2="222.0" class="sig" marker-end="url(#a11)"/>
+<text x="466.0" y="222.0" class="lbl" text-anchor="middle">σ<tspan class='sub'>x</tspan></text>
+<text x="466.0" y="238.0" class="val" text-anchor="middle">−80</text>
+<line x1="398.9" y1="207.2" x2="357.1" y2="236.8" class="tau" marker-end="url(#a11)"/>
+<text x="385.7" y="249.9" class="tau-lbl" text-anchor="middle">τ<tspan class='tau-sub'>xy</tspan></text>
+<line x1="378.0" y1="188.4" x2="378.0" y2="255.6" class="tau" marker-end="url(#a11)"/>
+<text x="404.8" y="273.1" class="tau-lbl" text-anchor="middle">τ<tspan class='tau-sub'>xz</tspan></text>
+<line x1="280.4" y1="250.1" x2="240.9" y2="278.1" class="sig" marker-end="url(#a11)"/>
+<text x="192.7" y="312.3" class="lbl" text-anchor="middle">σ<tspan class='sub'>y</tspan></text>
+<text x="192.7" y="328.3" class="val" text-anchor="middle">60</text>
+<line x1="250.4" y1="247.5" x2="317.7" y2="247.5" class="tau" marker-end="url(#a11)"/>
+<text x="309.8" y="280.5" class="tau-lbl" text-anchor="middle">τ<tspan class='tau-sub'>yx</tspan></text>
+<line x1="284.0" y1="281.2" x2="284.0" y2="213.9" class="tau" marker-end="url(#a11)"/>
+<text x="254.2" y="215.0" class="tau-lbl" text-anchor="middle">τ<tspan class='tau-sub'>yz</tspan></text>
+<line x1="320.0" y1="94.4" x2="320.0" y2="158.2" class="sig" marker-end="url(#a11)"/>
+<text x="320.0" y="84.0" class="lbl" text-anchor="middle">σ<tspan class='sub'>z</tspan></text>
+<text x="320.0" y="100.0" class="val" text-anchor="middle">−60</text>
+<line x1="353.6" y1="164.0" x2="286.4" y2="164.0" class="tau" marker-end="url(#a11)"/>
+<text x="272.9" y="141.2" class="tau-lbl" text-anchor="middle">τ<tspan class='tau-sub'>zx</tspan></text>
+<line x1="340.9" y1="149.2" x2="299.1" y2="178.8" class="tau" marker-end="url(#a11)"/>
+<text x="288.1" y="154.9" class="tau-lbl" text-anchor="middle">τ<tspan class='tau-sub'>zy</tspan></text>
+</svg>

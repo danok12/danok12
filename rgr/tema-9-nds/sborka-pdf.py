@@ -9,10 +9,16 @@ import re
 import subprocess
 import os
 
-SRC, DST = "index.html", "print.html"
-OUT = "Тема 9 — задача 1 (пп. 7-8) и задача 2 (пп. 1-3).pdf"
+TPL, SRC, DST = "shablon.html", "index.html", "print.html"
+OUT = "Тема 9 — НДС в окрестности точки тела.pdf"
 
-h = open(SRC, encoding="utf-8").read()
+# 0. вклеить схемы в шаблон -> index.html
+h = open(TPL, encoding="utf-8").read()
+for a, b in ((1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (2, 1), (2, 2)):
+    h = h.replace(f"__FIG_{a}_{b}__",
+                  open(f"fig-{a}-{b}.svg", encoding="utf-8").read().strip())
+assert "__FIG" not in h, "не все схемы вклеены"
+open(SRC, "w", encoding="utf-8").write(h)
 
 # 1. Google Fonts -> локальные фолбэки
 h = re.sub(r'<link rel="stylesheet" href="https://fonts\.googleapis\.com[^>]*>', "", h)
@@ -34,7 +40,7 @@ h2,h3,h4,caption{break-after:avoid}
 h2{break-before:auto}
 .f,.out,.note,.mx,figure,.sum section{break-inside:avoid}
 .tw,table,tr,.matrix{break-inside:avoid}
-figure svg{max-height:104mm}
+figure svg{max-height:96mm}
 .f{font-size:9.6pt; line-height:1.7}
 table{font-size:9.8pt} td.mono,th.mono,.kv{font-size:9.2pt}
 .sum{grid-template-columns:1fr 1fr}

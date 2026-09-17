@@ -1,31 +1,29 @@
-<svg viewBox="0 0 460 360" role="img" aria-label="Напряжения на гранях элемента: sigma x, sigma y, tau xy" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 460 360" role="img" aria-label="Напряжения на гранях элемента при плоском состоянии" xmlns="http://www.w3.org/2000/svg">
 <defs>
-<marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<marker id="a21" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
+<marker id="axm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
 <path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
 </defs>
-<line x1="46.0" y1="44.0" x2="126.0" y2="44.0" class="ax" marker-end="url(#ah1)"/>
+<line x1="46.0" y1="44.0" x2="126.0" y2="44.0" class="ax" marker-end="url(#a21)"/>
 <text x="133.0" y="48.0" class="ax-lbl" text-anchor="middle">x</text>
-<line x1="46.0" y1="44.0" x2="46.0" y2="124.0" class="ax" marker-end="url(#ah1)"/>
+<line x1="46.0" y1="44.0" x2="46.0" y2="124.0" class="ax" marker-end="url(#a21)"/>
 <text x="46.0" y="140.0" class="ax-lbl" text-anchor="middle">y</text>
 <circle cx="46" cy="44" r="2.5" class="dot"/>
 <rect x="169" y="124" width="132" height="132" class="elem"/>
-<line x1="359.0" y1="190.0" x2="307.0" y2="190.0" class="sig" marker-end="url(#ah1)"/>
-<line x1="111.0" y1="190.0" x2="163.0" y2="190.0" class="sig" marker-end="url(#ah1)"/>
-<text x="367.0" y="181.0" class="lbl" text-anchor="start">σ</text>
-<text x="376.0" y="185.0" class="sub" text-anchor="start">x</text>
+<line x1="359.0" y1="190.0" x2="307.0" y2="190.0" class="sig" marker-end="url(#a21)"/>
+<line x1="111.0" y1="190.0" x2="163.0" y2="190.0" class="sig" marker-end="url(#a21)"/>
+<text x="367.0" y="181.0" class="lbl" text-anchor="start">σ<tspan class='sub'>x</tspan></text>
 <text x="367.0" y="202.0" class="val" text-anchor="start">−85</text>
-<line x1="235.0" y1="72.0" x2="235.0" y2="118.0" class="sig" marker-end="url(#ah1)"/>
-<line x1="235.0" y1="308.0" x2="235.0" y2="262.0" class="sig" marker-end="url(#ah1)"/>
-<text x="243.0" y="66.0" class="lbl" text-anchor="start">σ</text>
-<text x="252.0" y="70.0" class="sub" text-anchor="start">y</text>
-<text x="281.0" y="66.0" class="val" text-anchor="start">−30</text>
-<line x1="315.0" y1="234.0" x2="315.0" y2="146.0" class="tau" marker-end="url(#ah1)"/>
-<line x1="155.0" y1="146.0" x2="155.0" y2="234.0" class="tau" marker-end="url(#ah1)"/>
-<line x1="279.0" y1="270.0" x2="191.0" y2="270.0" class="tau" marker-end="url(#ah1)"/>
-<line x1="191.0" y1="110.0" x2="279.0" y2="110.0" class="tau" marker-end="url(#ah1)"/>
-<text x="321.0" y="138.0" class="tau-lbl" text-anchor="start">τ</text>
-<text x="329.0" y="142.0" class="tau-sub" text-anchor="start">xy</text>
+<line x1="235.0" y1="72.0" x2="235.0" y2="118.0" class="sig" marker-end="url(#a21)"/>
+<line x1="235.0" y1="308.0" x2="235.0" y2="262.0" class="sig" marker-end="url(#a21)"/>
+<text x="243.0" y="66.0" class="lbl" text-anchor="start">σ<tspan class='sub'>y</tspan></text>
+<text x="277.0" y="66.0" class="val" text-anchor="start">−30</text>
+<line x1="315.0" y1="234.0" x2="315.0" y2="146.0" class="tau" marker-end="url(#a21)"/>
+<line x1="155.0" y1="146.0" x2="155.0" y2="234.0" class="tau" marker-end="url(#a21)"/>
+<line x1="279.0" y1="270.0" x2="191.0" y2="270.0" class="tau" marker-end="url(#a21)"/>
+<line x1="191.0" y1="110.0" x2="279.0" y2="110.0" class="tau" marker-end="url(#a21)"/>
+<text x="321.0" y="138.0" class="tau-lbl" text-anchor="start">τ<tspan class='tau-sub'>xy</tspan></text>
 <text x="321.0" y="157.0" class="tau-val" text-anchor="start">−30</text>
-<text x="149.0" y="290.0" class="tau-lbl" text-anchor="end">τ</text>
-<text x="157.0" y="294.0" class="tau-sub" text-anchor="end">yx</text>
+<text x="149.0" y="290.0" class="tau-lbl" text-anchor="end">τ<tspan class='tau-sub'>yx</tspan></text>
 </svg>
