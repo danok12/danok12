@@ -78,9 +78,34 @@ DATASETS=(
     "builddotai/Egocentric-100K:fae604b751b25337d6fd8c4c53e595910c28f68f:Egocentric-100K"
 )
 
+# В свежих версиях huggingface_hub команда называется hf, в старых —
+# huggingface-cli; годится и вызов через модуль.
+hf_cli() {
+    if command -v huggingface-cli >/dev/null 2>&1; then
+        echo "huggingface-cli"
+    elif command -v hf >/dev/null 2>&1; then
+        echo "hf"
+    elif python3 -c "import huggingface_hub" >/dev/null 2>&1; then
+        echo "python3 -m huggingface_hub.commands.huggingface_cli"
+    else
+        echo ""
+    fi
+}
+
 stage_data() {
     say "1/4 Датасеты -> $DATA_ROOT"
-    need huggingface-cli "установите: pip install huggingface_hub[cli]"
+    local HF
+    HF="$(hf_cli)"
+    if [[ -z "$HF" ]]; then
+        if [[ "$DRY" == "1" ]]; then
+            note "(dry-run) нет huggingface_hub — установите: pip3 install -U \"huggingface_hub[cli]\""
+            HF="huggingface-cli"
+        else
+            echo "нет huggingface_hub — установите: pip3 install -U \"huggingface_hub[cli]\"" >&2
+            exit 3
+        fi
+    fi
+    note "загрузчик: $HF"
     run mkdir -p "$DATA_ROOT"
     for entry in "${DATASETS[@]}"; do
         IFS=':' read -r repo revision dirname <<< "$entry"
@@ -92,15 +117,15 @@ stage_data() {
         note "$repo @ ${revision:0:8}"
         if [[ "$PILOT" -gt 0 && "$dirname" != "Egocentric-100K" ]]; then
             # Пилот: метаданные целиком плюс первые шарды данных и видео.
-            run huggingface-cli download "$repo" --repo-type dataset --revision "$revision" \
+            run $HF download "$repo" --repo-type dataset --revision "$revision" \
                 --local-dir "$target" \
                 --include "meta/*" "data/chunk-000/file-000*" "data/chunk-000/file-001*" \
                           "videos/*/chunk-000/file-000*" "videos/*/chunk-000/file-001*"
         elif [[ "$PILOT" -gt 0 ]]; then
-            run huggingface-cli download "$repo" --repo-type dataset --revision "$revision" \
+            run $HF download "$repo" --repo-type dataset --revision "$revision" \
                 --local-dir "$target" --include "*.mp4" --max-workers 4
         else
-            run huggingface-cli download "$repo" --repo-type dataset --revision "$revision" \
+            run $HF download "$repo" --repo-type dataset --revision "$revision" \
                 --local-dir "$target"
         fi
     done
@@ -109,7 +134,7 @@ stage_data() {
         note "$VLA_DATASET уже на месте, пропускаю"
     else
         note "HuggingFaceVLA/libero @ v3.0 -> $VLA_DATASET"
-        run huggingface-cli download HuggingFaceVLA/libero --repo-type dataset \
+        run $HF download HuggingFaceVLA/libero --repo-type dataset \
             --revision v3.0 --local-dir "$VLA_DATASET"
     fi
     note "занято: $(du -sh "$DATA_ROOT" 2>/dev/null | cut -f1 || echo '?')"
