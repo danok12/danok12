@@ -22,10 +22,34 @@ cd aij-vla-dataset
 ./src/tools/run_all.sh --participant /path/to/aij_robotics                       # выполнить
 ```
 
-Скрипт скачивает четыре датасета на нужных коммитах, генерирует обучающую
+Скрипт скачивает пять датасетов на нужных коммитах, генерирует обучающую
 выборку, запускает пайплайн участника и собирает `submission.zip`. Готовые
 стадии пропускаются, отдельная стадия — `--stage data|dataset|train|package`.
 Вручную остаётся загрузить архив на платформу.
+
+**Стадия обучения требует окружения участника.** Целиком одной командой скрипт
+проходит только там, где стоят torch, LLaMA-Factory и lerobot: внутри образа из
+`participant.zip` либо после `./scripts/setup_env.sh`. На Windows с Docker
+Desktop удобнее разделить — скачивание и генерацию выполнить в WSL, обучение в
+контейнере:
+
+```bash
+# в WSL: данные и датасет (нужны только python и huggingface-cli)
+./src/tools/run_all.sh --stage data    --data-root /mnt/g/aij/raw --vla-dataset /mnt/g/aij/vla
+./src/tools/run_all.sh --stage dataset --data-root /mnt/g/aij/raw --work ~/aij/vlm
+
+# обучение в контейнере участника
+docker run --gpus all --rm --shm-size=8g -e MUJOCO_GL=egl \
+    -v ~/aij/vlm:/data/vlm -v /mnt/g/aij/vla:/data/vla \
+    -v ~/aij/runs:/workspace/runs \
+    -v ~/aij/solution:/solution \
+    aij-robotics:latest \
+    /solution/src/tools/run_all.sh --stage train --participant /workspace \
+        --work /data/vlm --vla-dataset /data/vla
+
+# обратно в WSL: сборка архива
+./src/tools/run_all.sh --stage package --participant ~/aij/aij_robotics --work ~/aij/vlm
+```
 
 Дальше — те же шаги по отдельности, если нужен контроль на каждом этапе.
 
