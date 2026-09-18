@@ -1,0 +1,41 @@
+<svg viewBox="0 0 640 470" role="img" aria-label="Диагональная площадка с наибольшим касательным напряжением" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a13" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
+<marker id="axm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="74.0" y1="404.0" x2="112.0" y2="404.0" class="ax" marker-end="url(#axm)"/>
+<text x="122.6" y="408.0" class="ax-lbl" text-anchor="middle">1</text>
+<line x1="74.0" y1="404.0" x2="50.4" y2="420.7" class="ax" marker-end="url(#axm)"/>
+<text x="43.8" y="429.4" class="ax-lbl" text-anchor="middle">2</text>
+<line x1="74.0" y1="404.0" x2="74.0" y2="366.0" class="ax" marker-end="url(#axm)"/>
+<text x="74.0" y="359.4" class="ax-lbl" text-anchor="middle">3</text>
+<line x1="286.4" y1="249.7" x2="209.6" y2="304.3" class="hid"/>
+<line x1="209.6" y1="304.3" x2="209.6" y2="180.3" class="hid"/>
+<line x1="209.6" y1="180.3" x2="286.4" y2="125.7" class="hid"/>
+<line x1="286.4" y1="125.7" x2="286.4" y2="249.7" class="hid"/>
+<line x1="286.4" y1="249.7" x2="410.4" y2="249.7" class="hid"/>
+<line x1="410.4" y1="249.7" x2="410.4" y2="125.7" class="hid"/>
+<line x1="410.4" y1="125.7" x2="286.4" y2="125.7" class="hid"/>
+<line x1="286.4" y1="125.7" x2="286.4" y2="249.7" class="hid"/>
+<line x1="286.4" y1="249.7" x2="410.4" y2="249.7" class="hid"/>
+<line x1="410.4" y1="249.7" x2="333.6" y2="304.3" class="hid"/>
+<line x1="333.6" y1="304.3" x2="209.6" y2="304.3" class="hid"/>
+<line x1="209.6" y1="304.3" x2="286.4" y2="249.7" class="hid"/>
+<polygon points="410.4,249.7 333.6,304.3 333.6,180.3 410.4,125.7" class="elem-lite"/>
+<polygon points="209.6,304.3 333.6,304.3 333.6,180.3 209.6,180.3" class="elem-lite"/>
+<polygon points="286.4,125.7 410.4,125.7 333.6,180.3 209.6,180.3" class="elem-lite"/>
+<polygon points="410.4,249.7 333.6,304.3 209.6,180.3 286.4,125.7" class="plane"/>
+<line x1="386.7" y1="138.3" x2="325.3" y2="199.7" class="sig" marker-end="url(#a13)"/>
+<line x1="233.3" y1="291.7" x2="294.7" y2="230.3" class="sig" marker-end="url(#a13)"/>
+<line x1="249.6" y1="203.9" x2="312.7" y2="267.0" class="tau" marker-end="url(#a13)"/>
+<line x1="370.4" y1="226.1" x2="307.3" y2="163.0" class="tau" marker-end="url(#a13)"/>
+<line x1="396.7" y1="128.3" x2="470.0" y2="92.0" class="leader"/>
+<text x="474.0" y="78.0" class="lbl" text-anchor="start">σ<tspan class='sub'>31</tspan></text>
+<text x="474.0" y="96.0" class="val" text-anchor="start">−36,42 МПа</text>
+<line x1="312.7" y1="275.0" x2="206.0" y2="376.0" class="leader"/>
+<text x="202.0" y="366.0" class="tau-lbl" text-anchor="end">τ<tspan class='tau-sub'>31</tspan></text>
+<text x="202.0" y="384.0" class="tau-val" text-anchor="end">142,38 МПа</text>
+<text x="310.0" y="446.0" class="cap" text-anchor="middle">площадка равнонаклонена к направлениям 1 и 3 (под 45° к каждому)</text>
+</svg>

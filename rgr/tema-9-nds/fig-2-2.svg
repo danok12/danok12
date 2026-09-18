@@ -1,0 +1,27 @@
+<svg viewBox="0 0 520 400" role="img" aria-label="Главные площадки и главные напряжения" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a22" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
+<marker id="axm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="90.0" y1="200.0" x2="412.0" y2="200.0" class="ax" marker-end="url(#a22)"/>
+<text x="422.0" y="205.0" class="ax-lbl" text-anchor="middle">x</text>
+<line x1="250.0" y1="200.0" x2="250.0" y2="346.0" class="ax" marker-end="url(#a22)"/>
+<text x="236.0" y="350.0" class="ax-lbl" text-anchor="middle">y</text>
+<polygon points="329.1,169.2 219.2,120.9 170.9,230.8 280.8,279.1" class="elem"/>
+<line x1="202.5" y1="308.0" x2="297.5" y2="92.0" class="norm"/>
+<line x1="295.1" y1="97.5" x2="277.0" y2="138.7" class="sig" marker-end="url(#a22)"/>
+<line x1="204.9" y1="302.5" x2="223.0" y2="261.3" class="sig" marker-end="url(#a22)"/>
+<text x="311.2" y="60.9" class="lbl" text-anchor="middle">σ₂</text>
+<text x="311.2" y="78.9" class="val" text-anchor="middle">−16,80 МПа</text>
+<line x1="142.0" y1="152.5" x2="358.0" y2="247.5" class="norm"/>
+<line x1="352.5" y1="245.1" x2="311.3" y2="227.0" class="sig" marker-end="url(#a22)"/>
+<line x1="147.5" y1="154.9" x2="188.7" y2="173.0" class="sig" marker-end="url(#a22)"/>
+<text x="389.1" y="261.2" class="lbl" text-anchor="middle">σ₃</text>
+<text x="389.1" y="279.2" class="val" text-anchor="middle">−98,20 МПа</text>
+<path d="M 346 200 A 96 96 0 0 0 288.6 112.1" class="arc"/>
+<text x="343.1" y="147.2" class="ang" text-anchor="start">α₂ = 66,26°</text>
+<path d="M 312 200 A 62 62 0 0 1 306.8 225.0" class="arc"/>
+<text x="373.4" y="228.7" class="ang" text-anchor="start">α₃ = −23,74°</text>
+</svg>

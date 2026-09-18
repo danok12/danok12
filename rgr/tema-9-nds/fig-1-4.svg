@@ -1,0 +1,42 @@
+<svg viewBox="0 0 640 470" role="img" aria-label="Относительные линейные деформации" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a14" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
+<marker id="axm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="74.0" y1="396.0" x2="112.0" y2="396.0" class="ax" marker-end="url(#axm)"/>
+<text x="122.6" y="400.0" class="ax-lbl" text-anchor="middle">x</text>
+<line x1="74.0" y1="396.0" x2="50.4" y2="412.7" class="ax" marker-end="url(#axm)"/>
+<text x="43.8" y="421.4" class="ax-lbl" text-anchor="middle">y</text>
+<line x1="74.0" y1="396.0" x2="74.0" y2="358.0" class="ax" marker-end="url(#axm)"/>
+<text x="74.0" y="351.4" class="ax-lbl" text-anchor="middle">z</text>
+<line x1="298.0" y1="242.5" x2="226.0" y2="293.5" class="hid"/>
+<line x1="226.0" y1="293.5" x2="226.0" y2="177.5" class="hid"/>
+<line x1="226.0" y1="177.5" x2="298.0" y2="126.5" class="hid"/>
+<line x1="298.0" y1="126.5" x2="298.0" y2="242.5" class="hid"/>
+<line x1="298.0" y1="242.5" x2="414.0" y2="242.5" class="hid"/>
+<line x1="414.0" y1="242.5" x2="414.0" y2="126.5" class="hid"/>
+<line x1="414.0" y1="126.5" x2="298.0" y2="126.5" class="hid"/>
+<line x1="298.0" y1="126.5" x2="298.0" y2="242.5" class="hid"/>
+<line x1="298.0" y1="242.5" x2="414.0" y2="242.5" class="hid"/>
+<line x1="414.0" y1="242.5" x2="342.0" y2="293.5" class="hid"/>
+<line x1="342.0" y1="293.5" x2="226.0" y2="293.5" class="hid"/>
+<line x1="226.0" y1="293.5" x2="298.0" y2="242.5" class="hid"/>
+<polygon points="414.0,242.5 342.0,293.5 342.0,177.5 414.0,126.5" class="elem-lite"/>
+<polygon points="226.0,293.5 342.0,293.5 342.0,177.5 226.0,177.5" class="elem-lite"/>
+<polygon points="298.0,126.5 414.0,126.5 342.0,177.5 226.0,177.5" class="elem-lite"/>
+<polygon points="412.0,231.0 325.4,292.5 325.4,189.0 412.0,127.5" class="deformed"/>
+<polygon points="228.0,292.5 325.4,292.5 325.4,189.0 228.0,189.0" class="deformed"/>
+<polygon points="314.6,127.5 412.0,127.5 325.4,189.0 228.0,189.0" class="deformed"/>
+<text x="464.0" y="210.0" class="lbl" text-anchor="middle">ε<tspan class='sub'>x</tspan></text>
+<text x="464.0" y="226.0" class="val" text-anchor="middle">−38,09·10⁻⁵</text>
+<text x="464.0" y="241.0" class="cap" text-anchor="middle">укорочение</text>
+<text x="192.7" y="300.3" class="lbl" text-anchor="middle">ε<tspan class='sub'>y</tspan></text>
+<text x="192.7" y="316.3" class="val" text-anchor="middle">48,57·10⁻⁵</text>
+<text x="192.7" y="331.3" class="cap" text-anchor="middle">удлинение</text>
+<text x="320.0" y="74.0" class="lbl" text-anchor="middle">ε<tspan class='sub'>z</tspan></text>
+<text x="320.0" y="90.0" class="val" text-anchor="middle">−25,71·10⁻⁵</text>
+<text x="320.0" y="105.0" class="cap" text-anchor="middle">укорочение</text>
+<text x="320.0" y="446.0" class="cap" text-anchor="middle">сплошной контур — до деформации, штриховой — после (масштаб условный)</text>
+</svg>
