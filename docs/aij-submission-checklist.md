@@ -44,6 +44,44 @@ cd aij-vla-dataset
 Каталоги с `meta/info.json` подхватываются как LeRobot v3, каталог с видео — как
 эгоцентрический источник. Переименовывать ничего не нужно.
 
+Отдельно нужен датасет для обучения action-эксперта:
+
+| Что | Откуда | Куда |
+|-----|--------|------|
+| LIBERO, LeRobot v3.0 | `HuggingFaceVLA/libero` @ `v3.0` | `/data/vla` |
+
+Ссылки: [BridgeData2](https://huggingface.co/datasets/nvidia/BridgeData2_LeRobot_v3),
+[Fractal](https://huggingface.co/datasets/BrunoM42/fractal20220817_data_lerobot),
+[Language Table](https://huggingface.co/datasets/tailong-wu/language_table_lerobot_v30),
+[Egocentric-100K](https://huggingface.co/datasets/builddotai/Egocentric-100K),
+[LIBERO](https://huggingface.co/datasets/HuggingFaceVLA/libero).
+
+### Windows + WSL2: где что держать
+
+Диск `G:` виден в WSL как `/mnt/g`. Через drvfs он заметно медленнее ext4, а
+генерация и обучение читают тысячи мелких файлов, поэтому:
+
+| Что | Где держать | Почему |
+|-----|-------------|--------|
+| Исходные датасеты (сотни ГБ) | `/mnt/g/aij/raw` | места больше всего на SSD |
+| Датасет LIBERO для VLA | `/mnt/g/aij/vla` | то же |
+| Репозитории (код решения, `participant`) | `~/aij/` внутри WSL | на `/mnt/*` сборка и обучение тормозят — об этом прямо предупреждает README участника |
+| Сгенерированные кадры и `train.jsonl` | `~/aij/vlm` | читаются на каждом шаге обучения |
+| `runs/` с чекпойнтами | `~/aij/runs`, готовый архив скопировать на `G:` | запись весов на drvfs медленная |
+
+Запуск с такой раскладкой:
+
+```bash
+./src/tools/run_all.sh \
+    --participant ~/aij/aij_robotics \
+    --data-root /mnt/g/aij/raw \
+    --vla-dataset /mnt/g/aij/vla \
+    --work ~/aij/vlm
+```
+
+Если места в WSL мало, `--work` тоже можно увести на `/mnt/g/aij/vlm` — генерация
+переживёт, но обучение будет читать кадры медленнее.
+
 ## 2. Датасет
 
 ```bash

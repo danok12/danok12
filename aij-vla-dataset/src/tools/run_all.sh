@@ -104,6 +104,14 @@ stage_data() {
                 --local-dir "$target"
         fi
     done
+    # Датасет для обучения action-эксперта (LIBERO в формате LeRobot v3.0).
+    if [[ -f "$VLA_DATASET/meta/info.json" && "$FORCE" != "1" ]]; then
+        note "$VLA_DATASET уже на месте, пропускаю"
+    else
+        note "HuggingFaceVLA/libero @ v3.0 -> $VLA_DATASET"
+        run huggingface-cli download HuggingFaceVLA/libero --repo-type dataset \
+            --revision v3.0 --local-dir "$VLA_DATASET"
+    fi
     note "занято: $(du -sh "$DATA_ROOT" 2>/dev/null | cut -f1 || echo '?')"
 }
 
