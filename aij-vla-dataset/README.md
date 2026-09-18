@@ -23,7 +23,7 @@ LeRobot v3 / видео ──► кинематический разбор ─�
 pip install -r requirements.txt
 
 # самопроверка на синтетическом эпизоде: генерация + валидация + детерминизм
-./scripts/run_smoke.sh
+./src/tools/run_smoke.sh
 
 # рабочий прогон
 python generate_dataset.py \
@@ -151,6 +151,11 @@ input:
 | `src/pipeline.py` | параллельный прогон, сбор, балансировка, запись |
 | `src/writer.py` | квоты, дедупликация, разбиение train/val, статистика |
 | `src/validate.py` | проверка итогового JSONL |
+| `src/tools/` | валидатор JSONL, самопроверка, сборка архива решения |
+| `src/tests/` | синтетический фикстур и тесты |
+
+Всё, что не входит в пятёрку обязательных файлов архива, лежит внутри `src/` —
+структура корня совпадает с эталонным `submission.zip`.
 
 Три момента, на которых держится качество разметки:
 
@@ -200,14 +205,14 @@ input:
   детерминированными хешами от `(seed, ключ примера)`, а не от глобального RNG,
   поэтому результат не зависит от числа процессов и порядка обработки эпизодов.
 * Источники, эпизоды и генераторы обходятся в отсортированном порядке.
-* Проверка входит в `./scripts/run_smoke.sh`: два прогона с 1 и 4 воркерами дают
+* Проверка входит в `./src/tools/run_smoke.sh`: два прогона с 1 и 4 воркерами дают
   побитово одинаковый `annotations.jsonl`.
 
 ```bash
-python -m pytest tests -q      # 13 тестов: разбор инструкций, события, сквозной прогон, mp4-вариант
+python -m pytest src/tests -q  # 13 тестов: разбор инструкций, события, сквозной прогон, mp4-вариант
 ```
 
-Фикстур собирается скриптом `tests/make_fixture.py`: скриптованная траектория
+Фикстур собирается скриптом `src/tests/make_fixture.py`: скриптованная траектория
 «подвод → захват → подъём → перенос → опускание → отпускание → отвод» с
 согласованными состояниями и отрисованными кадрами, плюс сценарии со срывом
 захвата и застоем. Ключ `--video` кладёт кадры в mp4 — так проверяется путь
@@ -223,7 +228,7 @@ python -m pytest tests -q      # 13 тестов: разбор инструкц�
 | Работа без интернета | нет сетевых вызовов; веса моделей не используются |
 | Без ручной разметки | вся разметка выводится из траекторий программно |
 | Воспроизводимость при фиксированных входах и сиде | детерминированные хеши, тест в smoke |
-| Формат ShareGPT | `messages` + `images`, число `<image>` равно числу путей; проверяется `scripts/validate_annotations.py` |
+| Формат ShareGPT | `messages` + `images`, число `<image>` равно числу путей; проверяется `src/tools/validate_annotations.py` |
 | Не датасет действий | в ответах нет векторов действий и дискретизированных траекторий; состояния и действия используются только как источник разметки на естественном языке. Проверяется тестом `test_no_action_vector_leakage` |
 | Исходные изображения не копируются | в `images/` сохраняются только извлечённые кадры, нужные конкретным примерам (отдельный кадр parquet/mp4 нельзя адресовать путём) |
 
@@ -246,12 +251,35 @@ python generate_dataset.py --input /data/raw --output /data/vlm/train.jsonl --co
 ./scripts/run_pipeline.sh configs/participant.yaml
 
 # 3. сборка архива решения
-./scripts/make_submission.sh \
+./src/tools/make_submission.sh \
     --annotations /data/vlm/train.jsonl \
     --smolvlm2 runs/<run>/submission/smolvlm2 \
     --action-expert runs/<run>/submission/action_expert \
     --output submission.zip
 ```
+
+Скрипт кладёт в корень архива ровно то, что требует организатор, проверяет
+`annotations.jsonl` и предупреждает о недостающих файлах чекпойнтов:
+
+```text
+submission.zip
+├── README.md
+├── requirements.txt
+├── generate_dataset.py
+├── config.yaml
+├── annotations.jsonl
+├── src/
+├── smolvlm2/         config.json, model.safetensors, generation_config.json,
+│                     processor_config.json, tokenizer_config.json, tokenizer.json,
+│                     chat_template.jinja
+└── action_expert/    config.json, model.safetensors, train_config.json,
+                      policy_preprocessor.json, policy_postprocessor.json,
+                      policy_{pre,post}processor_step_*.safetensors
+```
+
+В эталонном архиве `smolvlm2/` весит ≈ 2.03 ГБ, `action_expert/` ≈ 1.42 ГБ —
+это веса в fp32. Если ваши каталоги вышли примерно вдвое легче, чекпойнт
+сохранён в bf16; стоит сверить с протоколом обучения перед отправкой.
 
 Относительные пути в JSONL резолвятся от `vlm.media_dir`, поэтому каталог
 `images/` должен лежать рядом с JSONL (либо `media_dir` указывается явно).

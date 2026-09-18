@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Проверка annotations.jsonl перед отправкой решения.
 
-    python scripts/validate_annotations.py --input /output/annotations.jsonl
+    python src/tools/validate_annotations.py --input /output/annotations.jsonl
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ import argparse
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.validate import validate_file  # noqa: E402
 

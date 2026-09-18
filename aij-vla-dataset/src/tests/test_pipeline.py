@@ -1,6 +1,6 @@
 """Самопроверка пайплайна на синтетическом эпизоде (сеть не нужна).
 
-    python -m pytest tests -q
+    python -m pytest src/tests -q
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from src.config import Config  # noqa: E402
@@ -21,7 +21,7 @@ from src.lerobot import LeRobotSource  # noqa: E402
 from src.pipeline import run  # noqa: E402
 from src.sources import prepare_lerobot_source  # noqa: E402
 from src.validate import validate_file  # noqa: E402
-from tests.make_fixture import build  # noqa: E402
+from src.tests.make_fixture import build  # noqa: E402
 
 EPISODES = 6
 
