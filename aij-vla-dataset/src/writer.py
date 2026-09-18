@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import json
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 from .config import Config
 from .records import Sample
-from .utils import atomic_write_text, get_logger, stable_hash, write_json
+from .utils import get_logger, stable_hash, write_json
 
 LOGGER = get_logger(__name__)
 
@@ -148,6 +148,15 @@ def build_stats(train: Sequence[Sample], val: Sequence[Sample], cfg: Config, ext
         letters = Counter(
             s.meta.get("answer_letter", "?") for s in items if s.meta.get("format") == "mcq"
         )
+        # Позиция верного ответа равномерна внутри групп с одинаковым числом
+        # вариантов; общая гистограмма всегда смещена к первым буквам, потому что
+        # в вопросах с тремя вариантами буквы D просто нет.
+        by_options: dict[str, Counter[str]] = {}
+        for sample in items:
+            if sample.meta.get("format") != "mcq":
+                continue
+            group = str(sample.meta.get("answer_options", "?"))
+            by_options.setdefault(group, Counter())[sample.meta.get("answer_letter", "?")] += 1
         images = Counter(len(s.images) for s in items)
         total = max(1, len(items))
         return {
@@ -157,6 +166,9 @@ def build_stats(train: Sequence[Sample], val: Sequence[Sample], cfg: Config, ext
             "by_format": dict(sorted(by_format.items())),
             "by_source": dict(sorted(by_source.items())),
             "mcq_answer_letters": dict(sorted(letters.items())),
+            "mcq_letters_by_options": {
+                key: dict(sorted(value.items())) for key, value in sorted(by_options.items())
+            },
             "images_per_sample": dict(sorted(images.items())),
             "unique_templates": len({s.template for s in items}),
             "unique_answers": len({s.assistant for s in items}),

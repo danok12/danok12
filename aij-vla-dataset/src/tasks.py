@@ -14,18 +14,14 @@ from __future__ import annotations
 
 from typing import Callable, Iterable
 
-import numpy as np
-
 from .kinematics import (
     PHASE_ALIGN,
     PHASE_APPROACH,
-    PHASE_GRASP,
     PHASE_GLOSS,
     PHASE_IDLE,
     PHASE_LABEL,
     PHASE_RELEASE,
     PHASE_RETREAT,
-    phase_sequence,
 )
 from .language import decompose, next_subtask_for_phase, subtask_for_phase
 from .records import EpisodeContext, FrameAsset, Sample
@@ -107,7 +103,13 @@ def _mcq_sample(
         user=_img(mcq.user_text(), n_images),
         assistant=ctx.phrasebook.mcq_answer(mcq, key),
         images=images,
-        meta={"format": "mcq", "episode": ctx.uid, "answer_letter": mcq.letter, **(meta or {})},
+        meta={
+            "format": "mcq",
+            "episode": ctx.uid,
+            "answer_letter": mcq.letter,
+            "answer_options": len(mcq.options),
+            **(meta or {}),
+        },
     )
 
 
@@ -240,7 +242,14 @@ def gen_progress(ctx: EpisodeContext) -> list[Sample]:
     for frame in _pick(_third_person_frames(ctx), 2, "progress", ctx.seed):
         idx = frame.local_index
         progress = float(ctx.kin.progress[min(idx, ctx.kin.length - 1)])
+        phase = ctx.kin.phase(idx)
         bucket = progress_bucket(progress)
+        percent = progress_percent(progress)
+        if bucket == PROGRESS_OPTIONS[-1] and phase not in {PHASE_RELEASE, PHASE_RETREAT, PHASE_IDLE}:
+            # Последний кадр эпизода ещё не означает завершения: рука может быть
+            # в контакте с объектом. Не утверждаем то, чего кадр не подтверждает.
+            bucket = PROGRESS_OPTIONS[-2]
+            percent = min(percent, 95)
         key = f"{ctx.uid}:progress:{frame.key}"
         if _use_mcq(ctx, key):
             sample = _mcq_sample(
@@ -252,12 +261,11 @@ def gen_progress(ctx: EpisodeContext) -> list[Sample]:
                 distractors=[o for o in PROGRESS_OPTIONS if o != bucket],
                 key=key,
                 images=[frame.path],
-                meta={"frame": idx, "progress": round(progress, 3)},
+                meta={"frame": idx, "progress": round(progress, 3), "phase": phase},
             )
         else:
-            phase = ctx.kin.phase(idx)
             answer = (
-                f"About {progress_percent(progress)}% of the task is complete — {bucket}. "
+                f"About {percent}% of the task is complete — {bucket}. "
                 f"The robot is {PHASE_LABEL[phase]}."
             )
             sample = _open_sample(
@@ -268,7 +276,7 @@ def gen_progress(ctx: EpisodeContext) -> list[Sample]:
                 answer=answer,
                 key=key,
                 images=[frame.path],
-                meta={"frame": idx, "progress": round(progress, 3)},
+                meta={"frame": idx, "progress": round(progress, 3), "phase": phase},
             )
         if sample is not None:
             out.append(sample)
@@ -618,6 +626,7 @@ def gen_temporal_order(ctx: EpisodeContext) -> list[Sample]:
                 "format": "mcq",
                 "episode": ctx.uid,
                 "answer_letter": mcq.letter,
+                "answer_options": len(mcq.options),
                 "frames": [first.local_index, second.local_index],
             },
         )
@@ -652,6 +661,7 @@ def gen_progress_compare(ctx: EpisodeContext) -> list[Sample]:
                 "format": "mcq",
                 "episode": ctx.uid,
                 "answer_letter": mcq.letter,
+                "answer_options": len(mcq.options),
                 "frames": [first.local_index, second.local_index],
             },
         )
@@ -790,7 +800,12 @@ def gen_view_role(ctx: EpisodeContext) -> list[Sample]:
             user=_img(mcq.user_text(), 2),
             assistant=ctx.phrasebook.mcq_answer(mcq, key),
             images=images,
-            meta={"format": "mcq", "episode": ctx.uid, "answer_letter": mcq.letter},
+            meta={
+                "format": "mcq",
+                "episode": ctx.uid,
+                "answer_letter": mcq.letter,
+                "answer_options": len(mcq.options),
+            },
         )
     ]
 
@@ -913,7 +928,7 @@ def gen_scene_caption(ctx: EpisodeContext) -> list[Sample]:
         idx = frame.local_index
         pieces: list[str] = []
         view = "wrist-mounted camera" if frame.is_wrist else "fixed camera"
-        pieces.append(f"A robot manipulator is working in a tabletop workspace, seen from a {view}.")
+        pieces.append(f"A robot arm is at work in the scene, seen from a {view}.")
         if ctx.parsed.is_valid and ctx.parsed.obj_short:
             target = (
                 f" {ctx.parsed.prep} the {ctx.parsed.target_short}" if ctx.parsed.target_short else ""
@@ -976,7 +991,12 @@ def gen_ego_temporal_order(ctx: EpisodeContext) -> list[Sample]:
             user=_img(mcq.user_text(), 2),
             assistant=ctx.phrasebook.mcq_answer(mcq, key),
             images=[first.path, second.path],
-            meta={"format": "mcq", "episode": ctx.uid, "answer_letter": mcq.letter},
+            meta={
+                "format": "mcq",
+                "episode": ctx.uid,
+                "answer_letter": mcq.letter,
+                "answer_options": len(mcq.options),
+            },
         )
     ]
 

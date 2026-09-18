@@ -9,7 +9,13 @@ from typing import Any, Iterable
 import numpy as np
 
 from .config import Config
-from .frames import build_frame_assets, detect_wrist_camera, select_frame_indices, stable_subsample
+from .frames import (
+    build_frame_assets,
+    detect_wrist_camera,
+    order_cameras,
+    select_frame_indices,
+    stable_subsample,
+)
 from .kinematics import (
     EpisodeKinematics,
     GripperCalibration,
@@ -21,7 +27,7 @@ from .kinematics import (
 )
 from .language import ParsedInstruction, object_mentions, parse_instruction
 from .lerobot import EpisodeMeta, LeRobotSource, discover_lerobot_sources
-from .records import EpisodeContext, FrameAsset, Sample
+from .records import EpisodeContext, Sample
 from .tasks import run_generators
 from .templates import Phrasebook
 from .utils import get_logger, stable_hash
@@ -203,6 +209,8 @@ def process_lerobot_episode(
     if isinstance(requested, list) and requested:
         wanted = {str(x) for x in requested}
         cameras = [c for c in cameras if c.key in wanted or c.name in wanted]
+    order = order_cameras([c.name for c in cameras])
+    cameras = sorted(cameras, key=lambda c: order.index(c.name))
     cameras = cameras[: int(cfg.get("cameras.max_per_episode", 2))]
     if not cameras:
         return []

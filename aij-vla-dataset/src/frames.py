@@ -20,7 +20,8 @@ from .vision import (
     save_frame,
 )
 
-WRIST_TOKENS = ("wrist", "hand", "gripper", "ego", "eye_in_hand", "image2")
+#: Имена, по которым камеру можно опознать как наручную без анализа кадров.
+WRIST_NAME_TOKENS = ("wrist", "hand", "gripper", "ego", "eye_in_hand")
 
 
 def select_frame_indices(kin: EpisodeKinematics, cfg: Any) -> list[int]:
@@ -78,7 +79,7 @@ def detect_wrist_camera(
 ) -> str | None:
     """Наручная камера: по имени, иначе по доле глобально меняющихся пикселей."""
     for name in frames_by_camera:
-        if any(token in name.lower() for token in WRIST_TOKENS[:-1]):
+        if any(token in name.lower() for token in WRIST_NAME_TOKENS):
             return name
     if not enabled or len(frames_by_camera) < 2:
         return None
@@ -169,6 +170,14 @@ def build_frame_assets(
                 )
             )
     return assets
+
+
+def order_cameras(names: Sequence[str]) -> list[str]:
+    """Стационарная камера первой, наручная второй — чтобы обрезание по
+    cameras.max_per_episode не выкинуло наручный вид у многокамерных датасетов."""
+    wrist = [n for n in names if any(token in str(n).lower() for token in WRIST_NAME_TOKENS)]
+    rest = [n for n in names if n not in wrist]
+    return rest[:1] + wrist[:1] + rest[1:] + wrist[1:]
 
 
 def stable_subsample(items: Sequence[Any], limit: int | None, seed: int, key: str) -> list[Any]:

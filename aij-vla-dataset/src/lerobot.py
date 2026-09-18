@@ -106,11 +106,30 @@ class LeRobotSource:
         for key, spec in sorted(self.features.items()):
             if not key.startswith(IMAGE_PREFIX):
                 continue
-            dtype = str((spec or {}).get("dtype", "image"))
-            kind = "video" if dtype == "video" else "image"
-            shape = tuple((spec or {}).get("shape") or ()) or None
-            cams.append(CameraSpec(key=key, name=key[len(IMAGE_PREFIX) :], kind=kind, shape=shape))
+            cams.append(self._camera_spec(key, spec))
+        if cams:
+            return cams
+        # Запасной путь: конвертации встречаются с ключами вида observation.image
+        # или observation.rgb — опираемся на dtype и имя.
+        for key, spec in sorted(self.features.items()):
+            dtype = str((spec or {}).get("dtype", ""))
+            lowered = key.lower()
+            if dtype in {"image", "video"} and ("image" in lowered or "rgb" in lowered):
+                cams.append(self._camera_spec(key, spec))
+        if cams:
+            LOGGER.info("%s: камеры найдены по dtype: %s", self.name, [c.key for c in cams])
         return cams
+
+    @staticmethod
+    def _camera_spec(key: str, spec: dict[str, Any] | None) -> CameraSpec:
+        dtype = str((spec or {}).get("dtype", "image"))
+        name = key[len(IMAGE_PREFIX) :] if key.startswith(IMAGE_PREFIX) else key.split(".")[-1]
+        return CameraSpec(
+            key=key,
+            name=name,
+            kind="video" if dtype == "video" else "image",
+            shape=tuple((spec or {}).get("shape") or ()) or None,
+        )
 
     @property
     def task_map(self) -> dict[int, str]:
@@ -223,7 +242,7 @@ class LeRobotSource:
         if not path.is_file():
             LOGGER.warning("%s: нет data-файла %s", self.name, path)
             return None
-        table = _read_table(str(path), _numeric_columns(path))
+        table = _read_table(str(path), _numeric_columns(path, tuple(c.key for c in self.cameras)))
         if table is None or table.num_rows == 0:
             return None
         cols = set(table.column_names)
@@ -324,9 +343,14 @@ class LeRobotSource:
 
 # --------------------------------------------------------------------- helpers
 @lru_cache(maxsize=4)
-def _numeric_columns(path: Path) -> tuple[str, ...]:
+def _numeric_columns(path: Path, camera_keys: tuple[str, ...] = ()) -> tuple[str, ...]:
+    """Колонки без изображений: их чтение не должно тянуть в память байты кадров."""
     schema = pq.ParquetFile(str(path)).schema_arrow
-    return tuple(name for name in schema.names if not name.startswith(IMAGE_PREFIX))
+    return tuple(
+        name
+        for name in schema.names
+        if not name.startswith(IMAGE_PREFIX) and name not in camera_keys
+    )
 
 
 # Кеш на файл: числовые колонки + по колонке на камеру, чтобы соседние эпизоды

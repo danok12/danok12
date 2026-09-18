@@ -1,8 +1,10 @@
-# Runtime dependencies of generate_dataset.py (offline install from a local wheelhouse is fine).
+# Зависимости generate_dataset.py. Установка из локального wheelhouse (офлайн) допустима:
+#   pip install --no-index --find-links /path/to/wheels -r requirements.txt
 numpy>=1.24,<3
 pyarrow>=14.0
 pillow>=10.0
 opencv-python-headless>=4.8
 av>=11.0
 PyYAML>=6.0
-tqdm>=4.66
+# Только для запуска тестов (src/tests), генератору не нужен:
+# pytest>=7.4
