@@ -130,7 +130,10 @@ stage_data() {
         fi
     done
     # Датасет для обучения action-эксперта (LIBERO в формате LeRobot v3.0).
-    if [[ -f "$VLA_DATASET/meta/info.json" && "$FORCE" != "1" ]]; then
+    # В пилотном режиме он не нужен: пилот проверяет только построение датасета.
+    if [[ "$PILOT" -gt 0 ]]; then
+        note "пилот: LIBERO пропускаю, он нужен на стадии обучения"
+    elif [[ -f "$VLA_DATASET/meta/info.json" && "$FORCE" != "1" ]]; then
         note "$VLA_DATASET уже на месте, пропускаю"
     else
         note "HuggingFaceVLA/libero @ v3.0 -> $VLA_DATASET"
