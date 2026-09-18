@@ -32,19 +32,20 @@ h = h.replace("<details>", "<details open>")
 
 PRINT_CSS = """
 <style>
-@page{margin:14mm 12mm}
-body{background:#fff; font-size:11.4pt; line-height:1.5}
+@page{margin:18mm 16mm 16mm}
+body{background:#fff; color:#000; font-size:11.5pt; line-height:1.45}
 .wrap{max-width:none; padding-block:0; padding-inline:0}
-h1{font-size:22pt} h2{font-size:15pt; margin-top:22pt} h3{font-size:12.6pt; margin-top:15pt}
-h2,h3,h4,caption{break-after:avoid}
-h2{break-before:auto}
-.f,.out,.note,.mx,figure,.sum section{break-inside:avoid}
-.tw,table,tr,.matrix{break-inside:avoid}
-figure svg{max-height:96mm}
-.f{font-size:9.6pt; line-height:1.7}
-table{font-size:9.8pt} td.mono,th.mono,.kv{font-size:9.2pt}
-.sum{grid-template-columns:1fr 1fr}
-footer{break-inside:avoid}
+h1{font-size:14pt; margin-bottom:10pt}
+h2{font-size:13pt; margin:18pt 0 8pt}
+h3{font-size:11.5pt; margin:13pt 0 5pt}
+h4{margin:9pt 0 4pt}
+h1,h2,h3,h4,caption{break-after:avoid}
+p,.f,.res,.rem,.mx,figure,.tw,table,tr,.matrix,footer{break-inside:avoid}
+.f{line-height:1.6; margin-bottom:7pt}
+table{font-size:10.5pt}
+figure{margin:9pt 0 11pt}
+figure svg{max-height:104mm}
+figcaption{font-size:10.5pt}
 </style>
 """
 h = h.replace("</style>", "</style>" + PRINT_CSS, 1)
