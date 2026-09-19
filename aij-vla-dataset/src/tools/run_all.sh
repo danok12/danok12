@@ -67,7 +67,6 @@ if [[ "$STAGE" == "all" || "$STAGE" == "train" || "$STAGE" == "package" ]]; then
         echo "в $PARTICIPANT нет scripts/run_pipeline.sh" >&2; exit 2; }
 fi
 need python3 "нужен Python 3.10+"
-[[ "$DRY" == "1" ]] || mkdir -p "$LOG_DIR"
 
 # ------------------------------------------------------------- 1. данные
 #   репозиторий:коммит:каталог
@@ -202,6 +201,7 @@ runtime:
 EOF
         note "конфиг: $config"
     fi
+    run mkdir -p "$LOG_DIR"
     note "запуск пайплайна участника (долго)"
     run bash -c "cd '$PARTICIPANT' && ./scripts/run_pipeline.sh configs/participant_generated.yaml 2>&1 | tee '$LOG_DIR/train.log'"
     note "проверка весов"
