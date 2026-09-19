@@ -361,6 +361,93 @@ def fig15():
 
 
 # ------------------------------------------------------------- рис. 2.1
+def fig21_plate():
+    """Откуда берётся двухосное состояние: тонкая пластина, нагруженная
+    по контуру, и вырезанный из неё объёмный элемент.
+
+    Слева — пластина (h ≪ a, b) и место, где выделен элемент;
+    справа — сам элемент: на площадках с нормалью z напряжений нет,
+    поэтому σz = 0 и τzx = τzy = 0.
+    """
+    w, h_, mid = 920, 420, "a21p"
+    s = HEAD.format(w=w, h=h_, mid=mid,
+                    alt="Тонкая пластина, нагруженная по контуру, "
+                        "и выделенный из неё элемент")
+    s += ln((470, 26), (470, 396), "sep")
+
+    # ---------- а) пластина ------------------------------------------
+    iso = Iso(228, 214, 60)
+    s += txt(228, 44, "а) тонкая пластина, нагруженная по контуру", "cap")
+    s += axes2d(58, 336, 30)
+    A, B, H = 1.55, 1.05, 0.13          # полуразмеры: x, y, толщина
+    M = [[A, 0, 0], [0, B, 0], [0, 0, H]]
+    s += draw_box(iso, M, "elem-lite", "hid")
+
+    # нагрузка по контуру: σx и σy сжимающие -> стрелки к кромкам
+    for n, half, tag in (((1, 0, 0), A, "x"), ((0, 1, 0), B, "y")):
+        for sgn in (1, -1):
+            for t in (-0.55, 0.0, 0.55):
+                # точка на кромке, сдвинутая вдоль неё
+                other = (0, 1, 0) if n[0] else (1, 0, 0)
+                oh = B if n[0] else A
+                base = add(mul(n, sgn * half), mul(other, t * oh))
+                d = mul(n, sgn)
+                s += ar(iso.p(add(base, mul(d, 0.62))),
+                        iso.p(add(base, mul(d, 0.09))), "sig", mid)
+    q = lab(iso, mul((1, 0, 0), A), (1, 0, 0), 86)
+    s += txt(q[0], q[1], "q<tspan class='sub'>x</tspan>", "lbl")
+    q = lab(iso, mul((0, 1, 0), B), (0, 1, 0), 86)
+    s += txt(q[0], q[1], "q<tspan class='sub'>y</tspan>", "lbl")
+
+    # выделенный элемент на поверхности пластины
+    e = 0.17
+    top = [( e,  e, H), (-e,  e, H), (-e, -e, H), ( e, -e, H)]
+    s += poly([iso.p(p) for p in top], "elem")
+    p0 = iso.p((0, 0, H))
+    s += ln((p0[0] + 6, p0[1] - 8), (318, 96), "leader")
+    s += txt(322, 92, "выделенный элемент", "cap", "start")
+
+    # размеры: b вдоль x, a вдоль y, h — толщина
+    q = lab(iso, (0.0, B, -H), (0.0, 1.0, -1.0), 30)
+    s += txt(q[0], q[1] + 4, "b", "ax-lbl")
+    q = lab(iso, (-A, 0.0, H), (-1.0, 0.0, 0.35), 42)
+    s += txt(q[0], q[1] + 4, "a", "ax-lbl")
+    pc = iso.p((-A, B, 0.0))
+    s += ln((pc[0] - 4, pc[1] + 2), (70, 268), "leader")
+    s += txt(64, 272, "h", "ax-lbl", "end")
+    s += txt(228, 372, "h ≪ a, b", "cap")
+
+    # ---------- б) объёмный элемент ----------------------------------
+    iso = Iso(700, 212, 56)
+    s += txt(700, 44, "б) объёмный элемент в окрестности точки", "cap")
+    s += draw_box(iso, IDENT, "elem", "hid")
+    data = [((1, 0, 0), SX2, "x", 84, ((0, 1, 0), TXY2, "xy")),
+            ((0, 1, 0), SY2, "y", 104, ((1, 0, 0), TXY2, "yx"))]
+    for n, sv, sub, dl, (d, tv, tsub) in data:
+        c = face_center(IDENT, n)
+        s += stress_arrow(iso, c, n, sv, mid)
+        q = lab(iso, c, n, dl)
+        s += txt(q[0], q[1], f"σ<tspan class='sub'>{sub}</tspan>", "lbl")
+        s += txt(q[0], q[1] + 16, num(sv, 0), "val")
+        dd = mul(d, 1 if tv > 0 else -1)
+        s += ar(iso.p(add(c, mul(dd, -0.58))),
+                iso.p(add(c, mul(dd, 0.58))), "tau", mid)
+        q = lab(iso, add(c, mul(dd, 0.58)), add(mul(dd, 0.5), n), 28)
+        s += txt(q[0], q[1] + 4,
+                 f"τ<tspan class='tau-sub'>{tsub}</tspan>", "tau-lbl")
+    # свободные площадки с нормалью z
+    q = lab(iso, face_center(IDENT, (0, 0, 1)), (0, 0, 1), 60)
+    s += txt(q[0], q[1] - 16, "грани с нормалью z свободны:", "cap")
+    s += txt(q[0], q[1] + 2, "σ<tspan class='sub'>z</tspan> = 0", "lbl-s")
+    s += txt(q[0], q[1] + 20,
+             "τ<tspan class='sub'>zx</tspan> = τ<tspan class='sub'>zy</tspan> = 0",
+             "lbl-s")
+    s += axes2d(858, 336, 30)
+    s += '</svg>\n'
+    return s
+
+
+# ------------------------------------------------------------- рис. 2.1
 def fig21():
     w, h, mid = 460, 360, "a21"
     cx, cy, a = 235, 190, 66
@@ -450,6 +537,7 @@ if __name__ == "__main__":
               f"{'ok' if (ang < 90) == (g > 0) else 'ЗНАК НЕ СОШЁЛСЯ'}")
     for name, fn in (("fig-1-1", fig11), ("fig-1-2", fig12), ("fig-1-3", fig13),
                      ("fig-1-4", fig14), ("fig-1-5", fig15),
-                     ("fig-2-1", fig21), ("fig-2-2", fig22)):
+                     ("fig-2-1", fig21_plate), ("fig-2-2", fig21),
+                     ("fig-2-3", fig22)):
         open(name + ".svg", "w", encoding="utf-8").write(fn())
     print("схемы собраны")

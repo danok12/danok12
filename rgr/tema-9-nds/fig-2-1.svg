@@ -1,29 +1,88 @@
-<svg viewBox="0 0 460 360" role="img" aria-label="Напряжения на гранях элемента при плоском состоянии" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 920 420" role="img" aria-label="Тонкая пластина, нагруженная по контуру, и выделенный из неё элемент" xmlns="http://www.w3.org/2000/svg">
 <defs>
-<marker id="a21" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<marker id="a21p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
 <path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
 <marker id="axm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
 <path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>
 </defs>
-<line x1="46.0" y1="44.0" x2="126.0" y2="44.0" class="ax" marker-end="url(#a21)"/>
-<text x="133.0" y="48.0" class="ax-lbl" text-anchor="middle">x</text>
-<line x1="46.0" y1="44.0" x2="46.0" y2="124.0" class="ax" marker-end="url(#a21)"/>
-<text x="46.0" y="140.0" class="ax-lbl" text-anchor="middle">y</text>
-<circle cx="46" cy="44" r="2.5" class="dot"/>
-<rect x="169" y="124" width="132" height="132" class="elem"/>
-<line x1="359.0" y1="190.0" x2="307.0" y2="190.0" class="sig" marker-end="url(#a21)"/>
-<line x1="111.0" y1="190.0" x2="163.0" y2="190.0" class="sig" marker-end="url(#a21)"/>
-<text x="367.0" y="181.0" class="lbl" text-anchor="start">σ<tspan class='sub'>x</tspan></text>
-<text x="367.0" y="202.0" class="val" text-anchor="start">−85</text>
-<line x1="235.0" y1="72.0" x2="235.0" y2="118.0" class="sig" marker-end="url(#a21)"/>
-<line x1="235.0" y1="308.0" x2="235.0" y2="262.0" class="sig" marker-end="url(#a21)"/>
-<text x="243.0" y="66.0" class="lbl" text-anchor="start">σ<tspan class='sub'>y</tspan></text>
-<text x="277.0" y="66.0" class="val" text-anchor="start">−30</text>
-<line x1="315.0" y1="234.0" x2="315.0" y2="146.0" class="tau" marker-end="url(#a21)"/>
-<line x1="155.0" y1="146.0" x2="155.0" y2="234.0" class="tau" marker-end="url(#a21)"/>
-<line x1="279.0" y1="270.0" x2="191.0" y2="270.0" class="tau" marker-end="url(#a21)"/>
-<line x1="191.0" y1="110.0" x2="279.0" y2="110.0" class="tau" marker-end="url(#a21)"/>
-<text x="321.0" y="138.0" class="tau-lbl" text-anchor="start">τ<tspan class='tau-sub'>xy</tspan></text>
-<text x="321.0" y="157.0" class="tau-val" text-anchor="start">−30</text>
-<text x="149.0" y="290.0" class="tau-lbl" text-anchor="end">τ<tspan class='tau-sub'>yx</tspan></text>
+<line x1="470.0" y1="26.0" x2="470.0" y2="396.0" class="sep"/>
+<text x="228.0" y="44.0" class="cap" text-anchor="middle">а) тонкая пластина, нагруженная по контуру</text>
+<line x1="58.0" y1="336.0" x2="88.0" y2="336.0" class="ax" marker-end="url(#axm)"/>
+<text x="96.4" y="340.0" class="ax-lbl" text-anchor="middle">x</text>
+<line x1="58.0" y1="336.0" x2="39.4" y2="349.2" class="ax" marker-end="url(#axm)"/>
+<text x="34.2" y="356.9" class="ax-lbl" text-anchor="middle">y</text>
+<line x1="58.0" y1="336.0" x2="58.0" y2="306.0" class="ax" marker-end="url(#axm)"/>
+<text x="58.0" y="301.6" class="ax-lbl" text-anchor="middle">z</text>
+<line x1="174.1" y1="194.1" x2="95.9" y2="249.5" class="hid"/>
+<line x1="95.9" y1="249.5" x2="95.9" y2="233.9" class="hid"/>
+<line x1="95.9" y1="233.9" x2="174.1" y2="178.5" class="hid"/>
+<line x1="174.1" y1="178.5" x2="174.1" y2="194.1" class="hid"/>
+<line x1="174.1" y1="194.1" x2="360.1" y2="194.1" class="hid"/>
+<line x1="360.1" y1="194.1" x2="360.1" y2="178.5" class="hid"/>
+<line x1="360.1" y1="178.5" x2="174.1" y2="178.5" class="hid"/>
+<line x1="174.1" y1="178.5" x2="174.1" y2="194.1" class="hid"/>
+<line x1="174.1" y1="194.1" x2="360.1" y2="194.1" class="hid"/>
+<line x1="360.1" y1="194.1" x2="281.9" y2="249.5" class="hid"/>
+<line x1="281.9" y1="249.5" x2="95.9" y2="249.5" class="hid"/>
+<line x1="95.9" y1="249.5" x2="174.1" y2="194.1" class="hid"/>
+<polygon points="360.1,194.1 281.9,249.5 281.9,233.9 360.1,178.5" class="elem-lite"/>
+<polygon points="95.9,249.5 281.9,249.5 281.9,233.9 95.9,233.9" class="elem-lite"/>
+<polygon points="174.1,178.5 360.1,178.5 281.9,233.9 95.9,233.9" class="elem-lite"/>
+<line x1="379.7" y1="198.8" x2="347.9" y2="198.8" class="sig" marker-end="url(#a21p)"/>
+<line x1="358.2" y1="214.0" x2="326.4" y2="214.0" class="sig" marker-end="url(#a21p)"/>
+<line x1="336.7" y1="229.2" x2="304.9" y2="229.2" class="sig" marker-end="url(#a21p)"/>
+<line x1="119.3" y1="198.8" x2="151.1" y2="198.8" class="sig" marker-end="url(#a21p)"/>
+<line x1="97.8" y1="214.0" x2="129.6" y2="214.0" class="sig" marker-end="url(#a21p)"/>
+<line x1="76.3" y1="229.2" x2="108.1" y2="229.2" class="sig" marker-end="url(#a21p)"/>
+<line x1="114.7" y1="258.1" x2="134.4" y2="244.1" class="sig" marker-end="url(#a21p)"/>
+<line x1="165.9" y1="258.1" x2="185.6" y2="244.1" class="sig" marker-end="url(#a21p)"/>
+<line x1="217.0" y1="258.1" x2="236.7" y2="244.1" class="sig" marker-end="url(#a21p)"/>
+<line x1="239.0" y1="169.9" x2="219.3" y2="183.9" class="sig" marker-end="url(#a21p)"/>
+<line x1="290.1" y1="169.9" x2="270.4" y2="183.9" class="sig" marker-end="url(#a21p)"/>
+<line x1="341.3" y1="169.9" x2="321.6" y2="183.9" class="sig" marker-end="url(#a21p)"/>
+<text x="407.0" y="214.0" class="lbl" text-anchor="middle">q<tspan class='sub'>x</tspan></text>
+<text x="118.8" y="291.5" class="lbl" text-anchor="middle">q<tspan class='sub'>y</tspan></text>
+<polygon points="231.9,210.7 211.5,210.7 224.1,201.7 244.5,201.7" class="elem"/>
+<line x1="234.0" y1="198.2" x2="318.0" y2="96.0" class="leader"/>
+<text x="322.0" y="92.0" class="cap" text-anchor="start">выделенный элемент</text>
+<text x="177.1" y="281.1" class="ax-lbl" text-anchor="middle">b</text>
+<text x="95.4" y="196.3" class="ax-lbl" text-anchor="middle">a</text>
+<line x1="91.9" y1="243.7" x2="70.0" y2="268.0" class="leader"/>
+<text x="64.0" y="272.0" class="ax-lbl" text-anchor="end">h</text>
+<text x="228.0" y="372.0" class="cap" text-anchor="middle">h ≪ a, b</text>
+<text x="700.0" y="44.0" class="cap" text-anchor="middle">б) объёмный элемент в окрестности точки</text>
+<line x1="678.7" y1="243.4" x2="609.3" y2="292.6" class="hid"/>
+<line x1="609.3" y1="292.6" x2="609.3" y2="180.6" class="hid"/>
+<line x1="609.3" y1="180.6" x2="678.7" y2="131.4" class="hid"/>
+<line x1="678.7" y1="131.4" x2="678.7" y2="243.4" class="hid"/>
+<line x1="678.7" y1="243.4" x2="790.7" y2="243.4" class="hid"/>
+<line x1="790.7" y1="243.4" x2="790.7" y2="131.4" class="hid"/>
+<line x1="790.7" y1="131.4" x2="678.7" y2="131.4" class="hid"/>
+<line x1="678.7" y1="131.4" x2="678.7" y2="243.4" class="hid"/>
+<line x1="678.7" y1="243.4" x2="790.7" y2="243.4" class="hid"/>
+<line x1="790.7" y1="243.4" x2="721.3" y2="292.6" class="hid"/>
+<line x1="721.3" y1="292.6" x2="609.3" y2="292.6" class="hid"/>
+<line x1="609.3" y1="292.6" x2="678.7" y2="243.4" class="hid"/>
+<polygon points="790.7,243.4 721.3,292.6 721.3,180.6 790.7,131.4" class="elem"/>
+<polygon points="609.3,292.6 721.3,292.6 721.3,180.6 609.3,180.6" class="elem"/>
+<polygon points="678.7,131.4 790.7,131.4 721.3,180.6 609.3,180.6" class="elem"/>
+<line x1="823.2" y1="212.0" x2="761.6" y2="212.0" class="sig" marker-end="url(#a21p)"/>
+<text x="840.0" y="212.0" class="lbl" text-anchor="middle">σ<tspan class='sub'>x</tspan></text>
+<text x="840.0" y="228.0" class="val" text-anchor="middle">−85</text>
+<line x1="735.9" y1="226.3" x2="776.1" y2="197.7" class="tau" marker-end="url(#a21p)"/>
+<text x="803.8" y="197.1" class="tau-lbl" text-anchor="middle">τ<tspan class='tau-sub'>xy</tspan></text>
+<line x1="623.6" y1="266.2" x2="661.8" y2="239.1" class="sig" marker-end="url(#a21p)"/>
+<text x="580.5" y="296.8" class="lbl" text-anchor="middle">σ<tspan class='sub'>y</tspan></text>
+<text x="580.5" y="312.8" class="val" text-anchor="middle">−30</text>
+<line x1="697.8" y1="236.6" x2="632.8" y2="236.6" class="tau" marker-end="url(#a21p)"/>
+<text x="606.7" y="250.9" class="tau-lbl" text-anchor="middle">τ<tspan class='tau-sub'>yx</tspan></text>
+<text x="700.0" y="80.0" class="cap" text-anchor="middle">грани с нормалью z свободны:</text>
+<text x="700.0" y="98.0" class="lbl-s" text-anchor="middle">σ<tspan class='sub'>z</tspan> = 0</text>
+<text x="700.0" y="116.0" class="lbl-s" text-anchor="middle">τ<tspan class='sub'>zx</tspan> = τ<tspan class='sub'>zy</tspan> = 0</text>
+<line x1="858.0" y1="336.0" x2="888.0" y2="336.0" class="ax" marker-end="url(#axm)"/>
+<text x="896.4" y="340.0" class="ax-lbl" text-anchor="middle">x</text>
+<line x1="858.0" y1="336.0" x2="839.4" y2="349.2" class="ax" marker-end="url(#axm)"/>
+<text x="834.2" y="356.9" class="ax-lbl" text-anchor="middle">y</text>
+<line x1="858.0" y1="336.0" x2="858.0" y2="306.0" class="ax" marker-end="url(#axm)"/>
+<text x="858.0" y="301.6" class="ax-lbl" text-anchor="middle">z</text>
 </svg>
