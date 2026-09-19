@@ -1,13 +1,21 @@
 # -*- coding: utf-8 -*-
 """Схемы к РГР по теме 9.
 
-Плоские схемы задачи 2 (рис. 2.1, 2.2) — оси как в тетради: x вправо, y вниз,
-угол α отсчитывается от оси x вверх.
-Пространственные схемы задачи 1 (рис. 1.1-1.5) — аксонометрия: z вверх,
-x вправо, y на зрителя (влево-вниз), как на схеме элемента в тетради.
+Аксонометрия: z вверх, x вправо, y на зрителя (влево-вниз) — как на схеме
+элемента в тетради. Плоские схемы задачи 2 — оси x вправо, y вниз, угол α
+отсчитывается от оси x вверх.
 
-Цвета берутся из CSS-переменных страницы: SVG вставляется в HTML инлайном
-и поэтому работает и в светлой, и в тёмной теме.
+Правила черчения, принятые во всех схемах:
+  * нормальные напряжения — стрелка по нормали к грани: растяжение от грани,
+    сжатие к грани;
+  * касательные — стрелка в плоскости грани, сдвинутая к её краю, чтобы
+    не пересекаться со второй касательной и с нормальной;
+  * невидимые рёбра — тонкий штрих; исходный контур — сплошной, деформи-
+    рованный — штриховой полужирный;
+  * подписи печатаются с белым ореолом (paint-order), поэтому читаются
+    поверх линий.
+
+Цвета не задаются: классы берут их из CSS страницы (документ чёрно-белый).
 """
 import math
 
@@ -29,12 +37,15 @@ P3, A3 = -98.1971, -23.74
 # ------------------------------------------------------------ примитивы
 HEAD = ('<svg viewBox="0 0 {w} {h}" role="img" aria-label="{alt}" '
         'xmlns="http://www.w3.org/2000/svg">\n<defs>\n'
-        '<marker id="{mid}" viewBox="0 0 10 10" refX="9" refY="5" '
-        'markerWidth="7" markerHeight="7" orient="auto-start-reverse">\n'
-        '<path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>\n'
-        '<marker id="axm" viewBox="0 0 10 10" refX="9" refY="5" '
-        'markerWidth="7" markerHeight="7" orient="auto-start-reverse">\n'
-        '<path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/></marker>\n</defs>\n')
+        '<marker id="{m}" viewBox="0 0 10 10" refX="9.2" refY="5" '
+        'markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse">'
+        '<path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>\n'
+        '<marker id="{m}s" viewBox="0 0 10 10" refX="9.2" refY="5" '
+        'markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse">'
+        '<path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>\n'
+        '</defs>\n')
+
+MID = "m"          # маркер обычной стрелки; MID + "s" — уменьшенной
 
 
 def ln(p1, p2, cls):
@@ -42,9 +53,17 @@ def ln(p1, p2, cls):
             f'y2="{p2[1]:.1f}" class="{cls}"/>\n')
 
 
-def ar(p1, p2, cls, mid):
+def ar(p1, p2, cls, small=False):
+    m = MID + ("s" if small else "")
     return (f'<line x1="{p1[0]:.1f}" y1="{p1[1]:.1f}" x2="{p2[0]:.1f}" '
-            f'y2="{p2[1]:.1f}" class="{cls}" marker-end="url(#{mid})"/>\n')
+            f'y2="{p2[1]:.1f}" class="{cls}" marker-end="url(#{m})"/>\n')
+
+
+def ar2(p1, p2, cls):
+    """Размерная линия со стрелками на обоих концах."""
+    return (f'<line x1="{p1[0]:.1f}" y1="{p1[1]:.1f}" x2="{p2[0]:.1f}" '
+            f'y2="{p2[1]:.1f}" class="{cls}" marker-start="url(#{MID}s)" '
+            f'marker-end="url(#{MID}s)"/>\n')
 
 
 def poly(pts, cls):
@@ -57,13 +76,19 @@ def txt(x, y, s, cls="lbl", anchor="middle"):
             f'text-anchor="{anchor}">{s}</text>\n')
 
 
-def num(v, n=2):
+def sg(v, n=2):
+    """Число со знаком в русской записи."""
     return f"{v:.{n}f}".replace(".", ",").replace("-", "−")
 
 
+def sub(sym, idx):
+    return f"{sym}<tspan class='sub'>{idx}</tspan>"
+
+
 # ------------------------------------------------- аксонометрия (3D → 2D)
-KY, KYV = -0.62, 0.44          # орт оси y на экране
-VIEW = (0.62, 1.0, 0.44)       # направление на зрителя
+KY, KYV = -0.58, 0.40
+VIEW = (0.58, 1.0, 0.40)
+UNIT = ((1, 0, 0), (0, 1, 0), (0, 0, 1))
 
 
 class Iso:
@@ -92,452 +117,502 @@ def visible(n):
     return sum(a * b for a, b in zip(n, VIEW)) > 1e-9
 
 
-UNIT = ((1, 0, 0), (0, 1, 0), (0, 0, 1))
-# грани куба: внешняя нормаль и четыре вершины в координатах (±1)
 FACES = []
-for ax in range(3):
-    for sgn in (1, -1):
-        n = [0, 0, 0]; n[ax] = sgn
-        o1, o2 = [k for k in range(3) if k != ax]
-        pts = []
-        for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
-            v = [0, 0, 0]; v[ax] = sgn; v[o1] = a; v[o2] = b
-            pts.append(tuple(v))
-        FACES.append((tuple(n), pts))
-
-
-def draw_box(iso, M, cls_vis, cls_hid=None, half=1.0):
-    """Параллелепипед, заданный матрицей рёбер M (столбцы — направления)."""
-    def P(v):
-        return iso.p(mul(mv(M, v), half))
-    s = ""
-    if cls_hid:
-        for n, pts in FACES:
-            if not visible(mv(M, n)):
-                for i in range(4):
-                    s += ln(P(pts[i]), P(pts[(i + 1) % 4]), cls_hid)
-    for n, pts in FACES:
-        if visible(mv(M, n)):
-            s += poly([P(q) for q in pts], cls_vis)
-    return s
-
+for _ax in range(3):
+    for _s in (1, -1):
+        _n = [0, 0, 0]; _n[_ax] = _s
+        _o1, _o2 = [k for k in range(3) if k != _ax]
+        _pts = []
+        for _a, _b in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+            _v = [0, 0, 0]; _v[_ax] = _s; _v[_o1] = _a; _v[_o2] = _b
+            _pts.append(tuple(_v))
+        FACES.append((tuple(_n), tuple(_pts), (_o1, _o2)))
 
 IDENT = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
 
-def face_center(M, n, half=1.0):
-    return mul(mv(M, n), half)
+def inplane(n):
+    """Два орта, лежащие в грани с нормалью n."""
+    ax = [i for i in range(3) if n[i]][0]
+    return [UNIT[i] for i in range(3) if i != ax]
 
 
+def draw_box(iso, M=IDENT, half=1.0, face="elem", hidden="hid"):
+    def P(v):
+        return iso.p(mul(mv(M, v), half))
+    s = ""
+    if hidden:
+        for n, pts, _ in FACES:
+            if not visible(mv(M, n)):
+                for i in range(4):
+                    s += ln(P(pts[i]), P(pts[(i + 1) % 4]), hidden)
+    for n, pts, _ in FACES:
+        if visible(mv(M, n)):
+            s += poly([P(q) for q in pts], face)
+    return s
 
-def stress_arrow(iso, c, n, val, mid, cls="sig", near=0.10, far=1.20):
-    """Стрелка нормального напряжения на грани.
 
-    Растяжение (val > 0) — от грани наружу; сжатие (val < 0) — снаружи к грани.
-    """
-    p_near = iso.p(add(c, mul(n, near)))
-    p_far = iso.p(add(c, mul(n, far)))
-    return ar(p_near, p_far, cls, mid) if val > 0 else ar(p_far, p_near, cls, mid)
-
-
-
-def lab(iso, c, n, dist):
-    """Точка для подписи: от центра грани по экранному направлению нормали.
-
-    Смещение считается в пикселях, а не в единицах модели: в аксонометрии
-    нормаль, направленная на зрителя, проецируется коротко, и подпись
-    иначе попадает на сам элемент.
-    """
-    p0, p1 = iso.p(c), iso.p(add(c, n))
+def lab(iso, base, direction, dist):
+    """Точка подписи: от base по экранному направлению, отступ в пикселях."""
+    p0, p1 = iso.p(base), iso.p(add(base, direction))
     dx, dy = p1[0] - p0[0], p1[1] - p0[1]
     L = math.hypot(dx, dy) or 1.0
     return (p0[0] + dx / L * dist, p0[1] + dy / L * dist)
 
 
+def stress_arrow(iso, c, n, val, near=0.12, far=1.22, cls="sig"):
+    """Растяжение — от грани наружу, сжатие — снаружи к грани."""
+    a, b = iso.p(add(c, mul(n, near))), iso.p(add(c, mul(n, far)))
+    return ar(a, b, cls) if val > 0 else ar(b, a, cls)
+
+
+def shear_arrow(iso, c, d, off, val, arm=0.46, cls="tau"):
+    """Касательное напряжение: стрелка в плоскости грани, сдвинутая к краю."""
+    dd = mul(d, 1.0 if val > 0 else -1.0)
+    base = add(c, off)
+    p1, p2 = iso.p(add(base, mul(dd, -arm))), iso.p(add(base, mul(dd, arm)))
+    return ar(p1, p2, cls, small=True), p1, p2
+
+
+
+def tip_label(p_tail, p_tip, away, along=11.0, side=15.0):
+    """Точка подписи у острия стрелки: чуть дальше по стрелке и в сторону
+    от центра элемента, чтобы подписи соседних стрелок не сливались."""
+    ux, uy = p_tip[0] - p_tail[0], p_tip[1] - p_tail[1]
+    L = math.hypot(ux, uy) or 1.0
+    ux, uy = ux / L, uy / L
+    vx, vy = -uy, ux
+    if vx * (p_tip[0] - away[0]) + vy * (p_tip[1] - away[1]) < 0:
+        vx, vy = -vx, -vy
+    return (p_tip[0] + ux * along + vx * side,
+            p_tip[1] + uy * along + vy * side)
+
+
 def axes2d(x0, y0, s, names=("x", "y", "z")):
-    """Тройка осей в аксонометрии от фиксированной точки на листе."""
     out = ""
     for d, nm in zip(UNIT, names):
         p1 = (x0 + s * (d[0] + KY * d[1]), y0 + s * (KYV * d[1] - d[2]))
-        out += ar((x0, y0), p1, "ax", "axm")
-        p2 = (x0 + s * 1.28 * (d[0] + KY * d[1]), y0 + s * 1.28 * (KYV * d[1] - d[2]))
+        out += ar((x0, y0), p1, "ax", small=True)
+        p2 = (x0 + s * 1.3 * (d[0] + KY * d[1]), y0 + s * 1.3 * (KYV * d[1] - d[2]))
         out += txt(p2[0], p2[1] + 4, nm, "ax-lbl")
     return out
 
 
-# ------------------------------------------------------------- рис. 1.1
-def fig11():
-    w, h, mid = 640, 470, "a11"
-    iso = Iso(320, 222, 58)
-    s = HEAD.format(w=w, h=h, mid=mid,
-                    alt="Напряжения на гранях элементарного параллелепипеда")
-    s += axes2d(74, 404, 38)
-    s += draw_box(iso, IDENT, "elem", "hid")
+def legend(x, y, items, gap=150):
+    """Пояснение к линиям: короткий образец + подпись."""
+    out = ""
+    for i, (cls, text) in enumerate(items):
+        x0 = x + i * gap
+        out += ln((x0, y - 4), (x0 + 26, y - 4), cls)
+        out += txt(x0 + 32, y, text, "cap", "start")
+    return out
 
-    data = [((1, 0, 0), SX, "x", 88, [((0, 1, 0), TXY, "xy"), ((0, 0, 1), TZX, "xz")]),
-            ((0, 1, 0), SY, "y", 112, [((1, 0, 0), TXY, "yx"), ((0, 0, 1), TYZ, "yz")]),
-            ((0, 0, 1), SZ, "z", 80, [((1, 0, 0), TZX, "zx"), ((0, 1, 0), TYZ, "zy")])]
-    for n, sv, sub, dlab, shears in data:
-        c = face_center(IDENT, n)
-        s += stress_arrow(iso, c, n, sv, mid)
-        q = lab(iso, c, n, dlab)
-        s += txt(q[0], q[1], f"σ<tspan class='sub'>{sub}</tspan>", "lbl")
-        s += txt(q[0], q[1] + 16, num(sv, 0), "val")
-        for d, tv, tsub in shears:
-            dd = mul(d, 1 if tv > 0 else -1)
-            s += ar(iso.p(add(c, mul(dd, -0.58))),
-                    iso.p(add(c, mul(dd, 0.58))), "tau", mid)
-            q = lab(iso, add(c, mul(dd, 0.58)), add(mul(dd, 0.5), n), 30)
-            s += txt(q[0], q[1] + 4,
-                     f"τ<tspan class='tau-sub'>{tsub}</tspan>", "tau-lbl")
+
+# ================================================================ рис. 1.1
+def fig11():
+    w, h = 700, 500
+    iso = Iso(348, 238, 80)
+    s = HEAD.format(w=w, h=h, m=MID,
+                    alt="Напряжения на гранях элементарного параллелепипеда")
+    s += draw_box(iso)
+
+    # у каждой грани две касательные; их сдвигают к разным краям грани,
+    # чтобы стрелки и подписи не сходились в центре
+    data = [((1, 0, 0), SX, "x", 96, [((0, 1, 0), TXY, "xy", (0, 0, 0.62)),
+                                      ((0, 0, 1), TZX, "xz", (0, -0.62, 0))]),
+            ((0, 1, 0), SY, "y", 118, [((1, 0, 0), TXY, "yx", (0, 0, -0.62)),
+                                       ((0, 0, 1), TYZ, "yz", (-0.62, 0, 0))]),
+            ((0, 0, 1), SZ, "z", 88, [((1, 0, 0), TZX, "zx", (0, -0.62, 0)),
+                                      ((0, 1, 0), TYZ, "zy", (0.62, 0, 0))])]
+    mid0 = iso.p((0, 0, 0))
+    for n, sv, name, dl, shears in data:
+        c = mul(n, 1.0)
+        s += stress_arrow(iso, c, n, sv)
+        q = lab(iso, c, n, dl)
+        s += txt(q[0], q[1] - 7, sub("σ", name), "lbl")
+        s += txt(q[0], q[1] + 12, sg(sv, 0), "val")
+        for d, tv, tname, off in shears:
+            a, p1, p2 = shear_arrow(iso, c, d, off, tv)
+            s += a
+            q = tip_label(p1, p2, mid0)
+            s += txt(q[0], q[1] + 4, sub("τ", tname), "tau-lbl")
+
+    s += axes2d(74, 432, 40)
+    s += txt(348, 470, "растяжение — стрелка от грани, сжатие — к грани; "
+                       "касательные лежат в плоскости грани", "cap")
     s += '</svg>\n'
     return s
 
 
-# ------------------------------------------------------------- рис. 1.2
+# ================================================================ рис. 1.2
 def fig12():
-    w, h, mid = 640, 470, "a12"
-    iso = Iso(320, 225, 58)
-    s = HEAD.format(w=w, h=h, mid=mid, alt="Главный элемент и главные напряжения")
-    s += axes2d(74, 404, 38)
+    w, h = 700, 500
+    iso = Iso(340, 236, 74)
+    s = HEAD.format(w=w, h=h, m=MID, alt="Главный элемент и главные напряжения")
     M = [[NU[1][0], NU[2][0], NU[3][0]],
          [NU[1][1], NU[2][1], NU[3][1]],
          [NU[1][2], NU[2][2], NU[3][2]]]
-    s += draw_box(iso, M, "elem", "hid", half=0.95)
+    # следы главных осей — до элемента, чтобы не перечёркивали грани
+    for i in (1, 2, 3):
+        n = NU[i]
+        s += ln(iso.p(mul(n, -1.45)), iso.p(mul(n, 1.45)), "norm")
+    s += draw_box(iso, M, half=0.96)
     for i, val in ((1, S1), (2, S2), (3, S3)):
         n = NU[i]
-        c = mul(n, 0.95)
-        s += stress_arrow(iso, c, n, val, mid, near=0.10, far=1.15)
-        s += ln(iso.p(mul(n, -0.9)), iso.p(mul(n, 0.9)), "norm")
-        q = lab(iso, c, n, 108)
-        s += txt(q[0], q[1], f"σ<tspan class='sub'>{i}</tspan> "
-                             f"(ν<tspan class='sub'>{i}</tspan>)", "lbl")
-        s += txt(q[0], q[1] + 16, num(val) + " МПа", "val")
+        c = mul(n, 0.96)
+        s += stress_arrow(iso, c, n, val, near=0.12, far=1.18)
+        q = lab(iso, c, n, 122)
+        tip = iso.p(add(c, mul(n, 0.65)))
+        s += ln(q, tip, "leader")
+        s += txt(q[0], q[1] - 7, f"{sub('σ', i)}  ({sub('ν', i)})", "lbl")
+        s += txt(q[0], q[1] + 12, sg(val) + " МПа", "val")
+    s += axes2d(74, 432, 40)
+    s += txt(340, 470, "гранями элемента служат главные площадки; "
+                       "штриховые линии — нормали ν₁, ν₂, ν₃", "cap")
     s += '</svg>\n'
     return s
 
 
-# ------------------------------------------------------------- рис. 1.3
+# ================================================================ рис. 1.3
 def fig13():
-    w, h, mid = 640, 470, "a13"
-    iso = Iso(310, 215, 62)
-    s = HEAD.format(w=w, h=h, mid=mid,
+    w, h = 700, 500
+    iso = Iso(330, 234, 82)
+    s = HEAD.format(w=w, h=h, m=MID,
                     alt="Диагональная площадка с наибольшим касательным напряжением")
-    s += axes2d(74, 404, 38, ("1", "2", "3"))
-    s += draw_box(iso, IDENT, "elem-lite", "hid")
-    # площадка, равнонаклонённая к направлениям 1 и 3: содержит ось 2
-    quad = [(1, -1, -1), (1, 1, -1), (-1, 1, 1), (-1, -1, 1)]
-    s += poly([iso.p(q) for q in quad], "plane")
     r2 = 1 / math.sqrt(2)
     nrm, tng = (r2, 0.0, r2), (r2, 0.0, -r2)
-    for sgn in (1, -1):
-        s += stress_arrow(iso, (0.0, 0.0, 0.0), mul(nrm, sgn), S31, mid,
-                          near=0.35, far=1.75)
-    for sgn in (1, -1):
-        base = mul((0, 1, 0), sgn * 0.75)
-        s += ar(iso.p(add(base, mul(tng, -sgn * 0.72))),
-                iso.p(add(base, mul(tng, sgn * 0.72))), "tau", mid)
-    # подписи — на фиксированных местах, с выносками
-    pn = iso.p(mul(nrm, 1.75))
-    s += ln((pn[0] + 10, pn[1] - 10), (470, 92), "leader")
-    s += txt(474, 78, "σ<tspan class='sub'>31</tspan>", "lbl", "start")
-    s += txt(474, 96, num(S31) + " МПа", "val", "start")
-    pt = iso.p(add(mul((0, 1, 0), 0.75), mul(tng, 0.72)))
-    s += ln((pt[0], pt[1] + 8), (206, 376), "leader")
-    s += txt(202, 366, "τ<tspan class='tau-sub'>31</tspan>", "tau-lbl", "end")
-    s += txt(202, 384, num(T31) + " МПа", "tau-val", "end")
-    s += txt(310, 446, "площадка равнонаклонена к направлениям 1 и 3 "
-                       "(под 45° к каждому)", "cap")
+
+    s += draw_box(iso, face="elem-lite")
+    # площадка: содержит ось 2 и направление (1,0,−1)
+    quad = [(1, -1, -1), (1, 1, -1), (-1, 1, 1), (-1, -1, 1)]
+    s += poly([iso.p(q) for q in quad], "plane")
+    # рёбра площадки пожирнее
+    for i in range(4):
+        s += ln(iso.p(quad[i]), iso.p(quad[(i + 1) % 4]), "plane-edge")
+
+    # нормаль к площадке и угол 45° к оси 1
+    s += ln(iso.p((0, 0, 0)), iso.p(mul(nrm, 1.75)), "norm")
+    s += ln(iso.p((0, 0, 0)), iso.p((1.75, 0, 0)), "norm")
+    p0, pa, pb = iso.p((0, 0, 0)), iso.p((0.85, 0, 0)), iso.p(mul(nrm, 0.85))
+    s += (f'<path d="M {pa[0]:.1f} {pa[1]:.1f} Q '
+          f'{(p0[0]+pa[0]+pb[0])/3+6:.1f} {(p0[1]+pa[1]+pb[1])/3-6:.1f} '
+          f'{pb[0]:.1f} {pb[1]:.1f}" class="arc"/>\n')
+    q = lab(iso, mul(add(nrm, (1, 0, 0)), 0.55), add(nrm, (1, 0, 0)), 36)
+    s += txt(q[0], q[1] + 4, "45°", "ang")
+
+    # нормальное напряжение на площадке (сжатие -> к площадке)
+    for k in (1, -1):
+        s += stress_arrow(iso, (0.0, 0.0, 0.0), mul(nrm, k), S31,
+                          near=0.42, far=1.72)
+    # касательные: пара в плоскости площадки, у её краёв
+    for k in (1, -1):
+        base = mul((0, 1, 0), k * 0.72)
+        s += ar(iso.p(add(base, mul(tng, -k * 0.78))),
+                iso.p(add(base, mul(tng, k * 0.78))), "tau")
+
+    pn = iso.p(mul(nrm, 1.72))
+    s += ln((pn[0] + 8, pn[1] - 8), (520, 92), "leader")
+    s += txt(526, 80, sub("σ", "31"), "lbl", "start")
+    s += txt(526, 99, sg(S31) + " МПа", "val", "start")
+    pt = iso.p(add(mul((0, 1, 0), 0.72), mul(tng, 0.78)))
+    s += ln((pt[0] - 6, pt[1] + 8), (176, 406), "leader")
+    s += txt(170, 396, sub("τ", "31"), "tau-lbl", "end")
+    s += txt(170, 415, sg(T31) + " МПа", "tau-val", "end")
+
+    s += axes2d(600, 408, 40, ("1", "2", "3"))
+    s += txt(330, 470, "площадка равнонаклонена к главным направлениям 1 и 3", "cap")
     s += '</svg>\n'
     return s
 
 
-# ------------------------------------------------------------- рис. 1.4
+# ================================================================ рис. 1.4
 def fig14():
-    w, h, mid = 640, 470, "a14"
-    iso = Iso(320, 210, 58)
-    K = 420.0                      # условное увеличение деформаций
-    s = HEAD.format(w=w, h=h, mid=mid, alt="Относительные линейные деформации")
-    s += axes2d(74, 396, 38)
-    s += draw_box(iso, IDENT, "elem-lite", "hid")
+    w, h = 700, 500
+    iso = Iso(336, 232, 76)
+    K = 560.0
+    s = HEAD.format(w=w, h=h, m=MID, alt="Относительные линейные деформации")
+    s += draw_box(iso, face="elem-lite")
     D = [[1 + K * EX, 0, 0], [0, 1 + K * EY, 0], [0, 0, 1 + K * EZ]]
-    s += draw_box(iso, D, "deformed")
-    for n, val, sub, what, dlab in (((1, 0, 0), EX, "x", "укорочение", 86),
-                                    ((0, 1, 0), EY, "y", "удлинение", 112),
-                                    ((0, 0, 1), EZ, "z", "укорочение", 78)):
-        c = face_center(IDENT, n)
-        q = lab(iso, c, n, dlab)
-        s += txt(q[0], q[1], f"ε<tspan class='sub'>{sub}</tspan>", "lbl")
-        s += txt(q[0], q[1] + 16, num(val * 1e5) + "·10⁻⁵", "val")
-        s += txt(q[0], q[1] + 31, what, "cap")
-    s += txt(320, 446, "сплошной контур — до деформации, штриховой — после "
-                       "(масштаб условный)", "cap")
+    s += draw_box(iso, D, face="deformed", hidden=None)
+    for n, val, name, what, dl in (((1, 0, 0), EX, "x", "укорочение", 108),
+                                   ((0, 1, 0), EY, "y", "удлинение", 150),
+                                   ((0, 0, 1), EZ, "z", "укорочение", 96)):
+        c = mul(n, 1.0)
+        q = lab(iso, c, n, dl)
+        s += txt(q[0], q[1] - 7, sub("ε", name), "lbl")
+        s += txt(q[0], q[1] + 12, sg(val * 1e5) + "·10⁻⁵", "val")
+        s += txt(q[0], q[1] + 28, what, "cap")
+    s += axes2d(74, 424, 40)
+    s += legend(212, 466, [("elem-lite", "до деформации"),
+                           ("deformed", "после деформации")], gap=190)
+    s += txt(336, 486, "масштаб условный: деформации увеличены", "cap")
     s += '</svg>\n'
     return s
 
 
-# ------------------------------------------------------------- рис. 1.5
+# ================================================================ рис. 1.5
 def fig15():
-    """Угловые деформации: три куба, на каждом — сдвиг в своей плоскости.
+    """Три элемента: на каждом — сдвиг в своей координатной плоскости."""
+    w, h = 1020, 470
+    K = 260.0
+    s = HEAD.format(w=w, h=h, m=MID,
+                    alt="Угловые деформации: сдвиг в плоскостях xOy, yOz и zOx")
+    panels = [("xOy", GXY, "xy", (0, 1), (0, 0, 1), 0, 1),
+              ("yOz", GYZ, "yz", (1, 2), (1, 0, 0), 1, 2),
+              ("zOx", GZX, "zx", (2, 0), (0, 1, 0), 2, 0)]
+    for p, (plane, g, name, cell, fn, i1, i2) in enumerate(panels):
+        x0 = 12 + p * 332
+        iso = Iso(x0 + 172, 250, 62)
+        if p:
+            s += ln((x0 - 4, 24), (x0 - 4, 404), "sep")
+        s += txt(x0 + 166, 38, f"плоскость {plane}", "cap")
+        s += txt(x0 + 166, 62,
+                 f"{sub('γ', name)} = {'+' if g > 0 else '−'}"
+                 f"{sg(abs(g) * 1e5)}·10⁻⁵", "lbl")
+        s += txt(x0 + 166, 82,
+                 "прямой угол " + ("уменьшился" if g > 0 else "увеличился"), "cap")
 
-    Сдвиг простой: рёбра одного направления наклоняются, второе остаётся
-    на месте — как на плоских схемах. Выделенная грань каждого куба лежит
-    в своей координатной плоскости:
-      куб 1 — верхняя грань, плоскость xOy, угол между x и y -> γxy,
-      куб 2 — правая грань,  плоскость yOz, угол между y и z -> γyz,
-      куб 3 — передняя грань, плоскость zOx, угол между z и x -> γzx.
-    """
-    w, h, mid = 1020, 424, "a15"
-    K = 240.0                      # условное увеличение углов
-    s = HEAD.format(w=w, h=h, mid=mid,
-                    alt="Угловые деформации: три куба со сдвигом в плоскостях "
-                        "xOy, yOz и zOx")
-
-    # (плоскость, γ, индекс, позиция сдвига в матрице, выделенная грань,
-    #  вершина угла, направления рёбер угла)
-    # плоскость, γ, индекс, недиагональный член сдвига, выделенная грань,
-    # две оси этой грани
-    panels = [
-        ("xOy", GXY, "xy", (0, 1), (0, 0, 1), 0, 1, "x", "y"),
-        ("yOz", GYZ, "yz", (1, 2), (1, 0, 0), 1, 2, "y", "z"),
-        ("zOx", GZX, "zx", (2, 0), (0, 1, 0), 2, 0, "z", "x"),
-    ]
-
-    for p, (plane, g, sub, cell, fn, i1, i2, n1, n2) in enumerate(panels):
-        # вершина угла — ближайший к зрителю угол выделенной грани,
-        # стороны угла идут от неё внутрь грани
         def side(idx):
-            sg = 1 if VIEW[idx] > 0 else -1
-            v = [0, 0, 0]; v[idx] = sg
+            k = 1 if VIEW[idx] > 0 else -1
+            v = [0, 0, 0]; v[idx] = k
             return tuple(v)
         a1, a2 = side(i1), side(i2)
         corner = add(fn, a1, a2)
         e1, e2 = mul(a1, -1), mul(a2, -1)
-        x0 = 14 + p * 334
-        cx, cy = x0 + 176, 238
-        iso = Iso(cx, cy, 57)
-        if p:
-            s += ln((x0 - 6, 22), (x0 - 6, 392), "sep")
-        # заголовок панели
-        s += txt(x0 + 168, 34, f"плоскость {plane}", "cap")
-        s += txt(x0 + 168, 56,
-                 f"γ<tspan class='sub'>{sub}</tspan> = "
-                 f"{'+' if g > 0 else '−'}{num(abs(g) * 1e5)}·10⁻⁵", "lbl")
-        s += txt(x0 + 168, 74,
-                 "прямой угол " + ("уменьшился" if g > 0 else "увеличился"), "cap")
-        # оси
-        s += axes2d(x0 + 46, 368, 30)
-        # недеформированный куб
-        s += draw_box(iso, IDENT, "elem-lite", "hid")
-        # простой сдвиг: один недиагональный член
-        Fm = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+
+        s += draw_box(iso, face="elem-lite")
+        Fm = [[1.0, 0, 0], [0, 1.0, 0], [0, 0, 1.0]]
         Fm[cell[0]][cell[1]] = K * g
-        s += draw_box(iso, Fm, "deformed")
-        # выделенная грань деформированного куба
-        for n, pts in FACES:
+        s += draw_box(iso, Fm, face="deformed", hidden=None)
+        for n, pts, _ in FACES:
             if n == fn:
                 s += poly([iso.p(mv(Fm, q)) for q in pts], "face-hi")
-        # исходный прямой угол — уголок на недеформированном кубе
+        # исходный прямой угол и угол после деформации
         d = 0.30
         s += ('<polyline points="' + ' '.join(
             f'{q[0]:.1f},{q[1]:.1f}' for q in (
                 iso.p(add(corner, mul(e1, d))),
                 iso.p(add(corner, mul(e1, d), mul(e2, d))),
-                iso.p(add(corner, mul(e2, d))))) +
-            '" class="right-angle"/>\n')
-        # изменившийся угол — дуга на деформированном кубе
+                iso.p(add(corner, mul(e2, d))))) + '" class="right-angle"/>\n')
         pc = iso.p(mv(Fm, corner))
-        q1 = iso.p(mv(Fm, add(corner, mul(e1, 0.58))))
-        q2 = iso.p(mv(Fm, add(corner, mul(e2, 0.58))))
+        q1 = iso.p(mv(Fm, add(corner, mul(e1, 0.56))))
+        q2 = iso.p(mv(Fm, add(corner, mul(e2, 0.56))))
         s += (f'<path d="M {q1[0]:.1f} {q1[1]:.1f} Q {pc[0]:.1f} {pc[1]:.1f} '
               f'{q2[0]:.1f} {q2[1]:.1f}" class="arc-def"/>\n')
         s += f'<circle cx="{pc[0]:.1f}" cy="{pc[1]:.1f}" r="3" class="vertex"/>\n'
+        s += axes2d(x0 + 52, 388, 34)
 
-    s += txt(510, 412, "сплошной контур — до деформации, штриховой — после; "
-                       "закрашена грань, лежащая в рассматриваемой плоскости; "
-                       "углы увеличены примерно в 240 раз", "cap")
+    s += legend(258, 440, [("elem-lite", "до деформации"),
+                           ("deformed", "после деформации"),
+                           ("face-hi", "грань в этой плоскости")], gap=200)
+    s += txt(510, 460, "углы показаны увеличенными примерно в 260 раз", "cap")
     s += '</svg>\n'
     return s
 
 
-# ------------------------------------------------------------- рис. 2.1
+# ================================================================ рис. 2.1
 def fig21_plate():
-    """Откуда берётся двухосное состояние: тонкая пластина, нагруженная
-    по контуру, и вырезанный из неё объёмный элемент.
+    """Тонкая пластина, нагруженная по контуру, и вырезанный элемент."""
+    w, h = 980, 430
+    s = HEAD.format(w=w, h=h, m=MID,
+                    alt="Тонкая пластина и выделенный из неё объёмный элемент")
+    s += ln((500, 24), (500, 404), "sep")
 
-    Слева — пластина (h ≪ a, b) и место, где выделен элемент;
-    справа — сам элемент: на площадках с нормалью z напряжений нет,
-    поэтому σz = 0 и τzx = τzy = 0.
-    """
-    w, h_, mid = 920, 420, "a21p"
-    s = HEAD.format(w=w, h=h_, mid=mid,
-                    alt="Тонкая пластина, нагруженная по контуру, "
-                        "и выделенный из неё элемент")
-    s += ln((470, 26), (470, 396), "sep")
+    # ---------- а) пластина -------------------------------------------
+    iso = Iso(240, 196, 78)
+    s += txt(240, 42, "а) тонкая пластина, нагруженная по контуру", "cap")
+    A, B, H = 1.5, 1.0, 0.11
+    s += draw_box(iso, [[A, 0, 0], [0, B, 0], [0, 0, H]])
 
-    # ---------- а) пластина ------------------------------------------
-    iso = Iso(228, 214, 60)
-    s += txt(228, 44, "а) тонкая пластина, нагруженная по контуру", "cap")
-    s += axes2d(58, 336, 30)
-    A, B, H = 1.55, 1.05, 0.13          # полуразмеры: x, y, толщина
-    M = [[A, 0, 0], [0, B, 0], [0, 0, H]]
-    s += draw_box(iso, M, "elem-lite", "hid")
-
-    # нагрузка по контуру: σx и σy сжимающие -> стрелки к кромкам
-    for n, half, tag in (((1, 0, 0), A, "x"), ((0, 1, 0), B, "y")):
-        for sgn in (1, -1):
-            for t in (-0.55, 0.0, 0.55):
-                # точка на кромке, сдвинутая вдоль неё
-                other = (0, 1, 0) if n[0] else (1, 0, 0)
-                oh = B if n[0] else A
-                base = add(mul(n, sgn * half), mul(other, t * oh))
-                d = mul(n, sgn)
+    # нагрузка по контуру: оба напряжения сжимающие -> стрелки к кромкам
+    for n, half in (((1, 0, 0), A), ((0, 1, 0), B)):
+        other = (0, 1, 0) if n[0] else (1, 0, 0)
+        oh = B if n[0] else A
+        for k in (1, -1):
+            for t in (-0.6, 0.0, 0.6):
+                base = add(mul(n, k * half), mul(other, t * oh))
+                d = mul(n, k)
                 s += ar(iso.p(add(base, mul(d, 0.62))),
-                        iso.p(add(base, mul(d, 0.09))), "sig", mid)
-    q = lab(iso, mul((1, 0, 0), A), (1, 0, 0), 86)
-    s += txt(q[0], q[1], "q<tspan class='sub'>x</tspan>", "lbl")
-    q = lab(iso, mul((0, 1, 0), B), (0, 1, 0), 86)
-    s += txt(q[0], q[1], "q<tspan class='sub'>y</tspan>", "lbl")
+                        iso.p(add(base, mul(d, 0.10))), "sig")
+    q = lab(iso, mul((1, 0, 0), A), (1, 0, 0), 84)
+    s += txt(q[0], q[1] + 5, sub("q", "x"), "lbl")
+    q = lab(iso, mul((0, 1, 0), B), (0, 1, 0), 124)
+    s += txt(q[0], q[1] + 5, sub("q", "y"), "lbl")
 
-    # выделенный элемент на поверхности пластины
-    e = 0.17
-    top = [( e,  e, H), (-e,  e, H), (-e, -e, H), ( e, -e, H)]
-    s += poly([iso.p(p) for p in top], "elem")
+    # место, откуда вырезан элемент
+    e = 0.19
+    s += poly([iso.p(p) for p in (( e,  e, H), (-e,  e, H),
+                                  (-e, -e, H), ( e, -e, H))], "elem")
     p0 = iso.p((0, 0, H))
-    s += ln((p0[0] + 6, p0[1] - 8), (318, 96), "leader")
-    s += txt(322, 92, "выделенный элемент", "cap", "start")
+    s += ln((p0[0] + 8, p0[1] - 8), (316, 84), "leader")
+    s += txt(322, 80, "выделенный элемент", "cap", "start")
 
-    # размеры: b вдоль x, a вдоль y, h — толщина
-    q = lab(iso, (0.0, B, -H), (0.0, 1.0, -1.0), 30)
-    s += txt(q[0], q[1] + 4, "b", "ax-lbl")
-    q = lab(iso, (-A, 0.0, H), (-1.0, 0.0, 0.35), 42)
-    s += txt(q[0], q[1] + 4, "a", "ax-lbl")
-    pc = iso.p((-A, B, 0.0))
-    s += ln((pc[0] - 4, pc[1] + 2), (70, 268), "leader")
-    s += txt(64, 272, "h", "ax-lbl", "end")
-    s += txt(228, 372, "h ≪ a, b", "cap")
+    # размеры b, a, h
+    pb1, pb2 = iso.p((-A, B, -H)), iso.p((A, B, -H))
+    s += ln(pb1, (pb1[0], pb1[1] + 40), "ext")
+    s += ln(pb2, (pb2[0], pb2[1] + 40), "ext")
+    s += ar2((pb1[0], pb1[1] + 32), (pb2[0], pb2[1] + 32), "dim")
+    s += txt((pb1[0] + pb2[0]) / 2, pb1[1] + 27, "b", "ax-lbl")
 
-    # ---------- б) объёмный элемент ----------------------------------
-    iso = Iso(700, 212, 56)
-    s += txt(700, 44, "б) объёмный элемент в окрестности точки", "cap")
-    s += draw_box(iso, IDENT, "elem", "hid")
-    data = [((1, 0, 0), SX2, "x", 84, ((0, 1, 0), TXY2, "xy")),
-            ((0, 1, 0), SY2, "y", 104, ((1, 0, 0), TXY2, "yx"))]
-    for n, sv, sub, dl, (d, tv, tsub) in data:
-        c = face_center(IDENT, n)
-        s += stress_arrow(iso, c, n, sv, mid)
+    pa1, pa2 = iso.p((-A, -B, H)), iso.p((-A, B, H))
+    ux, uy = pa2[0] - pa1[0], pa2[1] - pa1[1]
+    L = math.hypot(ux, uy)
+    vx, vy = -uy / L, ux / L                      # наружу от пластины
+    if vx > 0:
+        vx, vy = -vx, -vy
+    o = 46
+    s += ln(pa1, (pa1[0] + vx * (o + 8), pa1[1] + vy * (o + 8)), "ext")
+    s += ln(pa2, (pa2[0] + vx * (o + 8), pa2[1] + vy * (o + 8)), "ext")
+    s += ar2((pa1[0] + vx * o, pa1[1] + vy * o),
+             (pa2[0] + vx * o, pa2[1] + vy * o), "dim")
+    s += txt((pa1[0] + pa2[0]) / 2 + vx * (o + 14),
+             (pa1[1] + pa2[1]) / 2 + vy * (o + 14) + 4, "a", "ax-lbl")
+
+    ph1, ph2 = iso.p((-A, B, H)), iso.p((-A, B, -H))
+    s += ln(ph1, (ph1[0] - 34, ph1[1]), "ext")
+    s += ln(ph2, (ph2[0] - 34, ph2[1]), "ext")
+    s += ar2((ph1[0] - 26, ph1[1]), (ph2[0] - 26, ph2[1]), "dim")
+    s += txt(ph1[0] - 34, (ph1[1] + ph2[1]) / 2 + 5, "h", "ax-lbl", "end")
+
+    s += txt(240, 388, "h ≪ a, b — напряжения по толщине не меняются", "cap")
+    s += axes2d(70, 330, 36)
+
+    # ---------- б) объёмный элемент ------------------------------------
+    iso = Iso(722, 222, 70)
+    s += txt(722, 42, "б) объёмный элемент в окрестности точки", "cap")
+    s += draw_box(iso)
+    mid0 = iso.p((0, 0, 0))
+    for n, sv, name, dl, (d, tv, tname, off) in (
+            ((1, 0, 0), SX2, "x", 96, ((0, 1, 0), TXY2, "xy", (0, 0, 0.62))),
+            ((0, 1, 0), SY2, "y", 134, ((1, 0, 0), TXY2, "yx", (0, 0, -0.62)))):
+        c = mul(n, 1.0)
+        s += stress_arrow(iso, c, n, sv)
         q = lab(iso, c, n, dl)
-        s += txt(q[0], q[1], f"σ<tspan class='sub'>{sub}</tspan>", "lbl")
-        s += txt(q[0], q[1] + 16, num(sv, 0), "val")
-        dd = mul(d, 1 if tv > 0 else -1)
-        s += ar(iso.p(add(c, mul(dd, -0.58))),
-                iso.p(add(c, mul(dd, 0.58))), "tau", mid)
-        q = lab(iso, add(c, mul(dd, 0.58)), add(mul(dd, 0.5), n), 28)
-        s += txt(q[0], q[1] + 4,
-                 f"τ<tspan class='tau-sub'>{tsub}</tspan>", "tau-lbl")
-    # свободные площадки с нормалью z
-    q = lab(iso, face_center(IDENT, (0, 0, 1)), (0, 0, 1), 60)
-    s += txt(q[0], q[1] - 16, "грани с нормалью z свободны:", "cap")
-    s += txt(q[0], q[1] + 2, "σ<tspan class='sub'>z</tspan> = 0", "lbl-s")
-    s += txt(q[0], q[1] + 20,
-             "τ<tspan class='sub'>zx</tspan> = τ<tspan class='sub'>zy</tspan> = 0",
-             "lbl-s")
-    s += axes2d(858, 336, 30)
+        s += txt(q[0], q[1] - 7, sub("σ", name), "lbl")
+        s += txt(q[0], q[1] + 12, sg(sv, 0) + " МПа", "val")
+        arrow, p1, p2 = shear_arrow(iso, c, d, off, tv)
+        s += arrow
+        q = tip_label(p1, p2, mid0)
+        s += txt(q[0], q[1] + 4, sub("τ", tname), "tau-lbl")
+    # грани с нормалью z свободны — подпись внизу панели, с выноской к грани
+    ptop = iso.p((0.3, -0.3, 1.0))
+    s += ln((ptop[0], ptop[1]), (836, 104), "leader")
+    s += txt(842, 94, "грань свободна:", "cap", "start")
+    s += txt(842, 114, f"{sub('σ', 'z')} = 0", "lbl-s", "start")
+    s += txt(842, 134, f"{sub('τ', 'zx')} = {sub('τ', 'zy')} = 0",
+             "lbl-s", "start")
+    s += axes2d(900, 326, 36)
     s += '</svg>\n'
     return s
 
 
-# ------------------------------------------------------------- рис. 2.1
-def fig21():
-    w, h, mid = 460, 360, "a21"
-    cx, cy, a = 235, 190, 66
-    s = HEAD.format(w=w, h=h, mid=mid,
+# ================================================================ рис. 2.2
+def fig22_flat():
+    """Плоский элемент: нормальные — по серединам граней, касательные
+    сдвинуты к краям, поэтому стрелки нигде не пересекаются."""
+    w, h = 600, 412
+    cx, cy, a = 296, 214, 96
+    s = HEAD.format(w=w, h=h, m=MID,
                     alt="Напряжения на гранях элемента при плоском состоянии")
-    s += ar((46, 44), (126, 44), "ax", mid) + txt(133, 48, "x", "ax-lbl")
-    s += ar((46, 44), (46, 124), "ax", mid) + txt(46, 140, "y", "ax-lbl")
-    s += f'<circle cx="46" cy="44" r="2.5" class="dot"/>\n'
-    s += (f'<rect x="{cx-a}" y="{cy-a}" width="{2*a}" height="{2*a}" class="elem"/>\n')
-    s += ar((cx + a + 58, cy), (cx + a + 6, cy), "sig", mid)
-    s += ar((cx - a - 58, cy), (cx - a - 6, cy), "sig", mid)
-    s += txt(cx + a + 66, cy - 9, "σ<tspan class='sub'>x</tspan>", "lbl", "start")
-    s += txt(cx + a + 66, cy + 12, "−85", "val", "start")
-    s += ar((cx, cy - a - 52), (cx, cy - a - 6), "sig", mid)
-    s += ar((cx, cy + a + 52), (cx, cy + a + 6), "sig", mid)
-    s += txt(cx + 8, cy - a - 58, "σ<tspan class='sub'>y</tspan>", "lbl", "start")
-    s += txt(cx + 42, cy - a - 58, "−30", "val", "start")
-    s += ar((cx + a + 14, cy + 44), (cx + a + 14, cy - 44), "tau", mid)
-    s += ar((cx - a - 14, cy - 44), (cx - a - 14, cy + 44), "tau", mid)
-    s += ar((cx + 44, cy + a + 14), (cx - 44, cy + a + 14), "tau", mid)
-    s += ar((cx - 44, cy - a - 14), (cx + 44, cy - a - 14), "tau", mid)
-    s += txt(cx + a + 20, cy - 52, "τ<tspan class='tau-sub'>xy</tspan>", "tau-lbl", "start")
-    s += txt(cx + a + 20, cy - 33, "−30", "tau-val", "start")
-    s += txt(cx - a - 20, cy + a + 34, "τ<tspan class='tau-sub'>yx</tspan>", "tau-lbl", "end")
+    s += ar((50, 46), (128, 46), "ax", small=True) + txt(137, 51, "x", "ax-lbl")
+    s += ar((50, 46), (50, 124), "ax", small=True) + txt(50, 141, "y", "ax-lbl")
+    s += f'<circle cx="50" cy="46" r="2.8" class="dot"/>\n'
+    s += (f'<rect x="{cx-a}" y="{cy-a}" width="{2*a}" height="{2*a}" '
+          f'class="elem"/>\n')
+
+    # нормальные: оба сжимающие -> стрелки снаружи к серединам граней
+    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        fx, fy = cx + dx * a, cy + dy * a
+        s += ar((fx + dx * 68, fy + dy * 68), (fx + dx * 9, fy + dy * 9), "sig")
+    s += txt(cx + a + 78, cy - 9, sub("σ", "x"), "lbl", "start")
+    s += txt(cx + a + 78, cy + 13, sg(SX2, 0) + " МПа", "val", "start")
+    s += txt(cx, cy - a - 86, sub("σ", "y"), "lbl")
+    s += txt(cx, cy - a - 66, sg(SY2, 0) + " МПа", "val")
+
+    # касательные: τxy < 0 -> на грани +x вверх, +y влево; сдвинуты к краям
+    off, g = 15, 0.5 * a
+    arms = 40
+    pairs = [((cx + a + off, cy - g + arms), (cx + a + off, cy - g - arms),
+              "xy", (cx + a + off + 10, cy - g - arms - 8), "start"),
+             ((cx - a - off, cy + g - arms), (cx - a - off, cy + g + arms),
+              None, None, None),
+             ((cx + g + arms, cy + a + off), (cx + g - arms, cy + a + off),
+              None, None, None),
+             ((cx - g - arms, cy - a - off), (cx - g + arms, cy - a - off),
+              "yx", (cx - g - arms - 10, cy - a - off - 8), "end")]
+    for p1, p2, name, lp, anch in pairs:
+        s += ar(p1, p2, "tau")
+        if name:
+            s += txt(lp[0], lp[1], sub("τ", name), "tau-lbl", anch)
+            s += txt(lp[0], lp[1] + 19, sg(TXY2, 0) + " МПа", "tau-val", anch)
     s += '</svg>\n'
     return s
 
 
-# ------------------------------------------------------------- рис. 2.2
-def fig22():
-    w, h, mid = 520, 400, "a22"
-    cx, cy, a = 250, 200, 60
-    s = HEAD.format(w=w, h=h, mid=mid, alt="Главные площадки и главные напряжения")
+# ================================================================ рис. 2.3
+def fig23_main():
+    w, h = 620, 432
+    cx, cy, a = 292, 216, 78
+    s = HEAD.format(w=w, h=h, m=MID,
+                    alt="Главные площадки и главные напряжения задачи 2")
 
     def uv(deg):
         r = math.radians(deg)
         return math.cos(r), -math.sin(r)
     n2, n3 = uv(A2), uv(A3)
-    s += ar((cx - 160, cy), (cx + 162, cy), "ax", mid) + txt(cx + 172, cy + 5, "x", "ax-lbl")
-    s += ar((cx, cy), (cx, cy + 146), "ax", mid) + txt(cx - 14, cy + 150, "y", "ax-lbl")
-    pts = []
-    for q2, q3 in ((1, 1), (1, -1), (-1, -1), (-1, 1)):
-        pts.append((cx + a * (q2 * n2[0] + q3 * n3[0]),
-                    cy + a * (q2 * n2[1] + q3 * n3[1])))
+
+    s += ar((cx - 188, cy), (cx + 196, cy), "ax", small=True)
+    s += txt(cx + 206, cy + 5, "x", "ax-lbl")
+    s += ar((cx, cy), (cx, cy + 176), "ax", small=True)
+    s += txt(cx - 15, cy + 182, "y", "ax-lbl")
+
+    pts = [(cx + a * (q2 * n2[0] + q3 * n3[0]),
+            cy + a * (q2 * n2[1] + q3 * n3[1]))
+           for q2, q3 in ((1, 1), (1, -1), (-1, -1), (-1, 1))]
     s += poly(pts, "elem")
-    for n, val, name in ((n2, P2, "σ₂"), (n3, P3, "σ₃")):
-        s += ln((cx - 118 * n[0], cy - 118 * n[1]),
-                (cx + 118 * n[0], cy + 118 * n[1]), "norm")
-        for sgn in (1, -1):
-            fx, fy = cx + sgn * a * n[0], cy + sgn * a * n[1]
-            s += ar((fx + sgn * 52 * n[0], fy + sgn * 52 * n[1]),
-                    (fx + sgn * 7 * n[0], fy + sgn * 7 * n[1]), "sig", mid)
-        lx, ly = cx + 152 * n[0], cy + 152 * n[1]
-        s += txt(lx, ly, name, "lbl")
-        s += txt(lx, ly + 18, num(val) + " МПа", "val")
-    for deg, name, r, rl in ((A2, "α₂ = 66,26°", 96, 104),
-                             (A3, "α₃ = −23,74°", 62, 120)):
+
+    for n, val, name in ((n2, P2, "2"), (n3, P3, "3")):
+        s += ln((cx - 152 * n[0], cy - 152 * n[1]),
+                (cx + 152 * n[0], cy + 152 * n[1]), "norm")
+        for k in (1, -1):
+            fx, fy = cx + k * a * n[0], cy + k * a * n[1]
+            s += ar((fx + k * 62 * n[0], fy + k * 62 * n[1]),
+                    (fx + k * 9 * n[0], fy + k * 9 * n[1]), "sig")
+        lx, ly = cx + 182 * n[0], cy + 182 * n[1]
+        s += txt(lx, ly - 7, sub("σ", name), "lbl")
+        s += txt(lx, ly + 13, sg(val) + " МПа", "val")
+
+    # дуги углов: разные радиусы, каждая упирается в свою нормаль
+    for deg, name, r in ((A2, "α₂ = 66,26°", 96), (A3, "α₃ = −23,74°", 132)):
         ex = cx + r * math.cos(math.radians(deg))
         ey = cy - r * math.sin(math.radians(deg))
         sweep = 1 if deg < 0 else 0
-        s += (f'<path d="M {cx + r} {cy} A {r} {r} 0 0 {sweep} {ex:.1f} {ey:.1f}" '
-              f'class="arc"/>\n')
+        s += (f'<path d="M {cx + r} {cy} A {r} {r} 0 0 {sweep} {ex:.1f} '
+              f'{ey:.1f}" class="arc"/>\n')
         md = math.radians(deg / 2)
-        s += txt(cx + rl * math.cos(md) + 6, cy - rl * math.sin(md) + 4,
-                 name, "ang", "start")
+        s += txt(cx + (r + 16) * math.cos(md) + 6,
+                 cy - (r + 16) * math.sin(md) + 5, name, "ang", "start")
     s += '</svg>\n'
     return s
 
 
 if __name__ == "__main__":
-    # контроль: что именно показывает рис. 1.5
-    K = 240.0
+    K = 260.0
     for nm, cell, i, j, g in (("xOy (γxy)", (0, 1), 0, 1, GXY),
                               ("yOz (γyz)", (1, 2), 1, 2, GYZ),
                               ("zOx (γzx)", (2, 0), 2, 0, GZX)):
         Fm = [[1.0, 0, 0], [0, 1.0, 0], [0, 0, 1.0]]
         Fm[cell[0]][cell[1]] = K * g
-        a = mv(Fm, UNIT[i]); b = mv(Fm, UNIT[j])
-        cosang = (sum(p * q for p, q in zip(a, b))
-                  / math.sqrt(sum(p * p for p in a))
-                  / math.sqrt(sum(q * q for q in b)))
-        ang = math.degrees(math.acos(cosang))
-        print(f"  {nm}: на рисунке угол {ang:6.2f}° "
-              f"({'уменьшился' if ang < 90 else 'увеличился'} на {abs(ang-90):.2f}°), "
-              f"γ = {g*1e5:+.2f}·10⁻⁵ -> "
-              f"{'уменьшился' if g > 0 else 'увеличился'}  "
-              f"{'ok' if (ang < 90) == (g > 0) else 'ЗНАК НЕ СОШЁЛСЯ'}")
+        u, v = mv(Fm, UNIT[i]), mv(Fm, UNIT[j])
+        ang = math.degrees(math.acos(
+            sum(p * q for p, q in zip(u, v))
+            / math.sqrt(sum(p * p for p in u)) / math.sqrt(sum(q * q for q in v))))
+        print(f"  {nm}: угол на рисунке {ang:6.2f}° "
+              f"({'уменьшился' if ang < 90 else 'увеличился'} на {abs(ang-90):.2f}°) "
+              f"-> {'ok' if (ang < 90) == (g > 0) else 'ЗНАК НЕ СОШЁЛСЯ'}")
     for name, fn in (("fig-1-1", fig11), ("fig-1-2", fig12), ("fig-1-3", fig13),
                      ("fig-1-4", fig14), ("fig-1-5", fig15),
-                     ("fig-2-1", fig21_plate), ("fig-2-2", fig21),
-                     ("fig-2-3", fig22)):
+                     ("fig-2-1", fig21_plate), ("fig-2-2", fig22_flat),
+                     ("fig-2-3", fig23_main)):
         open(name + ".svg", "w", encoding="utf-8").write(fn())
     print("схемы собраны")
