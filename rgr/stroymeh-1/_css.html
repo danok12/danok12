@@ -1,0 +1,81 @@
+<style>
+:root{color-scheme:light}
+*{box-sizing:border-box}
+body{
+  margin:0; background:#ffffff; color:#000000;
+  font-family:'Times New Roman','Liberation Serif','DejaVu Serif',Times,serif;
+  font-size:17px; line-height:1.5;
+}
+.wrap{max-width:820px; margin:0 auto; padding-inline:20px; padding-block:36px 56px}
+
+h1{font-size:21px; font-weight:bold; text-align:center; line-height:1.35;
+   margin:0 0 14px; text-wrap:balance}
+.variant{margin:0 0 22px; text-align:justify}
+h2{font-size:19px; font-weight:bold; text-align:center; margin:34px 0 14px;
+   text-wrap:balance}
+h3{font-size:17px; font-weight:bold; margin:22px 0 8px; text-wrap:balance}
+h4{font-size:17px; font-weight:normal; font-style:italic; margin:16px 0 6px}
+p{margin:0 0 9px; text-align:justify; text-indent:0}
+
+/* формулы и выкладки — тем же шрифтом, с отступом, без плашек */
+.f{margin:0 0 10px 2.2em; white-space:pre-wrap; overflow-x:auto; line-height:1.72}
+.f b{font-weight:bold}
+.f .cm{font-style:italic}
+.f .eq{float:right; font-style:normal}
+.kv{margin-left:0}
+code{font-family:inherit}
+
+/* результат и примечание — обычный текст, выделение только начертанием */
+.res{margin:0 0 10px}
+.res-tag{font-weight:bold; margin:0 0 3px; text-align:left}
+.res p{margin:0 0 6px}
+.rem{margin:0 0 10px}
+.rem p{margin:0 0 6px}
+
+/* матрицы */
+.mx{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 12px 2.2em}
+.matrix{position:relative; display:inline-grid; gap:3px 16px; padding:6px 13px;
+  justify-items:end; font-variant-numeric:tabular-nums}
+.matrix::before,.matrix::after{content:''; position:absolute; top:0; bottom:0;
+  width:7px; border:1.4px solid #000}
+.matrix::before{left:0; border-right:0}
+.matrix::after{right:0; border-left:0}
+.m2{grid-template-columns:repeat(2,minmax(44px,auto))}
+.m3{grid-template-columns:repeat(3,minmax(42px,auto))}
+
+/* таблицы */
+.tw{overflow-x:auto; margin:0 0 14px}
+table{border-collapse:collapse; width:100%; font-size:16px;
+  font-variant-numeric:tabular-nums}
+caption{caption-side:top; text-align:left; padding:0 0 5px}
+th,td{border:1px solid #000; padding:4px 9px; text-align:center}
+th:first-child,td:first-child{text-align:left}
+thead th{font-weight:bold}
+tr.accept td{font-weight:bold}
+
+/* рисунки */
+figure{margin:14px 0 16px; text-align:center}
+figure svg{display:block; width:100%; max-width:100%; height:auto; margin:0 auto}
+figcaption{margin-top:6px; text-align:center; text-indent:0}
+
+footer{margin-top:26px; font-size:15px; font-style:italic}
+
+/* расчётные схемы — чёрно-белые */
+svg .bar{stroke:#000; stroke-width:2.6; fill:none; stroke-linecap:round}
+svg .bar-thin{stroke:#000; stroke-width:1.6; fill:none}
+svg .hinge{fill:#fff; stroke:#000; stroke-width:1.7}
+svg .hatch-line{stroke:#000; stroke-width:1.6; fill:none}
+svg .hatch{stroke:#000; stroke-width:1.1; fill:none}
+svg .mark{stroke:#000; stroke-width:2.2; fill:none}
+svg .q-line{stroke:#000; stroke-width:1.1; fill:none}
+svg .q-arrow{stroke:#000; stroke-width:1.1; fill:none}
+svg .force{stroke:#000; stroke-width:3.2; fill:none}
+svg .moment{stroke:#000; stroke-width:1.9; fill:none}
+svg .dim{stroke:#000; stroke-width:.9; fill:none}
+svg .ext{stroke:#8a8a8a; stroke-width:.8; fill:none}
+svg .load{stroke:#000; stroke-width:1.4; fill:none}
+svg text{font-family:'Times New Roman','Liberation Serif',Times,serif; fill:#000}
+svg .lbl{font-size:17px}
+svg .sub{font-size:12px} svg .sup{font-size:12px}
+svg .dim-lbl{font-size:15px; font-style:italic}
+</style>

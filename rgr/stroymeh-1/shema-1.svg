@@ -1,0 +1,51 @@
+<svg viewBox="0 0 600 470" role="img" aria-label="Схема 1: рама, защемлённая в стене" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
+<marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="96.0" y1="74.0" x2="214.0" y2="74.0" class="bar"/>
+<line x1="214.0" y1="74.0" x2="214.0" y2="282.0" class="bar"/>
+<line x1="214.0" y1="178.0" x2="332.0" y2="178.0" class="bar"/>
+<line x1="96.0" y1="48.0" x2="96.0" y2="100.0" class="hatch-line"/>
+<line x1="96.0" y1="50.9" x2="103.0" y2="43.9" class="hatch"/>
+<line x1="96.0" y1="56.7" x2="103.0" y2="49.7" class="hatch"/>
+<line x1="96.0" y1="62.4" x2="103.0" y2="55.4" class="hatch"/>
+<line x1="96.0" y1="68.2" x2="103.0" y2="61.2" class="hatch"/>
+<line x1="96.0" y1="74.0" x2="103.0" y2="67.0" class="hatch"/>
+<line x1="96.0" y1="79.8" x2="103.0" y2="72.8" class="hatch"/>
+<line x1="96.0" y1="85.6" x2="103.0" y2="78.6" class="hatch"/>
+<line x1="96.0" y1="91.3" x2="103.0" y2="84.3" class="hatch"/>
+<line x1="96.0" y1="97.1" x2="103.0" y2="90.1" class="hatch"/>
+<line x1="260.0" y1="74.0" x2="260.0" y2="178.0" class="q-line"/>
+<line x1="260.0" y1="74.0" x2="214.0" y2="74.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="260.0" y1="94.8" x2="214.0" y2="94.8" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="260.0" y1="115.6" x2="214.0" y2="115.6" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="260.0" y1="136.4" x2="214.0" y2="136.4" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="260.0" y1="157.2" x2="214.0" y2="157.2" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="260.0" y1="178.0" x2="214.0" y2="178.0" class="q-arrow" marker-end="url(#ahs)"/>
+<text x="276.0" y="130.0" class="lbl" text-anchor="middle">q</text>
+<line x1="332.0" y1="224.0" x2="332.0" y2="178.0" class="force" marker-end="url(#ah)"/>
+<text x="346.0" y="241.0" class="lbl" text-anchor="middle">F</text>
+<path d="M 205.5 296.7 A 17 17 0 1 1 230.7 285.0" class="moment" marker-end="url(#ah)"/>
+<text x="236.0" y="302.0" class="lbl" text-anchor="middle">m</text>
+<line x1="208.5" y1="276.5" x2="219.5" y2="287.5" class="mark"/>
+<line x1="208.5" y1="287.5" x2="219.5" y2="276.5" class="mark"/>
+<text x="200.0" y="276.0" class="lbl" text-anchor="end">K</text>
+<line x1="96.0" y1="288.0" x2="96.0" y2="367.0" class="ext"/>
+<line x1="214.0" y1="288.0" x2="214.0" y2="367.0" class="ext"/>
+<line x1="96.0" y1="360.0" x2="214.0" y2="360.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<text x="155.0" y="353.0" class="dim-lbl" text-anchor="middle">l</text>
+<line x1="214.0" y1="288.0" x2="214.0" y2="367.0" class="ext"/>
+<line x1="332.0" y1="288.0" x2="332.0" y2="367.0" class="ext"/>
+<line x1="214.0" y1="360.0" x2="332.0" y2="360.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<text x="273.0" y="353.0" class="dim-lbl" text-anchor="middle">l</text>
+<line x1="440.0" y1="74.0" x2="440.0" y2="178.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<line x1="435.0" y1="74.0" x2="445.0" y2="74.0" class="dim"/>
+<line x1="435.0" y1="178.0" x2="445.0" y2="178.0" class="dim"/>
+<text x="453.0" y="131.0" class="dim-lbl" text-anchor="start">h</text>
+<line x1="440.0" y1="178.0" x2="440.0" y2="282.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<line x1="435.0" y1="178.0" x2="445.0" y2="178.0" class="dim"/>
+<line x1="435.0" y1="282.0" x2="445.0" y2="282.0" class="dim"/>
+<text x="453.0" y="235.0" class="dim-lbl" text-anchor="start">h</text>
+<text x="112.0" y="250.0" class="lbl" text-anchor="start">Δ<tspan class='sub'>kp</tspan> — ?</text>
+</svg>

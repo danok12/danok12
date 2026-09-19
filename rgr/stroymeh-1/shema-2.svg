@@ -1,0 +1,70 @@
+<svg viewBox="0 0 620 330" role="img" aria-label="Схема 2: рама на трёх опорных стержнях" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
+<marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="96.0" y1="86.0" x2="440.0" y2="86.0" class="bar"/>
+<line x1="96.0" y1="86.0" x2="96.0" y2="226.0" class="bar"/>
+<line x1="268.0" y1="86.0" x2="268.0" y2="226.0" class="bar"/>
+<line x1="96.0" y1="52.0" x2="268.0" y2="52.0" class="q-line"/>
+<line x1="96.0" y1="52.0" x2="96.0" y2="86.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="130.4" y1="52.0" x2="130.4" y2="86.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="164.8" y1="52.0" x2="164.8" y2="86.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="199.2" y1="52.0" x2="199.2" y2="86.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="233.6" y1="52.0" x2="233.6" y2="86.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="268.0" y1="52.0" x2="268.0" y2="86.0" class="q-arrow" marker-end="url(#ahs)"/>
+<text x="182.0" y="44.0" class="lbl" text-anchor="middle">q</text>
+<line x1="50.0" y1="156.0" x2="96.0" y2="156.0" class="force" marker-end="url(#ah)"/>
+<text x="38.0" y="155.0" class="lbl" text-anchor="middle">F</text>
+<path d="M 338.4 95.0 A 18 18 0 1 0 370.9 92.2" class="moment" marker-end="url(#ah)"/>
+<text x="354.0" y="56.0" class="lbl" text-anchor="middle">m</text>
+<circle cx="96.0" cy="226.0" r="5.2" class="hinge"/>
+<line x1="96.0" y1="226.0" x2="96.0" y2="252.0" class="bar-thin"/>
+<circle cx="96.0" cy="252.0" r="5.2" class="hinge"/>
+<line x1="79.0" y1="258.2" x2="113.0" y2="258.2" class="hatch-line"/>
+<line x1="81.4" y1="258.2" x2="74.4" y2="265.2" class="hatch"/>
+<line x1="86.3" y1="258.2" x2="79.3" y2="265.2" class="hatch"/>
+<line x1="91.1" y1="258.2" x2="84.1" y2="265.2" class="hatch"/>
+<line x1="96.0" y1="258.2" x2="89.0" y2="265.2" class="hatch"/>
+<line x1="100.9" y1="258.2" x2="93.9" y2="265.2" class="hatch"/>
+<line x1="105.7" y1="258.2" x2="98.7" y2="265.2" class="hatch"/>
+<line x1="110.6" y1="258.2" x2="103.6" y2="265.2" class="hatch"/>
+<circle cx="268.0" cy="226.0" r="5.2" class="hinge"/>
+<line x1="268.0" y1="226.0" x2="294.0" y2="226.0" class="bar-thin"/>
+<circle cx="294.0" cy="226.0" r="5.2" class="hinge"/>
+<line x1="300.2" y1="209.0" x2="300.2" y2="243.0" class="hatch-line"/>
+<line x1="300.2" y1="211.4" x2="293.2" y2="204.4" class="hatch"/>
+<line x1="300.2" y1="216.3" x2="293.2" y2="209.3" class="hatch"/>
+<line x1="300.2" y1="221.1" x2="293.2" y2="214.1" class="hatch"/>
+<line x1="300.2" y1="226.0" x2="293.2" y2="219.0" class="hatch"/>
+<line x1="300.2" y1="230.9" x2="293.2" y2="223.9" class="hatch"/>
+<line x1="300.2" y1="235.7" x2="293.2" y2="228.7" class="hatch"/>
+<line x1="300.2" y1="240.6" x2="293.2" y2="233.6" class="hatch"/>
+<circle cx="440.0" cy="86.0" r="5.2" class="hinge"/>
+<line x1="440.0" y1="86.0" x2="466.0" y2="86.0" class="bar-thin"/>
+<circle cx="466.0" cy="86.0" r="5.2" class="hinge"/>
+<line x1="472.2" y1="69.0" x2="472.2" y2="103.0" class="hatch-line"/>
+<line x1="472.2" y1="71.4" x2="465.2" y2="64.4" class="hatch"/>
+<line x1="472.2" y1="76.3" x2="465.2" y2="69.3" class="hatch"/>
+<line x1="472.2" y1="81.1" x2="465.2" y2="74.1" class="hatch"/>
+<line x1="472.2" y1="86.0" x2="465.2" y2="79.0" class="hatch"/>
+<line x1="472.2" y1="90.9" x2="465.2" y2="83.9" class="hatch"/>
+<line x1="472.2" y1="95.7" x2="465.2" y2="88.7" class="hatch"/>
+<line x1="472.2" y1="100.6" x2="465.2" y2="93.6" class="hatch"/>
+<line x1="498.0" y1="86.0" x2="498.0" y2="156.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<line x1="493.0" y1="86.0" x2="503.0" y2="86.0" class="dim"/>
+<line x1="493.0" y1="156.0" x2="503.0" y2="156.0" class="dim"/>
+<text x="511.0" y="126.0" class="dim-lbl" text-anchor="start">h/2</text>
+<line x1="498.0" y1="156.0" x2="498.0" y2="226.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<line x1="493.0" y1="156.0" x2="503.0" y2="156.0" class="dim"/>
+<line x1="493.0" y1="226.0" x2="503.0" y2="226.0" class="dim"/>
+<text x="511.0" y="196.0" class="dim-lbl" text-anchor="start">h/2</text>
+<line x1="96.0" y1="232.0" x2="96.0" y2="295.0" class="ext"/>
+<line x1="268.0" y1="232.0" x2="268.0" y2="295.0" class="ext"/>
+<line x1="96.0" y1="288.0" x2="268.0" y2="288.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<text x="182.0" y="281.0" class="dim-lbl" text-anchor="middle">l</text>
+<line x1="268.0" y1="232.0" x2="268.0" y2="295.0" class="ext"/>
+<line x1="440.0" y1="92.0" x2="440.0" y2="295.0" class="ext"/>
+<line x1="268.0" y1="288.0" x2="440.0" y2="288.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<text x="354.0" y="281.0" class="dim-lbl" text-anchor="middle">l</text>
+</svg>
