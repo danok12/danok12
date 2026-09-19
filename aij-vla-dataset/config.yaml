@@ -1,0 +1,171 @@
+# ============================================================================
+#  AIJ Robotics — конфигурация пайплайна построения vision-language датасета
+#  из робототехнических траекторий (LeRobot v3) и эгоцентрических видео.
+#
+#  Запуск:
+#    python generate_dataset.py --input /data/raw --output /output/annotations.jsonl \
+#                               --config config.yaml
+#
+#  Все значения ниже влияют на результат; при фиксированных входных данных,
+#  конфиге и seed генерация побитово воспроизводима.
+# ============================================================================
+
+version: 1
+seed: 42
+
+input:
+  # Автообнаружение: каждая поддиректория --input, содержащая meta/info.json,
+  # считается LeRobot v3 датасетом; директории с видеофайлами — эгоцентрическим
+  # источником. Явный список sources отключает автообнаружение.
+  discover: true
+  sources: []
+  # Пример явного описания источника:
+  # sources:
+  #   - {name: bridge, type: lerobot, path: /data/raw/BridgeData2_LeRobot_v3, weight: 1.0}
+  #   - {name: ego,    type: video_folder, path: /data/raw/Egocentric-100K, weight: 0.3}
+  video_extensions: [".mp4", ".webm", ".mov", ".mkv"]
+  # Источники с этими именами (подстрока) пропускаются.
+  exclude: []
+
+output:
+  # relative — пути в JSONL относительно каталога annotations.jsonl (рекомендуется:
+  # так их резолвит vlm.media_dir в пайплайне участника); absolute — полные пути.
+  path_mode: relative
+  frames_dirname: images
+  frame_format: jpg
+  frame_quality: 92
+  frame_long_side: 512      # кадры ресайзятся по длинной стороне перед записью
+  # Доля примеров, уходящая в val-файл (annotations.val.jsonl). 0 — не делить.
+  val_fraction: 0.02
+  # Разбиение делается по эпизодам, а не по примерам: кадры одного эпизода
+  # не попадают одновременно в train и val.
+  split_by: episode
+  shuffle: true
+  # Сайдкар с провенансом каждого примера (source/episode/frame/task/template).
+  write_meta: true
+  # Удалять кадры, которые после балансировки не попали ни в один пример.
+  prune_unused_frames: true
+
+budget:
+  max_samples: 400000            # жёсткий потолок итогового датасета
+  max_samples_per_source: null   # null — без ограничения
+  max_episodes_per_source: null
+  max_samples_per_episode: 24
+  max_frames_per_episode: 12     # сколько кадров эпизода вообще сохраняется на диск
+
+frames:
+  # keyframes — кадры вокруг событий (захват, подъём, отпускание, застой);
+  # uniform — равномерная сетка; mixed — объединение обоих множеств.
+  strategy: mixed
+  uniform_stride: 0        # 0 — шаг подбирается из max_frames_per_episode
+  min_gap_frames: 3        # минимальный зазор между выбранными кадрами
+  skip_head_frames: 1      # первые кадры часто пустые/смазанные
+  skip_tail_frames: 0
+  quality:
+    enabled: true
+    min_laplacian_var: 8.0   # фильтр размытых кадров
+    min_mean_luma: 10.0      # чёрные кадры
+    max_mean_luma: 248.0     # засвеченные кадры
+  dedup:
+    enabled: true
+    phash_hamming: 4         # порог различия dHash внутри эпизода
+
+cameras:
+  # Какие камеры использовать. auto — все из meta/info.json.
+  keys: auto
+  max_per_episode: 2
+  # Автоопределение наручной камеры по доле глобального движения кадра.
+  detect_wrist: true
+  wrist_motion_ratio: 0.10
+
+kinematics:
+  # Схема observation.state / action определяется автоматически (по names из
+  # info.json, затем по размерности). Здесь — ручные переопределения по имени
+  # источника, если автоопределение ошиблось.
+  profiles: {}
+  # profiles:
+  #   language_table: {xyz: [0, 1], rot: [], gripper: [], action_gripper: null}
+  gripper:
+    auto_calibrate: true   # знак канала «схвата» подбирается по данным (корреляция
+                           # команды с изменением раскрытия пальцев)
+    smooth_window: 3
+    min_calibration_frames: 200
+  events:
+    velocity_eps: 0.004    # порог «движение почти остановилось» (в единицах state)
+    stall_window: 10       # длина окна застоя
+    lift_delta: 0.02       # прирост z, считающийся подъёмом
+    slip_window: 8         # окно проверки проскальзывания после захвата
+
+grounding:
+  # Локализация подвижной области (манипулятор + удерживаемый объект) по
+  # разнице кадров. Без нейросетевых детекторов: только OpenCV/NumPy.
+  enabled: true
+  min_confidence: 0.45     # примеры ниже порога не попадают в датасет
+  min_box_area_frac: 0.004
+  max_box_area_frac: 0.45
+  diff_percentile: 98.0
+  morph_kernel: 5
+  track_window: 2          # разница между t и t-track_window
+  static_camera_only: true # для наручной камеры разностная локализация не годится
+
+language:
+  # Язык датасета. Бенчмарки англоязычные, поэтому по умолчанию английский.
+  locale: en
+  # Максимальная доля примеров на один текстовый шаблон (антипереобучение формой).
+  max_share_per_template: 0.04
+  # Нижняя граница квоты шаблона: на маленьких прогонах доля 4% вырождается
+  # в 1 пример и убивает разнообразие.
+  min_template_cap: 25
+  # Доля примеров в формате множественного выбора (ERQA/BLINK/MMMU/EmbSpatial
+  # оцениваются как MCQ — формат ответа важен не меньше содержания).
+  mcq_share: 0.4
+  mcq_answer_prefix: "Answer: "
+  mcq_balance_letters: true
+  mcq_min_options: 3
+  mcq_max_options: 4
+
+tasks:
+  # weight — относительная доля в итоговом датасете; enabled: false выключает
+  # генератор полностью. Фактические доли печатаются в stats.json.
+  gripper_state:        {enabled: true, weight: 0.8}
+  phase:                {enabled: true, weight: 1.0}
+  progress:             {enabled: true, weight: 0.9}
+  subtask:              {enabled: true, weight: 1.2}
+  instruction_decomp:   {enabled: true, weight: 0.5}
+  instruction_check:    {enabled: true, weight: 0.7}
+  object_role:          {enabled: true, weight: 0.6}
+  spatial_relation:     {enabled: true, weight: 0.9}
+  grounding_box:        {enabled: true, weight: 0.5}
+  grounding_point:      {enabled: true, weight: 0.4}
+  temporal_order:       {enabled: true, weight: 0.8}
+  progress_compare:     {enabled: true, weight: 0.5}
+  frame_transition:     {enabled: true, weight: 0.8}
+  multiview_match:      {enabled: true, weight: 0.5}
+  view_role:            {enabled: true, weight: 0.3}
+  episode_summary:      {enabled: true, weight: 0.6}
+  failure_diagnosis:    {enabled: true, weight: 0.7}
+  recovery_instruction: {enabled: true, weight: 0.6}
+  scene_caption:        {enabled: true, weight: 0.7}
+  # Эгоцентрические видео (Egocentric-100K): без проприоцепции, поэтому только
+  # проверяемые сигналы — порядок кадров и смещение точки обзора.
+  ego_temporal_order:   {enabled: true, weight: 0.4}
+  ego_transition:       {enabled: true, weight: 0.4}
+
+captioner:
+  # Опциональное обогащение локальной VLM (OpenAI-compatible endpoint, поднятый
+  # на тех же GPU). По умолчанию выключено: базовый пайплайн не требует ни сети,
+  # ни сторонних весов и полностью детерминирован.
+  enabled: false
+  base_url: "http://127.0.0.1:8001"
+  model: ""
+  api_token: ""
+  timeout_s: 60
+  workers: 8
+  max_samples: 0
+  retries: 2
+
+runtime:
+  num_workers: 0        # 0 — по числу CPU (не больше 32)
+  chunk_episodes: 8     # сколько эпизодов уходит в один воркер-таск
+  log_level: INFO
+  progress: true
