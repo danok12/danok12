@@ -362,6 +362,8 @@ M, Q, N для пяти схем варианта. Исходные данные
 <text x="343.7" y="101.0" class="ep-lbl" text-anchor="end">122</text>
 <rect x="315.9" y="273.0" width="27.8" height="15.0" class="ep-bg"/>
 <text x="341.7" y="285.0" class="ep-lbl" text-anchor="end">130</text>
+<rect x="316.4" y="181.0" width="27.8" height="15.0" class="ep-bg"/>
+<text x="342.2" y="193.0" class="ep-lbl" text-anchor="end">128</text>
 <rect x="354.2" y="273.0" width="20.2" height="15.0" class="ep-bg"/>
 <text x="372.4" y="285.0" class="ep-lbl" text-anchor="end">10</text>
 <rect x="354.2" y="457.0" width="20.2" height="15.0" class="ep-bg"/>
@@ -524,10 +526,12 @@ M, Q, N для пяти схем варианта. Исходные данные
 <thead><tr><th>участок</th><th>N, кН</th><th>Q, кН</th><th>M, кН·м (начало → конец)</th></tr></thead>
 <tbody>
 <tr><td>A–B, ригель</td><td>−4</td><td>−20</td><td>242 → 122</td></tr>
-<tr><td>B–C, стойка с q</td><td>−20</td><td>4 → 0</td><td>122 → 130 (парабола)</td></tr>
+<tr><td>B–C, стойка с q</td><td>−20</td><td>4 → 0</td><td>122 → 128 → 130 (парабола)</td></tr>
 <tr><td>C–D, консоль</td><td>0</td><td>−20</td><td>120 → 0</td></tr>
 <tr><td>C–K, стойка</td><td>0</td><td>0</td><td>10 = const</td></tr>
 </tbody></table></div>
+
+<p>На стойке B–C эпюра M — парабола: участок загружен распределённой нагрузкой. Стрелка параболы равна q·h²/8 = 1·4²/8 = 2 кН·м, и при наибольшей ординате схемы 242 кН·м это примерно полмиллиметра на листе — кривизну на глаз не отличить от прямой, поэтому ордината середины (128 кН·м) подписана на самой эпюре и вынесена в таблицу. То же на схемах 2–5: середина каждого параболического участка подписана числом.</p>
 
 <p><b>Проверки эпюр.</b> В заделке M = 242 кН·м — совпало с реакцией. На свободном
 конце D момент равен нулю, в точке K равен приложенному моменту 10 кН·м. Узел C:
@@ -733,6 +737,8 @@ R₃ — горизонтальный у правого конца. Уравне
 <text x="104.0" y="27.0" class="ep-lbl" text-anchor="middle">40</text>
 <rect x="369.9" y="42.9" width="20.2" height="15.0" class="ep-bg"/>
 <text x="380.0" y="54.9" class="ep-lbl" text-anchor="middle">22</text>
+<rect x="220.5" y="35.9" width="43.0" height="15.0" class="ep-bg"/>
+<text x="242.0" y="47.9" class="ep-lbl" text-anchor="middle">26,50</text>
 <rect x="369.9" y="61.5" width="20.2" height="15.0" class="ep-bg"/>
 <text x="380.0" y="73.5" class="ep-lbl" text-anchor="middle">10</text>
 <rect x="507.9" y="61.5" width="20.2" height="15.0" class="ep-bg"/>
@@ -979,7 +985,7 @@ R₃ — горизонтальный у правого конца. Уравне
 <div class="tw"><table>
 <thead><tr><th>участок</th><th>N, кН</th><th>Q, кН</th><th>M, кН·м</th></tr></thead>
 <tbody>
-<tr><td>L–M, левый пролёт с q</td><td>−20</td><td>6 → 0</td><td>40 → 22 (парабола)</td></tr>
+<tr><td>L–M, левый пролёт с q</td><td>−20</td><td>6 → 0</td><td>40 → 26,50 → 22 (парабола)</td></tr>
 <tr><td>M–S, правый пролёт до m</td><td>−17</td><td>0</td><td>10 = const</td></tr>
 <tr><td>S–E, правый пролёт после m</td><td>−17</td><td>0</td><td>0</td></tr>
 <tr><td>L–P, стойка над F</td><td>−6</td><td>−20</td><td>40 → 0</td></tr>
@@ -1199,6 +1205,8 @@ R₃ — горизонтальный у правого конца. Уравне
 <text x="207.8" y="285.0" class="ep-lbl" text-anchor="end">80</text>
 <rect x="504.1" y="199.0" width="27.8" height="15.0" class="ep-bg"/>
 <text x="518.0" y="211.0" class="ep-lbl" text-anchor="middle">170</text>
+<rect x="358.5" y="231.6" width="43.0" height="15.0" class="ep-bg"/>
+<text x="380.0" y="243.6" class="ep-lbl" text-anchor="middle">80,50</text>
 <rect x="579.4" y="273.0" width="27.8" height="15.0" class="ep-bg"/>
 <text x="581.4" y="285.0" class="ep-lbl" text-anchor="start">160</text>
 </svg><figcaption>Схема 3 — эпюра M, кН·м</figcaption></figure>
@@ -1416,7 +1424,7 @@ R₃ — горизонтальный у правого конца. Уравне
 <tbody>
 <tr><td>K–J, верх стойки</td><td>0</td><td>20</td><td>0 → 80</td></tr>
 <tr><td>J–LB, низ стойки</td><td>25,33</td><td>−20</td><td>80 → 0</td></tr>
-<tr><td>J–R, ригель с q</td><td>−40</td><td>−25,33 → −31,33</td><td>0 → 170</td></tr>
+<tr><td>J–R, ригель с q</td><td>−40</td><td>−25,33 → −31,33</td><td>0 → 80,50 → 170 (парабола)</td></tr>
 <tr><td>R–RB, правая стойка</td><td>−31,33</td><td>40</td><td>160 → 0</td></tr>
 </tbody></table></div>
 
@@ -1641,6 +1649,8 @@ R₃ — горизонтальный у правого конца. Уравне
 <text x="692.3" y="101.0" class="ep-lbl" text-anchor="start">90</text>
 <rect x="721.0" y="273.0" width="27.8" height="15.0" class="ep-bg"/>
 <text x="723.0" y="285.0" class="ep-lbl" text-anchor="start">178</text>
+<rect x="705.0" y="181.0" width="27.8" height="15.0" class="ep-bg"/>
+<text x="707.0" y="193.0" class="ep-lbl" text-anchor="start">132</text>
 </svg><figcaption>Схема 4 — эпюра M, кН·м</figcaption></figure>
 <figure><svg style="width:136mm" viewBox="65 73 631 276" role="img" aria-label="Схема 4: эпюра 1" xmlns="http://www.w3.org/2000/svg">
 <line x1="104.0" y1="280.0" x2="104.0" y2="314.4" class="ep-hatch"/>
@@ -1886,7 +1896,7 @@ R₃ — горизонтальный у правого конца. Уравне
 <tr><td>K–C, низ справа</td><td>0</td><td>−13,33</td><td>40 → 80</td></tr>
 <tr><td>C–H, левая стойка</td><td>13,33</td><td>20</td><td>80 → 0</td></tr>
 <tr><td>H–R, ригель</td><td>20</td><td>−13,33</td><td>0 → 80</td></tr>
-<tr><td>R–RB, правая стойка с q</td><td>−13,33</td><td>−20 → −24</td><td>90 → 178 (парабола)</td></tr>
+<tr><td>R–RB, правая стойка с q</td><td>−13,33</td><td>−20 → −24</td><td>90 → 132 → 178 (парабола)</td></tr>
 </tbody></table></div>
 
 <p><b>Проверки.</b> В шарнире H момент равен нулю с обеих сторон. В заделке
@@ -2152,6 +2162,8 @@ M = 178 кН·м — совпало с реакцией. Узел R: 80 (риг�
 <line x1="537.8" y1="96.0" x2="664.0" y2="96.0" class="ep-axis"/>
 <rect x="85.9" y="15.0" width="20.2" height="15.0" class="ep-bg"/>
 <text x="96.0" y="27.0" class="ep-lbl" text-anchor="middle">36</text>
+<rect x="137.6" y="53.8" width="43.0" height="15.0" class="ep-bg"/>
+<text x="159.1" y="65.8" class="ep-lbl" text-anchor="middle">13,50</text>
 <rect x="267.6" y="108.8" width="35.4" height="15.0" class="ep-bg"/>
 <text x="285.3" y="120.8" class="ep-lbl" text-anchor="middle">4,50</text>
 <rect x="405.3" y="61.5" width="12.6" height="15.0" class="ep-bg"/>
@@ -2311,7 +2323,7 @@ M = 178 кН·м — совпало с реакцией. Узел R: 80 (риг�
 <div class="tw"><table>
 <thead><tr><th>участок</th><th>длина, м</th><th>Q, кН</th><th>M, кН·м</th></tr></thead>
 <tbody>
-<tr><td>A–H₁ (с q)</td><td>6</td><td>9 → 3</td><td>36 → 0 (парабола)</td></tr>
+<tr><td>A–H₁ (с q)</td><td>6</td><td>9 → 3</td><td>36 → 13,50 → 0 (парабола)</td></tr>
 <tr><td>H₁–H₂ (с q)</td><td>6</td><td>3 → −3</td><td>0 → 0, в середине 4,50</td></tr>
 <tr><td>H₂–B</td><td>3</td><td>−3</td><td>0 → 9</td></tr>
 <tr><td>B–F</td><td>3</td><td>9,83</td><td>9 → 20,50</td></tr>

@@ -133,4 +133,6 @@
 <text x="692.3" y="101.0" class="ep-lbl" text-anchor="start">90</text>
 <rect x="721.0" y="273.0" width="27.8" height="15.0" class="ep-bg"/>
 <text x="723.0" y="285.0" class="ep-lbl" text-anchor="start">178</text>
+<rect x="705.0" y="181.0" width="27.8" height="15.0" class="ep-bg"/>
+<text x="707.0" y="193.0" class="ep-lbl" text-anchor="start">132</text>
 </svg>

@@ -106,6 +106,8 @@
 <text x="343.7" y="101.0" class="ep-lbl" text-anchor="end">122</text>
 <rect x="315.9" y="273.0" width="27.8" height="15.0" class="ep-bg"/>
 <text x="341.7" y="285.0" class="ep-lbl" text-anchor="end">130</text>
+<rect x="316.4" y="181.0" width="27.8" height="15.0" class="ep-bg"/>
+<text x="342.2" y="193.0" class="ep-lbl" text-anchor="end">128</text>
 <rect x="354.2" y="273.0" width="20.2" height="15.0" class="ep-bg"/>
 <text x="372.4" y="285.0" class="ep-lbl" text-anchor="end">10</text>
 <rect x="354.2" y="457.0" width="20.2" height="15.0" class="ep-bg"/>

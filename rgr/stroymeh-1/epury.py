@@ -118,6 +118,12 @@ def labels(s, pan, kind, sc):
         sign = -1.0 if kind == 2 else 1.0
         marks = [F(0), F(1)]
         d = next((x for x in s.dists if x[0] == mem), None)
+        if d is not None and kind == 2:
+            # под распределённой нагрузкой эпюра M — парабола; её середину
+            # подписываем всегда. Стрелка бывает меньше толщины линии
+            # (на схеме 1 это 2 кН·м при наибольшей ординате 242), и тогда
+            # кривизну видно только по числу.
+            marks.append(F(1, 2))
         if d is not None:
             q0 = float(s.internal(mem, F(0))[1])
             q1 = float(s.internal(mem, F(1))[1])

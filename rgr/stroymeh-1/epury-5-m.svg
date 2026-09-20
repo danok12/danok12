@@ -147,6 +147,8 @@
 <line x1="537.8" y1="96.0" x2="664.0" y2="96.0" class="ep-axis"/>
 <rect x="85.9" y="15.0" width="20.2" height="15.0" class="ep-bg"/>
 <text x="96.0" y="27.0" class="ep-lbl" text-anchor="middle">36</text>
+<rect x="137.6" y="53.8" width="43.0" height="15.0" class="ep-bg"/>
+<text x="159.1" y="65.8" class="ep-lbl" text-anchor="middle">13,50</text>
 <rect x="267.6" y="108.8" width="35.4" height="15.0" class="ep-bg"/>
 <text x="285.3" y="120.8" class="ep-lbl" text-anchor="middle">4,50</text>
 <rect x="405.3" y="61.5" width="12.6" height="15.0" class="ep-bg"/>
