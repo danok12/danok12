@@ -300,9 +300,43 @@ def shema5():
     return s
 
 
+# ===================================================== схема 1 с реакциями
+def shema1_reakcii():
+    """Та же схема 1, но с найденными опорными реакциями в заделке."""
+    w, h = 660, 470
+    L, H = 118, 104
+    x0, xa = 150, 268
+    yt = 74
+    yb, yk = yt + H, yt + 2 * H
+    s = HEAD.format(w=w, h=h, alt="Схема 1: опорные реакции в заделке")
+    s += ln((x0, yt), (xa, yt)) + ln((xa, yt), (xa, yk))
+    s += ln((xa, yb), (xa + L, yb))
+    s += fixed((x0, yt), 90, 52, -1)
+    s += qload((xa, yt), (xa, yb), (46, 0), 5, "q = 1 кН/м", (54, 4))
+    s += force((xa + L, yb), 0, -1, "F = 20 кН", (44, 0))
+    s += moment((xa, yk), "m = 10 кН·м", 15, 120, 250, 1, (72, 22))
+    s += cross((xa, yk))
+    s += txt(xa - 14, yk - 6, "K", "lbl", "end")
+    # реакции
+    s += force((x0 + 26, yt), 1, 0, "", (0, 0), 40)
+    s += txt(x0 + 34, yt - 10, "R<tspan class='sub'>Ax</tspan> = 4 кН", "lbl", "start")
+    s += force((x0 + 12, yt + 54), 0, 1, "", (0, 0), 44)
+    s += txt(x0 + 20, yt + 52, "R<tspan class='sub'>Ay</tspan> = 20 кН", "lbl", "start")
+    s += moment((x0 - 30, yt + 72), "", 19, 250, -260, -1)
+    s += txt(x0 - 30, yt + 112, "M<tspan class='sub'>A</tspan> = 242 кН·м", "lbl")
+    s += txt(x0 - 16, yt - 14, "A", "lbl", "end")
+    s += dim((x0, yk), (xa, yk), "l = 6 м", 78)
+    s += dim((xa, yk), (xa + L, yk), "l = 6 м", 78)
+    s += dim((xa, yt), (xa, yb), "h = 4 м", 226, True)
+    s += dim((xa, yb), (xa, yk), "h = 4 м", 226, True)
+    s += '</svg>\n'
+    return s
+
+
 if __name__ == "__main__":
     for name, fn in (("shema-1", shema1), ("shema-2", shema2),
                      ("shema-3", shema3), ("shema-4", shema4),
-                     ("shema-5", shema5)):
+                     ("shema-5", shema5),
+                     ("shema-1-reakcii", shema1_reakcii)):
         open(name + ".svg", "w", encoding="utf-8").write(fn())
         print("записано", name + ".svg")

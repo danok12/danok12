@@ -1,0 +1,60 @@
+<svg viewBox="0 0 660 470" role="img" aria-label="Схема 1: опорные реакции в заделке" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
+<marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="150.0" y1="74.0" x2="268.0" y2="74.0" class="bar"/>
+<line x1="268.0" y1="74.0" x2="268.0" y2="282.0" class="bar"/>
+<line x1="268.0" y1="178.0" x2="386.0" y2="178.0" class="bar"/>
+<line x1="150.0" y1="48.0" x2="150.0" y2="100.0" class="hatch-line"/>
+<line x1="150.0" y1="50.9" x2="157.0" y2="43.9" class="hatch"/>
+<line x1="150.0" y1="56.7" x2="157.0" y2="49.7" class="hatch"/>
+<line x1="150.0" y1="62.4" x2="157.0" y2="55.4" class="hatch"/>
+<line x1="150.0" y1="68.2" x2="157.0" y2="61.2" class="hatch"/>
+<line x1="150.0" y1="74.0" x2="157.0" y2="67.0" class="hatch"/>
+<line x1="150.0" y1="79.8" x2="157.0" y2="72.8" class="hatch"/>
+<line x1="150.0" y1="85.6" x2="157.0" y2="78.6" class="hatch"/>
+<line x1="150.0" y1="91.3" x2="157.0" y2="84.3" class="hatch"/>
+<line x1="150.0" y1="97.1" x2="157.0" y2="90.1" class="hatch"/>
+<line x1="314.0" y1="74.0" x2="314.0" y2="178.0" class="q-line"/>
+<line x1="314.0" y1="74.0" x2="268.0" y2="74.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="314.0" y1="94.8" x2="268.0" y2="94.8" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="314.0" y1="115.6" x2="268.0" y2="115.6" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="314.0" y1="136.4" x2="268.0" y2="136.4" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="314.0" y1="157.2" x2="268.0" y2="157.2" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="314.0" y1="178.0" x2="268.0" y2="178.0" class="q-arrow" marker-end="url(#ahs)"/>
+<text x="368.0" y="130.0" class="lbl" text-anchor="middle">q = 1 кН/м</text>
+<line x1="386.0" y1="224.0" x2="386.0" y2="178.0" class="force" marker-end="url(#ah)"/>
+<text x="430.0" y="241.0" class="lbl" text-anchor="middle">F = 20 кН</text>
+<path d="M 260.5 295.0 A 15 15 0 1 1 282.8 284.6" class="moment" marker-end="url(#ah)"/>
+<text x="340.0" y="304.0" class="lbl" text-anchor="middle">m = 10 кН·м</text>
+<line x1="262.5" y1="276.5" x2="273.5" y2="287.5" class="mark"/>
+<line x1="262.5" y1="287.5" x2="273.5" y2="276.5" class="mark"/>
+<text x="254.0" y="276.0" class="lbl" text-anchor="end">K</text>
+<line x1="136.0" y1="74.0" x2="176.0" y2="74.0" class="force" marker-end="url(#ah)"/>
+<text x="124.0" y="79.0" class="lbl" text-anchor="middle"></text>
+<text x="184.0" y="64.0" class="lbl" text-anchor="start">R<tspan class='sub'>Ax</tspan> = 4 кН</text>
+<line x1="162.0" y1="84.0" x2="162.0" y2="128.0" class="force" marker-end="url(#ah)"/>
+<text x="162.0" y="77.0" class="lbl" text-anchor="middle"></text>
+<text x="170.0" y="126.0" class="lbl" text-anchor="start">R<tspan class='sub'>Ay</tspan> = 20 кН</text>
+<path d="M 113.5 128.1 A 19 19 0 1 0 103.5 155.5" class="moment" marker-end="url(#ah)"/>
+<text x="120.0" y="146.0" class="lbl" text-anchor="middle"></text>
+<text x="120.0" y="186.0" class="lbl" text-anchor="middle">M<tspan class='sub'>A</tspan> = 242 кН·м</text>
+<text x="134.0" y="60.0" class="lbl" text-anchor="end">A</text>
+<line x1="150.0" y1="288.0" x2="150.0" y2="367.0" class="ext"/>
+<line x1="268.0" y1="288.0" x2="268.0" y2="367.0" class="ext"/>
+<line x1="150.0" y1="360.0" x2="268.0" y2="360.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<text x="209.0" y="353.0" class="dim-lbl" text-anchor="middle">l = 6 м</text>
+<line x1="268.0" y1="288.0" x2="268.0" y2="367.0" class="ext"/>
+<line x1="386.0" y1="288.0" x2="386.0" y2="367.0" class="ext"/>
+<line x1="268.0" y1="360.0" x2="386.0" y2="360.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<text x="327.0" y="353.0" class="dim-lbl" text-anchor="middle">l = 6 м</text>
+<line x1="494.0" y1="74.0" x2="494.0" y2="178.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<line x1="489.0" y1="74.0" x2="499.0" y2="74.0" class="dim"/>
+<line x1="489.0" y1="178.0" x2="499.0" y2="178.0" class="dim"/>
+<text x="507.0" y="131.0" class="dim-lbl" text-anchor="start">h = 4 м</text>
+<line x1="494.0" y1="178.0" x2="494.0" y2="282.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<line x1="489.0" y1="178.0" x2="499.0" y2="178.0" class="dim"/>
+<line x1="489.0" y1="282.0" x2="499.0" y2="282.0" class="dim"/>
+<text x="507.0" y="235.0" class="dim-lbl" text-anchor="start">h = 4 м</text>
+</svg>
