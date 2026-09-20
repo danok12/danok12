@@ -13,6 +13,9 @@
 #   --vla-dataset PATH   HuggingFaceVLA/libero @ v3.0        (по умолчанию /data/vla)
 #   --run-name NAME      имя прогона обучения                (по умолчанию aij_run)
 #   --stage NAME         data|dataset|train|package|all      (по умолчанию all)
+#   --preset NAME        default|single-gpu|minimal          (по умолчанию default)
+#                        single-gpu и minimal уменьшают датасет, minimal ещё и
+#                        подставляет укороченные шаблоны обучения
 #   --pilot N            пилот: N эпизодов на источник и частичная выгрузка данных
 #   --force              переделать стадию, даже если результат уже есть
 #   --dry-run            только показать команды
@@ -20,7 +23,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PARTICIPANT=""; DATA_ROOT="/data/raw"; WORK="/data/vlm"; VLA_DATASET="/data/vla"
-RUN_NAME="aij_run"; STAGE="all"; PILOT=0; FORCE=0; DRY=0
+RUN_NAME="aij_run"; STAGE="all"; PILOT=0; FORCE=0; DRY=0; PRESET="default"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -30,6 +33,7 @@ while [[ $# -gt 0 ]]; do
         --vla-dataset) VLA_DATASET="$2"; shift 2 ;;
         --run-name) RUN_NAME="$2"; shift 2 ;;
         --stage) STAGE="$2"; shift 2 ;;
+        --preset) PRESET="$2"; shift 2 ;;
         --pilot) PILOT="$2"; shift 2 ;;
         --force) FORCE=1; shift ;;
         --dry-run) DRY=1; shift ;;
@@ -39,6 +43,15 @@ while [[ $# -gt 0 ]]; do
 done
 
 LOG_DIR="$WORK/logs"
+# Конфиг генератора по выбранному пресету.
+config_path() {
+    if [[ "$PRESET" == "default" ]]; then
+        echo "$ROOT/config.yaml"
+    else
+        echo "$ROOT/src/presets/config.$PRESET.yaml"
+    fi
+}
+
 say() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 note() { printf '   %s\n' "$*"; }
 run() {
@@ -149,7 +162,14 @@ stage_dataset() {
     if [[ "$FORCE" == "1" || ! -f "$WORK/train.jsonl" ]]; then
         note "самопроверка генератора"
         run bash "$ROOT/src/tools/run_smoke.sh" "$WORK/smoke"
-        local args=(--input "$DATA_ROOT" --output "$WORK/train.jsonl" --config "$ROOT/config.yaml")
+        local config
+        config="$(config_path)"
+        if [[ ! -f "$config" && "$DRY" != "1" ]]; then
+            echo "нет конфига пресета: $config" >&2
+            exit 3
+        fi
+        note "конфиг: $config"
+        local args=(--input "$DATA_ROOT" --output "$WORK/train.jsonl" --config "$config")
         [[ "$PILOT" -gt 0 ]] && args+=(--limit-episodes "$PILOT")
         if [[ "$PILOT" -gt 0 ]]; then
             note "генерация (пилот: $PILOT эпизодов на источник)"
@@ -178,8 +198,27 @@ PY
 }
 
 # ----------------------------------------------------------- 3. обучение
+# Укороченные шаблоны обучения кладутся на место шаблонов организатора,
+# оригиналы сохраняются рядом с суффиксом .orig.
+apply_training_preset() {
+    local src_dir="$ROOT/src/presets"
+    local dst_dir="$PARTICIPANT/configs"
+    local pair
+    for pair in "vlm_sft.$PRESET.yaml:vlm_sft.yaml" "vla_libero.$PRESET.yaml:vla_libero.yaml"; do
+        local src="${pair%%:*}"
+        local dst="${pair##*:}"
+        [[ -f "$src_dir/$src" ]] || continue
+        if [[ -f "$dst_dir/$dst" && ! -f "$dst_dir/$dst.orig" ]]; then
+            run cp "$dst_dir/$dst" "$dst_dir/$dst.orig"
+        fi
+        run cp "$src_dir/$src" "$dst_dir/$dst"
+        note "шаблон обучения: $src -> configs/$dst (оригинал в $dst.orig)"
+    done
+}
+
 stage_train() {
     say "3/4 Обучение VLM и action-эксперта"
+    [[ "$PRESET" != "default" ]] && apply_training_preset
     [[ -d "$VLA_DATASET/meta" ]] || note "ВНИМАНИЕ: в $VLA_DATASET нет meta/ — нужен HuggingFaceVLA/libero @ v3.0"
     local config="$PARTICIPANT/configs/participant_generated.yaml"
     if [[ "$DRY" == "1" ]]; then

@@ -1,0 +1,165 @@
+# Минимальный прогон: датасет на ~25k примеров.
+#
+# Цель — получить валидный submission.zip на одной потребительской карте
+# (12 ГБ) за примерно сутки машинного времени. Качество ниже, чем на полном
+# протоколе, но решение получается завершённым.
+#
+#   python generate_dataset.py --input /data/raw --output /data/vlm/train.jsonl \
+#       --config src/presets/config.minimal.yaml
+#
+# Вместе с ним используются шаблоны обучения из этого же каталога:
+#   vlm_sft.minimal.yaml, vla_libero.minimal.yaml
+version: 1
+seed: 42
+input:
+  discover: true
+  sources: []
+  video_extensions:
+  - .mp4
+  - .webm
+  - .mov
+  - .mkv
+  exclude: []
+output:
+  path_mode: relative
+  frames_dirname: images
+  frame_format: jpg
+  frame_quality: 92
+  frame_long_side: 384
+  val_fraction: 0.02
+  split_by: episode
+  shuffle: true
+  write_meta: true
+  prune_unused_frames: true
+budget:
+  max_samples: 25000
+  max_samples_per_source: null
+  max_episodes_per_source: 800
+  max_samples_per_episode: 14
+  max_frames_per_episode: 8
+frames:
+  strategy: mixed
+  uniform_stride: 0
+  min_gap_frames: 3
+  skip_head_frames: 1
+  skip_tail_frames: 0
+  quality:
+    enabled: true
+    min_laplacian_var: 8.0
+    min_mean_luma: 10.0
+    max_mean_luma: 248.0
+  dedup:
+    enabled: true
+    phash_hamming: 4
+cameras:
+  keys: auto
+  max_per_episode: 2
+  detect_wrist: true
+  wrist_motion_ratio: 0.1
+kinematics:
+  profiles: {}
+  gripper:
+    auto_calibrate: true
+    smooth_window: 3
+    min_calibration_frames: 200
+  events:
+    velocity_eps: 0.004
+    stall_window: 10
+    lift_delta: 0.02
+    slip_window: 8
+grounding:
+  enabled: true
+  min_confidence: 0.45
+  min_box_area_frac: 0.004
+  max_box_area_frac: 0.45
+  diff_percentile: 98.0
+  morph_kernel: 5
+  track_window: 2
+  static_camera_only: true
+language:
+  locale: en
+  max_share_per_template: 0.04
+  min_template_cap: 25
+  mcq_share: 0.4
+  mcq_answer_prefix: 'Answer: '
+  mcq_balance_letters: true
+  mcq_min_options: 3
+  mcq_max_options: 4
+tasks:
+  gripper_state:
+    enabled: true
+    weight: 0.8
+  phase:
+    enabled: true
+    weight: 1.0
+  progress:
+    enabled: true
+    weight: 0.9
+  subtask:
+    enabled: true
+    weight: 1.2
+  instruction_decomp:
+    enabled: true
+    weight: 0.5
+  instruction_check:
+    enabled: true
+    weight: 0.7
+  object_role:
+    enabled: true
+    weight: 0.6
+  spatial_relation:
+    enabled: true
+    weight: 0.9
+  grounding_box:
+    enabled: true
+    weight: 0.5
+  grounding_point:
+    enabled: true
+    weight: 0.4
+  temporal_order:
+    enabled: true
+    weight: 0.8
+  progress_compare:
+    enabled: true
+    weight: 0.5
+  frame_transition:
+    enabled: true
+    weight: 0.8
+  multiview_match:
+    enabled: true
+    weight: 0.5
+  view_role:
+    enabled: true
+    weight: 0.3
+  episode_summary:
+    enabled: true
+    weight: 0.3
+  failure_diagnosis:
+    enabled: true
+    weight: 0.7
+  recovery_instruction:
+    enabled: true
+    weight: 0.6
+  scene_caption:
+    enabled: true
+    weight: 0.7
+  ego_temporal_order:
+    enabled: true
+    weight: 0.4
+  ego_transition:
+    enabled: true
+    weight: 0.4
+captioner:
+  enabled: false
+  base_url: http://127.0.0.1:8001
+  model: ''
+  api_token: ''
+  timeout_s: 60
+  workers: 8
+  max_samples: 0
+  retries: 2
+runtime:
+  num_workers: 0
+  chunk_episodes: 8
+  log_level: INFO
+  progress: true
