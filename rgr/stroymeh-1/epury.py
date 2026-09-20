@@ -17,6 +17,7 @@ from ordinaty import fmt
 NS = 40                      # число выборок на стержень
 HATCH = 2                    # штрих через каждые HATCH выборок
 OFF = 5                      # отступ подписи от кончика ординаты
+R_ZN = 9                     # радиус кружка со знаком в поле эпюры
 
 
 def num(v):
@@ -87,6 +88,10 @@ def rect(x0, y0, x1, y1):
             f'height="{y1 - y0:.1f}" class="ep-bg"/>\n')
 
 
+def circ(x, y, r):
+    return f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" class="ep-krug"/>\n'
+
+
 def box(lx, ly, s, anchor):
     """Габарит подписи — оценка по числу знаков, шрифт моноширинных цифр."""
     w, h = 7.6 * len(s) + 5, 15.0
@@ -97,6 +102,54 @@ def box(lx, ly, s, anchor):
 
 def hit(a, b):
     return not (a[2] < b[0] or b[2] < a[0] or a[3] < b[1] or b[3] < a[1])
+
+
+def znaki(s, pan, kind, sc):
+    """Знак в поле эпюры Q и N — плюс или минус на каждом участке знака.
+
+    На эпюре M знака нет (она со стороны растянутого волокна), а на Q и N
+    знак принято ставить прямо в поле эпюры, а не только у ординат.
+    Участок берётся как непрерывный кусок одного знака, поэтому там, где
+    Q меняет знак внутри стержня, появляются оба знака.
+    """
+    if kind == 2:
+        return ""
+    out = ""
+    for mem, _, _ in s.members:
+        e = s.axis(mem)
+        n = (-float(e[1]), float(e[0]))
+        vals, bases, tips = [], [], []
+        for i in range(NS + 1):
+            t = F(i, NS)
+            v = float(s.internal(mem, t)[kind])
+            b = pan.P(s.point_on(mem, t))
+            vals.append(v)
+            bases.append(b)
+            tips.append((b[0] + n[0] * v * sc, b[1] - n[1] * v * sc))
+        run = []                                  # индексы одного знака подряд
+        for i in range(NS + 2):
+            sg = 0 if i > NS or abs(vals[i]) < 1e-9 else (1 if vals[i] > 0 else -1)
+            if run and (i > NS or sg != run[0][1]):
+                idx = [k for k, _ in run]
+                im = idx[len(idx) // 2]
+                shirina = max(abs(vals[k]) for k in idx) * sc
+                bx, by = bases[im]
+                tx, ty = tips[im]
+                if shirina >= 2 * R_ZN + 4:       # кружок влезает внутрь эпюры
+                    x, y = (bx + tx) / 2, (by + ty) / 2
+                else:                             # полоса узкая — кружок рядом
+                    h = math.hypot(tx - bx, ty - by) or 1.0
+                    ux, uy = (tx - bx) / h, (ty - by) / h
+                    x, y = tx + ux * (R_ZN + 3), ty + uy * (R_ZN + 3)
+                # кружок, а не голый знак: штриховка эпюры идёт по нормали
+                # к стержню, и на вертикальном стержне минус с ней сливается
+                out += (circ(x, y, R_ZN) +
+                        txt(x, y + 6, "+" if run[0][1] > 0 else "\u2212",
+                            "ep-znak"))
+                run = []
+            if sg:
+                run.append((i, sg))
+    return out
 
 
 def labels(s, pan, kind, sc):
@@ -154,8 +207,12 @@ def labels(s, pan, kind, sc):
                 anchor = "middle"
             nudge = 12 if uy > .3 else (-2 if uy < -.3 else 5)
             # на эпюре M знак не ставится — она и так со стороны
-            # растянутого волокна; на Q и N знак нужен
-            cap = num(abs(v) if kind == 2 else v).replace('-', '\u2212')
+            # растянутого волокна; на Q и N знак нужен у каждой ординаты,
+            # и у положительной тоже, иначе плюс читается как «забыли»
+            if kind == 2:
+                cap = num(abs(v))
+            else:
+                cap = ("\u2212" if v < 0 else "+") + num(abs(v))
             for k in range(6):                      # развести столкновения
                 off = OFF + 17 * k
                 lx, ly = x + ux * off, y + uy * off + nudge

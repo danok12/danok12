@@ -7,7 +7,7 @@
 """
 from fractions import Fraction as F
 from sistemy import ALL
-from epury import Panel, skeleton, diagram, labels, txt
+from epury import Panel, skeleton, diagram, labels, znaki, txt
 
 HEAD = ('<svg viewBox="0 0 {w} {h}" role="img" aria-label="{alt}" '
         'xmlns="http://www.w3.org/2000/svg">\n')
@@ -45,6 +45,7 @@ def risunok(s, kind, name):
     out = HEAD.format(w=round(W), h=round(H), alt=f"{s.name}: эпюра {kind}")
     out += diagram(s, pan, kind, sc)
     out += skeleton(s, pan)
+    out += znaki(s, pan, kind, sc)
     out += labels(s, pan, kind, sc)
     out += '</svg>\n'
     open(name, "w", encoding="utf-8").write(out)

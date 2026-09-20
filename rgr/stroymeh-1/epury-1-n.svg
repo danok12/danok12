@@ -51,6 +51,10 @@
 <line x1="380.0" y1="96.0" x2="380.0" y2="280.0" class="ep-axis"/>
 <line x1="380.0" y1="280.0" x2="380.0" y2="464.0" class="ep-axis"/>
 <line x1="380.0" y1="280.0" x2="656.0" y2="280.0" class="ep-axis"/>
+<circle cx="242.0" cy="120.4" r="9" class="ep-krug"/>
+<text x="242.0" y="126.4" class="ep-znak" text-anchor="middle">−</text>
+<circle cx="349.0" cy="188.0" r="9" class="ep-krug"/>
+<text x="349.0" y="194.0" class="ep-znak" text-anchor="middle">−</text>
 <rect x="93.9" y="113.4" width="20.2" height="15.0" class="ep-bg"/>
 <text x="104.0" y="125.4" class="ep-lbl" text-anchor="middle">−4</text>
 <rect x="369.9" y="113.4" width="20.2" height="15.0" class="ep-bg"/>

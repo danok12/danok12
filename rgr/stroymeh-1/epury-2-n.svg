@@ -125,6 +125,16 @@
 <line x1="104.0" y1="96.0" x2="104.0" y2="188.0" class="ep-axis"/>
 <line x1="104.0" y1="188.0" x2="104.0" y2="280.0" class="ep-axis"/>
 <line x1="380.0" y1="96.0" x2="380.0" y2="280.0" class="ep-axis"/>
+<circle cx="242.0" cy="127.0" r="9" class="ep-krug"/>
+<text x="242.0" y="133.0" class="ep-znak" text-anchor="middle">−</text>
+<circle cx="449.0" cy="122.3" r="9" class="ep-krug"/>
+<text x="449.0" y="128.3" class="ep-znak" text-anchor="middle">−</text>
+<circle cx="587.0" cy="122.3" r="9" class="ep-krug"/>
+<text x="587.0" y="128.3" class="ep-znak" text-anchor="middle">−</text>
+<circle cx="73.4" cy="142.0" r="9" class="ep-krug"/>
+<text x="73.4" y="148.0" class="ep-znak" text-anchor="middle">−</text>
+<circle cx="73.4" cy="234.0" r="9" class="ep-krug"/>
+<text x="73.4" y="240.0" class="ep-znak" text-anchor="middle">−</text>
 <rect x="90.1" y="163.0" width="27.8" height="15.0" class="ep-bg"/>
 <text x="104.0" y="175.0" class="ep-lbl" text-anchor="middle">−20</text>
 <rect x="366.1" y="163.0" width="27.8" height="15.0" class="ep-bg"/>

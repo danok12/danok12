@@ -75,10 +75,16 @@
 <line x1="242.0" y1="280.0" x2="242.0" y2="464.0" class="ep-axis"/>
 <line x1="242.0" y1="280.0" x2="518.0" y2="280.0" class="ep-axis"/>
 <line x1="518.0" y1="280.0" x2="518.0" y2="464.0" class="ep-axis"/>
-<rect x="284.3" y="273.0" width="43.0" height="15.0" class="ep-bg"/>
-<text x="286.3" y="285.0" class="ep-lbl" text-anchor="start">25,33</text>
-<rect x="284.3" y="457.0" width="43.0" height="15.0" class="ep-bg"/>
-<text x="286.3" y="469.0" class="ep-lbl" text-anchor="start">25,33</text>
+<circle cx="261.6" cy="372.0" r="9" class="ep-krug"/>
+<text x="261.6" y="378.0" class="ep-znak" text-anchor="middle">+</text>
+<circle cx="380.0" cy="311.0" r="9" class="ep-krug"/>
+<text x="380.0" y="317.0" class="ep-znak" text-anchor="middle">−</text>
+<circle cx="493.7" cy="372.0" r="9" class="ep-krug"/>
+<text x="493.7" y="378.0" class="ep-znak" text-anchor="middle">−</text>
+<rect x="284.3" y="273.0" width="50.6" height="15.0" class="ep-bg"/>
+<text x="286.3" y="285.0" class="ep-lbl" text-anchor="start">+25,33</text>
+<rect x="284.3" y="457.0" width="50.6" height="15.0" class="ep-bg"/>
+<text x="286.3" y="469.0" class="ep-lbl" text-anchor="start">+25,33</text>
 <rect x="228.1" y="347.0" width="27.8" height="15.0" class="ep-bg"/>
 <text x="242.0" y="359.0" class="ep-lbl" text-anchor="middle">−40</text>
 <rect x="504.1" y="347.0" width="27.8" height="15.0" class="ep-bg"/>
