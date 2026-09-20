@@ -10,14 +10,36 @@ import subprocess
 import os
 
 TPL, SRC, DST = "shablon.html", "index.html", "print.html"
-OUT = "Строймех, задание 1 — вариант 2, исходные данные и схемы.pdf"
+OUT = "Строймех, задание 1 — вариант 2, решение.pdf"
+
+W_MM, H_MM = 136, 78           # место под рисунок на полосе A4
+
+
+def po_meste(svg):
+    """Задать рисунку размер, при котором он влезает в полосу по высоте.
+
+    Без этого высокий рисунок растягивается на всю ширину, выходит за
+    страницу и Chromium выносит его на отдельный лист — рядом с ним
+    остаётся пустое поле в полстраницы.
+    """
+    vb = [float(v) for v in re.search(r'viewBox="([^"]+)"', svg).group(1).split()]
+    w = min(W_MM, H_MM * vb[2] / vb[3])
+    return svg.replace("<svg ", f'<svg style="width:{w:.0f}mm" ', 1)
+
 
 # 0. вклеить стили и схемы в шаблон -> index.html
 h = open(TPL, encoding="utf-8").read()
 h = h.replace("__CSS__", open("_css.html", encoding="utf-8").read())
+h = h.replace("__SH_1R__",
+              open("shema-1-reakcii.svg", encoding="utf-8").read().strip())
 for i in range(1, 6):
-    h = h.replace(f"__FIG_{i}__", open(f"shema-{i}.svg", encoding="utf-8").read().strip())
-assert "__FIG" not in h and "__CSS__" not in h, "не всё вклеено"
+    h = h.replace(f"__SH_{i}__", open(f"shema-{i}.svg", encoding="utf-8").read().strip())
+    for k in "MQN":
+        f = f"epury-{i}-{k.lower()}.svg"
+        if f"__EP_{i}_{k}__" in h:
+            h = h.replace(f"__EP_{i}_{k}__",
+                          po_meste(open(f, encoding="utf-8").read().strip()))
+assert not re.search(r"__[A-Z_0-9]+__", h), "не всё вклеено"
 open(SRC, "w", encoding="utf-8").write(h)
 
 # 1. Google Fonts -> локальные фолбэки

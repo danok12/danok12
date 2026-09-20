@@ -16,9 +16,9 @@
 <line x1="478.0" y1="262.0" x2="436.0" y2="262.0" class="q-arrow" marker-end="url(#ahs)"/>
 <line x1="478.0" y1="290.0" x2="436.0" y2="290.0" class="q-arrow" marker-end="url(#ahs)"/>
 <text x="494.0" y="224.0" class="lbl" text-anchor="middle">q</text>
-<line x1="218.0" y1="290.0" x2="260.0" y2="290.0" class="force" marker-end="url(#ah)"/>
-<text x="206.0" y="281.0" class="lbl" text-anchor="middle">F</text>
-<path d="M 445.0 134.4 A 18 18 0 1 1 418.3 153.1" class="moment" marker-end="url(#ah)"/>
+<line x1="312.0" y1="290.0" x2="268.0" y2="290.0" class="force" marker-end="url(#ah)"/>
+<text x="324.0" y="281.0" class="lbl" text-anchor="middle">F</text>
+<path d="M 420.7 154.8 A 16 16 0 1 0 427.4 136.5" class="moment" marker-end="url(#ah)"/>
 <text x="462.0" y="144.0" class="lbl" text-anchor="middle">m</text>
 <line x1="178.5" y1="284.5" x2="189.5" y2="295.5" class="mark"/>
 <line x1="178.5" y1="295.5" x2="189.5" y2="284.5" class="mark"/>

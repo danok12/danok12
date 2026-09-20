@@ -132,16 +132,32 @@ def force(tip, dx, dy, label="F", lab=(0, 0), length=46):
     return s
 
 
-def moment(p, label="m", r=15, start=200, sweep=250, side=1, lab=(0, 0)):
-    """Сосредоточенный момент: дуга со стрелкой."""
-    a0, a1 = math.radians(start), math.radians(start + sweep * side)
-    x0, y0 = p[0] + r * math.cos(a0), p[1] + r * math.sin(a0)
-    x1, y1 = p[0] + r * math.cos(a1), p[1] + r * math.sin(a1)
-    large = 1 if abs(sweep) > 180 else 0
-    sw = 1 if side > 0 else 0
-    s = (f'<path d="M {x0:.1f} {y0:.1f} A {r} {r} 0 {large} {sw} '
+def moment(p, label="m", r=16, ccw=True, gap=90, lab=(0, 0), span=285):
+    """Сосредоточенный момент — дуга со стрелкой.
+
+    ccw=True  — против часовой стрелки на листе;
+    ccw=False — по часовой.
+    gap — куда смотрит разрыв дуги, в экранных градусах
+          (0 вправо, 90 вниз, 180 влево, 270 вверх).
+
+    В экранных координатах ось y направлена вниз, поэтому рост угла —
+    это движение по часовой стрелке, а флаг sweep=1 в SVG означает
+    «в сторону роста угла». Отсюда: по часовой — sweep=1, против — 0.
+    """
+    half = (360 - span) / 2
+    if ccw:
+        a0, a1, sweep = gap - half, gap - half - span, 0
+    else:
+        a0, a1, sweep = gap + half, gap + half + span, 1
+    x0 = p[0] + r * math.cos(math.radians(a0))
+    y0 = p[1] + r * math.sin(math.radians(a0))
+    x1 = p[0] + r * math.cos(math.radians(a1))
+    y1 = p[1] + r * math.sin(math.radians(a1))
+    large = 1 if span > 180 else 0
+    s = (f'<path d="M {x0:.1f} {y0:.1f} A {r} {r} 0 {large} {sweep} '
          f'{x1:.1f} {y1:.1f}" class="moment" marker-end="url(#ah)"/>\n')
-    s += txt(p[0] + lab[0], p[1] + lab[1], label, "lbl")
+    if label:
+        s += txt(p[0] + lab[0], p[1] + lab[1], label, "lbl")
     return s
 
 
@@ -193,7 +209,7 @@ def shema1():
     # нагрузки
     s += qload((xa, yt), (xa, yb), (46, 0), 5, "q", (16, 4))
     s += force((xa + L, yb), 0, -1, "F", (14, 0))
-    s += moment((xa, yk), "m", 17, 120, 250, 1, (22, 20))
+    s += moment((xa, yk), "m", 16, True, 270, (28, 22))
     s += cross((xa, yk))
     s += txt(xa - 14, yk - 6, "K", "lbl", "end")
     # размеры
@@ -216,7 +232,7 @@ def shema2():
     s += ln((xl, yt), (xl, yb)) + ln((xm, yt), (xm, yb))
     s += qload((xl, yt), (xm, yt), (0, -34), 5, "q", (0, -8))
     s += force((xl, yt + 70), 1, 0, "F", (0, -6))
-    s += moment((xm + (xr - xm) / 2, yt), "m", 18, 150, -230, -1, (0, -30))
+    s += moment((xm + (xr - xm) / 2, yt), "m", 16, False, 90, (0, -30))
     s += link_v((xl, yb))
     s += link_h((xm, yb), 26, 1)
     s += link_h((xr, yt), 26, 1)
@@ -237,7 +253,7 @@ def shema3():
     s += ln((xl, yk), (xl, yb)) + ln((xl, ym), (xr, ym)) + ln((xr, ym), (xr, yb))
     s += qload((xl, ym), (xr, ym), (0, -34), 6, "q", (0, -8))
     s += force((xl, yk), 1, 0, "F", (0, -6))
-    s += moment((xr, ym), "m", 18, 300, 230, 1, (26, -4))
+    s += moment((xr, ym), "m", 16, False, 200, (26, -4))
     s += cross((xl, yk))
     s += txt(xl + 14, yk - 8, "K", "lbl", "start")
     s += pin2((xl, yb), 24, -1)
@@ -260,8 +276,8 @@ def shema4():
     s += ln((xc, yt), (xr, yt)) + ln((xr, yt), (xr, yb))
     s += hinge((xc, yt))
     s += qload((xr, yt), (xr, yb), (42, 0), 5, "q", (16, 4))
-    s += force((xc - 8, yb), 1, 0, "F", (0, -14), 42)
-    s += moment((xr, yt), "m", 18, 300, 230, 1, (26, -6))
+    s += force((xc, yb), -1, 0, "F", (0, -14), 44)
+    s += moment((xr, yt), "m", 16, True, 200, (26, -6))
     s += cross(((xs + xc) / 2, yb))
     s += txt((xs + xc) / 2, yb + 24, "K", "lbl")
     s += link_v((xs, yb))
@@ -291,7 +307,7 @@ def shema5():
     s += link_v((xs[3], y), 24)
     s += link_v((xs[5], y), 24)
     s += force((xs[4], y), 0, 1, "F", (12, 0), 48)
-    s += moment((xs[-1], y), "m", 17, 210, -240, -1, (24, -14))
+    s += moment((xs[-1], y), "m", 16, False, 180, (26, -14))
     s += dim((x0, y), (xs[1], y), "l", 96)
     s += dim((xs[1], y), (xs[2], y), "l", 96)
     for i in (2, 3, 4, 5, 6):
@@ -314,7 +330,7 @@ def shema1_reakcii():
     s += fixed((x0, yt), 90, 52, -1)
     s += qload((xa, yt), (xa, yb), (46, 0), 5, "q = 1 кН/м", (54, 4))
     s += force((xa + L, yb), 0, -1, "F = 20 кН", (44, 0))
-    s += moment((xa, yk), "m = 10 кН·м", 15, 120, 250, 1, (72, 22))
+    s += moment((xa, yk), "m = 10 кН·м", 16, True, 270, (74, 24))
     s += cross((xa, yk))
     s += txt(xa - 14, yk - 6, "K", "lbl", "end")
     # реакции
@@ -322,7 +338,7 @@ def shema1_reakcii():
     s += txt(x0 + 34, yt - 10, "R<tspan class='sub'>Ax</tspan> = 4 кН", "lbl", "start")
     s += force((x0 + 12, yt + 54), 0, 1, "", (0, 0), 44)
     s += txt(x0 + 20, yt + 52, "R<tspan class='sub'>Ay</tspan> = 20 кН", "lbl", "start")
-    s += moment((x0 - 30, yt + 72), "", 19, 250, -260, -1)
+    s += moment((x0 - 30, yt + 72), "", 19, False, 90)
     s += txt(x0 - 30, yt + 112, "M<tspan class='sub'>A</tspan> = 242 кН·м", "lbl")
     s += txt(x0 - 16, yt - 14, "A", "lbl", "end")
     s += dim((x0, yk), (xa, yk), "l = 6 м", 78)

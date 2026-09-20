@@ -17,7 +17,7 @@
 <text x="229.0" y="178.0" class="lbl" text-anchor="middle">q</text>
 <line x1="82.0" y1="72.0" x2="128.0" y2="72.0" class="force" marker-end="url(#ah)"/>
 <text x="70.0" y="71.0" class="lbl" text-anchor="middle">F</text>
-<path d="M 339.0 204.4 A 18 18 0 1 1 312.3 223.1" class="moment" marker-end="url(#ah)"/>
+<path d="M 321.4 206.5 A 16 16 0 1 1 314.7 224.8" class="moment" marker-end="url(#ah)"/>
 <text x="356.0" y="216.0" class="lbl" text-anchor="middle">m</text>
 <line x1="122.5" y1="66.5" x2="133.5" y2="77.5" class="mark"/>
 <line x1="122.5" y1="77.5" x2="133.5" y2="66.5" class="mark"/>
