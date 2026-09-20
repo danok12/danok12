@@ -1,0 +1,53 @@
+# Минимальный прогон action-эксперта на одной карте 12 ГБ.
+#
+# Отличия от configs/vla_libero.yaml организатора:
+#   - 6000 шагов вместо 30000;
+#   - 400 эпизодов LIBERO вместо 1693;
+#   - меньше воркеров загрузчика.
+# Размер чанка действий (50) сохранён: от него зависит совместимость политики
+# с бенчмарком, и урезать его нельзя.
+#
+# Ставится на место configs/vla_libero.yaml в репозитории участника.
+
+dataset:
+  repo_id: HuggingFaceVLA/libero
+  revision: v3.0
+  episode_count: 400
+  subset_seed: 1000
+  use_imagenet_stats: true
+  video_backend: pyav
+
+policy:
+  load_vlm_weights: true
+  train_expert_only: true
+  freeze_vision_encoder: true
+  train_state_proj: true
+  chunk_size: 50
+  n_action_steps: 50
+  num_vlm_layers: -1
+  num_expert_layers: -1
+  expert_width_multiplier: 0.75
+  attention_mode: cross_attn
+  self_attn_every_n_layers: 2
+  device: cuda
+
+optimizer:
+  learning_rate: 0.0001
+  betas: [0.9, 0.95]
+  epsilon: 0.00000001
+  weight_decay: 0.0000000001
+  grad_clip_norm: 10.0
+  warmup_steps: 200
+  decay_steps: 6000
+  decay_learning_rate: 0.0000025
+
+training:
+  job_name: smolvla-libero-minimal
+  steps: 6000
+  batch_size: 4
+  num_workers: 4
+  seed: 1000
+  log_freq: 20
+  save_freq: 2000
+  resume: false
+  resume_config_path: null

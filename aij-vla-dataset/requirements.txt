@@ -1,0 +1,13 @@
+# Зависимости generate_dataset.py. Все они уже присутствуют в образе участника
+# (pyarrow 25, av 15, opencv-python-headless 5.0, PyYAML 6.0, numpy и pillow как
+# транзитивные), поэтому в контрольном запуске установка не требуется.
+# Офлайн-установка из локального wheelhouse при необходимости:
+#   pip install --no-index --find-links /path/to/wheels -r requirements.txt
+numpy>=1.24,<3
+pyarrow>=14.0
+pillow>=10.0
+opencv-python-headless>=4.8
+av>=11.0
+PyYAML>=6.0
+# Только для запуска тестов (src/tests), генератору не нужен:
+# pytest>=7.4
