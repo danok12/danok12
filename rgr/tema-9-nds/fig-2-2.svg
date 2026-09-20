@@ -1,4 +1,4 @@
-<svg viewBox="0 0 600 412" role="img" aria-label="Напряжения на гранях элемента при плоском состоянии" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="31 3 512 389" role="img" aria-label="Напряжения на гранях элемента при плоском состоянии" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
 <marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>

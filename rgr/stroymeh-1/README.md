@@ -47,3 +47,14 @@ l, l, l/2, l/2, l/2, l/2, l/2 — то есть полная длина 4,5·l.
 python3 shemy.py        # перечертить схемы
 python3 sborka-pdf.py   # index.html + print.html + PDF
 ```
+
+## Обрезка схем
+
+`../obrezka-svg.py` открывает схемы в Chromium, берёт `svg.getBBox()`
+и переписывает `viewBox` по фактическому содержимому. Без этого снизу
+остаётся пустое поле: на экране незаметно, а в PDF рисунок из-за него
+выходит мельче. Запускать после `shemy.py`:
+
+```bash
+python3 ../obrezka-svg.py .
+```

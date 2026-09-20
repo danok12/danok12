@@ -32,8 +32,9 @@ h = h.replace("<details>", "<details open>")
 
 PRINT_CSS = """
 <style>
-@page{margin:18mm 16mm 16mm}
-body{background:#fff; color:#000; font-size:11.5pt; line-height:1.45}
+@page{size:A4; margin:18mm 16mm 16mm}
+body{background:#fff; color:#000; font-size:11.5pt; line-height:1.45;
+  hyphens:auto; -webkit-hyphens:auto}
 .wrap{max-width:none; padding-block:0; padding-inline:0}
 h1{font-size:14pt; margin-bottom:10pt}
 h2{font-size:13pt; margin:18pt 0 8pt}
@@ -44,7 +45,7 @@ p,.f,.res,.rem,.mx,figure,.tw,table,tr,.matrix,footer{break-inside:avoid}
 .f{line-height:1.6; margin-bottom:7pt}
 table{font-size:10.5pt}
 figure{margin:9pt 0 11pt}
-figure svg{max-height:112mm}
+figure svg{width:100%; max-width:136mm; height:auto}
 figcaption{font-size:10.5pt}
 </style>
 """
