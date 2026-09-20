@@ -96,6 +96,23 @@ def _build_jobs(
             if not episodes:
                 LOGGER.warning("%s: эпизоды не найдены", spec.name)
                 continue
+            # При частичной выгрузке метаданные описывают все эпизоды, а data-файлы
+            # скачаны не все: эпизоды без своего файла отбрасываем сразу, иначе
+            # выборка уходит в пустоту.
+            available = [
+                episode
+                for episode in episodes
+                if source.data_file(episode.data_chunk, episode.data_file).is_file()
+            ]
+            if len(available) < len(episodes):
+                LOGGER.info(
+                    "%s: доступно %d эпизодов из %d (частичная выгрузка датасета)",
+                    spec.name, len(available), len(episodes),
+                )
+            if not available:
+                LOGGER.warning("%s: ни одного data-файла на диске, источник пропущен", spec.name)
+                continue
+            episodes = available
             states[spec.name] = prepare_lerobot_source(source, cfg)
             selected = stable_subsample(episodes, per_source_limit, cfg.seed, f"{spec.name}:episodes")
             summary[spec.name] = {
