@@ -30,8 +30,10 @@ def po_meste(svg):
 # 0. вклеить стили и схемы в шаблон -> index.html
 h = open(TPL, encoding="utf-8").read()
 h = h.replace("__CSS__", open("_css.html", encoding="utf-8").read())
-h = h.replace("__SH_1R__",
-              open("shema-1-reakcii.svg", encoding="utf-8").read().strip())
+for k in (1, 2):
+    h = h.replace(f"__SH_{k}R__",
+                  open(f"shema-{k}-reakcii.svg",
+                       encoding="utf-8").read().strip())
 for i in range(1, 6):
     h = h.replace(f"__SH_{i}__", open(f"shema-{i}.svg", encoding="utf-8").read().strip())
     for k in "MQN":

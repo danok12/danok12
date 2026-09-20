@@ -258,7 +258,7 @@ M, Q, N для пяти схем варианта. Исходные данные
 88 + 24 + 120 + 10 − 242 = 0.</p>
 
 <h3>Эпюры</h3>
-<figure><svg style="width:112mm" viewBox="76 73 594 414" role="img" aria-label="Схема 1: эпюра 2" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:112mm" viewBox="76 73 594 413" role="img" aria-label="Схема 1: эпюра 2" xmlns="http://www.w3.org/2000/svg">
 <line x1="104.0" y1="96.0" x2="104.0" y2="158.0" class="ep-hatch"/>
 <line x1="117.8" y1="96.0" x2="117.8" y2="156.5" class="ep-hatch"/>
 <line x1="131.6" y1="96.0" x2="131.6" y2="154.9" class="ep-hatch"/>
@@ -375,7 +375,7 @@ M, Q, N для пяти схем варианта. Исходные данные
 <rect x="366.1" y="315.7" width="27.8" height="15.0" class="ep-bg"/>
 <text x="380.0" y="327.7" class="ep-lbl" text-anchor="middle">120</text>
 </svg><figcaption>Схема 1 — эпюра M, кН·м</figcaption></figure>
-<figure><svg style="width:117mm" viewBox="76 73 608 405" role="img" aria-label="Схема 1: эпюра 1" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:117mm" viewBox="76 74 608 404" role="img" aria-label="Схема 1: эпюра 1" xmlns="http://www.w3.org/2000/svg">
 <line x1="104.0" y1="96.0" x2="104.0" y2="158.0" class="ep-hatch"/>
 <line x1="117.8" y1="96.0" x2="117.8" y2="158.0" class="ep-hatch"/>
 <line x1="131.6" y1="96.0" x2="131.6" y2="158.0" class="ep-hatch"/>
@@ -553,7 +553,7 @@ M, Q, N для пяти схем варианта. Исходные данные
 
 <h2>СХЕМА 2</h2>
 
-<figure><svg viewBox="19 15 525 294" role="img" aria-label="Схема 2: рама на трёх опорных стержнях" xmlns="http://www.w3.org/2000/svg">
+<figure><svg viewBox="19 14 525 295" role="img" aria-label="Схема 2: рама на трёх опорных стержнях" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
 <marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
@@ -642,11 +642,99 @@ R₃ — горизонтальный у правого конца. Уравне
 
 ΣX = 0:   F + R₂ + R₃ = 0   →   20 + R₂ − 17 = 0   →   <b>R₂ = −3 кН</b></div>
 
-<p>Минус означает, что стержень работает в сторону, противоположную принятой
-(оба горизонтальных стержня сжимают раму влево).</p>
+<p>Минус означает, что стержень работает в сторону, противоположную принятой.
+На чертеже реакции отложены в их истинную сторону, а подписаны модулями:
+R₁ — вверх, оба горизонтальных стержня — влево.</p>
+
+<figure><svg viewBox="0 15 613 324" role="img" aria-label="Схема 2: найденные опорные реакции" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
+<marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="96.0" y1="86.0" x2="440.0" y2="86.0" class="bar"/>
+<line x1="96.0" y1="86.0" x2="96.0" y2="226.0" class="bar"/>
+<line x1="268.0" y1="86.0" x2="268.0" y2="226.0" class="bar"/>
+<line x1="96.0" y1="52.0" x2="268.0" y2="52.0" class="q-line"/>
+<line x1="96.0" y1="52.0" x2="96.0" y2="86.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="130.4" y1="52.0" x2="130.4" y2="86.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="164.8" y1="52.0" x2="164.8" y2="86.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="199.2" y1="52.0" x2="199.2" y2="86.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="233.6" y1="52.0" x2="233.6" y2="86.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="268.0" y1="52.0" x2="268.0" y2="86.0" class="q-arrow" marker-end="url(#ahs)"/>
+<text x="182.0" y="44.0" class="lbl" text-anchor="middle">q = 1 кН/м</text>
+<line x1="50.0" y1="156.0" x2="96.0" y2="156.0" class="force" marker-end="url(#ah)"/>
+<text x="38.0" y="155.0" class="lbl" text-anchor="middle">F = 20 кН</text>
+<path d="M 344.3 98.7 A 16 16 0 1 1 363.7 98.7" class="moment" marker-end="url(#ah)"/>
+<text x="354.0" y="56.0" class="lbl" text-anchor="middle">m = 10 кН·м</text>
+<circle cx="96.0" cy="226.0" r="5.2" class="hinge"/>
+<line x1="96.0" y1="226.0" x2="96.0" y2="252.0" class="bar-thin"/>
+<circle cx="96.0" cy="252.0" r="5.2" class="hinge"/>
+<line x1="79.0" y1="258.2" x2="113.0" y2="258.2" class="hatch-line"/>
+<line x1="81.4" y1="258.2" x2="74.4" y2="265.2" class="hatch"/>
+<line x1="86.3" y1="258.2" x2="79.3" y2="265.2" class="hatch"/>
+<line x1="91.1" y1="258.2" x2="84.1" y2="265.2" class="hatch"/>
+<line x1="96.0" y1="258.2" x2="89.0" y2="265.2" class="hatch"/>
+<line x1="100.9" y1="258.2" x2="93.9" y2="265.2" class="hatch"/>
+<line x1="105.7" y1="258.2" x2="98.7" y2="265.2" class="hatch"/>
+<line x1="110.6" y1="258.2" x2="103.6" y2="265.2" class="hatch"/>
+<circle cx="268.0" cy="226.0" r="5.2" class="hinge"/>
+<line x1="268.0" y1="226.0" x2="294.0" y2="226.0" class="bar-thin"/>
+<circle cx="294.0" cy="226.0" r="5.2" class="hinge"/>
+<line x1="300.2" y1="209.0" x2="300.2" y2="243.0" class="hatch-line"/>
+<line x1="300.2" y1="211.4" x2="293.2" y2="204.4" class="hatch"/>
+<line x1="300.2" y1="216.3" x2="293.2" y2="209.3" class="hatch"/>
+<line x1="300.2" y1="221.1" x2="293.2" y2="214.1" class="hatch"/>
+<line x1="300.2" y1="226.0" x2="293.2" y2="219.0" class="hatch"/>
+<line x1="300.2" y1="230.9" x2="293.2" y2="223.9" class="hatch"/>
+<line x1="300.2" y1="235.7" x2="293.2" y2="228.7" class="hatch"/>
+<line x1="300.2" y1="240.6" x2="293.2" y2="233.6" class="hatch"/>
+<circle cx="440.0" cy="86.0" r="5.2" class="hinge"/>
+<line x1="440.0" y1="86.0" x2="466.0" y2="86.0" class="bar-thin"/>
+<circle cx="466.0" cy="86.0" r="5.2" class="hinge"/>
+<line x1="472.2" y1="69.0" x2="472.2" y2="103.0" class="hatch-line"/>
+<line x1="472.2" y1="71.4" x2="465.2" y2="64.4" class="hatch"/>
+<line x1="472.2" y1="76.3" x2="465.2" y2="69.3" class="hatch"/>
+<line x1="472.2" y1="81.1" x2="465.2" y2="74.1" class="hatch"/>
+<line x1="472.2" y1="86.0" x2="465.2" y2="79.0" class="hatch"/>
+<line x1="472.2" y1="90.9" x2="465.2" y2="83.9" class="hatch"/>
+<line x1="472.2" y1="95.7" x2="465.2" y2="88.7" class="hatch"/>
+<line x1="472.2" y1="100.6" x2="465.2" y2="93.6" class="hatch"/>
+<line x1="62.0" y1="268.0" x2="62.0" y2="226.0" class="force" marker-end="url(#ah)"/>
+<text x="62.0" y="285.0" class="lbl" text-anchor="middle"></text>
+<text x="62.0" y="286.0" class="lbl" text-anchor="middle">R<tspan class='sub'>1</tspan> = 6 кН</text>
+<line x1="310.0" y1="256.0" x2="266.0" y2="256.0" class="force" marker-end="url(#ah)"/>
+<text x="322.0" y="261.0" class="lbl" text-anchor="middle"></text>
+<text x="288.0" y="278.0" class="lbl" text-anchor="middle">R<tspan class='sub'>2</tspan> = 3 кН</text>
+<line x1="480.0" y1="112.0" x2="436.0" y2="112.0" class="force" marker-end="url(#ah)"/>
+<text x="492.0" y="117.0" class="lbl" text-anchor="middle"></text>
+<text x="458.0" y="134.0" class="lbl" text-anchor="middle">R<tspan class='sub'>3</tspan> = 17 кН</text>
+<line x1="96.0" y1="232.0" x2="96.0" y2="325.0" class="ext"/>
+<line x1="268.0" y1="232.0" x2="268.0" y2="325.0" class="ext"/>
+<line x1="96.0" y1="318.0" x2="268.0" y2="318.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<text x="182.0" y="311.0" class="dim-lbl" text-anchor="middle">l = 6 м</text>
+<line x1="268.0" y1="232.0" x2="268.0" y2="325.0" class="ext"/>
+<line x1="440.0" y1="92.0" x2="440.0" y2="325.0" class="ext"/>
+<line x1="268.0" y1="318.0" x2="440.0" y2="318.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<text x="354.0" y="311.0" class="dim-lbl" text-anchor="middle">l = 6 м</text>
+<line x1="518.0" y1="86.0" x2="518.0" y2="156.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<line x1="513.0" y1="86.0" x2="523.0" y2="86.0" class="dim"/>
+<line x1="513.0" y1="156.0" x2="523.0" y2="156.0" class="dim"/>
+<text x="531.0" y="126.0" class="dim-lbl" text-anchor="start">h/2 = 2 м</text>
+<line x1="518.0" y1="156.0" x2="518.0" y2="226.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<line x1="513.0" y1="156.0" x2="523.0" y2="156.0" class="dim"/>
+<line x1="513.0" y1="226.0" x2="523.0" y2="226.0" class="dim"/>
+<text x="531.0" y="196.0" class="dim-lbl" text-anchor="start">h/2 = 2 м</text>
+</svg><figcaption>Схема 2 — найденные реакции</figcaption></figure>
+
+<p><b>Проверка по силам.</b> ΣX: 20 (F вправо) − 3 − 17 = 0. ΣY: 6 (R₁ вверх)
+− q·l = 6 − 6 = 0.</p>
+
+<p><b>Проверка по моментам</b> относительно низа левой стойки — точки, через
+которую проходят и R₁, и R₂, поэтому они в проверку не входят:
+68 (от R₃) − 40 (от F) − 18 (от q) − 10 (m) = 0.</p>
 
 <h3>Эпюры</h3>
-<figure><svg style="width:136mm" viewBox="5 0 665 295" role="img" aria-label="Схема 2: эпюра 2" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:136mm" viewBox="5 0 665 294" role="img" aria-label="Схема 2: эпюра 2" xmlns="http://www.w3.org/2000/svg">
 <line x1="104.0" y1="96.0" x2="104.0" y2="34.0" class="ep-hatch"/>
 <line x1="117.8" y1="96.0" x2="117.8" y2="36.7" class="ep-hatch"/>
 <line x1="131.6" y1="96.0" x2="131.6" y2="39.3" class="ep-hatch"/>
@@ -762,7 +850,7 @@ R₃ — горизонтальный у правого конца. Уравне
 <rect x="401.6" y="89.0" width="20.2" height="15.0" class="ep-bg"/>
 <text x="403.6" y="101.0" class="ep-lbl" text-anchor="start">12</text>
 </svg><figcaption>Схема 2 — эпюра M, кН·м</figcaption></figure>
-<figure><svg style="width:136mm" viewBox="0 42 673 260" role="img" aria-label="Схема 2: эпюра 1" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:136mm" viewBox="0 43 673 259" role="img" aria-label="Схема 2: эпюра 1" xmlns="http://www.w3.org/2000/svg">
 <line x1="104.0" y1="96.0" x2="104.0" y2="77.4" class="ep-hatch"/>
 <line x1="117.8" y1="96.0" x2="117.8" y2="78.3" class="ep-hatch"/>
 <line x1="131.6" y1="96.0" x2="131.6" y2="79.3" class="ep-hatch"/>
@@ -857,7 +945,7 @@ R₃ — горизонтальный у правого конца. Уравне
 <rect x="392.3" y="273.0" width="20.2" height="15.0" class="ep-bg"/>
 <text x="394.3" y="285.0" class="ep-lbl" text-anchor="start">+3</text>
 </svg><figcaption>Схема 2 — эпюра Q, кН</figcaption></figure>
-<figure><svg style="width:136mm" viewBox="48 73 636 230" role="img" aria-label="Схема 2: эпюра 0" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:136mm" viewBox="48 73 636 229" role="img" aria-label="Схема 2: эпюра 0" xmlns="http://www.w3.org/2000/svg">
 <line x1="104.0" y1="96.0" x2="104.0" y2="158.0" class="ep-hatch"/>
 <line x1="117.8" y1="96.0" x2="117.8" y2="158.0" class="ep-hatch"/>
 <line x1="131.6" y1="96.0" x2="131.6" y2="158.0" class="ep-hatch"/>
@@ -1240,7 +1328,7 @@ R₃ — горизонтальный у правого конца. Уравне
 <rect x="579.4" y="273.0" width="27.8" height="15.0" class="ep-bg"/>
 <text x="581.4" y="285.0" class="ep-lbl" text-anchor="start">160</text>
 </svg><figcaption>Схема 3 — эпюра M, кН·м</figcaption></figure>
-<figure><svg style="width:86mm" viewBox="166 73 459 414" role="img" aria-label="Схема 3: эпюра 1" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:87mm" viewBox="166 74 459 412" role="img" aria-label="Схема 3: эпюра 1" xmlns="http://www.w3.org/2000/svg">
 <line x1="242.0" y1="96.0" x2="273.0" y2="96.0" class="ep-hatch"/>
 <line x1="242.0" y1="105.2" x2="273.0" y2="105.2" class="ep-hatch"/>
 <line x1="242.0" y1="114.4" x2="273.0" y2="114.4" class="ep-hatch"/>
@@ -1366,7 +1454,7 @@ R₃ — горизонтальный у правого конца. Уравне
 <rect x="583.0" y="457.0" width="27.8" height="15.0" class="ep-bg"/>
 <text x="585.0" y="469.0" class="ep-lbl" text-anchor="start">+40</text>
 </svg><figcaption>Схема 3 — эпюра Q, кН</figcaption></figure>
-<figure><svg style="width:64mm" viewBox="214 82 332 405" role="img" aria-label="Схема 3: эпюра 0" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:64mm" viewBox="214 82 332 404" role="img" aria-label="Схема 3: эпюра 0" xmlns="http://www.w3.org/2000/svg">
 <line x1="242.0" y1="280.0" x2="281.3" y2="280.0" class="ep-hatch"/>
 <line x1="242.0" y1="289.2" x2="281.3" y2="289.2" class="ep-hatch"/>
 <line x1="242.0" y1="298.4" x2="281.3" y2="298.4" class="ep-hatch"/>
@@ -1558,7 +1646,7 @@ R₃ — горизонтальный у правого конца. Уравне
    160 + 8 + 10 + M<sub>B</sub> = 0   →   <b>M<sub>B</sub> = −178 кН·м</b> (по часовой стрелке)</div>
 
 <h3>Эпюры</h3>
-<figure><svg style="width:136mm" viewBox="90 33 673 270" role="img" aria-label="Схема 4: эпюра 2" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:136mm" viewBox="90 34 673 269" role="img" aria-label="Схема 4: эпюра 2" xmlns="http://www.w3.org/2000/svg">
 <line x1="110.9" y1="280.0" x2="110.9" y2="279.3" class="ep-hatch"/>
 <line x1="117.8" y1="280.0" x2="117.8" y2="278.6" class="ep-hatch"/>
 <line x1="124.7" y1="280.0" x2="124.7" y2="277.9" class="ep-hatch"/>
@@ -1696,7 +1784,7 @@ R₃ — горизонтальный у правого конца. Уравне
 <rect x="705.0" y="181.0" width="27.8" height="15.0" class="ep-bg"/>
 <text x="707.0" y="193.0" class="ep-lbl" text-anchor="start">132</text>
 </svg><figcaption>Схема 4 — эпюра M, кН·м</figcaption></figure>
-<figure><svg style="width:136mm" viewBox="65 73 631 276" role="img" aria-label="Схема 4: эпюра 1" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:136mm" viewBox="65 73 631 275" role="img" aria-label="Схема 4: эпюра 1" xmlns="http://www.w3.org/2000/svg">
 <line x1="104.0" y1="280.0" x2="104.0" y2="314.4" class="ep-hatch"/>
 <line x1="110.9" y1="280.0" x2="110.9" y2="314.4" class="ep-hatch"/>
 <line x1="117.8" y1="280.0" x2="117.8" y2="314.4" class="ep-hatch"/>
@@ -1851,7 +1939,7 @@ R₃ — горизонтальный у правого конца. Уравне
 <rect x="563.2" y="273.0" width="27.8" height="15.0" class="ep-bg"/>
 <text x="589.0" y="285.0" class="ep-lbl" text-anchor="end">−24</text>
 </svg><figcaption>Схема 4 — эпюра Q, кН</figcaption></figure>
-<figure><svg style="width:136mm" viewBox="90 0 594 304" role="img" aria-label="Схема 4: эпюра 0" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:136mm" viewBox="90 0 594 303" role="img" aria-label="Схема 4: эпюра 0" xmlns="http://www.w3.org/2000/svg">
 <line x1="380.0" y1="280.0" x2="338.7" y2="280.0" class="ep-hatch"/>
 <line x1="380.0" y1="270.8" x2="338.7" y2="270.8" class="ep-hatch"/>
 <line x1="380.0" y1="261.6" x2="338.7" y2="261.6" class="ep-hatch"/>
@@ -1965,7 +2053,7 @@ M = 178 кН·м — совпало с реакцией. Узел R: 80 (риг�
 
 <h2>СХЕМА 5</h2>
 
-<figure><svg viewBox="56 19 583 202" role="img" aria-label="Схема 5: многопролётная балка" xmlns="http://www.w3.org/2000/svg">
+<figure><svg viewBox="56 20 583 201" role="img" aria-label="Схема 5: многопролётная балка" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
 <marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
@@ -2073,7 +2161,7 @@ M = 178 кН·м — совпало с реакцией. Узел R: 80 (риг�
    ΣY:  R<sub>B</sub> + R<sub>C</sub> = 3 + 20   →   <b>R<sub>C</sub> = 10,17 кН</b></div>
 
 <h3>Эпюры</h3>
-<figure><svg style="width:136mm" viewBox="72 0 616 167" role="img" aria-label="Схема 5: эпюра 2" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:136mm" viewBox="72 0 616 166" role="img" aria-label="Схема 5: эпюра 2" xmlns="http://www.w3.org/2000/svg">
 <line x1="96.0" y1="96.0" x2="96.0" y2="34.0" class="ep-hatch"/>
 <line x1="102.3" y1="96.0" x2="102.3" y2="38.6" class="ep-hatch"/>
 <line x1="108.6" y1="96.0" x2="108.6" y2="43.0" class="ep-hatch"/>
@@ -2235,7 +2323,7 @@ M = 178 кН·м — совпало с реакцией. Узел R: 80 (риг�
 <rect x="653.9" y="59.8" width="20.2" height="15.0" class="ep-bg"/>
 <text x="664.0" y="71.8" class="ep-lbl" text-anchor="middle">10</text>
 </svg><figcaption>Схема 5 — эпюра M, кН·м</figcaption></figure>
-<figure><svg style="width:136mm" viewBox="72 1 606 192" role="img" aria-label="Схема 5: эпюра 1" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:136mm" viewBox="72 2 606 190" role="img" aria-label="Схема 5: эпюра 1" xmlns="http://www.w3.org/2000/svg">
 <line x1="96.0" y1="96.0" x2="96.0" y2="41.1" class="ep-hatch"/>
 <line x1="102.3" y1="96.0" x2="102.3" y2="42.9" class="ep-hatch"/>
 <line x1="108.6" y1="96.0" x2="108.6" y2="44.8" class="ep-hatch"/>

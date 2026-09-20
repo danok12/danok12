@@ -349,10 +349,46 @@ def shema1_reakcii():
     return s
 
 
+def shema2_reakcii():
+    """Схема 2 с найденными реакциями, отложенными в истинную сторону.
+
+    R₂ и R₃ вышли отрицательными при принятом направлении «вправо»,
+    поэтому их стрелки развёрнуты влево, а подписаны модули. Стрелки
+    смещены поперёк опорных стержней: иначе они легли бы прямо на связь
+    и на штриховку.
+    """
+    w, h = 640, 372
+    xl, xm, xr = 96, 268, 440
+    yt, yb = 86, 86 + 140
+    s = HEAD.format(w=w, h=h, alt="Схема 2: найденные опорные реакции")
+    s += ln((xl, yt), (xr, yt))
+    s += ln((xl, yt), (xl, yb)) + ln((xm, yt), (xm, yb))
+    s += qload((xl, yt), (xm, yt), (0, -34), 5, "q = 1 кН/м", (0, -8))
+    s += force((xl, yt + 70), 1, 0, "F = 20 кН", (0, -6))
+    s += moment((xm + (xr - xm) / 2, yt), "m = 10 кН·м", 16, False, 90, (0, -30))
+    s += link_v((xl, yb))
+    s += link_h((xm, yb), 26, 1)
+    s += link_h((xr, yt), 26, 1)
+    # реакции: стрелка в ту сторону, куда связь работает на самом деле
+    s += force((xl - 34, yb), 0, -1, "", (0, 0), 42)
+    s += txt(xl - 34, yb + 60, "R<tspan class='sub'>1</tspan> = 6 кН", "lbl")
+    s += force((xm - 2, yb + 30), -1, 0, "", (0, 0), 44)
+    s += txt(xm + 20, yb + 52, "R<tspan class='sub'>2</tspan> = 3 кН", "lbl")
+    s += force((xr - 4, yt + 26), -1, 0, "", (0, 0), 44)
+    s += txt(xr + 18, yt + 48, "R<tspan class='sub'>3</tspan> = 17 кН", "lbl")
+    s += dim((xl, yb), (xm, yb), "l = 6 м", 92)
+    s += dim((xm, yb), (xr, yt), "l = 6 м", 92)
+    s += dim((xl, yt), (xl, yt + 70), "h/2 = 2 м", 422, True)
+    s += dim((xl, yt + 70), (xl, yb), "h/2 = 2 м", 422, True)
+    s += '</svg>\n'
+    return s
+
+
 if __name__ == "__main__":
     for name, fn in (("shema-1", shema1), ("shema-2", shema2),
                      ("shema-3", shema3), ("shema-4", shema4),
                      ("shema-5", shema5),
-                     ("shema-1-reakcii", shema1_reakcii)):
+                     ("shema-1-reakcii", shema1_reakcii),
+                     ("shema-2-reakcii", shema2_reakcii)):
         open(name + ".svg", "w", encoding="utf-8").write(fn())
         print("записано", name + ".svg")
