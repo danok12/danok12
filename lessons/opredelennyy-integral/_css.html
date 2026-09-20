@@ -1,0 +1,96 @@
+<style>
+:root{
+  --paper:#eff3f2; --card:#ffffff; --ink:#0d2429; --soft:#4b6268;
+  --petrol:#0d4c58; --petrol-2:#14707f; --ochre:#8a6410;
+  --rule:#c9d8d8; --code:#e7eeed; --shade:#f6f9f8;
+  --display:'Spectral',Georgia,'Times New Roman',serif;
+  --body:'Source Sans 3','Segoe UI',system-ui,sans-serif;
+  --mono:'JetBrains Mono','DejaVu Sans Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0a1b1f; --card:#0f2a30; --ink:#dfeaea; --soft:#93aab0;
+    --petrol:#6cb6c3; --petrol-2:#8fd0da; --ochre:#d8a740;
+    --rule:#23474f; --code:#0d252b; --shade:#0d252b;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0a1b1f; --card:#0f2a30; --ink:#dfeaea; --soft:#93aab0;
+  --petrol:#6cb6c3; --petrol-2:#8fd0da; --ochre:#d8a740;
+  --rule:#23474f; --code:#0d252b; --shade:#0d252b;
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--body); font-size:17px; line-height:1.55;
+  -webkit-text-size-adjust:100%}
+.wrap{max-width:47rem; margin:0 auto; padding-inline:16px; padding-block:40px 64px}
+
+h1{font-family:var(--display); font-weight:600; font-size:2.05rem; line-height:1.18;
+  margin:0 0 .35em; color:var(--petrol); text-wrap:balance; letter-spacing:-.01em}
+.lead{color:var(--soft); margin:0 0 2rem; font-size:1.02rem; max-width:62ch}
+h2{font-family:var(--display); font-weight:600; font-size:1.42rem; color:var(--petrol);
+  margin:2.6rem 0 .2rem; text-wrap:balance}
+h2 .idx{font-family:var(--mono); font-size:.62em; color:var(--ochre);
+  letter-spacing:.06em; display:block; margin-bottom:.25em; text-transform:uppercase}
+h3{font-family:var(--display); font-weight:600; font-size:1.08rem; margin:1.6rem 0 .4rem}
+p{margin:0 0 .8rem; max-width:65ch}
+a{color:var(--petrol-2)}
+hr{border:0; border-top:1px solid var(--rule); margin:2.4rem 0}
+
+/* знак интеграла с пределами — без скриптов, потоком */
+.I{display:inline-flex; align-items:center; gap:.16em; vertical-align:-.34em}
+.I>b{font-family:var(--mono); font-weight:400; font-size:1.6em; line-height:.86}
+.I .lm{display:inline-flex; flex-direction:column; justify-content:center;
+  font-size:.7em; line-height:1.12; font-family:var(--body)}
+.I .lm i{font-style:normal; white-space:nowrap}
+
+/* задачи */
+.tasks{display:grid; gap:.1rem; margin:.9rem 0 0}
+.t{display:grid; grid-template-columns:3.6rem 1fr; gap:.2rem .5rem;
+  align-items:baseline; padding:.5rem .1rem; border-top:1px solid var(--rule)}
+.t:last-child{border-bottom:1px solid var(--rule)}
+.t .n{font-family:var(--mono); font-size:.82rem; color:var(--soft); white-space:nowrap}
+.t .b{font-size:1.02rem}
+.t .b .hint{display:block; color:var(--soft); font-size:.9rem; margin-top:.2rem}
+.lv{color:var(--ochre); letter-spacing:.05em}
+
+/* формулы и памятка */
+.f{font-family:var(--mono); font-size:.95rem; background:var(--code);
+  border-left:3px solid var(--petrol); padding:.6rem .8rem; margin:.8rem 0;
+  overflow-x:auto; white-space:pre-wrap}
+.ref{background:var(--card); border:1px solid var(--rule); border-radius:3px;
+  padding:1rem 1.1rem; margin:1.2rem 0}
+.ref h3{margin-top:0}
+.tw{overflow-x:auto; margin:.9rem 0}
+table{border-collapse:collapse; width:100%; font-size:.94rem;
+  font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--rule); padding:.38rem .6rem; text-align:left;
+  vertical-align:top}
+thead th{background:var(--shade); font-weight:600; font-family:var(--body)}
+td.num{text-align:right; font-family:var(--mono); font-size:.9rem; white-space:nowrap}
+
+/* неверные решения */
+.wrong{background:var(--code); border:1px dashed var(--rule); border-radius:3px;
+  padding:.7rem .9rem; margin:.6rem 0 .9rem; font-family:var(--mono);
+  font-size:.9rem; white-space:pre-wrap; overflow-x:auto}
+
+/* ответы */
+details{border-top:1px solid var(--rule); margin-top:1.2rem; padding-top:.7rem}
+summary{cursor:pointer; font-family:var(--body); font-weight:600; color:var(--petrol-2);
+  font-size:.95rem; list-style:none; display:flex; align-items:center; gap:.45rem}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+"; font-family:var(--mono); color:var(--ochre);
+  font-size:1.05rem; line-height:1}
+details[open] summary::before{content:"−"}
+details>div{padding-top:.7rem}
+summary:focus-visible{outline:2px solid var(--petrol-2); outline-offset:3px}
+
+footer{margin-top:3rem; padding-top:1rem; border-top:1px solid var(--rule);
+  color:var(--soft); font-size:.88rem}
+@media (max-width:420px){
+  body{font-size:16px}
+  .t{grid-template-columns:1fr}
+  .t .n{color:var(--ochre)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
