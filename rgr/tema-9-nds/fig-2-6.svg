@@ -1,0 +1,39 @@
+<svg viewBox="146 0 515 503" role="img" aria-label="Круги Мора для задачи 2" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
+<marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="166.4" y1="215.0" x2="620.0" y2="215.0" class="ax" marker-end="url(#ms)"/>
+<text x="641.6" y="220.0" class="ax-lbl" text-anchor="middle">σ</text>
+<line x1="566.0" y1="416.6" x2="566.0" y2="13.4" class="ax" marker-end="url(#ms)"/>
+<text x="581.0" y="6.2" class="ax-lbl" text-anchor="middle">τ</text>
+<circle cx="535.8" cy="215.0" r="30.2" class="hid" fill="none"/>
+<circle cx="389.2" cy="215.0" r="176.8" class="hid" fill="none"/>
+<circle cx="359.0" cy="215.0" r="146.5" class="plane-edge" fill="none"/>
+<line x1="260.0" y1="107.0" x2="458.0" y2="323.0" class="dim"/>
+<line x1="458.0" y1="215.0" x2="458.0" y2="323.0" class="dim"/>
+<circle cx="260.0" cy="215.0" r="3.4" class="dot"/>
+<circle cx="458.0" cy="215.0" r="3.4" class="dot"/>
+<circle cx="359.0" cy="215.0" r="3.4" class="dot"/>
+<circle cx="566.0" cy="215.0" r="3.4" class="dot"/>
+<circle cx="505.5" cy="215.0" r="3.4" class="dot"/>
+<circle cx="212.5" cy="215.0" r="3.4" class="dot"/>
+<circle cx="458.0" cy="323.0" r="3.4" class="dot"/>
+<circle cx="260.0" cy="107.0" r="3.4" class="dot"/>
+<circle cx="389.2" cy="38.2" r="3.4" class="dot"/>
+<text x="260.0" y="202.0" class="lbl" text-anchor="middle">D</text>
+<text x="458.0" y="202.0" class="lbl" text-anchor="middle">B</text>
+<text x="368.0" y="204.0" class="lbl" text-anchor="start">C</text>
+<text x="250.0" y="99.0" class="lbl" text-anchor="end">D′</text>
+<text x="469.0" y="329.0" class="lbl" text-anchor="start">K</text>
+<text x="469.0" y="347.0" class="val" text-anchor="start">τxy = −30</text>
+<text x="260.0" y="239.0" class="val" text-anchor="middle">σx = −85</text>
+<text x="449.0" y="239.0" class="val" text-anchor="end">σy = −30</text>
+<text x="398.5" y="260.0" class="val" text-anchor="end">R = 40,70</text>
+<text x="400.2" y="30.2" class="val" text-anchor="start">τmax = 49,10</text>
+<text x="577.0" y="202.0" class="val" text-anchor="start">σ₁ = 0</text>
+<line x1="212.5" y1="223.0" x2="212.5" y2="451.0" class="leader"/>
+<text x="212.5" y="465.0" class="val" text-anchor="middle">σ₃ = −98,20 МПа</text>
+<line x1="505.5" y1="223.0" x2="505.5" y2="451.0" class="leader"/>
+<text x="505.5" y="465.0" class="val" text-anchor="middle">σ₂ = −16,80 МПа</text>
+</svg>

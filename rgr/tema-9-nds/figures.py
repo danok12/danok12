@@ -596,6 +596,164 @@ def fig23_main():
     return s
 
 
+# ---------------------------------------------------------------- п. 4
+A_TAU = A2 - 45          # нормаль к площадке наибольшего τ в плоскости
+S_SR = -57.5             # σ\' = (σ2+σ3)/2
+T_23 = 40.6971           # τ23 = радиус круга Мора в плоскости
+AL5 = 15
+S_NU, S_T, T_TNU = -66.3157, -48.6843, -39.7308
+
+
+def uv(deg):
+    """Единичный вектор под углом deg к оси x; ось y на листе — вниз."""
+    r = math.radians(deg)
+    return math.cos(r), -math.sin(r)
+
+
+def povernutyy(cx, cy, a, ang, sig_u, sig_v, tau_znak):
+    """Квадратный элемент, повёрнутый на ang: нормальные и касательные.
+
+    sig_u, sig_v — напряжения на гранях с нормалями u и v (оба сжатия,
+    поэтому стрелки направлены внутрь). tau_znak задаёт сторону обхода
+    касательных: пара образует уравновешенный момент.
+    """
+    u, v = uv(ang), uv(ang + 90)
+    pts = [(cx + a * (p * u[0] + q * v[0]), cy + a * (p * u[1] + q * v[1]))
+           for p, q in ((1, 1), (1, -1), (-1, -1), (-1, 1))]
+    s = poly(pts, "elem")
+    for w in (u, v):
+        for k in (1, -1):
+            fx, fy = cx + k * a * w[0], cy + k * a * w[1]
+            s += ar((fx + k * 58 * w[0], fy + k * 58 * w[1]),
+                    (fx + k * 10 * w[0], fy + k * 10 * w[1]), "sig")
+    for w, z, sgn in ((u, v, tau_znak), (v, u, -tau_znak)):
+        for k in (1, -1):
+            fx, fy = cx + k * a * w[0], cy + k * a * w[1]
+            s += ar((fx - sgn * k * 40 * z[0], fy - sgn * k * 40 * z[1]),
+                    (fx + sgn * k * 40 * z[0], fy + sgn * k * 40 * z[1]), "tau")
+    return s, u, v
+
+
+def vynos(cx, cy, a, u, v, sdvig, text, anchor="middle", dal=100):
+    """Подпись за стрелками: вдоль нормали u на dal и вбок на sdvig по v."""
+    x = cx + u[0] * (a + dal) + v[0] * sdvig
+    y = cy + u[1] * (a + dal) + v[1] * sdvig
+    return txt(x, y, text, "val", anchor)
+
+
+def fig24_tau():
+    """Площадки экстремальных касательных напряжений в плоскости пластины."""
+    w, h = 700, 500
+    cx, cy, a = 330, 252, 68
+    s = HEAD.format(w=w, h=h, m=MID,
+                    alt="Площадки экстремальных касательных напряжений задачи 2")
+    s += ar((cx - 208, cy), (cx + 216, cy), "ax", small=True)
+    s += txt(cx + 226, cy + 5, "x", "ax-lbl")
+    s += ar((cx, cy), (cx, cy + 190), "ax", small=True)
+    s += txt(cx - 16, cy + 202, "y", "ax-lbl")
+
+    for d, nm in ((A2, "σ₂"), (A3, "σ₃")):      # главные направления — пунктир
+        n = uv(d)
+        s += ln((cx - 168 * n[0], cy - 168 * n[1]),
+                (cx + 168 * n[0], cy + 168 * n[1]), "hid")
+        s += txt(cx + 186 * n[0], cy + 186 * n[1] + 5, nm, "ang")
+
+    body, u, v = povernutyy(cx, cy, a, A_TAU, S_SR, S_SR, 1)
+    s += body
+    s += vynos(cx, cy, a, u, v, -34, "σ\u2032 = " + sg(S_SR) + " МПа", "start")
+    s += vynos(cx, cy, a, v, u, 30, "τ₂₃ = ±" + sg(T_23) + " МПа")
+    r0 = 116
+    ex, ey = cx + r0 * math.cos(math.radians(A_TAU)), cy - r0 * math.sin(math.radians(A_TAU))
+    s += f'<path d="M {cx + r0} {cy} A {r0} {r0} 0 0 0 {ex:.1f} {ey:.1f}" class="arc"/>\n'
+    s += txt(cx + r0 + 24, cy + 26, "α = 21,26°", "ang", "start")
+    s += '</svg>\n'
+    return s
+
+
+def fig25_alpha():
+    """Площадки, повёрнутые на α = 15° к осям Ox и Oy."""
+    w, h = 700, 480
+    cx, cy, a = 330, 236, 68
+    s = HEAD.format(w=w, h=h, m=MID,
+                    alt="Напряжения на площадках под углом 15° к осям")
+    s += ar((cx - 208, cy), (cx + 212, cy), "ax", small=True)
+    s += txt(cx + 222, cy + 5, "x", "ax-lbl")
+    s += ar((cx, cy), (cx, cy + 184), "ax", small=True)
+    s += txt(cx - 16, cy + 196, "y", "ax-lbl")
+
+    body, u, v = povernutyy(cx, cy, a, AL5, S_NU, S_T, -1)
+    for w_, nm in ((u, "ν"), (v, "t")):         # нормали к площадкам
+        s += ln((cx, cy), (cx + 196 * w_[0], cy + 196 * w_[1]), "norm")
+        s += txt(cx + 210 * w_[0], cy + 210 * w_[1] + 5, nm, "ax-lbl")
+    s += body
+    s += vynos(cx, cy, a, u, v, -74, "σ\u03bd = " + sg(S_NU) + " МПа",
+               "start", dal=52)
+    s += vynos(cx, cy, a, v, u, 62, "σ\u209c = " + sg(S_T) + " МПа",
+               "start", dal=76)
+    s += vynos(cx, cy, a, (-u[0], -u[1]), v, 58,
+               "τ\u209c\u03bd = " + sg(T_TNU) + " МПа", "end", dal=70)
+    r0 = 128
+    ex, ey = cx + r0 * math.cos(math.radians(AL5)), cy - r0 * math.sin(math.radians(AL5))
+    s += f'<path d="M {cx + r0} {cy} A {r0} {r0} 0 0 0 {ex:.1f} {ey:.1f}" class="arc"/>\n'
+    s += txt(cx + r0 + 22, cy + 26, "α = 15°", "ang", "start")
+    s += '</svg>\n'
+    return s
+
+
+def fig26_mohr():
+    """Три круга Мора; основной построен по σx, σy, τxy."""
+    K = 3.6                                     # пикселей на МПа
+    w, h = 700, 530
+    ox, oy = 566, 215
+    sx_, sy_, t_ = -85.0, -30.0, -30.0
+    c_pl, r_pl = -57.5, 40.6971
+    s1, s2, s3 = 0.0, -16.8029, -98.1971
+    tmax = 49.0985
+    s = HEAD.format(w=w, h=h, m=MID, alt="Круги Мора для задачи 2")
+    X = lambda v: ox + v * K
+    Y = lambda v: oy - v * K
+
+    s += ar((X(-111), oy), (X(15), oy), "ax", small=True)
+    s += txt(X(21), oy + 5, "σ", "ax-lbl")
+    s += ar((ox, Y(-56)), (ox, Y(56)), "ax", small=True)
+    s += txt(ox + 15, Y(58), "τ", "ax-lbl")
+
+    for c, r, cls in (((s1 + s2) / 2, (s1 - s2) / 2, "hid"),
+                      ((s1 + s3) / 2, (s1 - s3) / 2, "hid"),
+                      (c_pl, r_pl, "plane-edge")):
+        s += (f'<circle cx="{X(c):.1f}" cy="{oy:.1f}" r="{r * K:.1f}" '
+              f'class="{cls}" fill="none"/>\n')
+
+    kx, ky = X(sy_), Y(t_)
+    dx2, dy2 = X(sx_), Y(-t_)
+    s += ln((dx2, dy2), (kx, ky), "dim")        # диаметр D\'K через центр C
+    s += ln((kx, oy), (kx, ky), "dim")          # BK = τxy
+    for px, py in ((X(sx_), oy), (X(sy_), oy), (X(c_pl), oy), (ox, oy),
+                   (X(s2), oy), (X(s3), oy), (kx, ky), (dx2, dy2),
+                   (X(-tmax), Y(tmax))):
+        s += f'<circle cx="{px:.1f}" cy="{py:.1f}" r="3.4" class="dot"/>\n'
+
+    # буквы построения — над осью, значения — под ней
+    s += txt(X(sx_), oy - 13, "D", "lbl")
+    s += txt(X(sy_), oy - 13, "B", "lbl")
+    s += txt(X(c_pl) + 9, oy - 11, "C", "lbl", "start")
+    s += txt(dx2 - 10, dy2 - 8, "D\u2032", "lbl", "end")
+    s += txt(kx + 11, ky + 6, "K", "lbl", "start")
+    s += txt(kx + 11, ky + 24, "τxy = −30", "val", "start")
+    s += txt(X(sx_), oy + 24, "σx = −85", "val")
+    s += txt(kx - 9, oy + 24, "σy = −30", "val", "end")
+    s += txt((X(c_pl) + kx) / 2 - 10, (oy + ky) / 2 - 9, "R = 40,70", "val", "end")
+    s += txt(X(-tmax) + 11, Y(tmax) - 8, "τmax = 49,10", "val", "start")
+    s += txt(ox + 11, oy - 13, "σ₁ = 0", "val", "start")
+
+    ry = oy + 250                               # строка выносок под кругами
+    for v, nm in ((s3, "σ₃ = −98,20"), (s2, "σ₂ = −16,80")):
+        s += ln((X(v), oy + 8), (X(v), ry - 14), "leader")
+        s += txt(X(v), ry, nm + " МПа", "val")
+    s += '</svg>\n'
+    return s
+
+
 if __name__ == "__main__":
     K = 260.0
     for nm, cell, i, j, g in (("xOy (γxy)", (0, 1), 0, 1, GXY),
@@ -613,6 +771,8 @@ if __name__ == "__main__":
     for name, fn in (("fig-1-1", fig11), ("fig-1-2", fig12), ("fig-1-3", fig13),
                      ("fig-1-4", fig14), ("fig-1-5", fig15),
                      ("fig-2-1", fig21_plate), ("fig-2-2", fig22_flat),
-                     ("fig-2-3", fig23_main)):
+                     ("fig-2-3", fig23_main),
+                     ("fig-2-4", fig24_tau), ("fig-2-5", fig25_alpha),
+                     ("fig-2-6", fig26_mohr)):
         open(name + ".svg", "w", encoding="utf-8").write(fn())
     print("схемы собраны")
