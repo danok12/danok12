@@ -21,7 +21,9 @@
 <text x="417.0" y="118.0" class="tau-lbl" text-anchor="start">τ<tspan class='sub'>xy</tspan></text>
 <text x="417.0" y="137.0" class="tau-val" text-anchor="start">−30 МПа</text>
 <line x1="185.0" y1="222.0" x2="185.0" y2="302.0" class="tau" marker-end="url(#m)"/>
+<text x="175.0" y="318.0" class="tau-lbl" text-anchor="end">τ<tspan class='sub'>xy</tspan></text>
 <line x1="384.0" y1="325.0" x2="304.0" y2="325.0" class="tau" marker-end="url(#m)"/>
+<text x="394.0" y="341.0" class="tau-lbl" text-anchor="start">τ<tspan class='sub'>yx</tspan></text>
 <line x1="208.0" y1="103.0" x2="288.0" y2="103.0" class="tau" marker-end="url(#m)"/>
 <text x="198.0" y="95.0" class="tau-lbl" text-anchor="end">τ<tspan class='sub'>yx</tspan></text>
 <text x="198.0" y="114.0" class="tau-val" text-anchor="end">−30 МПа</text>

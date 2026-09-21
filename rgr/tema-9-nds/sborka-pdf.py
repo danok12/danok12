@@ -12,12 +12,26 @@ import os
 TPL, SRC, DST = "shablon.html", "index.html", "print.html"
 OUT = "Тема 9 — НДС в окрестности точки тела.pdf"
 
+# Единый масштаб черчения на весь документ.
+# Без него каждая схема растягивалась на всю ширину полосы, и подписи на
+# ней выходили крупнее основного текста, а линии — грубее. Теперь ширина
+# задаётся не полосой, а содержимым: одна единица viewBox = MM_NA_ED мм,
+# поэтому шрифт .lbl (17 ед.) печатается около 9 пт на всех схемах сразу.
+MM_NA_ED = 0.187
+MAX_MM = 132.0
+
+
+def po_masshtabu(svg):
+    vb = [float(v) for v in re.search(r'viewBox="([^"]+)"', svg).group(1).split()]
+    mm = min(vb[2] * MM_NA_ED, MAX_MM)
+    return svg.replace("<svg ", f'<svg style="width:{mm:.0f}mm" ', 1)
+
+
 # 0. вклеить схемы в шаблон -> index.html
 h = open(TPL, encoding="utf-8").read()
-for a, b in ((1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
-             (2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7)):
-    h = h.replace(f"__FIG_{a}_{b}__",
-                  open(f"fig-{a}-{b}.svg", encoding="utf-8").read().strip())
+for n in range(1, 9):
+    h = h.replace(f"__FIG_{n}__",
+                  po_masshtabu(open(f"fig-{n}.svg", encoding="utf-8").read().strip()))
 assert "__FIG" not in h, "не все схемы вклеены"
 open(SRC, "w", encoding="utf-8").write(h)
 
@@ -46,7 +60,7 @@ p,.f,.res,.rem,.mx,figure,.tw,table,tr,.matrix,footer{break-inside:avoid}
 .f{line-height:1.6; margin-bottom:7pt}
 table{font-size:10.5pt}
 figure{margin:9pt 0 11pt}
-figure svg{width:100%; height:auto}
+figure svg{height:auto; max-width:100%}
 figcaption{font-size:10.5pt}
 </style>
 """

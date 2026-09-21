@@ -1,9 +1,9 @@
-<svg viewBox="22 10 942 408" role="img" aria-label="Тонкая пластина и выделенный из неё объёмный элемент" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="16 16 488 782" role="img" aria-label="Тонкая пластина и выделенный из неё объёмный элемент" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
 <marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
 </defs>
-<line x1="500.0" y1="24.0" x2="500.0" y2="404.0" class="sep"/>
+<line x1="30.0" y1="412.0" x2="490.0" y2="412.0" class="sep"/>
 <text x="240.0" y="42.0" class="cap" text-anchor="middle">а) тонкая пластина, нагруженная по контуру</text>
 <line x1="168.2" y1="173.4" x2="77.8" y2="235.8" class="hid"/>
 <line x1="77.8" y1="235.8" x2="77.8" y2="218.6" class="hid"/>
@@ -56,6 +56,7 @@
 <text x="42.9" y="352.7" class="ax-lbl" text-anchor="middle">y</text>
 <line x1="70.0" y1="330.0" x2="70.0" y2="294.0" class="ax" marker-end="url(#ms)"/>
 <text x="70.0" y="287.2" class="ax-lbl" text-anchor="middle">z</text>
+<g transform="translate(-462,432)">
 <text x="722.0" y="42.0" class="cap" text-anchor="middle">б) объёмный элемент в окрестности точки</text>
 <line x1="692.6" y1="264.0" x2="611.4" y2="320.0" class="hid"/>
 <line x1="611.4" y1="320.0" x2="611.4" y2="180.0" class="hid"/>
@@ -92,4 +93,5 @@
 <text x="872.9" y="348.7" class="ax-lbl" text-anchor="middle">y</text>
 <line x1="900.0" y1="326.0" x2="900.0" y2="290.0" class="ax" marker-end="url(#ms)"/>
 <text x="900.0" y="283.2" class="ax-lbl" text-anchor="middle">z</text>
+</g>
 </svg>

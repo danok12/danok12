@@ -97,671 +97,10 @@ svg .cap{font-size:14px}
 
 <h1>Тема № 9. Исследование напряжённо-деформированного состояния<br>
 в окрестности точки тела</h1>
-<p class="variant">Вариант: задача 1 — строка 14 (σ<sub>x</sub>, σ<sub>y</sub>,
-τ<sub>xy</sub>) и строка 11 (σ<sub>z</sub>, τ<sub>yz</sub>, τ<sub>zx</sub>);
-задача 2 — σ<sub>x</sub> по строке 29, σ<sub>y</sub> по строке 8, τ<sub>xy</sub>
-по строке 25. Порядок решения — как на практическом занятии.</p>
-
-<h2>ЗАДАЧА 1. Трёхосное напряжённое состояние</h2>
-
-<h4>Дано</h4>
-
-<div class="tw"><table>
-<caption>Таблица 1 — компоненты напряжённого состояния, МПа</caption>
-<thead><tr><th>источник</th><th>σ<sub>x</sub></th><th>σ<sub>y</sub></th><th>τ<sub>xy</sub></th><th>σ<sub>z</sub></th><th>τ<sub>yz</sub></th><th>τ<sub>zx</sub></th></tr></thead>
-<tbody>
-<tr><td>строка № 14</td><td class="mono">−80</td><td class="mono">60</td><td class="mono">90</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td></tr>
-<tr><td>строка № 11</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td class="mono">−60</td><td class="mono">50</td><td class="mono">−65</td></tr>
-<tr class="accept"><td>принято к расчёту</td><td class="mono">−80</td><td class="mono">60</td><td class="mono">90</td><td class="mono">−60</td><td class="mono">50</td><td class="mono">−65</td></tr>
-</tbody></table></div>
-
-<p>Сталь: E = 2,1·10⁵ МПа; G = 0,8·10⁵ МПа; R = 210 МПа; γ<sub>c</sub> = 0,9; ν = 0,3.</p>
-
-<h3>1. Тензор напряжений и напряжения на гранях элемента</h3>
-
-<p>По <strong>закону парности касательных напряжений</strong> τ<sub>ij</sub> = τ<sub>ji</sub>:</p>
-
-<div class="f">τ<sub>xy</sub> = τ<sub>yx</sub> = 90 МПа;   τ<sub>xz</sub> = τ<sub>zx</sub> = −65 МПа;   τ<sub>yz</sub> = τ<sub>zy</sub> = 50 МПа</div>
-
-<p>Тензор напряжений в рассматриваемой точке:</p>
-
-<div class="mx">
-  <span class="name">T<sub>н</sub> =</span>
-  <span class="matrix m3"><span>σ<sub>x</sub></span><span>τ<sub>xy</sub></span><span>τ<sub>xz</sub></span><span>τ<sub>yx</sub></span><span>σ<sub>y</sub></span><span>τ<sub>yz</sub></span><span>τ<sub>zx</sub></span><span>τ<sub>zy</sub></span><span>σ<sub>z</sub></span></span>
-  <span class="name">=</span>
-  <span class="matrix m3"><span>−80</span><span>90</span><span>−65</span><span>90</span><span>60</span><span>50</span><span>−65</span><span>50</span><span>−60</span></span>
-  <span class="unit">[МПа]</span>
-</div>
-
-<p>Первый индекс у τ — площадка (её нормаль), второй — направление напряжения.
-Растягивающие нормальные напряжения направлены от грани, сжимающие — к грани.</p>
-
-<figure><svg viewBox="24 2 606 486" role="img" aria-label="Напряжения на гранях элементарного параллелепипеда" xmlns="http://www.w3.org/2000/svg">
-<defs>
-<marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
-<marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
-</defs>
-<line x1="314.4" y1="286.0" x2="221.6" y2="350.0" class="hid"/>
-<line x1="221.6" y1="350.0" x2="221.6" y2="190.0" class="hid"/>
-<line x1="221.6" y1="190.0" x2="314.4" y2="126.0" class="hid"/>
-<line x1="314.4" y1="126.0" x2="314.4" y2="286.0" class="hid"/>
-<line x1="314.4" y1="286.0" x2="474.4" y2="286.0" class="hid"/>
-<line x1="474.4" y1="286.0" x2="474.4" y2="126.0" class="hid"/>
-<line x1="474.4" y1="126.0" x2="314.4" y2="126.0" class="hid"/>
-<line x1="314.4" y1="126.0" x2="314.4" y2="286.0" class="hid"/>
-<line x1="314.4" y1="286.0" x2="474.4" y2="286.0" class="hid"/>
-<line x1="474.4" y1="286.0" x2="381.6" y2="350.0" class="hid"/>
-<line x1="381.6" y1="350.0" x2="221.6" y2="350.0" class="hid"/>
-<line x1="221.6" y1="350.0" x2="314.4" y2="286.0" class="hid"/>
-<polygon points="474.4,286.0 381.6,350.0 381.6,190.0 474.4,126.0" class="elem"/>
-<polygon points="221.6,350.0 381.6,350.0 381.6,190.0 221.6,190.0" class="elem"/>
-<polygon points="314.4,126.0 474.4,126.0 381.6,190.0 221.6,190.0" class="elem"/>
-<line x1="525.6" y1="238.0" x2="437.6" y2="238.0" class="sig" marker-end="url(#m)"/>
-<text x="524.0" y="231.0" class="lbl" text-anchor="middle">σ<tspan class='sub'>x</tspan></text>
-<text x="524.0" y="250.0" class="val" text-anchor="middle">−80</text>
-<line x1="449.3" y1="173.7" x2="406.7" y2="203.1" class="tau" marker-end="url(#ms)"/>
-<text x="406.1" y="225.7" class="tau-lbl" text-anchor="middle">τ<tspan class='sub'>xy</tspan></text>
-<line x1="456.8" y1="181.4" x2="456.8" y2="255.0" class="tau" marker-end="url(#ms)"/>
-<text x="471.8" y="270.0" class="tau-lbl" text-anchor="middle">τ<tspan class='sub'>xz</tspan></text>
-<line x1="296.0" y1="273.8" x2="245.0" y2="309.0" class="sig" marker-end="url(#m)"/>
-<text x="204.5" y="330.0" class="lbl" text-anchor="middle">σ<tspan class='sub'>y</tspan></text>
-<text x="204.5" y="349.0" class="val" text-anchor="middle">60</text>
-<line x1="264.8" y1="319.6" x2="338.4" y2="319.6" class="tau" marker-end="url(#ms)"/>
-<text x="349.4" y="338.6" class="tau-lbl" text-anchor="middle">τ<tspan class='sub'>yx</tspan></text>
-<line x1="252.0" y1="306.8" x2="252.0" y2="233.2" class="tau" marker-end="url(#ms)"/>
-<text x="237.0" y="226.2" class="tau-lbl" text-anchor="middle">τ<tspan class='sub'>yz</tspan></text>
-<line x1="348.0" y1="60.4" x2="348.0" y2="148.4" class="sig" marker-end="url(#m)"/>
-<text x="348.0" y="31.0" class="lbl" text-anchor="middle">σ<tspan class='sub'>z</tspan></text>
-<text x="348.0" y="50.0" class="val" text-anchor="middle">−60</text>
-<line x1="413.6" y1="138.2" x2="340.0" y2="138.2" class="tau" marker-end="url(#ms)"/>
-<text x="329.0" y="127.2" class="tau-lbl" text-anchor="middle">τ<tspan class='sub'>zx</tspan></text>
-<line x1="418.9" y1="143.3" x2="376.3" y2="172.7" class="tau" marker-end="url(#ms)"/>
-<text x="358.7" y="170.6" class="tau-lbl" text-anchor="middle">τ<tspan class='sub'>zy</tspan></text>
-<line x1="74.0" y1="432.0" x2="114.0" y2="432.0" class="ax" marker-end="url(#ms)"/>
-<text x="126.0" y="436.0" class="ax-lbl" text-anchor="middle">x</text>
-<line x1="74.0" y1="432.0" x2="50.8" y2="448.0" class="ax" marker-end="url(#ms)"/>
-<text x="43.8" y="456.8" class="ax-lbl" text-anchor="middle">y</text>
-<line x1="74.0" y1="432.0" x2="74.0" y2="392.0" class="ax" marker-end="url(#ms)"/>
-<text x="74.0" y="384.0" class="ax-lbl" text-anchor="middle">z</text>
-<text x="348.0" y="470.0" class="cap" text-anchor="middle">растяжение — стрелка от грани, сжатие — к грани; касательные лежат в плоскости грани</text>
-</svg>
-<figcaption>Рис. 1.1 — напряжения на гранях элементарного параллелепипеда, МПа.
-Оси: z вверх, x вправо, y на зрителя.</figcaption></figure>
-
-<h3>2. Главные напряжения</h3>
-
-<p>На главной площадке касательные напряжения отсутствуют (σ ≠ 0, τ = 0). Условия
-для нормали ν главной площадки дают однородную систему:</p>
-
-<div class="f">(σ<sub>x</sub> − σ)·l + τ<sub>xy</sub>·m + τ<sub>xz</sub>·n = 0
-τ<sub>yx</sub>·l + (σ<sub>y</sub> − σ)·m + τ<sub>yz</sub>·n = 0<span class="eq">(2)</span>
-τ<sub>zx</sub>·l + τ<sub>zy</sub>·m + (σ<sub>z</sub> − σ)·n = 0</div>
-
-<p>где l = cos(ν, x), m = cos(ν, y), n = cos(ν, z) — направляющие косинусы нормали.
-Система однородная, ненулевое решение существует только при равенстве нулю
-определителя, что даёт <strong>кубическое уравнение</strong>:</p>
-
-<div class="f">σ³ − I₁н·σ² + I₂н·σ − I₃н = 0<span class="eq">(1)</span></div>
-
-<h4>Инварианты</h4>
-
-<div class="f">I₁н = σ<sub>x</sub> + σ<sub>y</sub> + σ<sub>z</sub> = −80 + 60 + (−60) = <b>−80 МПа</b>
-
-I₂н = σ<sub>x</sub>σ<sub>y</sub> + σ<sub>y</sub>σ<sub>z</sub> + σ<sub>z</sub>σ<sub>x</sub> − τ<sub>xy</sub>² − τ<sub>yz</sub>² − τ<sub>zx</sub>² =
-    = (−80)·60 + 60·(−60) + (−60)·(−80) − 90² − 50² − (−65)² =
-    = −4800 − 3600 + 4800 − 8100 − 2500 − 4225 = <b>−18425 МПа²</b>
-
-I₃н = σ<sub>x</sub>σ<sub>y</sub>σ<sub>z</sub> + 2τ<sub>xy</sub>τ<sub>yz</sub>τ<sub>zx</sub> − σ<sub>x</sub>τ<sub>yz</sub>² − σ<sub>y</sub>τ<sub>zx</sub>² − σ<sub>z</sub>τ<sub>xy</sub>² =
-    = 288000 − 585000 + 200000 − 253500 + 486000 = <b>135500 МПа³</b></div>
-
-<p>Подставляя в (1), получаем:</p>
-
-<div class="f">σ³ + 80·σ² − 18425·σ − 135500 = 0</div>
-
-<h4>Решение кубического уравнения по теореме Виета</h4>
-
-<p>Уравнение (1) — приведённое кубическое: σ³ + bσ² + cσ + d = 0, где b = −I₁н = 80,
-c = I₂н = −18425, d = −I₃н = −135500. По <strong>теореме Виета</strong> его корни
-связаны с коэффициентами тремя соотношениями, которые здесь есть не что иное,
-как инварианты напряжённого состояния:</p>
-
-<div class="f">σ₁ + σ₂ + σ₃ = −b = I₁н
-σ₁σ₂ + σ₂σ₃ + σ₃σ₁ = c = I₂н<span class="eq">(3)</span>
-σ₁·σ₂·σ₃ = −d = I₃н</div>
-
-<p>Существенно, что <strong>если известен хотя бы один корень, два других находятся
-из обычного квадратного уравнения</strong>: первое и третье соотношения сразу дают
-сумму и произведение оставшихся корней. Поэтому решение разбивается на два шага.</p>
-
-<p><strong>Шаг 1. Отыскание первого корня.</strong> Сначала проверим, нет ли целого
-корня. По теореме Безу целый корень обязан быть делителем свободного члена:
-135500 = 2²·5³·271, то есть ±1, ±2, ±4, ±5, ±10, ±20, ±25, …, ±271, …, ±135500.
-Подстановка показывает, что <strong>ни один делитель корнем не является</strong>:</p>
-
-<div class="f">f(1) = −153844;   f(−1) = −116996;   f(5) = −225500;   f(−5) = −41500;
-f(271) = 20649116;   f(−271) = −9169556   и т. д.</div>
-
-<p>Значит корни иррациональные, и первый из них находим подстановкой, отслеживая
-перемену знака функции f(σ) = σ³ + 80σ² − 18425σ − 135500:</p>
-
-<div class="tw"><table>
-<caption>Таблица 2 — подбор корня подстановкой</caption>
-<thead><tr><th>σ, МПа</th><th>0</th><th>50</th><th>100</th><th>105</th><th>106</th><th>110</th></tr></thead>
-<tbody><tr><td>f(σ)</td><td class="mono">−135500</td><td class="mono">−731750</td><td class="mono">−178000</td><td class="mono">−30500</td><td class="mono">+1346</td><td class="mono">+136750</td></tr></tbody>
-</table></div>
-
-<p>Функция меняет знак между σ = 105 и σ = 106, следовательно корень лежит внутри
-этого отрезка. Уточняем его линейной интерполяцией:</p>
-
-<div class="f">σ₁ ≈ 105 + 1·30500/(30500 + 1346) = 105 + 0,958 = 105,958 МПа
-<span class="cm">проверка подстановкой: f(105,95) = −265,2;  f(105,96) = +56,9;  f(105,958) = −7,5 ≈ 0</span>
-<b>σ₁ = 105,96 МПа</b></div>
-
-<p><strong>Шаг 2. Два оставшихся корня — прямо из соотношений Виета.</strong>
-Из первого соотношения (3) получаем сумму, из третьего — произведение корней σ₂ и σ₃:</p>
-
-<div class="f">σ₂ + σ₃ = I₁н − σ₁ = −80 − 105,9582 = −185,9582 МПа
-σ₂·σ₃ = I₃н / σ₁ = 135500 / 105,9582 = 1278,81 МПа²</div>
-
-<p>По обратной теореме Виета числа с известной суммой и произведением являются
-корнями квадратного уравнения t² − (σ₂ + σ₃)·t + σ₂σ₃ = 0, то есть</p>
-
-<div class="f">t² + 185,9582·t + 1278,81 = 0
-D = 185,9582² − 4·1278,81 = 34580,46 − 5115,22 = 29465,24;   √D = 171,654
-t = (−185,9582 ± 171,654)/2   →   t′ = −7,152;   t″ = −178,806</div>
-
-<p>Располагая все три корня от большего к меньшему (σ₁ &gt; σ₂ &gt; σ₃):</p>
-
-<div class="res"><p class="res-tag">Главные напряжения</p>
-<p class="kv">σ₁ = 105,96 МПа;&nbsp;&nbsp;&nbsp;σ₂ = −7,15 МПа;&nbsp;&nbsp;&nbsp;σ₃ = −178,81 МПа</p></div>
-
-<h4>Проверка по теореме Виета</h4>
-
-<div class="f">σ₁ + σ₂ + σ₃       = 105,96 − 7,15 − 178,81 = −80,00 МПа   = I₁н
-σ₁σ₂ + σ₂σ₃ + σ₃σ₁ = −18425 МПа²                        = I₂н
-σ₁·σ₂·σ₃          = 135500 МПа³                         = I₃н</div>
-
-<p>Все три соотношения выполняются точно — главные напряжения найдены верно.
-Все три главных напряжения отличны от нуля и не одного знака (σ₁ &gt; 0 — растяжение,
-σ₂ &lt; 0 и σ₃ &lt; 0 — сжатие), следовательно напряжённое состояние —
-<strong>трёхосное разноимённое</strong>.</p>
-
-<h3>3. Косинусы и углы наклона главных площадок</h3>
-
-<p>Из системы (2) берём любые два уравнения и добавляем геометрическое условие:</p>
-
-<div class="f">(σ<sub>x</sub> − σ<sub>i</sub>)·l<sub>i</sub> + τ<sub>xy</sub>·m<sub>i</sub> + τ<sub>xz</sub>·n<sub>i</sub> = 0
-τ<sub>yx</sub>·l<sub>i</sub> + (σ<sub>y</sub> − σ<sub>i</sub>)·m<sub>i</sub> + τ<sub>yz</sub>·n<sub>i</sub> = 0<span class="eq">(4)</span>
-l<sub>i</sub>² + m<sub>i</sub>² + n<sub>i</sub>² = 1</div>
-
-<p>Систему решаем по формулам Крамера. Вводим определители:</p>
-
-<div class="f">Δ<sub>i</sub>  = (σ<sub>x</sub> − σ<sub>i</sub>)·(σ<sub>y</sub> − σ<sub>i</sub>) − τ<sub>xy</sub>²
-Δ1<sub>i</sub> = −(σ<sub>y</sub> − σ<sub>i</sub>)·τ<sub>xz</sub> + τ<sub>xy</sub>·τ<sub>yz</sub>
-Δ2<sub>i</sub> = −(σ<sub>x</sub> − σ<sub>i</sub>)·τ<sub>yz</sub> + τ<sub>yx</sub>·τ<sub>xz</sub>
-D<sub>i</sub>  = √(Δ1<sub>i</sub>² + Δ2<sub>i</sub>² + Δ<sub>i</sub>²)
-
-l<sub>i</sub> = Δ1<sub>i</sub>/D<sub>i</sub>;   m<sub>i</sub> = Δ2<sub>i</sub>/D<sub>i</sub>;   n<sub>i</sub> = Δ<sub>i</sub>/D<sub>i</sub></div>
-
-<p>Чтобы не накапливать ошибку округления, подставляем неокруглённые главные
-напряжения: σ₁ = 105,9582; σ₂ = −7,1519; σ₃ = −178,8063 МПа.</p>
-
-<div class="f"><span class="cm">при i = 1  (σ₁ = 105,96 МПа)</span>
-σ<sub>x</sub> − σ₁ = −185,9582;    σ<sub>y</sub> − σ₁ = −45,9582
-Δ₁  = (−185,9582)·(−45,9582) − 90² = 8546,3 − 8100 = 446,3
-Δ1₁ = −(−45,9582)·(−65) + 90·50 = −2987,3 + 4500 = 1512,7
-Δ2₁ = −(−185,9582)·50 + 90·(−65) = 9297,9 − 5850 = 3447,9
-D₁  = √(1512,7² + 3447,9² + 446,3²) = 3791,5
-<b>l₁ = 0,3990;   m₁ = 0,9094;   n₁ = 0,1177</b>
-
-<span class="cm">при i = 2  (σ₂ = −7,15 МПа)</span>
-σ<sub>x</sub> − σ₂ = −72,8481;    σ<sub>y</sub> − σ₂ = 67,1519
-Δ₂  = (−72,8481)·67,1519 − 8100 = −4891,9 − 8100 = −12991,9
-Δ1₂ = −67,1519·(−65) + 4500 = 4364,9 + 4500 = 8864,9
-Δ2₂ = −(−72,8481)·50 + 90·(−65) = 3642,4 − 5850 = −2207,6
-D₂  = √(8864,9² + 2207,6² + 12991,9²) = 15882,3
-<b>l₂ = 0,5582;   m₂ = −0,1390;   n₂ = −0,8180</b>
-
-<span class="cm">при i = 3  (σ₃ = −178,81 МПа)</span>
-σ<sub>x</sub> − σ₃ = 98,8063;    σ<sub>y</sub> − σ₃ = 238,8063
-Δ₃  = 98,8063·238,8063 − 8100 = 23595,6 − 8100 = 15495,6
-Δ1₃ = −238,8063·(−65) + 4500 = 15522,4 + 4500 = 20022,4
-Δ2₃ = −98,8063·50 + 90·(−65) = −4940,3 − 5850 = −10790,3
-D₃  = √(20022,4² + 10790,3² + 15495,6²) = 27521,6
-<b>l₃ = 0,7275;   m₃ = −0,3921;   n₃ = 0,5630</b></div>
-
-<div class="tw"><table>
-<caption>Таблица 3 — направляющие косинусы и углы наклона главных площадок</caption>
-<thead><tr><th>нормаль</th><th>l = cos(ν,x)</th><th>m = cos(ν,y)</th><th>n = cos(ν,z)</th><th>∠(ν,x)</th><th>∠(ν,y)</th><th>∠(ν,z)</th></tr></thead>
-<tbody>
-<tr><td>ν₁ (σ₁)</td><td class="mono">0,3990</td><td class="mono">0,9094</td><td class="mono">0,1177</td><td class="mono">66,49°</td><td class="mono">24,58°</td><td class="mono">83,24°</td></tr>
-<tr><td>ν₂ (σ₂)</td><td class="mono">0,5582</td><td class="mono">−0,1390</td><td class="mono">−0,8180</td><td class="mono">56,07°</td><td class="mono">97,99°</td><td class="mono">144,89°</td></tr>
-<tr><td>ν₃ (σ₃)</td><td class="mono">0,7275</td><td class="mono">−0,3921</td><td class="mono">0,5630</td><td class="mono">43,32°</td><td class="mono">113,08°</td><td class="mono">55,73°</td></tr>
-</tbody></table></div>
-
-<p><strong>Проверка на ортогональность.</strong> Главные площадки взаимно
-перпендикулярны, поэтому скалярное произведение нормалей любой пары должно равняться
-нулю. Косинусы округлены до четырёх знаков, поэтому точного нуля не получится:
-складываем отдельно положительные и отрицательные слагаемые, их разность (невязку)
-относим к бо́льшей по модулю сумме и выражаем в процентах. Ортогональность считается
-подтверждённой, если погрешность <strong>δ &lt; 3 %</strong>.</p>
-
-<div class="f"><span class="cm">пара 1 — 2:</span>
-0,3990·0,5582 + 0,9094·(−0,1390) + 0,1177·(−0,8180) =
-= 0,22272 − 0,12641 − 0,09628 = 0,22272 − 0,22269 = 0,00003
-δ₁₂ = 0,00003/0,22272·100 % = 0,01 % &lt; 3 %   →   ν₁ ⊥ ν₂
-
-<span class="cm">пара 2 — 3:</span>
-0,5582·0,7275 + (−0,1390)·(−0,3921) + (−0,8180)·0,5630 =
-= 0,40609 + 0,05450 − 0,46053 = 0,46059 − 0,46053 = 0,00006
-δ₂₃ = 0,00006/0,46059·100 % = 0,01 % &lt; 3 %   →   ν₂ ⊥ ν₃
-
-<span class="cm">пара 3 — 1:</span>
-0,7275·0,3990 + (−0,3921)·0,9094 + 0,5630·0,1177 =
-= 0,29027 − 0,35658 + 0,06627 = 0,35654 − 0,35658 = −0,00004
-δ₃₁ = 0,00004/0,35658·100 % = 0,01 % &lt; 3 %   →   ν₃ ⊥ ν₁</div>
-
-<p>Кроме того, для каждой нормали выполняется условие нормировки
-l<sub>i</sub>² + m<sub>i</sub>² + n<sub>i</sub>² = 1,000 (0,99986; 1,00003; 0,99997).
-Все три погрешности много меньше 3 % — главные площадки взаимно перпендикулярны,
-направляющие косинусы найдены верно.</p>
-
-<div class="rem"><p>Нормаль к площадке определена <strong>с точностью до знака</strong>:
-векторы ν<sub>i</sub> и −ν<sub>i</sub> задают одну и ту же главную площадку. Поэтому
-знаки всей тройки косинусов для каждого i могут быть взяты противоположными — на
-положение главных площадок и на величины главных напряжений это не влияет.</p></div>
-
-<h3>4. Главные площадки и главные напряжения</h3>
-
-<p>По найденным направляющим косинусам строим главный элемент — параллелепипед,
-гранями которого служат главные площадки. От центра каждой грани откладываем
-нормаль ν<sub>i</sub> и действующее на этой площадке главное напряжение σ<sub>i</sub>:
-σ₁ &gt; 0 — стрелка от грани, σ₂ и σ₃ &lt; 0 — стрелки к грани.</p>
-
-<figure><svg viewBox="24 58 582 429" role="img" aria-label="Главный элемент и главные напряжения" xmlns="http://www.w3.org/2000/svg">
-<defs>
-<marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
-<marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
-</defs>
-<line x1="353.8" y1="209.6" x2="326.2" y2="262.4" class="norm"/>
-<line x1="271.5" y1="154.2" x2="408.5" y2="317.8" class="norm"/>
-<line x1="237.5" y1="313.2" x2="442.5" y2="158.8" class="norm"/>
-<line x1="235.9" y1="215.5" x2="326.7" y2="323.8" class="hid"/>
-<line x1="326.7" y1="323.8" x2="462.3" y2="221.5" class="hid"/>
-<line x1="462.3" y1="221.5" x2="371.6" y2="113.2" class="hid"/>
-<line x1="371.6" y1="113.2" x2="235.9" y2="215.5" class="hid"/>
-<line x1="326.7" y1="323.8" x2="308.4" y2="358.8" class="hid"/>
-<line x1="308.4" y1="358.8" x2="444.1" y2="256.5" class="hid"/>
-<line x1="444.1" y1="256.5" x2="462.3" y2="221.5" class="hid"/>
-<line x1="462.3" y1="221.5" x2="326.7" y2="323.8" class="hid"/>
-<line x1="235.9" y1="215.5" x2="217.7" y2="250.5" class="hid"/>
-<line x1="217.7" y1="250.5" x2="308.4" y2="358.8" class="hid"/>
-<line x1="308.4" y1="358.8" x2="326.7" y2="323.8" class="hid"/>
-<line x1="326.7" y1="323.8" x2="235.9" y2="215.5" class="hid"/>
-<polygon points="217.7,250.5 308.4,358.8 444.1,256.5 353.3,148.2" class="elem"/>
-<polygon points="235.9,215.5 217.7,250.5 353.3,148.2 371.6,113.2" class="elem"/>
-<polygon points="371.6,113.2 353.3,148.2 444.1,256.5 462.3,221.5" class="elem"/>
-<line x1="329.7" y1="255.7" x2="319.7" y2="275.0" class="sig" marker-end="url(#m)"/>
-<line x1="261.4" y1="386.4" x2="324.7" y2="265.3" class="leader"/>
-<text x="261.4" y="379.4" class="lbl" text-anchor="middle">σ<tspan class='sub'>1</tspan>  (ν<tspan class='sub'>1</tspan>)</text>
-<text x="261.4" y="398.4" class="val" text-anchor="middle">105,96 МПа</text>
-<line x1="441.2" y1="356.7" x2="391.1" y2="296.9" class="sig" marker-end="url(#m)"/>
-<line x1="481.7" y1="405.1" x2="416.1" y2="326.8" class="leader"/>
-<text x="481.7" y="398.1" class="lbl" text-anchor="middle">σ<tspan class='sub'>2</tspan>  (ν<tspan class='sub'>2</tspan>)</text>
-<text x="481.7" y="417.1" class="val" text-anchor="middle">−7,15 МПа</text>
-<line x1="491.2" y1="122.0" x2="416.3" y2="178.5" class="sig" marker-end="url(#m)"/>
-<line x1="527.6" y1="94.6" x2="453.8" y2="150.2" class="leader"/>
-<text x="527.6" y="87.6" class="lbl" text-anchor="middle">σ<tspan class='sub'>3</tspan>  (ν<tspan class='sub'>3</tspan>)</text>
-<text x="527.6" y="106.6" class="val" text-anchor="middle">−178,81 МПа</text>
-<line x1="74.0" y1="432.0" x2="114.0" y2="432.0" class="ax" marker-end="url(#ms)"/>
-<text x="126.0" y="436.0" class="ax-lbl" text-anchor="middle">x</text>
-<line x1="74.0" y1="432.0" x2="50.8" y2="448.0" class="ax" marker-end="url(#ms)"/>
-<text x="43.8" y="456.8" class="ax-lbl" text-anchor="middle">y</text>
-<line x1="74.0" y1="432.0" x2="74.0" y2="392.0" class="ax" marker-end="url(#ms)"/>
-<text x="74.0" y="384.0" class="ax-lbl" text-anchor="middle">z</text>
-<text x="340.0" y="470.0" class="cap" text-anchor="middle">гранями элемента служат главные площадки; штриховые линии — нормали ν₁, ν₂, ν₃</text>
-</svg>
-<figcaption>Рис. 1.2 — главный элемент: наклонённый параллелепипед, гранями которого
-служат главные площадки. Штриховые линии — нормали ν₁, ν₂, ν₃.</figcaption></figure>
-
-<h3>5. Экстремальные касательные напряжения</h3>
-
-<p>Они действуют на площадках, наклонённых под ±45° к главным площадкам:</p>
-
-<div class="f">τ12 = −(σ₁ − σ₂)/2 = −½·(105,96 + 7,15)  = <b>−56,56 МПа</b>
-τ23 = −(σ₂ − σ₃)/2 = −½·(−7,15 + 178,81) = <b>−85,83 МПа</b>
-τ31 = −(σ₃ − σ₁)/2 = −½·(−178,81 − 105,96) = <b>+142,38 МПа</b></div>
-
-<p>Наибольшее по абсолютной величине — <strong>τ31 = 142,38 МПа</strong>; оно действует
-на площадке, равнонаклонённой к первому и третьему главным направлениям. Знак
-касательного напряжения показывает его направление: если τ<sub>ij</sub> &gt; 0, стрелка
-направлена от оси j к оси i, если τ<sub>ij</sub> &lt; 0 — наоборот. На тех же
-диагональных плоскостях действуют и нормальные напряжения:</p>
-
-<div class="f">σ12 = (σ₁ + σ₂)/2 = ½·(105,96 − 7,15)   = <b>49,40 МПа</b>
-σ23 = (σ₂ + σ₃)/2 = ½·(−7,15 − 178,81)  = <b>−92,98 МПа</b>
-σ31 = (σ₁ + σ₃)/2 = ½·(105,96 − 178,81) = <b>−36,42 МПа</b></div>
-
-<p>Со стороны внешней нормали знак «+» означает, что напряжение направлено от сечения
-(растяжение), знак «−» — в сечение (сжатие).</p>
-
-<figure><svg viewBox="80 51 590 437" role="img" aria-label="Диагональная площадка с наибольшим касательным напряжением" xmlns="http://www.w3.org/2000/svg">
-<defs>
-<marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
-<marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
-</defs>
-<line x1="295.6" y1="283.2" x2="200.4" y2="348.8" class="hid"/>
-<line x1="200.4" y1="348.8" x2="200.4" y2="184.8" class="hid"/>
-<line x1="200.4" y1="184.8" x2="295.6" y2="119.2" class="hid"/>
-<line x1="295.6" y1="119.2" x2="295.6" y2="283.2" class="hid"/>
-<line x1="295.6" y1="283.2" x2="459.6" y2="283.2" class="hid"/>
-<line x1="459.6" y1="283.2" x2="459.6" y2="119.2" class="hid"/>
-<line x1="459.6" y1="119.2" x2="295.6" y2="119.2" class="hid"/>
-<line x1="295.6" y1="119.2" x2="295.6" y2="283.2" class="hid"/>
-<line x1="295.6" y1="283.2" x2="459.6" y2="283.2" class="hid"/>
-<line x1="459.6" y1="283.2" x2="364.4" y2="348.8" class="hid"/>
-<line x1="364.4" y1="348.8" x2="200.4" y2="348.8" class="hid"/>
-<line x1="200.4" y1="348.8" x2="295.6" y2="283.2" class="hid"/>
-<polygon points="459.6,283.2 364.4,348.8 364.4,184.8 459.6,119.2" class="elem-lite"/>
-<polygon points="200.4,348.8 364.4,348.8 364.4,184.8 200.4,184.8" class="elem-lite"/>
-<polygon points="295.6,119.2 459.6,119.2 364.4,184.8 200.4,184.8" class="elem-lite"/>
-<polygon points="459.6,283.2 364.4,348.8 200.4,184.8 295.6,119.2" class="plane"/>
-<line x1="459.6" y1="283.2" x2="364.4" y2="348.8" class="plane-edge"/>
-<line x1="364.4" y1="348.8" x2="200.4" y2="184.8" class="plane-edge"/>
-<line x1="200.4" y1="184.8" x2="295.6" y2="119.2" class="plane-edge"/>
-<line x1="295.6" y1="119.2" x2="459.6" y2="283.2" class="plane-edge"/>
-<line x1="330.0" y1="234.0" x2="431.5" y2="132.5" class="norm"/>
-<line x1="330.0" y1="234.0" x2="473.5" y2="234.0" class="norm"/>
-<path d="M 399.7 234.0 Q 375.7 211.6 379.3 184.7" class="arc"/>
-<text x="440.3" y="192.3" class="ang" text-anchor="middle">45°</text>
-<line x1="429.7" y1="134.3" x2="354.4" y2="209.6" class="sig" marker-end="url(#m)"/>
-<line x1="230.3" y1="333.7" x2="305.6" y2="258.4" class="sig" marker-end="url(#m)"/>
-<line x1="250.5" y1="212.4" x2="341.0" y2="302.8" class="tau" marker-end="url(#m)"/>
-<line x1="409.5" y1="255.6" x2="319.0" y2="165.2" class="tau" marker-end="url(#m)"/>
-<line x1="437.7" y1="126.3" x2="520.0" y2="92.0" class="leader"/>
-<text x="526.0" y="80.0" class="lbl" text-anchor="start">σ<tspan class='sub'>31</tspan></text>
-<text x="526.0" y="99.0" class="val" text-anchor="start">−36,42 МПа</text>
-<line x1="335.0" y1="310.8" x2="176.0" y2="406.0" class="leader"/>
-<text x="170.0" y="396.0" class="tau-lbl" text-anchor="end">τ<tspan class='sub'>31</tspan></text>
-<text x="170.0" y="415.0" class="tau-val" text-anchor="end">142,38 МПа</text>
-<line x1="600.0" y1="408.0" x2="640.0" y2="408.0" class="ax" marker-end="url(#ms)"/>
-<text x="652.0" y="412.0" class="ax-lbl" text-anchor="middle">1</text>
-<line x1="600.0" y1="408.0" x2="576.8" y2="424.0" class="ax" marker-end="url(#ms)"/>
-<text x="569.8" y="432.8" class="ax-lbl" text-anchor="middle">2</text>
-<line x1="600.0" y1="408.0" x2="600.0" y2="368.0" class="ax" marker-end="url(#ms)"/>
-<text x="600.0" y="360.0" class="ax-lbl" text-anchor="middle">3</text>
-<text x="330.0" y="470.0" class="cap" text-anchor="middle">площадка равнонаклонена к главным направлениям 1 и 3</text>
-</svg>
-<figcaption>Рис. 1.3 — диагональная площадка, равнонаклонённая к главным направлениям 1
-и 3: наибольшее касательное τ31 = 142,38 МПа и нормальное σ31 = −36,42 МПа.</figcaption></figure>
-
-<h3>6. Деформации в исследуемой точке</h3>
-
-<h4>а) Относительные линейные деформации</h4>
-
-<p>По обобщённому закону Гука ε<sub>x</sub> = 1/E·[σ<sub>x</sub> − ν·(σ<sub>y</sub> + σ<sub>z</sub>)]
-и аналогично для y и z:</p>
-
-<div class="f">ε<sub>x</sub> = [−80 − 0,3·(60 − 60)] / 2,1·10⁵ = −80/2,1·10⁵  = <b>−38,10·10⁻⁵</b>  <span class="cm">(укорочение dx)</span>
-ε<sub>y</sub> = [60 − 0,3·(−60 − 80)] / 2,1·10⁵ = 102/2,1·10⁵  = <b>+48,57·10⁻⁵</b>  <span class="cm">(удлинение dy)</span>
-ε<sub>z</sub> = [−60 − 0,3·(−80 + 60)] / 2,1·10⁵ = −54/2,1·10⁵ = <b>−25,71·10⁻⁵</b>  <span class="cm">(укорочение dz)</span></div>
-
-<p>Объёмная деформация:</p>
-
-<div class="f">θ = ε<sub>x</sub> + ε<sub>y</sub> + ε<sub>z</sub> = (1 − 2ν)/E · I₁н = 0,4·(−80)/2,1·10⁵ = <b>−15,24·10⁻⁵</b></div>
-
-<p>θ &lt; 0 — объём элемента в окрестности точки <strong>уменьшился</strong>.</p>
-
-<figure><svg viewBox="24 24 548 480" role="img" aria-label="Относительные линейные деформации" xmlns="http://www.w3.org/2000/svg">
-<defs>
-<marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
-<marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
-</defs>
-<line x1="304.1" y1="277.6" x2="215.9" y2="338.4" class="hid"/>
-<line x1="215.9" y1="338.4" x2="215.9" y2="186.4" class="hid"/>
-<line x1="215.9" y1="186.4" x2="304.1" y2="125.6" class="hid"/>
-<line x1="304.1" y1="125.6" x2="304.1" y2="277.6" class="hid"/>
-<line x1="304.1" y1="277.6" x2="456.1" y2="277.6" class="hid"/>
-<line x1="456.1" y1="277.6" x2="456.1" y2="125.6" class="hid"/>
-<line x1="456.1" y1="125.6" x2="304.1" y2="125.6" class="hid"/>
-<line x1="304.1" y1="125.6" x2="304.1" y2="277.6" class="hid"/>
-<line x1="304.1" y1="277.6" x2="456.1" y2="277.6" class="hid"/>
-<line x1="456.1" y1="277.6" x2="367.9" y2="338.4" class="hid"/>
-<line x1="367.9" y1="338.4" x2="215.9" y2="338.4" class="hid"/>
-<line x1="215.9" y1="338.4" x2="304.1" y2="277.6" class="hid"/>
-<polygon points="456.1,277.6 367.9,338.4 367.9,186.4 456.1,125.6" class="elem-lite"/>
-<polygon points="215.9,338.4 367.9,338.4 367.9,186.4 215.9,186.4" class="elem-lite"/>
-<polygon points="304.1,125.6 456.1,125.6 367.9,186.4 215.9,186.4" class="elem-lite"/>
-<polygon points="451.9,258.4 339.7,335.7 339.7,205.6 451.9,128.3" class="deformed"/>
-<polygon points="220.1,335.7 339.7,335.7 339.7,205.6 220.1,205.6" class="deformed"/>
-<polygon points="332.3,128.3 451.9,128.3 339.7,205.6 220.1,205.6" class="deformed"/>
-<text x="520.0" y="225.0" class="lbl" text-anchor="middle">ε<tspan class='sub'>x</tspan></text>
-<text x="520.0" y="244.0" class="val" text-anchor="middle">−38,09·10⁻⁵</text>
-<text x="520.0" y="260.0" class="cap" text-anchor="middle">укорочение</text>
-<text x="168.4" y="340.6" class="lbl" text-anchor="middle">ε<tspan class='sub'>y</tspan></text>
-<text x="168.4" y="359.6" class="val" text-anchor="middle">+48,57·10⁻⁵</text>
-<text x="168.4" y="375.6" class="cap" text-anchor="middle">удлинение</text>
-<text x="336.0" y="53.0" class="lbl" text-anchor="middle">ε<tspan class='sub'>z</tspan></text>
-<text x="336.0" y="72.0" class="val" text-anchor="middle">−25,71·10⁻⁵</text>
-<text x="336.0" y="88.0" class="cap" text-anchor="middle">укорочение</text>
-<line x1="74.0" y1="424.0" x2="114.0" y2="424.0" class="ax" marker-end="url(#ms)"/>
-<text x="126.0" y="428.0" class="ax-lbl" text-anchor="middle">x</text>
-<line x1="74.0" y1="424.0" x2="50.8" y2="440.0" class="ax" marker-end="url(#ms)"/>
-<text x="43.8" y="448.8" class="ax-lbl" text-anchor="middle">y</text>
-<line x1="74.0" y1="424.0" x2="74.0" y2="384.0" class="ax" marker-end="url(#ms)"/>
-<text x="74.0" y="376.0" class="ax-lbl" text-anchor="middle">z</text>
-<line x1="212.0" y1="462.0" x2="238.0" y2="462.0" class="elem-lite"/>
-<text x="244.0" y="466.0" class="cap" text-anchor="start">до деформации</text>
-<line x1="402.0" y1="462.0" x2="428.0" y2="462.0" class="deformed"/>
-<text x="434.0" y="466.0" class="cap" text-anchor="start">после деформации</text>
-<text x="336.0" y="486.0" class="cap" text-anchor="middle">масштаб условный: деформации увеличены</text>
-</svg>
-<figcaption>Рис. 1.4 — относительные линейные деформации: сплошной контур — до
-деформации, штриховой — после (масштаб условный).</figcaption></figure>
-
-<h4>б) Относительные угловые деформации</h4>
-
-<div class="f">γ<sub>xy</sub> = τ<sub>xy</sub>/G = 90/(0,8·10⁵)  = <b>+112,50·10⁻⁵</b>  <span class="cm">(прямой угол между x и y уменьшился)</span>
-γ<sub>yz</sub> = τ<sub>yz</sub>/G = 50/(0,8·10⁵)  = <b>+62,50·10⁻⁵</b>  <span class="cm">(прямой угол между y и z уменьшился)</span>
-γ<sub>zx</sub> = τ<sub>zx</sub>/G = −65/(0,8·10⁵) = <b>−81,25·10⁻⁵</b>  <span class="cm">(прямой угол между z и x увеличился)</span></div>
-
-<p>Величина γ<sub>ij</sub> показывает изменение прямого угла между соответствующими
-осями: если знак <strong>«+»</strong>, прямой угол <strong>уменьшился</strong>;
-если знак <strong>«−»</strong> — <strong>увеличился</strong>. Каждая из трёх угловых
-деформаций относится к своей координатной плоскости, поэтому показываю их на трёх
-отдельных элементах: у первого сдвиг в плоскости xOy, у второго — в yOz, у третьего —
-в zOx. Закрашенная грань каждого куба и лежит в соответствующей плоскости, а у ближней
-к наблюдателю вершины видно, как исходный прямой угол превращается в острый (γ &gt; 0)
-или тупой (γ &lt; 0).</p>
-
-<figure><svg viewBox="19 10 941 467" role="img" aria-label="Угловые деформации: сдвиг в плоскостях xOy, yOz и zOx" xmlns="http://www.w3.org/2000/svg">
-<defs>
-<marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
-<marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
-</defs>
-<text x="178.0" y="38.0" class="cap" text-anchor="middle">плоскость xOy</text>
-<text x="178.0" y="62.0" class="lbl" text-anchor="middle">γ<tspan class='sub'>xy</tspan> = +112,50·10⁻⁵</text>
-<text x="178.0" y="82.0" class="cap" text-anchor="middle">прямой угол уменьшился</text>
-<line x1="158.0" y1="287.2" x2="86.0" y2="336.8" class="hid"/>
-<line x1="86.0" y1="336.8" x2="86.0" y2="212.8" class="hid"/>
-<line x1="86.0" y1="212.8" x2="158.0" y2="163.2" class="hid"/>
-<line x1="158.0" y1="163.2" x2="158.0" y2="287.2" class="hid"/>
-<line x1="158.0" y1="287.2" x2="282.0" y2="287.2" class="hid"/>
-<line x1="282.0" y1="287.2" x2="282.0" y2="163.2" class="hid"/>
-<line x1="282.0" y1="163.2" x2="158.0" y2="163.2" class="hid"/>
-<line x1="158.0" y1="163.2" x2="158.0" y2="287.2" class="hid"/>
-<line x1="158.0" y1="287.2" x2="282.0" y2="287.2" class="hid"/>
-<line x1="282.0" y1="287.2" x2="210.0" y2="336.8" class="hid"/>
-<line x1="210.0" y1="336.8" x2="86.0" y2="336.8" class="hid"/>
-<line x1="86.0" y1="336.8" x2="158.0" y2="287.2" class="hid"/>
-<polygon points="282.0,287.2 210.0,336.8 210.0,212.8 282.0,163.2" class="elem-lite"/>
-<polygon points="86.0,336.8 210.0,336.8 210.0,212.8 86.0,212.8" class="elem-lite"/>
-<polygon points="158.0,163.2 282.0,163.2 210.0,212.8 86.0,212.8" class="elem-lite"/>
-<polygon points="263.8,287.2 228.2,336.8 228.2,212.8 263.8,163.2" class="deformed"/>
-<polygon points="104.2,336.8 228.2,336.8 228.2,212.8 104.2,212.8" class="deformed"/>
-<polygon points="139.8,163.2 263.8,163.2 228.2,212.8 104.2,212.8" class="deformed"/>
-<polygon points="139.8,163.2 263.8,163.2 228.2,212.8 104.2,212.8" class="face-hi"/>
-<polyline points="191.4,212.8 202.2,205.4 220.8,205.4" class="right-angle"/>
-<path d="M 193.5 212.8 Q 228.2 212.8 238.2 198.9" class="arc-def"/>
-<circle cx="228.2" cy="212.8" r="3" class="vertex"/>
-<line x1="64.0" y1="388.0" x2="98.0" y2="388.0" class="ax" marker-end="url(#ms)"/>
-<text x="108.2" y="392.0" class="ax-lbl" text-anchor="middle">x</text>
-<line x1="64.0" y1="388.0" x2="44.3" y2="401.6" class="ax" marker-end="url(#ms)"/>
-<text x="38.4" y="409.7" class="ax-lbl" text-anchor="middle">y</text>
-<line x1="64.0" y1="388.0" x2="64.0" y2="354.0" class="ax" marker-end="url(#ms)"/>
-<text x="64.0" y="347.8" class="ax-lbl" text-anchor="middle">z</text>
-<line x1="340.0" y1="24.0" x2="340.0" y2="404.0" class="sep"/>
-<text x="510.0" y="38.0" class="cap" text-anchor="middle">плоскость yOz</text>
-<text x="510.0" y="62.0" class="lbl" text-anchor="middle">γ<tspan class='sub'>yz</tspan> = +62,50·10⁻⁵</text>
-<text x="510.0" y="82.0" class="cap" text-anchor="middle">прямой угол уменьшился</text>
-<line x1="490.0" y1="287.2" x2="418.0" y2="336.8" class="hid"/>
-<line x1="418.0" y1="336.8" x2="418.0" y2="212.8" class="hid"/>
-<line x1="418.0" y1="212.8" x2="490.0" y2="163.2" class="hid"/>
-<line x1="490.0" y1="163.2" x2="490.0" y2="287.2" class="hid"/>
-<line x1="490.0" y1="287.2" x2="614.0" y2="287.2" class="hid"/>
-<line x1="614.0" y1="287.2" x2="614.0" y2="163.2" class="hid"/>
-<line x1="614.0" y1="163.2" x2="490.0" y2="163.2" class="hid"/>
-<line x1="490.0" y1="163.2" x2="490.0" y2="287.2" class="hid"/>
-<line x1="490.0" y1="287.2" x2="614.0" y2="287.2" class="hid"/>
-<line x1="614.0" y1="287.2" x2="542.0" y2="336.8" class="hid"/>
-<line x1="542.0" y1="336.8" x2="418.0" y2="336.8" class="hid"/>
-<line x1="418.0" y1="336.8" x2="490.0" y2="287.2" class="hid"/>
-<polygon points="614.0,287.2 542.0,336.8 542.0,212.8 614.0,163.2" class="elem-lite"/>
-<polygon points="418.0,336.8 542.0,336.8 542.0,212.8 418.0,212.8" class="elem-lite"/>
-<polygon points="490.0,163.2 614.0,163.2 542.0,212.8 418.0,212.8" class="elem-lite"/>
-<polygon points="619.8,283.2 547.9,332.8 536.2,216.8 608.1,167.2" class="deformed"/>
-<polygon points="423.9,332.8 547.9,332.8 536.2,216.8 412.2,216.8" class="deformed"/>
-<polygon points="484.1,167.2 608.1,167.2 536.2,216.8 412.2,216.8" class="deformed"/>
-<polygon points="619.8,283.2 547.9,332.8 536.2,216.8 608.1,167.2" class="face-hi"/>
-<polyline points="552.8,205.4 552.8,224.0 542.0,231.4" class="right-angle"/>
-<path d="M 556.3 202.9 Q 536.2 216.8 539.5 249.3" class="arc-def"/>
-<circle cx="536.2" cy="216.8" r="3" class="vertex"/>
-<line x1="396.0" y1="388.0" x2="430.0" y2="388.0" class="ax" marker-end="url(#ms)"/>
-<text x="440.2" y="392.0" class="ax-lbl" text-anchor="middle">x</text>
-<line x1="396.0" y1="388.0" x2="376.3" y2="401.6" class="ax" marker-end="url(#ms)"/>
-<text x="370.4" y="409.7" class="ax-lbl" text-anchor="middle">y</text>
-<line x1="396.0" y1="388.0" x2="396.0" y2="354.0" class="ax" marker-end="url(#ms)"/>
-<text x="396.0" y="347.8" class="ax-lbl" text-anchor="middle">z</text>
-<line x1="672.0" y1="24.0" x2="672.0" y2="404.0" class="sep"/>
-<text x="842.0" y="38.0" class="cap" text-anchor="middle">плоскость zOx</text>
-<text x="842.0" y="62.0" class="lbl" text-anchor="middle">γ<tspan class='sub'>zx</tspan> = −81,25·10⁻⁵</text>
-<text x="842.0" y="82.0" class="cap" text-anchor="middle">прямой угол увеличился</text>
-<line x1="822.0" y1="287.2" x2="750.0" y2="336.8" class="hid"/>
-<line x1="750.0" y1="336.8" x2="750.0" y2="212.8" class="hid"/>
-<line x1="750.0" y1="212.8" x2="822.0" y2="163.2" class="hid"/>
-<line x1="822.0" y1="163.2" x2="822.0" y2="287.2" class="hid"/>
-<line x1="822.0" y1="287.2" x2="946.0" y2="287.2" class="hid"/>
-<line x1="946.0" y1="287.2" x2="946.0" y2="163.2" class="hid"/>
-<line x1="946.0" y1="163.2" x2="822.0" y2="163.2" class="hid"/>
-<line x1="822.0" y1="163.2" x2="822.0" y2="287.2" class="hid"/>
-<line x1="822.0" y1="287.2" x2="946.0" y2="287.2" class="hid"/>
-<line x1="946.0" y1="287.2" x2="874.0" y2="336.8" class="hid"/>
-<line x1="874.0" y1="336.8" x2="750.0" y2="336.8" class="hid"/>
-<line x1="750.0" y1="336.8" x2="822.0" y2="287.2" class="hid"/>
-<polygon points="946.0,287.2 874.0,336.8 874.0,212.8 946.0,163.2" class="elem-lite"/>
-<polygon points="750.0,336.8 874.0,336.8 874.0,212.8 750.0,212.8" class="elem-lite"/>
-<polygon points="822.0,163.2 946.0,163.2 874.0,212.8 750.0,212.8" class="elem-lite"/>
-<polygon points="946.0,300.3 874.0,349.9 874.0,225.9 946.0,176.3" class="deformed"/>
-<polygon points="750.0,323.7 874.0,349.9 874.0,225.9 750.0,199.7" class="deformed"/>
-<polygon points="822.0,150.1 946.0,176.3 874.0,225.9 750.0,199.7" class="deformed"/>
-<polygon points="750.0,323.7 874.0,349.9 874.0,225.9 750.0,199.7" class="face-hi"/>
-<polyline points="874.0,231.4 855.4,231.4 855.4,212.8" class="right-angle"/>
-<path d="M 874.0 260.6 Q 874.0 225.9 839.3 218.6" class="arc-def"/>
-<circle cx="874.0" cy="225.9" r="3" class="vertex"/>
-<line x1="728.0" y1="388.0" x2="762.0" y2="388.0" class="ax" marker-end="url(#ms)"/>
-<text x="772.2" y="392.0" class="ax-lbl" text-anchor="middle">x</text>
-<line x1="728.0" y1="388.0" x2="708.3" y2="401.6" class="ax" marker-end="url(#ms)"/>
-<text x="702.4" y="409.7" class="ax-lbl" text-anchor="middle">y</text>
-<line x1="728.0" y1="388.0" x2="728.0" y2="354.0" class="ax" marker-end="url(#ms)"/>
-<text x="728.0" y="347.8" class="ax-lbl" text-anchor="middle">z</text>
-<line x1="258.0" y1="436.0" x2="284.0" y2="436.0" class="elem-lite"/>
-<text x="290.0" y="440.0" class="cap" text-anchor="start">до деформации</text>
-<line x1="458.0" y1="436.0" x2="484.0" y2="436.0" class="deformed"/>
-<text x="490.0" y="440.0" class="cap" text-anchor="start">после деформации</text>
-<line x1="658.0" y1="436.0" x2="684.0" y2="436.0" class="face-hi"/>
-<text x="690.0" y="440.0" class="cap" text-anchor="start">грань в этой плоскости</text>
-<text x="510.0" y="460.0" class="cap" text-anchor="middle">углы показаны увеличенными примерно в 260 раз</text>
-</svg>
-<figcaption>Рис. 1.5 — относительные угловые деформации: три элемента, на каждом
-показан сдвиг в своей координатной плоскости. Закрашена грань, лежащая в этой
-плоскости; у ближней вершины отмечены исходный прямой угол и угол после деформации.
-Сплошной контур — до деформации, штриховой — после; углы увеличены примерно в 240 раз
-(масштаб условный).</figcaption></figure>
-
-<h3>7. Полная удельная потенциальная энергия упругой деформации</h3>
-
-<p>Удельная энергия — энергия, приходящаяся на единицу объёма. Она складывается из
-двух составляющих: энергии изменения объёма и энергии изменения формы. Размерность
-удельной энергии совпадает с размерностью напряжения: Дж/м³ = Н·м/м³ = Н/м² = Па,
-поэтому результат записывается в МПа.</p>
-
-<div class="f"><b>U₀ = U₀<sup>об</sup> + U₀<sup>ф</sup></b></div>
-
-<h4>Полная энергия</h4>
-<div class="f">U₀ = 1/(2E) · [σ₁² + σ₂² + σ₃² − 2ν·(σ₁σ₂ + σ₂σ₃ + σ₃σ₁)]</div>
-
-<p>Обе суммы в квадратных скобках — это в точности инварианты тензора напряжений,
-поэтому беру их не через округлённые корни, а точно:</p>
-
-<div class="f">σ₁² + σ₂² + σ₃²   = I₁н² − 2·I₂н = (−80)² − 2·(−18425) = 6400 + 36850 = <b>43250 МПа²</b>
-σ₁σ₂ + σ₂σ₃ + σ₃σ₁ = I₂н                                          = <b>−18425 МПа²</b></div>
-
-<div class="f">U₀ = [43250 − 2·0,3·(−18425)] / (2·2,1·10⁵) =
-   = (43250 + 11055) / 4,2·10⁵ = 54305 / 4,2·10⁵ = <b>0,1293 МПа</b></div>
-
-<h4>Энергия изменения формы</h4>
-<div class="f">U₀<sup>ф</sup> = (1 + ν)/(6E) · [(σ₁ − σ₂)² + (σ₂ − σ₃)² + (σ₃ − σ₁)²]</div>
-
-<div class="f">σ₁ − σ₂ = 113,1101 МПа;   σ₂ − σ₃ = 171,6544 МПа;   σ₃ − σ₁ = −284,7646 МПа
-
-(σ₁−σ₂)² + (σ₂−σ₃)² + (σ₃−σ₁)² = 2·(I₁н² − 3·I₂н) = 2·(6400 + 55275) = <b>123350 МПа²</b>
-<span class="cm">контроль по корням: 113,1101² + 171,6544² + 284,7646² = 123350,0 — сходится</span>
-
-U₀<sup>ф</sup> = 1,3/(6·2,1·10⁵)·123350 = 1,3·123350 / 1,26·10⁶ = <b>0,12727 МПа</b></div>
-
-<h4>Энергия изменения объёма</h4>
-<div class="f">U₀<sup>об</sup> = U₀ − U₀<sup>ф</sup> = 0,12930 − 0,12727 = <b>0,00203 МПа</b>
-<span class="cm">проверка по независимой формуле:</span>
-U₀<sup>об</sup> = (1 − 2ν)/(6E)·I₁н² = 0,4·6400/1,26·10⁶ = <b>0,00203 МПа</b> — совпало точно</div>
-
-<div class="res"><p class="res-tag">Вывод</p>
-<p>U₀ = 0,1293 МПа <strong>&gt;</strong> U₀<sup>ф</sup> = 0,12727 МПа.
-На формоизменение уходит 98,4 % всей энергии, на изменение объёма — 1,6 %:
-состояние близко к чистому сдвигу.</p></div>
-
-<div class="rem"><p><strong>Почему не 0,13018.</strong> Ту же энергию можно записать
-через компоненты: U₀ = 1/(2E)·[σ<sub>x</sub>²+σ<sub>y</sub>²+σ<sub>z</sub>² −
-2ν(σ<sub>x</sub>σ<sub>y</sub>+σ<sub>y</sub>σ<sub>z</sub>+σ<sub>z</sub>σ<sub>x</sub>)] +
-1/(2G)·(τ<sub>xy</sub>²+τ<sub>yz</sub>²+τ<sub>zx</sub>²). При G = 0,8·10⁵ из задания
-выйдет 0,03752 + 0,09266 = 0,13018 МПа. Разница в том, что G в задании округлён:
-согласованное с E и ν значение G = E/[2(1+ν)] = 0,80769·10⁵ МПа даёт
-0,03752 + 0,09177 = 0,1293 МПа — ровно то же, что и по главным напряжениям.
-Формула по главным напряжениям от G не зависит, поэтому в отчёт идёт
-<strong>0,1293 МПа</strong>, а 0,13018 — та же величина с округлённым G
-(расхождение 0,68 %).</p></div>
-
-<h3>8. Проверка прочности по IV (энергетической) теории</h3>
-
-<p><strong>Формулировка.</strong> Опасное состояние наступает тогда, когда удельная
-энергия формоизменения достигает того же значения, что и в момент наступления
-опасного состояния при простом одноосном напряжённом состоянии. Используется модель
-Фёппля — Мизеса.</p>
-
-<div class="f">σ<sub>экв</sub><sup>IV</sup> = (1/√2)·√[(σ₁ − σ₂)² + (σ₂ − σ₃)² + (σ₃ − σ₁)²] ≤ R·γ<sub>c</sub></div>
-
-<div class="f">σ<sub>экв</sub><sup>IV</sup> = (1/√2)·√123350 = √61675 = <b>248,34 МПа</b>
-R·γ<sub>c</sub> = 210·0,9 = <b>189,0 МПа</b></div>
-
-<div class="res"><p class="res-tag">Условие прочности не выполняется</p>
-<p>σ<sub>экв</sub><sup>IV</sup> = 248,34 МПа <strong>&gt; R·γ<sub>c</sub> = 189,0 МПа</strong> —
-расчётное напряжение превышает предельное в 1,314 раза, то есть на <strong>31,4 %</strong>.
-Прочность тела в окрестности рассматриваемой точки не обеспечена: требуется снизить
-уровень напряжений либо применить сталь с более высоким расчётным сопротивлением R.</p></div>
-
-<div class="rem"><p><strong>Связь пунктов 7 и 8.</strong> U₀<sup>ф</sup> = σ<sub>экв</sub>²/(6G) =
-248,3445²/(6·0,80769·10⁵) = 0,12727 МПа — то же число, что в п. 7. Это и есть
-содержание энергетической теории: σ<sub>экв</sub> — одноосное напряжение с такой же
-энергией формоизменения.</p></div>
+<p class="variant">Задача 2: двухосное (плоское) напряжённое состояние.
+Вариант — σ<sub>x</sub> по строке 29, σ<sub>y</sub> по строке 8,
+τ<sub>xy</sub> по строке 25 таблицы исходных данных. Порядок решения,
+обозначения и нумерация главных напряжений — как на практическом занятии.</p>
 
 <h2>ЗАДАЧА 2. Двухосное напряжённое состояние</h2>
 
@@ -773,7 +112,7 @@ R·γ<sub>c</sub> = 210·0,9 = <b>189,0 МПа</b></div>
 нагруженной по контуру.</p>
 
 <div class="tw"><table>
-<caption>Таблица 4 — компоненты двухосного напряжённого состояния, МПа</caption>
+<caption>Таблица 1 — компоненты двухосного напряжённого состояния, МПа</caption>
 <thead><tr><th>источник</th><th>σ<sub>x</sub></th><th>σ<sub>y</sub></th><th>τ<sub>xy</sub></th></tr></thead>
 <tbody>
 <tr><td>строка № 29</td><td class="mono">−85</td><td class="mono">—</td><td class="mono">—</td></tr>
@@ -803,12 +142,12 @@ R·γ<sub>c</sub> = 210·0,9 = <b>189,0 МПа</b></div>
 поэтому σ<sub>z</sub> = 0 и τ<sub>zx</sub> = τ<sub>zy</sub> = 0; из-за малой толщины
 это справедливо и внутри пластины.</p>
 
-<figure><svg viewBox="22 10 942 408" role="img" aria-label="Тонкая пластина и выделенный из неё объёмный элемент" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:91mm" viewBox="16 16 488 782" role="img" aria-label="Тонкая пластина и выделенный из неё объёмный элемент" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
 <marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
 </defs>
-<line x1="500.0" y1="24.0" x2="500.0" y2="404.0" class="sep"/>
+<line x1="30.0" y1="412.0" x2="490.0" y2="412.0" class="sep"/>
 <text x="240.0" y="42.0" class="cap" text-anchor="middle">а) тонкая пластина, нагруженная по контуру</text>
 <line x1="168.2" y1="173.4" x2="77.8" y2="235.8" class="hid"/>
 <line x1="77.8" y1="235.8" x2="77.8" y2="218.6" class="hid"/>
@@ -861,6 +200,7 @@ R·γ<sub>c</sub> = 210·0,9 = <b>189,0 МПа</b></div>
 <text x="42.9" y="352.7" class="ax-lbl" text-anchor="middle">y</text>
 <line x1="70.0" y1="330.0" x2="70.0" y2="294.0" class="ax" marker-end="url(#ms)"/>
 <text x="70.0" y="287.2" class="ax-lbl" text-anchor="middle">z</text>
+<g transform="translate(-462,432)">
 <text x="722.0" y="42.0" class="cap" text-anchor="middle">б) объёмный элемент в окрестности точки</text>
 <line x1="692.6" y1="264.0" x2="611.4" y2="320.0" class="hid"/>
 <line x1="611.4" y1="320.0" x2="611.4" y2="180.0" class="hid"/>
@@ -897,8 +237,9 @@ R·γ<sub>c</sub> = 210·0,9 = <b>189,0 МПа</b></div>
 <text x="872.9" y="348.7" class="ax-lbl" text-anchor="middle">y</text>
 <line x1="900.0" y1="326.0" x2="900.0" y2="290.0" class="ax" marker-end="url(#ms)"/>
 <text x="900.0" y="283.2" class="ax-lbl" text-anchor="middle">z</text>
+</g>
 </svg>
-<figcaption>Рис. 2.1 — тонкая пластина, нагруженная по контуру (а), и выделенный
+<figcaption>Рис. 1 — тонкая пластина, нагруженная по контуру (а), и выделенный
 из неё объёмный элемент (б): грани с нормалью z свободны от напряжений.</figcaption></figure>
 
 <p>Оба нормальных напряжения отрицательны, поэтому стрелки направлены
@@ -907,7 +248,7 @@ R·γ<sub>c</sub> = 210·0,9 = <b>189,0 МПа</b></div>
 компонент отличны от нуля только три, элемент достаточно изобразить плоским —
 проекцией на плоскость xOy.</p>
 
-<figure><svg viewBox="31 3 512 389" role="img" aria-label="Напряжения на гранях элемента при плоском состоянии" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:96mm" viewBox="31 3 512 389" role="img" aria-label="Напряжения на гранях элемента при плоском состоянии" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
 <marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
@@ -930,17 +271,25 @@ R·γ<sub>c</sub> = 210·0,9 = <b>189,0 МПа</b></div>
 <text x="417.0" y="118.0" class="tau-lbl" text-anchor="start">τ<tspan class='sub'>xy</tspan></text>
 <text x="417.0" y="137.0" class="tau-val" text-anchor="start">−30 МПа</text>
 <line x1="185.0" y1="222.0" x2="185.0" y2="302.0" class="tau" marker-end="url(#m)"/>
+<text x="175.0" y="318.0" class="tau-lbl" text-anchor="end">τ<tspan class='sub'>xy</tspan></text>
 <line x1="384.0" y1="325.0" x2="304.0" y2="325.0" class="tau" marker-end="url(#m)"/>
+<text x="394.0" y="341.0" class="tau-lbl" text-anchor="start">τ<tspan class='sub'>yx</tspan></text>
 <line x1="208.0" y1="103.0" x2="288.0" y2="103.0" class="tau" marker-end="url(#m)"/>
 <text x="198.0" y="95.0" class="tau-lbl" text-anchor="end">τ<tspan class='sub'>yx</tspan></text>
 <text x="198.0" y="114.0" class="tau-val" text-anchor="end">−30 МПа</text>
 </svg>
-<figcaption>Рис. 2.2 — заданные напряжения на гранях элемента, МПа. Ось y направлена
+<figcaption>Рис. 2 — заданные напряжения на гранях элемента, МПа. Ось y направлена
 вниз, как на схеме элемента в тетради.</figcaption></figure>
 
 <h3>2. Главные напряжения</h3>
 
-<p>Используем то же кубическое уравнение (1):</p>
+<p>Главные напряжения — корни характеристического уравнения тензора
+напряжений:</p>
+
+<div class="f">σ³ − I₁н·σ² + I₂н·σ − I₃н = 0<span class="eq">(1)</span></div>
+
+<p>Для плоского состояния (σ<sub>z</sub> = τ<sub>yz</sub> = τ<sub>zx</sub> = 0)
+инварианты сворачиваются к двум:</p>
 
 <div class="f">I₁н = σ<sub>x</sub> + σ<sub>y</sub>       = −85 + (−30)          = <b>−115 МПа</b>
 I₂н = σ<sub>x</sub>·σ<sub>y</sub> − τ<sub>xy</sub>² = (−85)·(−30) − (−30)² = 2550 − 900 = <b>1650 МПа²</b>
@@ -971,15 +320,15 @@ I₃н = <b>0</b>  <span class="cm">— при двухосном состоян
 <p class="kv">σ₁ = −16,80 МПа;&nbsp;&nbsp;&nbsp;σ₂ = −98,20 МПа;&nbsp;&nbsp;&nbsp;σ₃ = 0</p></div>
 
 <div class="rem"><p><strong>О нумерации.</strong> Это не порядок по убыванию: здесь
-σ₃ = 0 больше обоих остальных. В задаче 1 состояние трёхосное, и там принята обычная
-нумерация σ₁ ≥ σ₂ ≥ σ₃. Здесь состояние плоское, и по разбору с занятия первые два
+σ₃ = 0 больше обоих остальных. Обычно главные напряжения нумеруют по убыванию,
+σ₁ ≥ σ₂ ≥ σ₃. Здесь состояние плоское, и по разбору с занятия первые два
 номера закреплены за напряжениями в плоскости пластины, а нулевое получает третий
 номер. На результат это не влияет — формулы пп. 7 и 8 симметричны относительно
 σ₁, σ₂, σ₃, — но в п. 4 от нумерации зависит, какая пара даёт наибольшее касательное
 напряжение, поэтому она выписана явно.</p></div>
 
 <div class="tw"><table>
-<caption>Таблица 5 — проверка по инвариантам</caption>
+<caption>Таблица 2 — проверка по инвариантам</caption>
 <thead><tr><th>инвариант</th><th>через компоненты</th><th>через главные напряжения</th></tr></thead>
 <tbody>
 <tr><td>I₁н</td><td class="mono">σ<sub>x</sub>+σ<sub>y</sub> = −115 МПа</td><td class="mono">−16,8029 − 98,1971 + 0 = −115 МПа</td></tr>
@@ -1006,7 +355,7 @@ I₃н = <b>0</b>  <span class="cm">— при двухосном состоян
 
 <p>Подставляем в (b) и делим на cos α<sub>i</sub>:</p>
 
-<div class="f">τ<sub>yx</sub>·cos α<sub>i</sub> − (σ<sub>y</sub> − σ<sub>i</sub>)·sin α<sub>i</sub> = 0   →   <b>tg α<sub>i</sub> = τ<sub>yx</sub> / (σ<sub>y</sub> − σ<sub>i</sub>)</b><span class="eq">(5)</span></div>
+<div class="f">τ<sub>yx</sub>·cos α<sub>i</sub> − (σ<sub>y</sub> − σ<sub>i</sub>)·sin α<sub>i</sub> = 0   →   <b>tg α<sub>i</sub> = τ<sub>yx</sub> / (σ<sub>y</sub> − σ<sub>i</sub>)</b><span class="eq">(2)</span></div>
 
 <div class="f"><span class="cm">при i = 1  (σ₁ = −16,80 МПа):</span>
 tg α₁ = −30 / (−30 + 16,8029) = −30 / (−13,1971) =  2,2732   →   <b>α₁ = +66,26°</b>
@@ -1021,7 +370,7 @@ tg α₂ = −30 / (−30 + 98,1971) = −30 /   68,1971  = −0,4399   →   <b
 <p>Дополнительная проверка — подстановкой найденных косинусов обратно в систему:</p>
 
 <div class="tw"><table>
-<caption>Таблица 6 — контроль направляющих косинусов</caption>
+<caption>Таблица 3 — контроль направляющих косинусов</caption>
 <thead><tr><th>нормаль</th><th>l = cos α</th><th>m = −sin α</th><th>l² + m²</th><th>ур. (a)</th><th>ур. (b)</th></tr></thead>
 <tbody>
 <tr><td>ν₁ (σ₁), α = 66,26°</td><td class="mono">0,40266</td><td class="mono">−0,91535</td><td class="mono">1,000000</td><td class="mono">0,000000</td><td class="mono">0,000000</td></tr>
@@ -1032,7 +381,7 @@ tg α₂ = −30 / (−30 + 98,1971) = −30 /   68,1971  = −0,4399   →   <b
 это площадка с нормалью z (σ₃ = 0): она совпадает с плоскостью пластины
 и перпендикулярна двум найденным.</p>
 
-<figure><svg viewBox="90 13 444 402" role="img" aria-label="Главные площадки и главные напряжения задачи 2" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:83mm" viewBox="90 13 444 402" role="img" aria-label="Главные площадки и главные напряжения задачи 2" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
 <marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
@@ -1057,7 +406,7 @@ tg α₂ = −30 / (−30 + 98,1971) = −30 /   68,1971  = −0,4399   →   <b
 <path d="M 424 216 A 132 132 0 0 1 412.8 269.1" class="arc"/>
 <text x="442.8" y="251.4" class="ang" text-anchor="start">α₂ = −23,74°</text>
 </svg>
-<figcaption>Рис. 2.3 — главный элемент: от оси x вверх отложен угол α₁ = 66,26°,
+<figcaption>Рис. 3 — главный элемент: от оси x вверх отложен угол α₁ = 66,26°,
 перпендикулярно ему — направление α₂ = −23,74°. Оба главных напряжения сжимающие,
 поэтому стрелки направлены к граням.</figcaption></figure>
 
@@ -1065,7 +414,7 @@ tg α₂ = −30 / (−30 + 98,1971) = −30 /   68,1971  = −0,4399   →   <b
 tg 2α₀ = 2τ<sub>xy</sub>/(σ<sub>x</sub> − σ<sub>y</sub>) = −60/−55 = 1,0909 →
 2α₀ = 47,49°, α₀ = 23,74°. Эта формула записана для системы с осью y
 <strong>вверх</strong> и углом против часовой стрелки: там σ₂ = −98,20 МПа лежит под
-+23,74°, а σ₁ = −16,80 МПа — под 113,74°. Формула (5) использует ось y
++23,74°, а σ₁ = −16,80 МПа — под 113,74°. Формула (2) использует ось y
 <strong>вниз</strong>, поэтому углы получаются зеркальными: −23,74° и +66,26°.
 Взаимное расположение площадок и величины напряжений одинаковы, различается только
 знак отсчёта угла.</p></div>
@@ -1080,7 +429,7 @@ tg 2α₀ = 2τ<sub>xy</sub>/(σ<sub>x</sub> − σ<sub>y</sub>) = −60/−55 =
 главных напряжений три, значит и семейств таких площадок три.</p>
 
 <div class="f">τ<sub>ij</sub> = ±(σ<sub>i</sub> − σ<sub>j</sub>)/2,
-      σ′ = (σ<sub>i</sub> + σ<sub>j</sub>)/2   (6)</div>
+      σ′ = (σ<sub>i</sub> + σ<sub>j</sub>)/2   (3)</div>
 
 <p>где σ′ — нормальное напряжение на той же площадке; на всех четырёх её гранях
 оно одинаково. Подставляем σ₁ = −16,8029; σ₂ = −98,1971; σ₃ = 0 МПа:</p>
@@ -1106,7 +455,7 @@ tg 2α₀ = 2τ<sub>xy</sub>/(σ<sub>x</sub> − σ<sub>y</sub>) = −60/−55 =
 τ<sub>xy</sub>, и именно её дала бы формула «в плоскости», если ограничиться одним
 кругом. Но наибольшее касательное напряжение в точке другое, 49,10 МПа: σ₃ = 0
 больше обоих напряжений в плоскости, а они оба сжимающие, поэтому самая «широкая» пара — σ₂ и σ₃.
-Наглядно это на рис. 2.7: кругов Мора в точке всегда три — по одному на каждую
+Наглядно это на рис. 8: кругов Мора в точке всегда три — по одному на каждую
 пару главных напряжений, — и наибольшее касательное равно радиусу наибольшего
 из них. Основной круг, построенный по σ<sub>x</sub>, σ<sub>y</sub>, τ<sub>xy</sub>
 (п. 9), — это круг пары σ₁, σ₂; он здесь не самый большой. Площадка с
@@ -1115,7 +464,7 @@ tg 2α₀ = 2τ<sub>xy</sub>/(σ<sub>x</sub> − σ<sub>y</sub>) = −60/−55 =
 с занятия такого не возникает: там σ₁ = 100 МПа растягивающее, и наибольшей
 оказывается как раз пара в плоскости.</p></div>
 
-<figure><svg viewBox="233 0 398 366" role="img" aria-label="Три круга Мора: откуда берётся τmax" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:74mm" viewBox="233 0 398 366" role="img" aria-label="Три круга Мора: откуда берётся τmax" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
 <marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
@@ -1138,11 +487,11 @@ tg 2α₀ = 2τ<sub>xy</sub>/(σ<sub>x</sub> − σ<sub>y</sub>) = −60/−55 =
 <circle cx="393.2" cy="58.0" r="3.6" class="dot"/>
 <text x="385.2" y="46.0" class="val" text-anchor="end">τ₁₂ = 40,70</text>
 </svg>
-<figcaption>Рис. 2.7 — три круга Мора, по одному на каждую пару главных
+<figcaption>Рис. 8 — три круга Мора, по одному на каждую пару главных
 напряжений. Сплошной — пара σ₁, σ₂ (он же основной круг п. 9), радиус 40,70 МПа.
 Наибольший радиус у пары σ₂, σ₃ — это и есть τ<sub>max</sub> = 49,10 МПа.</figcaption></figure>
 
-<figure><svg viewBox="108 58 509 414" role="img" aria-label="Площадки экстремальных касательных напряжений задачи 2" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:95mm" viewBox="108 58 509 414" role="img" aria-label="Площадки экстремальных касательных напряжений задачи 2" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
 <marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
@@ -1169,7 +518,7 @@ tg 2α₀ = 2τ<sub>xy</sub>/(σ<sub>x</sub> − σ<sub>y</sub>) = −60/−55 =
 <path d="M 446 252 A 116 116 0 0 0 438.1 209.9" class="arc"/>
 <text x="470.0" y="278.0" class="ang" text-anchor="start">α = 21,26°</text>
 </svg>
-<figcaption>Рис. 2.4 — площадки с τ₁₂ = ±40,70 МПа в плоскости пластины. Элемент
+<figcaption>Рис. 4 — площадки с τ₁₂ = ±40,70 МПа в плоскости пластины. Элемент
 повёрнут на 45° от главных направлений: α = 66,26° − 45° = 21,26°. Штриховыми
 показаны главные направления, на всех четырёх гранях σ′ = −57,50 МПа.</figcaption></figure>
 
@@ -1179,9 +528,9 @@ tg 2α₀ = 2τ<sub>xy</sub>/(σ<sub>x</sub> − σ<sub>y</sub>) = −60/−55 =
 с нормалью t — на α от оси y. Состояние двухосное (n = cos 90° = 0), поэтому общие
 формулы сворачиваются к двум слагаемым и одному с τ<sub>xy</sub>:</p>
 
-<div class="f">σ<sub>ν</sub>  = σ<sub>x</sub>·cos²α + σ<sub>y</sub>·sin²α − τ<sub>xy</sub>·sin 2α   (7)
-τ<sub>tν</sub> = (σ<sub>x</sub> − σ<sub>y</sub>)/2·sin 2α + τ<sub>xy</sub>·cos 2α   (8)
-σ<sub>t</sub>  = σ<sub>x</sub> + σ<sub>y</sub> − σ<sub>ν</sub>   (9)</div>
+<div class="f">σ<sub>ν</sub>  = σ<sub>x</sub>·cos²α + σ<sub>y</sub>·sin²α − τ<sub>xy</sub>·sin 2α   (4)
+τ<sub>tν</sub> = (σ<sub>x</sub> − σ<sub>y</sub>)/2·sin 2α + τ<sub>xy</sub>·cos 2α   (5)
+σ<sub>t</sub>  = σ<sub>x</sub> + σ<sub>y</sub> − σ<sub>ν</sub>   (6)</div>
 
 <p>При α = 15°: cos²α = 0,93301, sin²α = 0,06699, sin 2α = 0,50000, cos 2α = 0,86603.</p>
 
@@ -1195,7 +544,7 @@ tg 2α₀ = 2τ<sub>xy</sub>/(σ<sub>x</sub> − σ<sub>y</sub>) = −60/−55 =
 <div class="f">σ<sub>ν</sub> + σ<sub>t</sub>        = −66,3157 − 48,6843 = −115,000000 МПа  = I₁н  ✓
 σ<sub>ν</sub>·σ<sub>t</sub> − τ<sub>tν</sub>² = 3228,53 − 1578,53  =  1650,000000 МПа² = I₂н  ✓</div>
 
-<figure><svg viewBox="58 11 529 438" role="img" aria-label="Напряжения на площадках под углом 15° к осям" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:95mm" viewBox="89 11 507 438" role="img" aria-label="Напряжения на площадках под углом 15° к осям" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
 <marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
@@ -1217,19 +566,19 @@ tg 2α₀ = 2τ<sub>xy</sub>/(σ<sub>x</sub> − σ<sub>y</sub>) = −60/−55 =
 <line x1="274.7" y1="292.2" x2="254.0" y2="215.0" class="tau" marker-end="url(#m)"/>
 <line x1="273.8" y1="180.7" x2="351.0" y2="160.0" class="tau" marker-end="url(#m)"/>
 <line x1="386.2" y1="291.3" x2="309.0" y2="312.0" class="tau" marker-end="url(#m)"/>
-<text x="465.1" y="276.4" class="val" text-anchor="start">σν = −66,32 МПа</text>
+<text x="473.9" y="224.4" class="val" text-anchor="start">σν = −66,32 МПа</text>
 <text x="352.6" y="80.9" class="val" text-anchor="start">σₜ = −48,68 МПа</text>
-<text x="181.7" y="215.7" class="val" text-anchor="end">τₜν = −39,73 МПа</text>
+<text x="212.5" y="261.3" class="val" text-anchor="end">τₜν = −39,73 МПа</text>
 <path d="M 458 236 A 128 128 0 0 0 453.6 202.9" class="arc"/>
-<text x="480.0" y="262.0" class="ang" text-anchor="start">α = 15°</text>
+<text x="476.0" y="266.0" class="ang" text-anchor="start">α = 15°</text>
 </svg>
-<figcaption>Рис. 2.5 — напряжения на площадках, повёрнутых на α = 15°. Оба нормальных
+<figcaption>Рис. 5 — напряжения на площадках, повёрнутых на α = 15°. Оба нормальных
 напряжения сжимающие, стрелки направлены к граням; касательные образуют
 уравновешенную пару.</figcaption></figure>
 
 <div class="rem"><p><strong>Об угле.</strong> Значение α = 15° взято по разбору на
 занятии. Если в задании указан другой угол, меняются только четыре тригонометрические
-величины в формулах (7)–(9) — ход решения тот же.</p></div>
+величины в формулах (4)–(6) — ход решения тот же.</p></div>
 
 <h3>6. Относительные линейные и угловые деформации</h3>
 
@@ -1252,10 +601,38 @@ G = 0,8·10⁵ МПа.</p>
 <div class="f">γ<sub>xy</sub> = τ<sub>xy</sub>/G = −30 / 0,8·10⁵ = <b>−37,50·10⁻⁵</b>
 γ<sub>yz</sub> = γ<sub>zx</sub> = 0,  так как τ<sub>yz</sub> = τ<sub>zx</sub> = 0</div>
 
-<div class="rem"><p><strong>О модуле сдвига.</strong> Взято G = 0,8·10⁵ МПа — как в
-задании и как в задаче 1. Согласованное с E и ν значение G = E/[2(1 + ν)] =
+<div class="rem"><p><strong>О модуле сдвига.</strong> Взято G = 0,8·10⁵ МПа — как в задании. Согласованное с E и ν значение G = E/[2(1 + ν)] =
 0,8077·10⁵ МПа даёт γ<sub>xy</sub> = −37,14·10⁻⁵; расхождение 1 %, на выводы
 не влияет.</p></div>
+
+<figure><svg style="width:110mm" viewBox="38 14 586 307" role="img" aria-label="Деформация элемента задачи 2" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
+<marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
+</defs>
+<text x="186.0" y="40.0" class="cap" text-anchor="middle">а) линейные деформации</text>
+<rect x="130" y="94" width="112" height="112" class="elem-lite"/>
+<rect x="130" y="94" width="99.8" height="111.3" class="deformed" fill="none"/>
+<line x1="130.0" y1="210.0" x2="130.0" y2="238.0" class="ext"/>
+<line x1="242.0" y1="210.0" x2="242.0" y2="238.0" class="ext"/>
+<line x1="130.0" y1="232.0" x2="242.0" y2="232.0" class="dim" marker-start="url(#ms)" marker-end="url(#ms)"/>
+<text x="186.0" y="252.0" class="val" text-anchor="middle">ε<tspan class='sub'>x</tspan> = −36,19·10⁻⁵</text>
+<line x1="126.0" y1="94.0" x2="94.0" y2="94.0" class="ext"/>
+<line x1="126.0" y1="206.0" x2="94.0" y2="206.0" class="ext"/>
+<line x1="100.0" y1="94.0" x2="100.0" y2="206.0" class="dim" marker-start="url(#ms)" marker-end="url(#ms)"/>
+<text x="100.0" y="80.0" class="val" text-anchor="middle">ε<tspan class='sub'>y</tspan> = −2,14·10⁻⁵</text>
+<text x="186.0" y="272.0" class="cap" text-anchor="middle">ε<tspan class='sub'>z</tspan> = +16,43·10⁻⁵ — ребро dz удлинилось</text>
+<text x="500.0" y="40.0" class="cap" text-anchor="middle">б) угловая деформация</text>
+<rect x="444" y="94" width="112" height="112" class="elem-lite"/>
+<polygon points="450.3,94.0 562.3,94.0 549.7,206.0 437.7,206.0" class="deformed"/>
+<text x="500.0" y="252.0" class="val" text-anchor="middle">γ<tspan class='sub'>xy</tspan> = −37,50·10⁻⁵</text>
+<text x="500.0" y="272.0" class="cap" text-anchor="middle">прямой угол между x и y увеличился</text>
+<text x="330.0" y="304.0" class="cap" text-anchor="middle">сплошная линия — до деформации, штриховая — после; деформации увеличены в 300 раз</text>
+</svg>
+<figcaption>Рис. 6 — деформация элемента. Слева линейные деформации: ребро dx
+укоротилось заметно, dy почти не изменилось, dz удлинилось (вдоль свободной
+от нагрузки оси z). Справа угловая деформация: прямой угол между осями x и y
+увеличился, потому что γ<sub>xy</sub> отрицательна.</figcaption></figure>
 
 <h3>7. Полная удельная потенциальная энергия упругой деформации</h3>
 
@@ -1270,8 +647,11 @@ U₀<sup>ф</sup>  = ((1+ν)/6E)·2(I₁н² − 3I₂н) = (1,3/1,26·10⁶)·1
 U₀<sup>об</sup> = ((1−2ν)/6E)·I₁н²          = (0,4/1,26·10⁶)·13225 = <b>0,004198 МПа</b>  (19,7 %)
 контроль:  U₀<sup>ф</sup> + U₀<sup>об</sup> = 0,021274 МПа = U₀  ✓</div>
 
-<p>В задаче 1 на формоизменение уходило 98,4 % энергии, здесь — 80,3 %: доля
-объёмной части заметно больше, потому что оба главных напряжения одного знака.</p>
+<p>На формоизменение приходится 80,3 % всей энергии, на изменение объёма —
+19,7 %. Доля объёмной части здесь заметная именно потому, что оба главных
+напряжения в плоскости одного знака: при разноимённых напряжениях разности
+σ<sub>i</sub> − σ<sub>j</sub> были бы больше, и на формоизменение уходило бы
+почти всё.</p>
 
 <h3>8. Проверка прочности по энергетической (IV) теории</h3>
 
@@ -1286,11 +666,10 @@ U₀<sup>об</sup> = ((1−2ν)/6E)·I₁н²          = (0,4/1,26·10⁶)·132
 U₀<sup>ф</sup> = ((1+ν)/3E)·(σ<sub>экв</sub><sup>IV</sup>)² = 0,017075 МПа — то же
 значение, что в п. 7.</p></div>
 
-<p>Для сравнения: в задаче 1 σ<sub>экв</sub> = 248,34 МПа превышало 189,0 МПа
-на 31,4 %. Здесь состояние вдвое легче — при том, что наибольшее по модулю
-напряжение (−98,20 МПа) вполне велико. Причина та же, что и в п. 7: оба главных
-напряжения сжимающие и близки по знаку, поэтому разности σ<sub>i</sub> − σ<sub>j</sub>
-малы, а именно они и входят в энергетический критерий.</p>
+<p>Запас двукратный — и это при том, что наибольшее по модулю напряжение
+(−98,20 МПа) само по себе немалое. Причина та же, что и в п. 7: в энергетический
+критерий входят разности σ<sub>i</sub> − σ<sub>j</sub>, а при двухосном сжатии,
+когда оба напряжения в плоскости одного знака, эти разности малы.</p>
 
 <h3>9. Круг напряжений (круг Мора)</h3>
 
@@ -1300,7 +679,7 @@ U₀<sup>ф</sup> = ((1+ν)/3E)·(σ<sub>экв</sub><sup>IV</sup>)² = 0,017075
 окружность — где-то ошибка в аналитике. Ради этого пункт и делается.</p>
 
 <p><strong>Почему получается именно окружность.</strong> Формулы поворота
-площадок (7) и (8) можно переписать так:</p>
+площадок (4) и (5) можно переписать так:</p>
 
 <div class="f">σ<sub>ν</sub> − (σ<sub>x</sub> + σ<sub>y</sub>)/2 = (σ<sub>x</sub> − σ<sub>y</sub>)/2·cos 2α − τ<sub>xy</sub>·sin 2α
 τ<sub>tν</sub>                   = (σ<sub>x</sub> − σ<sub>y</sub>)/2·sin 2α + τ<sub>xy</sub>·cos 2α</div>
@@ -1308,7 +687,7 @@ U₀<sup>ф</sup> = ((1+ν)/3E)·(σ<sub>экв</sub><sup>IV</sup>)² = 0,017075
 <p>Возведём обе строки в квадрат и сложим — слагаемые с sin 2α·cos 2α взаимно
 уничтожаются, остаётся</p>
 
-<div class="f">[σ<sub>ν</sub> − (σ<sub>x</sub> + σ<sub>y</sub>)/2]² + τ<sub>tν</sub>² = [(σ<sub>x</sub> − σ<sub>y</sub>)/2]² + τ<sub>xy</sub>²   (10)</div>
+<div class="f">[σ<sub>ν</sub> − (σ<sub>x</sub> + σ<sub>y</sub>)/2]² + τ<sub>tν</sub>² = [(σ<sub>x</sub> − σ<sub>y</sub>)/2]² + τ<sub>xy</sub>²   (7)</div>
 
 <p>Это уравнение окружности в осях (σ; τ) с центром на оси σ в точке
 (σ<sub>x</sub> + σ<sub>y</sub>)/2 и радиусом
@@ -1333,7 +712,7 @@ U₀<sup>ф</sup> = ((1+ν)/3E)·(σ<sub>экв</sub><sup>IV</sup>)² = 0,017075
 касательное.</p>
 
 <div class="tw"><table>
-<caption>Таблица 7 — что читается с круга и с чем это должно совпасть</caption>
+<caption>Таблица 4 — что читается с круга и с чем это должно совпасть</caption>
 <thead><tr><th>что ищем</th><th>где на круге</th><th>с круга</th><th>из расчёта</th></tr></thead>
 <tbody>
 <tr><td>σ₁, σ₂ — главные напряжения</td><td>точки пересечения с осью σ: OC ± R</td><td class="mono">−16,80 и −98,20</td><td class="mono">п. 2: те же</td></tr>
@@ -1352,7 +731,7 @@ x, то есть α = 0. От её радиуса и отсчитываются 
 α₂ = <b>−23,74°</b>. Совпало с п. 3.</p>
 
 <p><strong>Главная проверка.</strong> Подставим найденные в п. 5 значения
-в уравнение (10):</p>
+в уравнение (7):</p>
 
 <div class="f">(σ<sub>ν</sub> − OC)² + τ<sub>tν</sub>² = (−66,3157 + 57,5)² + (−39,7308)² = 77,72 + 1578,53 = <b>1656,25 МПа²</b>
 R² = 40,6971² = <b>1656,25 МПа²</b>   ✓</div>
@@ -1360,7 +739,7 @@ R² = 40,6971² = <b>1656,25 МПа²</b>   ✓</div>
 <p>Точка легла на окружность точно — значит пункты 2–5 согласованы между собой
 и с исходными данными.</p>
 
-<figure><svg viewBox="161 2 630 481" role="img" aria-label="Круг Мора для задачи 2" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:118mm" viewBox="161 2 630 481" role="img" aria-label="Круг Мора для задачи 2" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
 <marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
@@ -1401,7 +780,7 @@ R² = 40,6971² = <b>1656,25 МПа²</b>   ✓</div>
 <text x="489.8" y="63.2" class="val" text-anchor="start">P′ (−48,68; +39,73)</text>
 <text x="513.5" y="312.0" class="val" text-anchor="start">R = 40,70</text>
 </svg>
-<figcaption>Рис. 2.6 — круг Мора. Построение: D и B — исходные σ<sub>x</sub> и
+<figcaption>Рис. 7 — круг Мора. Построение: D и B — исходные σ<sub>x</sub> и
 σ<sub>y</sub> на оси; C — центр; BK = τ<sub>xy</sub> отложено от B вниз;
 R = CK. С круга снимаются σ₁ и σ₂ (пересечения с осью), τ₁ и τ₂ (верх и низ),
 точка P — площадка под α = 15°, P′ — перпендикулярная ей. Все шесть величин
@@ -1409,21 +788,7 @@ R = CK. С круга снимаются σ₁ и σ₂ (пересечения 
 
 <h2>ВЫВОДЫ</h2>
 
-<p><b>Задача 1.</b> Инварианты тензора напряжений I₁н = −80 МПа; I₂н = −18425 МПа²;
-I₃н = 135500 МПа³. Главные напряжения σ₁ = 105,96 МПа; σ₂ = −7,15 МПа;
-σ₃ = −178,81 МПа найдены по теореме Виета и проверены по всем трём её соотношениям
-(совпадение с инвариантами) — напряжённое состояние трёхосное разноимённое.
-Направляющие косинусы главных площадок удовлетворяют условию нормировки, а сами
-площадки взаимно перпендикулярны с погрешностью 0,01 % &lt; 3 %. Наибольшее
-касательное напряжение τ31 = 142,38 МПа. Объёмная деформация θ = −15,24·10⁻⁵ —
-объём элемента уменьшился; угловые деформации γ<sub>xy</sub> = +112,50·10⁻⁵,
-γ<sub>yz</sub> = +62,50·10⁻⁵, γ<sub>zx</sub> = −81,25·10⁻⁵. Полная удельная
-потенциальная энергия U₀ = 0,1293 МПа, из них на изменение формы приходится
-U₀<sup>ф</sup> = 0,12727 МПа (98,4 %), на изменение объёма — U₀<sup>об</sup> =
-0,00203 МПа. По энергетической (IV) теории σ<sub>экв</sub> = 248,34 МПа &gt;
-R·γ<sub>c</sub> = 189,0 МПа — условие прочности не выполняется, превышение 31,4 %.</p>
-
-<p><b>Задача 2.</b> Инварианты I₁н = −115 МПа; I₂н = 1650 МПа²; I₃н = 0. Главные
+<p>Инварианты I₁н = −115 МПа; I₂н = 1650 МПа²; I₃н = 0. Главные
 напряжения σ₃ = 0; σ₁ = −16,80 МПа; σ₂ = −98,20 МПа — двухосное сжатие; проверка
 по всем инвариантам сошлась. Главные площадки наклонены к оси x под углами
 α₁ = +66,26° и α₂ = −23,74°, сумма модулей равна 90°, подстановка направляющих
@@ -1439,7 +804,6 @@ R·γ<sub>c</sub> = 189,0 МПа — условие прочности не вы
 По IV теории σ<sub>экв</sub> = 90,97 МПа ≤ R·γ<sub>c</sub> = 189,0 МПа — прочность
 обеспечена с запасом 2,08. Круг Мора даёт σ₁ и σ₂, совпадающие с аналитическим
 расчётом.</p>
-
 
 <footer>Все числовые значения пересчитаны программой в точной арифметике (дроби),
 корни уравнений — с 50 знаками; в тексте приведены округления. Результат дополнительно
