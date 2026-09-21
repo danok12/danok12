@@ -29,7 +29,7 @@ def po_masshtabu(svg):
 
 # 0. вклеить схемы в шаблон -> index.html
 h = open(TPL, encoding="utf-8").read()
-for n in range(1, 9):
+for n in range(1, 8):
     h = h.replace(f"__FIG_{n}__",
                   po_masshtabu(open(f"fig-{n}.svg", encoding="utf-8").read().strip()))
 assert "__FIG" not in h, "не все схемы вклеены"

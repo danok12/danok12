@@ -150,10 +150,10 @@ check("рис. 4: σ на грани элемента (α=21,26°)", dot(n_t, p)
 check("рис. 4: |τ| на грани элемента", abs(dot(t_t, p)), 40.6971, 2e-2, "МПа")
 
 # рис. 8 — круг Мора: радиус и точки на оси σ
-svg = open("fig-8.svg", encoding="utf-8").read()
+svg = open("fig-7.svg", encoding="utf-8").read()
 K8, ox8, oy8 = 4.6, 622.0, 300.0
 crc = re.findall(r'<circle cx="([-\d.]+)" cy="([-\d.]+)" r="([\d.]+)"', svg)
-check("рис. 8: радиус круга -> МПа",
+check("рис. 7: радиус круга -> МПа",
       max(float(c[2]) for c in crc) / K8, r, 5e-2, "МПа")
 na_osi = sorted({round((float(c[0]) - ox8) / K8, 2) for c in crc
                  if abs(float(c[1]) - oy8) < .6 and float(c[2]) < 10})
@@ -162,17 +162,8 @@ print(f"  точки на оси σ (МПа): {na_osi}")
 for want, nm in ((s2, "σ2"), (SX, "σx"), (OC, "C"), (SY, "σy"),
                  (s1, "σ1"), (0.0, "O")):
     blizh = min(na_osi, key=lambda v: abs(v - want))
-    check(f"рис. 8: точка {nm} на оси σ", blizh, want, 5e-2, "МПа")
+    check(f"рис. 7: точка {nm} на оси σ", blizh, want, 5e-2, "МПа")
 
-# рис. 5 — три круга: радиусы обязаны равняться трём полуразностям
-svg5 = open("fig-5.svg", encoding="utf-8").read()
-K5 = 3.3
-rr5 = sorted((float(c) / K5 for c in
-              re.findall(r'<circle cx="[-\d.]+" cy="[-\d.]+" r="([\d.]+)"', svg5)
-              if float(c) > 10), reverse=True)
-for got, want, nm in zip(rr5, [(s3 - s2) / 2, (s1 - s2) / 2, (s3 - s1) / 2],
-                         ("τ23 = τmax", "τ12", "τ31")):
-    check(f"рис. 5: радиус круга {nm}", got, want, 5e-2, "МПа")
 
 print("\n" + "=" * 84)
 print("ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ" if ok_all else "ЕСТЬ РАСХОЖДЕНИЯ — см. строки «НЕТ»")

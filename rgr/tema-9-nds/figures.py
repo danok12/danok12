@@ -683,63 +683,17 @@ def fig26_mohr():
     return s
 
 
-def fig27_tri():
-    """Три круга Мора: откуда берётся τmax. Оси размечены."""
-    K = 3.3
-    w, h = 700, 430
-    ox, oy = 596.0, 216.0
-    s1, s2, s3 = -16.8029, -98.1971, 0.0
-    s = HEAD.format(w=w, h=h, m=MID, alt="Три круга Мора и наибольшее касательное")
-    X = lambda v: ox + v * K
-    Y = lambda v: oy - v * K
-
-    s += ar((X(-112), oy), (X(13), oy), "ax", small=True)
-    s += txt(X(18), oy + 5, "σ, МПа", "ax-lbl", "start")
-    s += ar((ox, Y(-58)), (ox, Y(60)), "ax", small=True)
-    s += txt(ox + 13, Y(62), "τ, МПа", "ax-lbl", "start")
-    for v in (-100, -80, -60, -40, -20):        # шкала на оси σ
-        s += ln((X(v), oy - 4), (X(v), oy + 4), "dim")
-        s += txt(X(v), oy + 19, str(v), "cap")
-    for v in (40.6971, 49.0985):
-        s += ln((ox - 4, Y(v)), (ox + 4, Y(v)), "dim")
-
-    krugi = ((s1, s2, "plane-edge", "круг пары σ₁, σ₂", 40.6971, "τ₁₂ = 40,70"),
-             (s2, s3, "hid", "круг пары σ₂, σ₃", 49.0985, "τmax = τ₂₃ = 49,10"),
-             (s3, s1, "hid", "круг пары σ₃, σ₁", 8.4015, "τ₃₁ = 8,40"))
-    for a, b, cls, _, rad, _ in krugi:
-        s += (f'<circle cx="{X((a + b) / 2):.1f}" cy="{oy:.1f}" '
-              f'r="{rad * K:.1f}" class="{cls}" fill="none"/>\n')
-    # радиусы: вертикальный отрезок от центра до верхней точки каждого круга
-    for a, b, _, _, rad, nm in krugi:
-        c = (a + b) / 2
-        s += ln((X(c), oy), (X(c), Y(rad)), "dim")
-        s += f'<circle cx="{X(c):.1f}" cy="{Y(rad):.1f}" r="3.4" class="dot"/>\n'
-    s += txt(X((s2 + s3) / 2), Y(49.0985) - 12, "τmax = τ₂₃ = 49,10", "val")
-    s += txt(X((s1 + s2) / 2) - 8, Y(40.6971) - 12, "τ₁₂ = 40,70", "val", "end")
-    s += txt(X((s3 + s1) / 2) + 12, Y(8.4015) - 18, "τ₃₁ = 8,40", "val", "start")
-    for v, nm, dx, dy, an in ((s2, "σ₂ = −98,20", -11, -10, "end"),
-                              (s1, "σ₁ = −16,80", -6, -10, "end"),
-                              (s3, "σ₃ = 0", 12, -10, "start")):
-        s += f'<circle cx="{X(v):.1f}" cy="{oy:.1f}" r="3.6" class="dot"/>\n'
-        s += txt(X(v) + dx, oy + dy, nm, "val", an)
-    s += txt(w / 2, h - 12,
-             "сплошной — круг, построенный по σx, σy, τxy (рис. 8); "
-             "штриховые — два остальных", "cap")
-    s += '</svg>\n'
-    return s
-
-
 if __name__ == "__main__":
     # контроль знака угловой деформации на рис. 6: при γxy < 0 прямой угол
     # между осями x и y должен увеличиться
     ug = math.degrees(math.atan(abs(GXY2 * KUGL)))
-    print(f"рис. 7: прямой угол изменился на {ug:.2f}° "
+    print(f"рис. 6: прямой угол изменился на {ug:.2f}° "
           f"({'увеличился' if GXY2 < 0 else 'уменьшился'}) — "
           f"{'ok' if GXY2 < 0 else 'проверить знак'}")
     # порядок — как в документе: схема N появляется в тексте N-й по счёту
     for name, fn in (("fig-1", fig21_plate), ("fig-2", fig22_flat),
                      ("fig-3", fig23_main), ("fig-4", fig24_tau),
-                     ("fig-5", fig27_tri), ("fig-6", fig25_alpha),
-                     ("fig-7", fig_deform), ("fig-8", fig26_mohr)):
+                     ("fig-5", fig25_alpha), ("fig-6", fig_deform),
+                     ("fig-7", fig26_mohr)):
         open(name + ".svg", "w", encoding="utf-8").write(fn())
-    print("схемы собраны: 8")
+    print("схемы собраны: 7")
