@@ -173,8 +173,11 @@ print(f"√[((σx-σy)/2)² + τxy²] = √({float(((sx2-sy2)/2)**2)} + {float(t
 sA = Decimal(float(half)) + root2   # больший из плоских
 sB = Decimal(float(half)) - root2   # меньший из плоских
 print(f"σmax(в плоскости) = {sA:.4f} МПа;  σmin = {sB:.4f} МПа")
-roots = sorted([Decimal(0), sA, sB], reverse=True)
-print(f"\nУпорядочение σ1 ≥ σ2 ≥ σ3:")
+# нумерация как на занятии: σ1 и σ2 — оба корня в плоскости пластины
+# (σ1 больший), σ3 = 0 — по площадке, совпадающей с плоскостью пластины.
+# Это НЕ порядок по убыванию: здесь σ3 больше обоих остальных.
+roots = [sA, sB, Decimal(0)]
+print(f"\nНумерация по разбору с занятия (σ1, σ2 — в плоскости; σ3 = 0):")
 for i, v in enumerate(roots, 1):
     print(f"  σ{i} = {v:.4f} МПа")
 print("Напряжённое состояние: двухосное сжатие (оба ненулевых главных < 0)")
@@ -192,7 +195,7 @@ print("п. 3. УГЛЫ НАКЛОНА ГЛАВНЫХ ПЛОЩАДОК К ОСИ 
 print("tg αi = τyx / (σy - σi)   (обозначения и ориентация осей — как в тетради)")
 print("-" * 72)
 angles = {}
-for name, val in (("σ2", sA), ("σ3", sB)):
+for name, val in (("σ1", sA), ("σ2", sB)):
     den = Decimal(float(sy2)) - val
     tg = Decimal(float(txy2)) / den
     a = math.degrees(math.atan(float(tg)))
@@ -204,7 +207,7 @@ print(f"\nПроверка: |α(σ2)| + |α(σ3)| = {abs(angles['σ2']):.2f}° +
       f"{abs(angles['σ3']):.2f}° = {s:.2f}°  (должно быть 90°)")
 
 print("\nПодстановка направляющих косинусов в систему (l = cos α, m = -sin α):")
-for name, val in (("σ2", sA), ("σ3", sB)):
+for name, val in (("σ1", sA), ("σ2", sB)):
     a = math.radians(angles[name])
     l, m = math.cos(a), -math.sin(a)
     e1 = (float(sx2) - float(val)) * l + float(txy2) * m
@@ -238,9 +241,9 @@ par = (("τ12", s1_2, s2_2), ("τ23", s2_2, s3_2), ("τ31", s3_2, s1_2))
 for nm, a, b in par:
     print(f"  {nm} = ±(({a:.4f}) - ({b:.4f}))/2 = ±{(a - b) / 2:.4f} МПа;"
           f"   σ' = {(a + b) / 2:.4f} МПа")
-tmax2 = (s1_2 - s3_2) / 2
-print(f"  наибольшее: τmax = (σ1 - σ3)/2 = {tmax2:.4f} МПа")
-print(f"  контроль: τ23 = радиус круга Мора в плоскости = {root2:.4f} МПа")
+tmax2 = max(abs((a - b) / 2) for _, a, b in par)
+print(f"  наибольшее из трёх: τmax = {tmax2:.4f} МПа (пара σ2, σ3)")
+print(f"  контроль: τ12 = радиус круга Мора в плоскости = {root2:.4f} МПа")
 
 # --- п. 5. Площадки под углом alpha к осям Ox и Oy --------------------
 AL = 15                                    # градусов, как в разобранном примере

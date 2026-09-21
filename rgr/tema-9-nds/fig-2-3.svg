@@ -11,15 +11,15 @@
 <line x1="230.8" y1="355.1" x2="353.2" y2="76.9" class="norm"/>
 <line x1="348.4" y1="87.8" x2="327.0" y2="136.4" class="sig" marker-end="url(#m)"/>
 <line x1="235.6" y1="344.2" x2="257.0" y2="295.6" class="sig" marker-end="url(#m)"/>
-<text x="365.3" y="42.4" class="lbl" text-anchor="middle">σ<tspan class='sub'>2</tspan></text>
+<text x="365.3" y="42.4" class="lbl" text-anchor="middle">σ<tspan class='sub'>1</tspan></text>
 <text x="365.3" y="62.4" class="val" text-anchor="middle">−16,80 МПа</text>
 <line x1="152.9" y1="154.8" x2="431.1" y2="277.2" class="norm"/>
 <line x1="420.2" y1="272.4" x2="371.6" y2="251.0" class="sig" marker-end="url(#m)"/>
 <line x1="163.8" y1="159.6" x2="212.4" y2="181.0" class="sig" marker-end="url(#m)"/>
-<text x="458.6" y="282.3" class="lbl" text-anchor="middle">σ<tspan class='sub'>3</tspan></text>
+<text x="458.6" y="282.3" class="lbl" text-anchor="middle">σ<tspan class='sub'>2</tspan></text>
 <text x="458.6" y="302.3" class="val" text-anchor="middle">−98,20 МПа</text>
 <path d="M 388 216 A 96 96 0 0 0 330.6 128.1" class="arc"/>
-<text x="391.8" y="159.8" class="ang" text-anchor="start">α₂ = 66,26°</text>
+<text x="391.8" y="159.8" class="ang" text-anchor="start">α₁ = 66,26°</text>
 <path d="M 424 216 A 132 132 0 0 1 412.8 269.1" class="arc"/>
-<text x="442.8" y="251.4" class="ang" text-anchor="start">α₃ = −23,74°</text>
+<text x="442.8" y="251.4" class="ang" text-anchor="start">α₂ = −23,74°</text>
 </svg>

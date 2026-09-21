@@ -222,7 +222,7 @@ def fig11():
                                       ((0, 0, 1), TZX, "xz", (0, -0.62, 0))]),
             ((0, 1, 0), SY, "y", 118, [((1, 0, 0), TXY, "yx", (0, 0, -0.62)),
                                        ((0, 0, 1), TYZ, "yz", (-0.62, 0, 0))]),
-            ((0, 0, 1), SZ, "z", 88, [((1, 0, 0), TZX, "zx", (0, -0.62, 0)),
+            ((0, 0, 1), SZ, "z", 120, [((1, 0, 0), TZX, "zx", (0, -0.62, 0)),
                                       ((0, 1, 0), TYZ, "zy", (0.62, 0, 0))])]
     mid0 = iso.p((0, 0, 0))
     for n, sv, name, dl, shears in data:
@@ -261,7 +261,7 @@ def fig12():
         n = NU[i]
         c = mul(n, 0.96)
         s += stress_arrow(iso, c, n, val, near=0.12, far=1.18)
-        q = lab(iso, c, n, 122)
+        q = lab(iso, c, n, 150)
         tip = iso.p(add(c, mul(n, 0.65)))
         s += ln(q, tip, "leader")
         s += txt(q[0], q[1] - 7, f"{sub('σ', i)}  ({sub('ν', i)})", "lbl")
@@ -340,7 +340,11 @@ def fig14():
         c = mul(n, 1.0)
         q = lab(iso, c, n, dl)
         s += txt(q[0], q[1] - 7, sub("ε", name), "lbl")
-        s += txt(q[0], q[1] + 12, sg(val * 1e5) + "·10⁻⁵", "val")
+        # знак ставим у всех трёх, включая положительную: иначе
+        # «48,57» рядом с «−25,71» читается как недосмотр
+        v = sg(val * 1e5)
+        s += txt(q[0], q[1] + 12,
+                 ("" if v.startswith("−") else "+") + v + "·10⁻⁵", "val")
         s += txt(q[0], q[1] + 28, what, "cap")
     s += axes2d(74, 424, 40)
     s += legend(212, 466, [("elem-lite", "до деформации"),
@@ -571,7 +575,7 @@ def fig23_main():
            for q2, q3 in ((1, 1), (1, -1), (-1, -1), (-1, 1))]
     s += poly(pts, "elem")
 
-    for n, val, name in ((n2, P2, "2"), (n3, P3, "3")):
+    for n, val, name in ((n2, P2, "1"), (n3, P3, "2")):
         s += ln((cx - 152 * n[0], cy - 152 * n[1]),
                 (cx + 152 * n[0], cy + 152 * n[1]), "norm")
         for k in (1, -1):
@@ -583,7 +587,7 @@ def fig23_main():
         s += txt(lx, ly + 13, sg(val) + " МПа", "val")
 
     # дуги углов: разные радиусы, каждая упирается в свою нормаль
-    for deg, name, r in ((A2, "α₂ = 66,26°", 96), (A3, "α₃ = −23,74°", 132)):
+    for deg, name, r in ((A2, "α₁ = 66,26°", 96), (A3, "α₂ = −23,74°", 132)):
         ex = cx + r * math.cos(math.radians(deg))
         ey = cy - r * math.sin(math.radians(deg))
         sweep = 1 if deg < 0 else 0
@@ -652,7 +656,7 @@ def fig24_tau():
     s += ar((cx, cy), (cx, cy + 190), "ax", small=True)
     s += txt(cx - 16, cy + 202, "y", "ax-lbl")
 
-    for d, nm in ((A2, "σ₂"), (A3, "σ₃")):      # главные направления — пунктир
+    for d, nm in ((A2, "σ₁"), (A3, "σ₂")):      # главные направления — пунктир
         n = uv(d)
         s += ln((cx - 168 * n[0], cy - 168 * n[1]),
                 (cx + 168 * n[0], cy + 168 * n[1]), "hid")
@@ -661,7 +665,7 @@ def fig24_tau():
     body, u, v = povernutyy(cx, cy, a, A_TAU, S_SR, S_SR, 1)
     s += body
     s += vynos(cx, cy, a, u, v, -34, "σ\u2032 = " + sg(S_SR) + " МПа", "start")
-    s += vynos(cx, cy, a, v, u, 30, "τ₂₃ = ±" + sg(T_23) + " МПа")
+    s += vynos(cx, cy, a, v, u, 30, "τ₁₂ = ±" + sg(T_23) + " МПа")
     r0 = 116
     ex, ey = cx + r0 * math.cos(math.radians(A_TAU)), cy - r0 * math.sin(math.radians(A_TAU))
     s += f'<path d="M {cx + r0} {cy} A {r0} {r0} 0 0 0 {ex:.1f} {ey:.1f}" class="arc"/>\n'
@@ -744,10 +748,10 @@ def fig26_mohr():
     s += txt(kx - 9, oy + 24, "σy = −30", "val", "end")
     s += txt((X(c_pl) + kx) / 2 - 10, (oy + ky) / 2 - 9, "R = 40,70", "val", "end")
     s += txt(X(-tmax) + 11, Y(tmax) - 8, "τmax = 49,10", "val", "start")
-    s += txt(ox + 11, oy - 13, "σ₁ = 0", "val", "start")
+    s += txt(ox + 11, oy - 13, "σ₃ = 0", "val", "start")
 
     ry = oy + 250                               # строка выносок под кругами
-    for v, nm in ((s3, "σ₃ = −98,20"), (s2, "σ₂ = −16,80")):
+    for v, nm in ((s3, "σ₂ = −98,20"), (s2, "σ₁ = −16,80")):
         s += ln((X(v), oy + 8), (X(v), ry - 14), "leader")
         s += txt(X(v), ry, nm + " МПа", "val")
     s += '</svg>\n'

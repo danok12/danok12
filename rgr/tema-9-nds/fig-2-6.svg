@@ -31,9 +31,9 @@
 <text x="449.0" y="239.0" class="val" text-anchor="end">σy = −30</text>
 <text x="398.5" y="260.0" class="val" text-anchor="end">R = 40,70</text>
 <text x="400.2" y="30.2" class="val" text-anchor="start">τmax = 49,10</text>
-<text x="577.0" y="202.0" class="val" text-anchor="start">σ₁ = 0</text>
+<text x="577.0" y="202.0" class="val" text-anchor="start">σ₃ = 0</text>
 <line x1="212.5" y1="223.0" x2="212.5" y2="451.0" class="leader"/>
-<text x="212.5" y="465.0" class="val" text-anchor="middle">σ₃ = −98,20 МПа</text>
+<text x="212.5" y="465.0" class="val" text-anchor="middle">σ₂ = −98,20 МПа</text>
 <line x1="505.5" y1="223.0" x2="505.5" y2="451.0" class="leader"/>
-<text x="505.5" y="465.0" class="val" text-anchor="middle">σ₂ = −16,80 МПа</text>
+<text x="505.5" y="465.0" class="val" text-anchor="middle">σ₁ = −16,80 МПа</text>
 </svg>
