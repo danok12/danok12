@@ -214,54 +214,80 @@ EX2, EY2, GXY2 = -36.1905e-5, -2.1429e-5, -37.50e-5
 KDEF = 300                      # во столько раз увеличены деформации
 
 
-def fig6_deform():
-    """Деформация элемента: слева линейные, справа угловая.
+EX2, EY2, EZ2 = -36.1905e-5, -2.1429e-5, 16.4286e-5
+GXY2 = -37.50e-5
+KLIN, KUGL = 500.0, 600.0       # во столько раз увеличены деформации
 
-    Ось y на чертеже направлена вниз, как и на остальных схемах. При
-    γxy < 0 прямой угол между осями x и y увеличивается, поэтому скос
-    откладывается в сторону, противоположную знаку.
-    """
-    w, h = 660, 316
-    a = 56
-    s = HEAD.format(w=w, h=h, m=MID, alt="Деформация элемента задачи 2")
+
+def fig_deform():
+    """Деформации элемента в аксонометрии: линейные и угловая."""
+    w, h = 540, 1010
+    s = HEAD.format(w=w, h=h, m=MID, alt="Деформации элемента задачи 2")
 
     # ---------- а) линейные деформации
-    cx, cy = 186, 150
-    dx, dy = a * EX2 * KDEF, a * EY2 * KDEF
-    s += txt(cx, 40, "а) линейные деформации", "cap")
-    s += (f'<rect x="{cx - a}" y="{cy - a}" width="{2 * a}" height="{2 * a}" '
-          f'class="elem-lite"/>\n')
-    s += (f'<rect x="{cx - a}" y="{cy - a}" width="{2 * (a + dx):.1f}" '
-          f'height="{2 * (a + dy):.1f}" class="deformed" fill="none"/>\n')
-    # размер по x — под элементом
-    yl = cy + a + 26
-    s += ln((cx - a, cy + a + 4), (cx - a, yl + 6), "ext")
-    s += ln((cx + a, cy + a + 4), (cx + a, yl + 6), "ext")
-    s += ar2((cx - a, yl), (cx + a, yl), "dim")
-    s += txt(cx, yl + 20, sub("ε", "x") + " = −36,19·10⁻⁵", "val")
-    # размер по y — слева от элемента
-    xl = cx - a - 30
-    s += ln((cx - a - 4, cy - a), (xl - 6, cy - a), "ext")
-    s += ln((cx - a - 4, cy + a), (xl - 6, cy + a), "ext")
-    s += ar2((xl, cy - a), (xl, cy + a), "dim")
-    # подпись εy — над размерной линией: слева от неё она уходила
-    # за левый край viewBox и обрезалась
-    s += txt(xl, cy - a - 14, sub("ε", "y") + " = −2,14·10⁻⁵", "val")
-    s += txt(cx, yl + 40, sub("ε", "z") + " = +16,43·10⁻⁵ — ребро dz удлинилось", "cap")
+    iso = Iso(262, 252, 68)
+    s += txt(262, 34, "а) линейные деформации: рёбра меняют длину", "cap")
+    s += draw_box(iso, face="elem-lite")
+    D = [[1 + KLIN * EX2, 0, 0], [0, 1 + KLIN * EY2, 0], [0, 0, 1 + KLIN * EZ2]]
+    s += draw_box(iso, D, face="deformed", hidden=None)
+    for n, val, name, what, dl in (((1, 0, 0), EX2, "x", "укорочение dx", 112),
+                                   ((0, 1, 0), EY2, "y", "укорочение dy", 158),
+                                   ((0, 0, 1), EZ2, "z", "удлинение dz", 124)):
+        c = mul(n, 1.0)
+        q = lab(iso, c, n, dl)
+        s += txt(q[0], q[1] - 7, sub("ε", name), "lbl")
+        v = sg(val * 1e5)
+        s += txt(q[0], q[1] + 12,
+                 ("" if v.startswith("−") else "+") + v + "·10⁻⁵", "val")
+        s += txt(q[0], q[1] + 28, what, "cap")
+    s += axes2d(462, 386, 36)
+    s += txt(240, 438, "объёмная деформация θ = Σε\u1d62 = −21,90·10⁻⁵ "
+                       "— объём уменьшился", "cap")
+    s += txt(240, 458, f"деформации увеличены в {KLIN:.0f} раз", "cap")
+    s += ln((30, 484), (510, 484), "sep")
 
     # ---------- б) угловая деформация
-    bx = 500
-    sk = -GXY2 * KDEF * a                  # знак: при γxy < 0 угол растёт
-    s += txt(bx, 40, "б) угловая деформация", "cap")
-    s += (f'<rect x="{bx - a}" y="{cy - a}" width="{2 * a}" height="{2 * a}" '
-          f'class="elem-lite"/>\n')
-    s += poly([(bx - a + sk, cy - a), (bx + a + sk, cy - a),
-               (bx + a - sk, cy + a), (bx - a - sk, cy + a)], "deformed")
-    s += txt(bx, yl + 20, sub("γ", "xy") + " = −37,50·10⁻⁵", "val")
-    s += txt(bx, yl + 40, "прямой угол между x и y увеличился", "cap")
+    s += '<g transform="translate(0,506)">\n'
+    iso = Iso(262, 252, 64)
+    s += txt(262, 34, "б) угловая деформация: прямые углы меняют величину", "cap")
+    s += txt(262, 58, sub("γ", "xy") + " = −37,50·10⁻⁵ — угол между x и y "
+                      "увеличился", "lbl")
+    s += txt(262, 78, sub("γ", "yz") + " = " + sub("γ", "zx")
+             + " = 0 — в этих плоскостях сдвига нет", "cap")
+    s += draw_box(iso, face="elem-lite")
+    Fm = [[1.0, KUGL * GXY2, 0], [0, 1.0, 0], [0, 0, 1.0]]
+    s += draw_box(iso, Fm, face="deformed", hidden=None)
+    for n, pts, _ in FACES:                      # грань в плоскости xOy
+        if n == (0, 0, 1):
+            s += poly([iso.p(mv(Fm, q)) for q in pts], "face-hi")
 
-    s += txt(w / 2, h - 12, f"сплошная линия — до деформации, штриховая — после; "
-             f"деформации увеличены в {KDEF} раз", "cap")
+    def side(idx):
+        k = 1 if VIEW[idx] > 0 else -1
+        v = [0, 0, 0]
+        v[idx] = k
+        return tuple(v)
+    a1, a2 = side(0), side(1)
+    corner = add((0, 0, 1), a1, a2)
+    e1, e2 = mul(a1, -1), mul(a2, -1)
+    d = 0.42
+    s += ('<polyline points="' + " ".join(
+        f"{q[0]:.1f},{q[1]:.1f}" for q in (
+            iso.p(add(corner, mul(e1, d))),
+            iso.p(add(corner, mul(e1, d), mul(e2, d))),
+            iso.p(add(corner, mul(e2, d))))) + '" class="right-angle"/>\n')
+    pc = iso.p(mv(Fm, corner))
+    q1 = iso.p(mv(Fm, add(corner, mul(e1, 0.72))))
+    q2 = iso.p(mv(Fm, add(corner, mul(e2, 0.72))))
+    s += (f'<path d="M {q1[0]:.1f} {q1[1]:.1f} Q {pc[0]:.1f} {pc[1]:.1f} '
+          f'{q2[0]:.1f} {q2[1]:.1f}" class="arc-def"/>\n')
+    s += f'<circle cx="{pc[0]:.1f}" cy="{pc[1]:.1f}" r="3" class="vertex"/>\n'
+    s += axes2d(462, 386, 36)
+    s += txt(240, 438, f"углы увеличены примерно в {KUGL:.0f} раз", "cap")
+    s += "</g>\n"
+
+    s += legend(116, 992, [("elem-lite", "до деформации"),
+                           ("deformed", "после деформации"),
+                           ("face-hi", "грань в плоскости xOy")], gap=152)
     s += '</svg>\n'
     return s
 
@@ -565,95 +591,140 @@ def fig25_alpha():
 
 
 def fig26_mohr():
-    """Круг Мора: построение по σx, σy, τxy и всё, что с него снимается."""
-    K = 4.4
-    w, h = 800, 566
-    ox, oy = 690.0, 258.0
+    """Круг Мора с полной разметкой построения: видно, что из чего берётся."""
+    K = 4.6
+    w, h = 760, 640
+    ox, oy = 622.0, 300.0
     sx_, sy_, t_ = -85.0, -30.0, -30.0
     c_pl, r_pl = -57.5, 40.6971
     s1, s2 = -16.8029, -98.1971
-    s_nu, t_tnu, s_t = -66.3157, -39.7308, -48.6843
-    s = HEAD.format(w=w, h=h, m=MID, alt="Круг Мора для задачи 2")
+    s_nu, t_tnu = -66.3157, -39.7308
+    s = HEAD.format(w=w, h=h, m=MID, alt="Круг Мора: построение и результаты")
     X = lambda v: ox + v * K
     Y = lambda v: oy - v * K
 
-    s += ar((X(-107), oy), (X(13), oy), "ax", small=True)
-    s += txt(X(19), oy + 5, "σ", "ax-lbl")
-    s += ar((ox, Y(-48)), (ox, Y(50)), "ax", small=True)
-    s += txt(ox + 15, Y(52), "τ", "ax-lbl")
+    # оси
+    s += ar((X(-106), oy), (X(11), oy), "ax", small=True)
+    s += txt(X(16), oy + 5, "σ, МПа", "ax-lbl", "start")
+    s += ar((ox, Y(-52)), (ox, Y(52)), "ax", small=True)
+    s += txt(ox + 14, Y(54), "τ, МПа", "ax-lbl", "start")
+    s += f'<circle cx="{ox}" cy="{oy}" r="3" class="dot"/>\n'
+    s += txt(ox + 9, oy + 21, "O", "lbl", "start")
+
     s += (f'<circle cx="{X(c_pl):.1f}" cy="{oy:.1f}" r="{r_pl * K:.1f}" '
           f'class="plane-edge" fill="none"/>\n')
 
-    P = {"D": (sx_, 0.0), "B": (sy_, 0.0), "C": (c_pl, 0.0),
-         "K": (sy_, t_), "X": (sx_, t_), "s1": (s1, 0.0), "s2": (s2, 0.0),
-         "t1": (c_pl, r_pl), "t2": (c_pl, -r_pl),
-         "P": (s_nu, t_tnu), "P2": (s_t, -t_tnu)}
-    pix = {k: (X(v[0]), Y(v[1])) for k, v in P.items()}
+    P = {"D": (sx_, 0.0), "B": (sy_, 0.0), "C": (c_pl, 0.0), "K": (sy_, t_),
+         "X": (sx_, t_), "s1": (s1, 0.0), "s2": (s2, 0.0),
+         "t1": (c_pl, r_pl), "t2": (c_pl, -r_pl), "P": (s_nu, t_tnu)}
+    px = {k: (X(v[0]), Y(v[1])) for k, v in P.items()}
 
-    # радиусы, по которым отсчитывается 2α, и построение BK = τxy
-    for a, b, cls in (("C", "X", "dim"), ("C", "P", "dim"), ("C", "K", "dim"),
-                      ("B", "K", "leader"), ("D", "X", "leader")):
-        s += ln(pix[a], pix[b], cls)
-    for k in pix:
-        s += f'<circle cx="{pix[k][0]:.1f}" cy="{pix[k][1]:.1f}" r="3.6" class="dot"/>\n'
+    # ---- построение: катеты CB и BK, гипотенуза CK = R
+    s += ln(px["C"], px["K"], "dim")
+    s += ln(px["B"], px["K"], "dim")
+    s += ln(px["C"], px["X"], "dim")
+    s += ln(px["C"], px["P"], "dim")
+    s += ln(px["D"], px["X"], "leader")
+    pr = 13                                     # значок прямого угла при B
+    s += ('<polyline points="' + " ".join(f"{a:.1f},{b:.1f}" for a, b in (
+        (px["B"][0] - pr, px["B"][1]), (px["B"][0] - pr, px["B"][1] + pr),
+        (px["B"][0], px["B"][1] + pr))) + '" class="right-angle"/>\n')
+
+    # размерная цепочка DC = CB над осью
+    yd = oy - 30
+    for a, b in (("D", "C"), ("C", "B")):
+        s += ln((px[a][0], oy - 6), (px[a][0], yd - 6), "ext")
+        s += ln((px[b][0], oy - 6), (px[b][0], yd - 6), "ext")
+        s += ar2((px[a][0], yd), (px[b][0], yd), "dim")
+        s += txt((px[a][0] + px[b][0]) / 2, yd - 6, "27,5", "val")
+    # размер BK справа от катета
+    xb = px["B"][0] + 22
+    s += ln((px["B"][0] + 6, px["B"][1]), (xb + 6, px["B"][1]), "ext")
+    s += ln((px["K"][0] + 6, px["K"][1]), (xb + 6, px["K"][1]), "ext")
+    s += ar2((xb, px["B"][1]), (xb, px["K"][1]), "dim")
+    s += txt(xb + 10, (px["B"][1] + px["K"][1]) / 2 + 5,
+             "BK = τxy = −30", "val", "start")
+    # размер OC под кругом
+    yo = oy + 232
+    s += ln((ox, oy + 6), (ox, yo + 6), "ext")
+    s += ln((px["C"][0], px["C"][1] + 6), (px["C"][0], yo + 6), "ext")
+    s += ar2((px["C"][0], yo), (ox, yo), "dim")
+    s += txt((px["C"][0] + ox) / 2, yo - 7,
+             "OC = (σx + σy)/2 = −57,50", "val")
 
     # дуга 2α от радиуса CX до радиуса CP
-    import math as _m
-    rr = 58
-    a0 = _m.degrees(_m.atan2(-(t_), -(sx_ - c_pl)))
-    a1 = _m.degrees(_m.atan2(-(t_tnu), -(s_nu - c_pl)))
-    s += (f'<path d="M {X(c_pl) + rr * _m.cos(_m.radians(a0)):.1f} '
-          f'{oy + rr * _m.sin(_m.radians(a0)):.1f} A {rr} {rr} 0 0 0 '
-          f'{X(c_pl) + rr * _m.cos(_m.radians(a1)):.1f} '
-          f'{oy + rr * _m.sin(_m.radians(a1)):.1f}" class="arc"/>\n')
-    s += txt(X(c_pl) - 10, oy + rr + 30, "2α = 30°", "ang", "middle")
+    rr = 62
+    a0 = math.degrees(math.atan2(-t_, -(sx_ - c_pl)))
+    a1 = math.degrees(math.atan2(-t_tnu, -(s_nu - c_pl)))
+    s += (f'<path d="M {X(c_pl) + rr * math.cos(math.radians(a0)):.1f} '
+          f'{oy + rr * math.sin(math.radians(a0)):.1f} A {rr} {rr} 0 0 0 '
+          f'{X(c_pl) + rr * math.cos(math.radians(a1)):.1f} '
+          f'{oy + rr * math.sin(math.radians(a1)):.1f}" class="arc"/>\n')
+    s += txt(X(c_pl) - 30, oy + 118, "2α = 30°", "ang")
 
-    lb = [("D", 0, -14, "D:  σx = −85", "middle"),
-          ("B", -22, -14, "B:  σy = −30", "middle"),
-          ("C", 0, -14, "C:  −57,50", "middle"),
+    for k in px:
+        s += f'<circle cx="{px[k][0]:.1f}" cy="{px[k][1]:.1f}" r="3.6" class="dot"/>\n'
+
+    lb = [("D", 0, 22, "D:  σx = −85", "middle"),
+          ("B", -14, 22, "B:  σy = −30", "end"),
+          ("C", 0, -44, "C", "middle"),
           ("s2", -11, -10, "σ₂ = −98,20", "end"),
-          ("s1", 12, -10, "σ₁ = −16,80", "start"),
-          ("t1", -46, -16, "τ₁ = +40,70   (σ′ = −57,50)", "middle"),
-          ("t2", -4, 26, "τ₂ = −40,70", "middle"),
-          ("X", -11, 6, "X — площадка x", "end"),
-          ("K", 12, 6, "K (σy; τxy)", "start"),
-          ("P", -11, 20, "P (−66,32; −39,73)", "end"),
-          ("P2", 14, -20, "P′ (−48,68; +39,73)", "start")]
+          ("s1", 10, -26, "σ₁ = −16,80", "start"),
+          ("t1", 0, -14, "τ₁ = +40,70   (σ′ = OC = −57,50)", "middle"),
+          ("t2", 26, -12, "τ₂ = −40,70", "start"),
+          ("X", -12, 6, "X (σx; τxy) — площадка x", "end"),
+          ("K", 14, 6, "K (σy; τxy)", "start"),
+          ("P", -12, 22, "P (σν; τtν) при α = 15°", "end")]
     for k, dx, dy, text, anc in lb:
-        s += txt(pix[k][0] + dx, pix[k][1] + dy, text, "val", anc)
-    s += txt((pix["C"][0] + pix["K"][0]) / 2 + 16,
-             (pix["C"][1] + pix["K"][1]) / 2 - 12, "R = 40,70", "val", "start")
+        s += txt(px[k][0] + dx, px[k][1] + dy, text, "val", anc)
+    s += txt((px["C"][0] + px["K"][0]) / 2 + 12,
+             (px["C"][1] + px["K"][1]) / 2 + 16, "R = 40,70", "val", "start")
     s += '</svg>\n'
     return s
 
 
 def fig27_tri():
-    """Три круга — только чтобы объяснить, откуда τmax = 49,10 МПа."""
-    K = 2.9
-    w, h = 660, 330
-    ox, oy = 560.0, 176.0
+    """Три круга Мора: откуда берётся τmax. Оси размечены."""
+    K = 3.3
+    w, h = 700, 430
+    ox, oy = 596.0, 216.0
     s1, s2, s3 = -16.8029, -98.1971, 0.0
-    s = HEAD.format(w=w, h=h, m=MID, alt="Три круга Мора: откуда берётся τmax")
+    s = HEAD.format(w=w, h=h, m=MID, alt="Три круга Мора и наибольшее касательное")
     X = lambda v: ox + v * K
     Y = lambda v: oy - v * K
-    s += ar((X(-108), oy), (X(12), oy), "ax", small=True)
-    s += txt(X(18), oy + 5, "σ", "ax-lbl")
-    s += ar((ox, Y(-54)), (ox, Y(56)), "ax", small=True)
-    s += txt(ox + 14, Y(58), "τ", "ax-lbl")
-    for a, b, cls in (((s1 + s2) / 2, (s1 - s2) / 2, "plane-edge"),
-                      ((s1 + s3) / 2, (s3 - s1) / 2, "hid"),
-                      ((s2 + s3) / 2, (s3 - s2) / 2, "hid")):
-        s += (f'<circle cx="{X(a):.1f}" cy="{oy:.1f}" r="{b * K:.1f}" '
-              f'class="{cls}" fill="none"/>\n')
-    for v, nm, dx, dy, an in ((s2, "σ₂", -11, -10, "end"),
-                              (s1, "σ₁", 11, 22, "start"),
-                              (s3, "σ₃ = 0", 11, -10, "start")):
-        s += f'<circle cx="{X(v):.1f}" cy="{oy:.1f}" r="3.4" class="dot"/>\n'
-        s += txt(X(v) + dx, oy + dy, nm, "val", an)
-    s += f'<circle cx="{X((s2 + s3) / 2):.1f}" cy="{Y(49.0985):.1f}" r="3.6" class="dot"/>\n'
-    s += txt(X((s2 + s3) / 2), Y(49.0985) - 12, "τmax = 49,10", "val")
-    s += f'<circle cx="{X((s1 + s2) / 2):.1f}" cy="{Y(40.6971):.1f}" r="3.6" class="dot"/>\n'
+
+    s += ar((X(-112), oy), (X(13), oy), "ax", small=True)
+    s += txt(X(18), oy + 5, "σ, МПа", "ax-lbl", "start")
+    s += ar((ox, Y(-58)), (ox, Y(60)), "ax", small=True)
+    s += txt(ox + 13, Y(62), "τ, МПа", "ax-lbl", "start")
+    for v in (-100, -80, -60, -40, -20):        # шкала на оси σ
+        s += ln((X(v), oy - 4), (X(v), oy + 4), "dim")
+        s += txt(X(v), oy + 19, str(v), "cap")
+    for v in (40.6971, 49.0985):
+        s += ln((ox - 4, Y(v)), (ox + 4, Y(v)), "dim")
+
+    krugi = ((s1, s2, "plane-edge", "круг пары σ₁, σ₂", 40.6971, "τ₁₂ = 40,70"),
+             (s2, s3, "hid", "круг пары σ₂, σ₃", 49.0985, "τmax = τ₂₃ = 49,10"),
+             (s3, s1, "hid", "круг пары σ₃, σ₁", 8.4015, "τ₃₁ = 8,40"))
+    for a, b, cls, _, rad, _ in krugi:
+        s += (f'<circle cx="{X((a + b) / 2):.1f}" cy="{oy:.1f}" '
+              f'r="{rad * K:.1f}" class="{cls}" fill="none"/>\n')
+    # радиусы: вертикальный отрезок от центра до верхней точки каждого круга
+    for a, b, _, _, rad, nm in krugi:
+        c = (a + b) / 2
+        s += ln((X(c), oy), (X(c), Y(rad)), "dim")
+        s += f'<circle cx="{X(c):.1f}" cy="{Y(rad):.1f}" r="3.4" class="dot"/>\n'
+    s += txt(X((s2 + s3) / 2), Y(49.0985) - 12, "τmax = τ₂₃ = 49,10", "val")
     s += txt(X((s1 + s2) / 2) - 8, Y(40.6971) - 12, "τ₁₂ = 40,70", "val", "end")
+    s += txt(X((s3 + s1) / 2) + 12, Y(8.4015) - 18, "τ₃₁ = 8,40", "val", "start")
+    for v, nm, dx, dy, an in ((s2, "σ₂ = −98,20", -11, -10, "end"),
+                              (s1, "σ₁ = −16,80", -6, -10, "end"),
+                              (s3, "σ₃ = 0", 12, -10, "start")):
+        s += f'<circle cx="{X(v):.1f}" cy="{oy:.1f}" r="3.6" class="dot"/>\n'
+        s += txt(X(v) + dx, oy + dy, nm, "val", an)
+    s += txt(w / 2, h - 12,
+             "сплошной — круг, построенный по σx, σy, τxy (рис. 8); "
+             "штриховые — два остальных", "cap")
     s += '</svg>\n'
     return s
 
@@ -661,13 +732,14 @@ def fig27_tri():
 if __name__ == "__main__":
     # контроль знака угловой деформации на рис. 6: при γxy < 0 прямой угол
     # между осями x и y должен увеличиться
-    ug = math.degrees(math.atan(abs(GXY2 * KDEF))) * 2
-    print(f"рис. 6: прямой угол изменился на {ug:.2f}° "
+    ug = math.degrees(math.atan(abs(GXY2 * KUGL)))
+    print(f"рис. 7: прямой угол изменился на {ug:.2f}° "
           f"({'увеличился' if GXY2 < 0 else 'уменьшился'}) — "
           f"{'ok' if GXY2 < 0 else 'проверить знак'}")
+    # порядок — как в документе: схема N появляется в тексте N-й по счёту
     for name, fn in (("fig-1", fig21_plate), ("fig-2", fig22_flat),
                      ("fig-3", fig23_main), ("fig-4", fig24_tau),
-                     ("fig-5", fig25_alpha), ("fig-6", fig6_deform),
-                     ("fig-7", fig26_mohr), ("fig-8", fig27_tri)):
+                     ("fig-5", fig27_tri), ("fig-6", fig25_alpha),
+                     ("fig-7", fig_deform), ("fig-8", fig26_mohr)):
         open(name + ".svg", "w", encoding="utf-8").write(fn())
     print("схемы собраны: 8")
