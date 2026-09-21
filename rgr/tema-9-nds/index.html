@@ -1105,11 +1105,42 @@ tg 2α₀ = 2τ<sub>xy</sub>/(σ<sub>x</sub> − σ<sub>y</sub>) = −60/−55 =
 40,70 МПа, — это радиус круга Мора, построенного по σ<sub>x</sub>, σ<sub>y</sub>,
 τ<sub>xy</sub>, и именно её дала бы формула «в плоскости», если ограничиться одним
 кругом. Но наибольшее касательное напряжение в точке другое, 49,10 МПа: σ₃ = 0
-больше обоих напряжений в плоскости, а они оба сжимающие, поэтому самая «широкая»
-пара — σ₂ и σ₃. Площадка с τ<sub>max</sub> наклонена к плоскости пластины, на
-плоском чертеже её не видно — видно только на круге Мора (рис. 2.6). В примере
+больше обоих напряжений в плоскости, а они оба сжимающие, поэтому самая «широкая» пара — σ₂ и σ₃.
+Наглядно это на рис. 2.7: кругов Мора в точке всегда три — по одному на каждую
+пару главных напряжений, — и наибольшее касательное равно радиусу наибольшего
+из них. Основной круг, построенный по σ<sub>x</sub>, σ<sub>y</sub>, τ<sub>xy</sub>
+(п. 9), — это круг пары σ₁, σ₂; он здесь не самый большой. Площадка с
+τ<sub>max</sub> наклонена к плоскости пластины, на плоском чертеже её не видно.
+В примере
 с занятия такого не возникает: там σ₁ = 100 МПа растягивающее, и наибольшей
 оказывается как раз пара в плоскости.</p></div>
+
+<figure><svg viewBox="233 0 398 366" role="img" aria-label="Три круга Мора: откуда берётся τmax" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
+<marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="246.8" y1="176.0" x2="594.8" y2="176.0" class="ax" marker-end="url(#ms)"/>
+<text x="612.2" y="181.0" class="ax-lbl" text-anchor="middle">σ</text>
+<line x1="560.0" y1="332.6" x2="560.0" y2="13.6" class="ax" marker-end="url(#ms)"/>
+<text x="574.0" y="7.8" class="ax-lbl" text-anchor="middle">τ</text>
+<circle cx="393.2" cy="176.0" r="118.0" class="plane-edge" fill="none"/>
+<circle cx="535.6" cy="176.0" r="24.4" class="hid" fill="none"/>
+<circle cx="417.6" cy="176.0" r="142.4" class="hid" fill="none"/>
+<circle cx="275.2" cy="176.0" r="3.4" class="dot"/>
+<text x="264.2" y="166.0" class="val" text-anchor="end">σ₂</text>
+<circle cx="511.3" cy="176.0" r="3.4" class="dot"/>
+<text x="522.3" y="198.0" class="val" text-anchor="start">σ₁</text>
+<circle cx="560.0" cy="176.0" r="3.4" class="dot"/>
+<text x="571.0" y="166.0" class="val" text-anchor="start">σ₃ = 0</text>
+<circle cx="417.6" cy="33.6" r="3.6" class="dot"/>
+<text x="417.6" y="21.6" class="val" text-anchor="middle">τmax = 49,10</text>
+<circle cx="393.2" cy="58.0" r="3.6" class="dot"/>
+<text x="385.2" y="46.0" class="val" text-anchor="end">τ₁₂ = 40,70</text>
+</svg>
+<figcaption>Рис. 2.7 — три круга Мора, по одному на каждую пару главных
+напряжений. Сплошной — пара σ₁, σ₂ (он же основной круг п. 9), радиус 40,70 МПа.
+Наибольший радиус у пары σ₂, σ₃ — это и есть τ<sub>max</sub> = 49,10 МПа.</figcaption></figure>
 
 <figure><svg viewBox="108 58 509 414" role="img" aria-label="Площадки экстремальных касательных напряжений задачи 2" xmlns="http://www.w3.org/2000/svg">
 <defs>
@@ -1263,67 +1294,118 @@ U₀<sup>ф</sup> = ((1+ν)/3E)·(σ<sub>экв</sub><sup>IV</sup>)² = 0,017075
 
 <h3>9. Круг напряжений (круг Мора)</h3>
 
-<p>Геометрическая проверка всего расчёта. Построение по исходным данным, масштаб
-1 см = 10 МПа:</p>
+<p><strong>Что нужно получить.</strong> Круг Мора — не отдельная задача, а
+геометрическая интерпретация того же расчёта: с одного чертежа должны читаться
+<strong>все</strong> результаты пунктов 2–5. Если хоть одна точка не легла на
+окружность — где-то ошибка в аналитике. Ради этого пункт и делается.</p>
 
-<div class="f">OD = σ<sub>x</sub> = −85 МПа;   OB = σ<sub>y</sub> = −30 МПа
-OC = (σ<sub>x</sub> + σ<sub>y</sub>)/2 = −57,5 МПа        — центр круга
-BK = τ<sub>xy</sub> = −30 МПа                     — откладывается вниз, знак минус
-R  = CK = √[((σ<sub>y</sub> − σ<sub>x</sub>)/2)² + τ<sub>xy</sub>²] = √(27,5² + 30²) = √1656,25 = 40,70 МПа</div>
+<p><strong>Почему получается именно окружность.</strong> Формулы поворота
+площадок (7) и (8) можно переписать так:</p>
 
-<p>Точки пересечения круга с осью σ дают главные напряжения в плоскости пластины:</p>
+<div class="f">σ<sub>ν</sub> − (σ<sub>x</sub> + σ<sub>y</sub>)/2 = (σ<sub>x</sub> − σ<sub>y</sub>)/2·cos 2α − τ<sub>xy</sub>·sin 2α
+τ<sub>tν</sub>                   = (σ<sub>x</sub> − σ<sub>y</sub>)/2·sin 2α + τ<sub>xy</sub>·cos 2α</div>
 
-<div class="f">OC + R = −57,5 + 40,70 = <b>−16,80 МПа</b> = σ₁
-OC − R = −57,5 − 40,70 = <b>−98,20 МПа</b> = σ₂   — совпало с п. 2  ✓</div>
+<p>Возведём обе строки в квадрат и сложим — слагаемые с sin 2α·cos 2α взаимно
+уничтожаются, остаётся</p>
 
-<p>Кругов на самом деле три: кроме основного, построенного по σ<sub>x</sub>,
-σ<sub>y</sub>, τ<sub>xy</sub>, есть ещё два — через σ₃ = 0 и каждое из найденных
-напряжений. Наибольший из них имеет радиус 49,10 МПа: это и есть τ<sub>max</sub>
-из п. 4. На одном круге его увидеть нельзя, поэтому на рис. 2.6 показаны все три.</p>
+<div class="f">[σ<sub>ν</sub> − (σ<sub>x</sub> + σ<sub>y</sub>)/2]² + τ<sub>tν</sub>² = [(σ<sub>x</sub> − σ<sub>y</sub>)/2]² + τ<sub>xy</sub>²   (10)</div>
 
-<figure><svg viewBox="146 0 515 503" role="img" aria-label="Круги Мора для задачи 2" xmlns="http://www.w3.org/2000/svg">
+<p>Это уравнение окружности в осях (σ; τ) с центром на оси σ в точке
+(σ<sub>x</sub> + σ<sub>y</sub>)/2 и радиусом
+√[((σ<sub>x</sub> − σ<sub>y</sub>)/2)² + τ<sub>xy</sub>²]. Угол α входит
+в неё только как параметр 2α — поэтому <strong>повороту площадки на угол α
+отвечает поворот точки по кругу на 2α</strong>. Отсюда и весь порядок
+построения: центр — посередине между σ<sub>x</sub> и σ<sub>y</sub>, радиус —
+гипотенуза прямоугольного треугольника с катетами (σ<sub>y</sub> − σ<sub>x</sub>)/2
+и τ<sub>xy</sub>.</p>
+
+<p><strong>Построение</strong> (масштаб 1 см = 10 МПа):</p>
+
+<div class="f"><span class="cm">1.</span> OD = σ<sub>x</sub> = −85 МПа,  OB = σ<sub>y</sub> = −30 МПа   — две точки на оси σ
+<span class="cm">2.</span> DC = CB = (σ<sub>y</sub> − σ<sub>x</sub>)/2 = (−30 + 85)/2 = 27,5 МПа
+   OC = σ<sub>x</sub> + DC = −85 + 27,5 = <b>−57,50 МПа</b>      — центр круга
+<span class="cm">3.</span> BK = τ<sub>xy</sub> = −30 МПа, откладываем от B вниз (знак минус) → точка K
+<span class="cm">4.</span> R = CK = √(CB² + BK²) = √(27,5² + 30²) = √1656,25 = <b>40,70 МПа</b>
+<span class="cm">5.</span> проводим окружность радиуса R из центра C</div>
+
+<p><strong>Что снимается с готового круга.</strong> Каждая точка окружности —
+это одна площадка: её абсцисса даёт нормальное напряжение, ордината —
+касательное.</p>
+
+<div class="tw"><table>
+<caption>Таблица 7 — что читается с круга и с чем это должно совпасть</caption>
+<thead><tr><th>что ищем</th><th>где на круге</th><th>с круга</th><th>из расчёта</th></tr></thead>
+<tbody>
+<tr><td>σ₁, σ₂ — главные напряжения</td><td>точки пересечения с осью σ: OC ± R</td><td class="mono">−16,80 и −98,20</td><td class="mono">п. 2: те же</td></tr>
+<tr><td>α₁, α₂ — углы главных площадок</td><td>половина угла от радиуса CX до оси σ</td><td class="mono">+66,26° и −23,74°</td><td class="mono">п. 3: те же</td></tr>
+<tr><td>τ₁, τ₂ — экстремальные касательные в плоскости</td><td>верхняя и нижняя точки круга</td><td class="mono">±40,70</td><td class="mono">п. 4: τ₁₂ = ±40,70</td></tr>
+<tr><td>σ′ на этих площадках</td><td>абсцисса тех же точек, то есть OC</td><td class="mono">−57,50</td><td class="mono">п. 4: −57,50</td></tr>
+<tr><td>σ<sub>ν</sub>, τ<sub>tν</sub> при α = 15°</td><td>точка P — поворот радиуса CX на 2α = 30°</td><td class="mono">−66,32 и −39,73</td><td class="mono">п. 5: те же</td></tr>
+<tr><td>σ<sub>t</sub> при α = 15°</td><td>точка P′ — противоположный конец диаметра</td><td class="mono">−48,68</td><td class="mono">п. 5: −48,68</td></tr>
+</tbody></table></div>
+
+<p>Точка X(σ<sub>x</sub>; τ<sub>xy</sub>) = (−85; −30) — это площадка с нормалью
+x, то есть α = 0. От её радиуса и отсчитываются все углы: поворот против часовой
+стрелки на 2α даёт площадку с нормалью под углом α к оси x. Проверим на главных
+площадках: до точки σ₁ радиус CX надо повернуть на 132,5°, то есть
+α₁ = 132,5°/2 = <b>66,26°</b>; до точки σ₂ — на −47,5°, то есть
+α₂ = <b>−23,74°</b>. Совпало с п. 3.</p>
+
+<p><strong>Главная проверка.</strong> Подставим найденные в п. 5 значения
+в уравнение (10):</p>
+
+<div class="f">(σ<sub>ν</sub> − OC)² + τ<sub>tν</sub>² = (−66,3157 + 57,5)² + (−39,7308)² = 77,72 + 1578,53 = <b>1656,25 МПа²</b>
+R² = 40,6971² = <b>1656,25 МПа²</b>   ✓</div>
+
+<p>Точка легла на окружность точно — значит пункты 2–5 согласованы между собой
+и с исходными данными.</p>
+
+<figure><svg viewBox="161 2 630 481" role="img" aria-label="Круг Мора для задачи 2" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="m" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6.4" markerHeight="6.4" orient="auto-start-reverse"><path d="M0 0.6 L10 5 L0 9.4 z" fill="context-stroke"/></marker>
 <marker id="ms" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0 0.8 L10 5 L0 9.2 z" fill="context-stroke"/></marker>
 </defs>
-<line x1="166.4" y1="215.0" x2="620.0" y2="215.0" class="ax" marker-end="url(#ms)"/>
-<text x="641.6" y="220.0" class="ax-lbl" text-anchor="middle">σ</text>
-<line x1="566.0" y1="416.6" x2="566.0" y2="13.4" class="ax" marker-end="url(#ms)"/>
-<text x="581.0" y="6.2" class="ax-lbl" text-anchor="middle">τ</text>
-<circle cx="535.8" cy="215.0" r="30.2" class="hid" fill="none"/>
-<circle cx="389.2" cy="215.0" r="176.8" class="hid" fill="none"/>
-<circle cx="359.0" cy="215.0" r="146.5" class="plane-edge" fill="none"/>
-<line x1="260.0" y1="107.0" x2="458.0" y2="323.0" class="dim"/>
-<line x1="458.0" y1="215.0" x2="458.0" y2="323.0" class="dim"/>
-<circle cx="260.0" cy="215.0" r="3.4" class="dot"/>
-<circle cx="458.0" cy="215.0" r="3.4" class="dot"/>
-<circle cx="359.0" cy="215.0" r="3.4" class="dot"/>
-<circle cx="566.0" cy="215.0" r="3.4" class="dot"/>
-<circle cx="505.5" cy="215.0" r="3.4" class="dot"/>
-<circle cx="212.5" cy="215.0" r="3.4" class="dot"/>
-<circle cx="458.0" cy="323.0" r="3.4" class="dot"/>
-<circle cx="260.0" cy="107.0" r="3.4" class="dot"/>
-<circle cx="389.2" cy="38.2" r="3.4" class="dot"/>
-<text x="260.0" y="202.0" class="lbl" text-anchor="middle">D</text>
-<text x="458.0" y="202.0" class="lbl" text-anchor="middle">B</text>
-<text x="368.0" y="204.0" class="lbl" text-anchor="start">C</text>
-<text x="250.0" y="99.0" class="lbl" text-anchor="end">D′</text>
-<text x="469.0" y="329.0" class="lbl" text-anchor="start">K</text>
-<text x="469.0" y="347.0" class="val" text-anchor="start">τxy = −30</text>
-<text x="260.0" y="239.0" class="val" text-anchor="middle">σx = −85</text>
-<text x="449.0" y="239.0" class="val" text-anchor="end">σy = −30</text>
-<text x="398.5" y="260.0" class="val" text-anchor="end">R = 40,70</text>
-<text x="400.2" y="30.2" class="val" text-anchor="start">τmax = 49,10</text>
-<text x="577.0" y="202.0" class="val" text-anchor="start">σ₃ = 0</text>
-<line x1="212.5" y1="223.0" x2="212.5" y2="451.0" class="leader"/>
-<text x="212.5" y="465.0" class="val" text-anchor="middle">σ₂ = −98,20 МПа</text>
-<line x1="505.5" y1="223.0" x2="505.5" y2="451.0" class="leader"/>
-<text x="505.5" y="465.0" class="val" text-anchor="middle">σ₁ = −16,80 МПа</text>
+<line x1="219.2" y1="258.0" x2="747.2" y2="258.0" class="ax" marker-end="url(#ms)"/>
+<text x="773.6" y="263.0" class="ax-lbl" text-anchor="middle">σ</text>
+<line x1="690.0" y1="469.2" x2="690.0" y2="38.0" class="ax" marker-end="url(#ms)"/>
+<text x="705.0" y="29.2" class="ax-lbl" text-anchor="middle">τ</text>
+<circle cx="437.0" cy="258.0" r="179.1" class="plane-edge" fill="none"/>
+<line x1="437.0" y1="258.0" x2="316.0" y2="390.0" class="dim"/>
+<line x1="437.0" y1="258.0" x2="398.2" y2="432.8" class="dim"/>
+<line x1="437.0" y1="258.0" x2="558.0" y2="390.0" class="dim"/>
+<line x1="558.0" y1="258.0" x2="558.0" y2="390.0" class="leader"/>
+<line x1="316.0" y1="258.0" x2="316.0" y2="390.0" class="leader"/>
+<circle cx="316.0" cy="258.0" r="3.6" class="dot"/>
+<circle cx="558.0" cy="258.0" r="3.6" class="dot"/>
+<circle cx="437.0" cy="258.0" r="3.6" class="dot"/>
+<circle cx="558.0" cy="390.0" r="3.6" class="dot"/>
+<circle cx="316.0" cy="390.0" r="3.6" class="dot"/>
+<circle cx="616.1" cy="258.0" r="3.6" class="dot"/>
+<circle cx="257.9" cy="258.0" r="3.6" class="dot"/>
+<circle cx="437.0" cy="78.9" r="3.6" class="dot"/>
+<circle cx="437.0" cy="437.1" r="3.6" class="dot"/>
+<circle cx="398.2" cy="432.8" r="3.6" class="dot"/>
+<circle cx="475.8" cy="83.2" r="3.6" class="dot"/>
+<path d="M 476.2 300.8 A 58 58 0 0 0 449.6 314.6" class="arc"/>
+<text x="427.0" y="346.0" class="ang" text-anchor="middle">2α = 30°</text>
+<text x="316.0" y="244.0" class="val" text-anchor="middle">D:  σx = −85</text>
+<text x="536.0" y="244.0" class="val" text-anchor="middle">B:  σy = −30</text>
+<text x="437.0" y="244.0" class="val" text-anchor="middle">C:  −57,50</text>
+<text x="246.9" y="248.0" class="val" text-anchor="end">σ₂ = −98,20</text>
+<text x="628.1" y="248.0" class="val" text-anchor="start">σ₁ = −16,80</text>
+<text x="391.0" y="62.9" class="val" text-anchor="middle">τ₁ = +40,70   (σ′ = −57,50)</text>
+<text x="433.0" y="463.1" class="val" text-anchor="middle">τ₂ = −40,70</text>
+<text x="305.0" y="396.0" class="val" text-anchor="end">X — площадка x</text>
+<text x="570.0" y="396.0" class="val" text-anchor="start">K (σy; τxy)</text>
+<text x="387.2" y="452.8" class="val" text-anchor="end">P (−66,32; −39,73)</text>
+<text x="489.8" y="63.2" class="val" text-anchor="start">P′ (−48,68; +39,73)</text>
+<text x="513.5" y="312.0" class="val" text-anchor="start">R = 40,70</text>
 </svg>
-<figcaption>Рис. 2.6 — круги Мора. Сплошной — основной, построенный по данным
-задачи: D(σ<sub>x</sub>; 0), B(σ<sub>y</sub>; 0), K(σ<sub>y</sub>; τ<sub>xy</sub>),
-диаметр D′K проходит через центр C. Штриховые — два вспомогательных, через σ₃ = 0.
-Радиус наибольшего равен τ<sub>max</sub> = 49,10 МПа.</figcaption></figure>
+<figcaption>Рис. 2.6 — круг Мора. Построение: D и B — исходные σ<sub>x</sub> и
+σ<sub>y</sub> на оси; C — центр; BK = τ<sub>xy</sub> отложено от B вниз;
+R = CK. С круга снимаются σ₁ и σ₂ (пересечения с осью), τ₁ и τ₂ (верх и низ),
+точка P — площадка под α = 15°, P′ — перпендикулярная ей. Все шесть величин
+совпали с аналитическим расчётом.</figcaption></figure>
 
 <h2>ВЫВОДЫ</h2>
 

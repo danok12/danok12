@@ -202,9 +202,9 @@ for name, val in (("σ1", sA), ("σ2", sB)):
     angles[name] = a
     print(f"  {name} = {val:.4f}:  tg α = {float(txy2)} / ({float(sy2)} - ({val:.4f})) "
           f"= {float(txy2)} / {den:.4f} = {tg:.5f}  ->  α = {a:.2f}°")
-s = abs(angles["σ2"]) + abs(angles["σ3"])
-print(f"\nПроверка: |α(σ2)| + |α(σ3)| = {abs(angles['σ2']):.2f}° + "
-      f"{abs(angles['σ3']):.2f}° = {s:.2f}°  (должно быть 90°)")
+s = abs(angles["σ1"]) + abs(angles["σ2"])
+print(f"\nПроверка: |α(σ1)| + |α(σ2)| = {abs(angles['σ1']):.2f}° + "
+      f"{abs(angles['σ2']):.2f}° = {s:.2f}°  (должно быть 90°)")
 
 print("\nПодстановка направляющих косинусов в систему (l = cos α, m = -sin α):")
 for name, val in (("σ1", sA), ("σ2", sB)):
@@ -314,6 +314,6 @@ print("\nп. 9. КРУГ МОРА (данные построения)")
 print(f"  OD = σx = {sx2};  OB = σy = {sy2};  BK = τxy = {txy2}")
 print(f"  OC = (σx+σy)/2 = {float(half)} МПа;  R = CK = {root2:.4f} МПа")
 print(f"  σ(в плоскости): OC + R = {sA:.4f};  OC - R = {sB:.4f} МПа")
-print(f"  три круга: центры {float(half):.3f}, {(s1_2 + s2_2) / 2:.3f}, "
-      f"{(s1_2 + s3_2) / 2:.3f};  радиусы {root2:.3f}, "
-      f"{(s1_2 - s2_2) / 2:.3f}, {tmax2:.3f}")
+print("  три круга (по паре главных на каждый):")
+for nm, a, b in par:
+    print(f"    {nm}: центр {(a + b) / 2:8.3f} МПа,  радиус {abs((a - b) / 2):7.3f} МПа")

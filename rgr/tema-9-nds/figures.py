@@ -705,55 +705,95 @@ def fig25_alpha():
 
 
 def fig26_mohr():
-    """Три круга Мора; основной построен по σx, σy, τxy."""
-    K = 3.6                                     # пикселей на МПа
-    w, h = 700, 530
-    ox, oy = 566, 215
+    """Круг Мора: построение по σx, σy, τxy и всё, что с него снимается."""
+    K = 4.4
+    w, h = 800, 566
+    ox, oy = 690.0, 258.0
     sx_, sy_, t_ = -85.0, -30.0, -30.0
     c_pl, r_pl = -57.5, 40.6971
-    s1, s2, s3 = 0.0, -16.8029, -98.1971
-    tmax = 49.0985
-    s = HEAD.format(w=w, h=h, m=MID, alt="Круги Мора для задачи 2")
+    s1, s2 = -16.8029, -98.1971
+    s_nu, t_tnu, s_t = -66.3157, -39.7308, -48.6843
+    s = HEAD.format(w=w, h=h, m=MID, alt="Круг Мора для задачи 2")
     X = lambda v: ox + v * K
     Y = lambda v: oy - v * K
 
-    s += ar((X(-111), oy), (X(15), oy), "ax", small=True)
-    s += txt(X(21), oy + 5, "σ", "ax-lbl")
-    s += ar((ox, Y(-56)), (ox, Y(56)), "ax", small=True)
-    s += txt(ox + 15, Y(58), "τ", "ax-lbl")
+    s += ar((X(-107), oy), (X(13), oy), "ax", small=True)
+    s += txt(X(19), oy + 5, "σ", "ax-lbl")
+    s += ar((ox, Y(-48)), (ox, Y(50)), "ax", small=True)
+    s += txt(ox + 15, Y(52), "τ", "ax-lbl")
+    s += (f'<circle cx="{X(c_pl):.1f}" cy="{oy:.1f}" r="{r_pl * K:.1f}" '
+          f'class="plane-edge" fill="none"/>\n')
 
-    for c, r, cls in (((s1 + s2) / 2, (s1 - s2) / 2, "hid"),
-                      ((s1 + s3) / 2, (s1 - s3) / 2, "hid"),
-                      (c_pl, r_pl, "plane-edge")):
-        s += (f'<circle cx="{X(c):.1f}" cy="{oy:.1f}" r="{r * K:.1f}" '
+    P = {"D": (sx_, 0.0), "B": (sy_, 0.0), "C": (c_pl, 0.0),
+         "K": (sy_, t_), "X": (sx_, t_), "s1": (s1, 0.0), "s2": (s2, 0.0),
+         "t1": (c_pl, r_pl), "t2": (c_pl, -r_pl),
+         "P": (s_nu, t_tnu), "P2": (s_t, -t_tnu)}
+    pix = {k: (X(v[0]), Y(v[1])) for k, v in P.items()}
+
+    # радиусы, по которым отсчитывается 2α, и построение BK = τxy
+    for a, b, cls in (("C", "X", "dim"), ("C", "P", "dim"), ("C", "K", "dim"),
+                      ("B", "K", "leader"), ("D", "X", "leader")):
+        s += ln(pix[a], pix[b], cls)
+    for k in pix:
+        s += f'<circle cx="{pix[k][0]:.1f}" cy="{pix[k][1]:.1f}" r="3.6" class="dot"/>\n'
+
+    # дуга 2α от радиуса CX до радиуса CP
+    import math as _m
+    rr = 58
+    a0 = _m.degrees(_m.atan2(-(t_), -(sx_ - c_pl)))
+    a1 = _m.degrees(_m.atan2(-(t_tnu), -(s_nu - c_pl)))
+    s += (f'<path d="M {X(c_pl) + rr * _m.cos(_m.radians(a0)):.1f} '
+          f'{oy + rr * _m.sin(_m.radians(a0)):.1f} A {rr} {rr} 0 0 0 '
+          f'{X(c_pl) + rr * _m.cos(_m.radians(a1)):.1f} '
+          f'{oy + rr * _m.sin(_m.radians(a1)):.1f}" class="arc"/>\n')
+    s += txt(X(c_pl) - 10, oy + rr + 30, "2α = 30°", "ang", "middle")
+
+    lb = [("D", 0, -14, "D:  σx = −85", "middle"),
+          ("B", -22, -14, "B:  σy = −30", "middle"),
+          ("C", 0, -14, "C:  −57,50", "middle"),
+          ("s2", -11, -10, "σ₂ = −98,20", "end"),
+          ("s1", 12, -10, "σ₁ = −16,80", "start"),
+          ("t1", -46, -16, "τ₁ = +40,70   (σ′ = −57,50)", "middle"),
+          ("t2", -4, 26, "τ₂ = −40,70", "middle"),
+          ("X", -11, 6, "X — площадка x", "end"),
+          ("K", 12, 6, "K (σy; τxy)", "start"),
+          ("P", -11, 20, "P (−66,32; −39,73)", "end"),
+          ("P2", 14, -20, "P′ (−48,68; +39,73)", "start")]
+    for k, dx, dy, text, anc in lb:
+        s += txt(pix[k][0] + dx, pix[k][1] + dy, text, "val", anc)
+    s += txt((pix["C"][0] + pix["K"][0]) / 2 + 16,
+             (pix["C"][1] + pix["K"][1]) / 2 - 12, "R = 40,70", "val", "start")
+    s += '</svg>\n'
+    return s
+
+
+def fig27_tri():
+    """Три круга — только чтобы объяснить, откуда τmax = 49,10 МПа."""
+    K = 2.9
+    w, h = 660, 330
+    ox, oy = 560.0, 176.0
+    s1, s2, s3 = -16.8029, -98.1971, 0.0
+    s = HEAD.format(w=w, h=h, m=MID, alt="Три круга Мора: откуда берётся τmax")
+    X = lambda v: ox + v * K
+    Y = lambda v: oy - v * K
+    s += ar((X(-108), oy), (X(12), oy), "ax", small=True)
+    s += txt(X(18), oy + 5, "σ", "ax-lbl")
+    s += ar((ox, Y(-54)), (ox, Y(56)), "ax", small=True)
+    s += txt(ox + 14, Y(58), "τ", "ax-lbl")
+    for a, b, cls in (((s1 + s2) / 2, (s1 - s2) / 2, "plane-edge"),
+                      ((s1 + s3) / 2, (s3 - s1) / 2, "hid"),
+                      ((s2 + s3) / 2, (s3 - s2) / 2, "hid")):
+        s += (f'<circle cx="{X(a):.1f}" cy="{oy:.1f}" r="{b * K:.1f}" '
               f'class="{cls}" fill="none"/>\n')
-
-    kx, ky = X(sy_), Y(t_)
-    dx2, dy2 = X(sx_), Y(-t_)
-    s += ln((dx2, dy2), (kx, ky), "dim")        # диаметр D\'K через центр C
-    s += ln((kx, oy), (kx, ky), "dim")          # BK = τxy
-    for px, py in ((X(sx_), oy), (X(sy_), oy), (X(c_pl), oy), (ox, oy),
-                   (X(s2), oy), (X(s3), oy), (kx, ky), (dx2, dy2),
-                   (X(-tmax), Y(tmax))):
-        s += f'<circle cx="{px:.1f}" cy="{py:.1f}" r="3.4" class="dot"/>\n'
-
-    # буквы построения — над осью, значения — под ней
-    s += txt(X(sx_), oy - 13, "D", "lbl")
-    s += txt(X(sy_), oy - 13, "B", "lbl")
-    s += txt(X(c_pl) + 9, oy - 11, "C", "lbl", "start")
-    s += txt(dx2 - 10, dy2 - 8, "D\u2032", "lbl", "end")
-    s += txt(kx + 11, ky + 6, "K", "lbl", "start")
-    s += txt(kx + 11, ky + 24, "τxy = −30", "val", "start")
-    s += txt(X(sx_), oy + 24, "σx = −85", "val")
-    s += txt(kx - 9, oy + 24, "σy = −30", "val", "end")
-    s += txt((X(c_pl) + kx) / 2 - 10, (oy + ky) / 2 - 9, "R = 40,70", "val", "end")
-    s += txt(X(-tmax) + 11, Y(tmax) - 8, "τmax = 49,10", "val", "start")
-    s += txt(ox + 11, oy - 13, "σ₃ = 0", "val", "start")
-
-    ry = oy + 250                               # строка выносок под кругами
-    for v, nm in ((s3, "σ₂ = −98,20"), (s2, "σ₁ = −16,80")):
-        s += ln((X(v), oy + 8), (X(v), ry - 14), "leader")
-        s += txt(X(v), ry, nm + " МПа", "val")
+    for v, nm, dx, dy, an in ((s2, "σ₂", -11, -10, "end"),
+                              (s1, "σ₁", 11, 22, "start"),
+                              (s3, "σ₃ = 0", 11, -10, "start")):
+        s += f'<circle cx="{X(v):.1f}" cy="{oy:.1f}" r="3.4" class="dot"/>\n'
+        s += txt(X(v) + dx, oy + dy, nm, "val", an)
+    s += f'<circle cx="{X((s2 + s3) / 2):.1f}" cy="{Y(49.0985):.1f}" r="3.6" class="dot"/>\n'
+    s += txt(X((s2 + s3) / 2), Y(49.0985) - 12, "τmax = 49,10", "val")
+    s += f'<circle cx="{X((s1 + s2) / 2):.1f}" cy="{Y(40.6971):.1f}" r="3.6" class="dot"/>\n'
+    s += txt(X((s1 + s2) / 2) - 8, Y(40.6971) - 12, "τ₁₂ = 40,70", "val", "end")
     s += '</svg>\n'
     return s
 
@@ -777,6 +817,6 @@ if __name__ == "__main__":
                      ("fig-2-1", fig21_plate), ("fig-2-2", fig22_flat),
                      ("fig-2-3", fig23_main),
                      ("fig-2-4", fig24_tau), ("fig-2-5", fig25_alpha),
-                     ("fig-2-6", fig26_mohr)):
+                     ("fig-2-6", fig26_mohr), ("fig-2-7", fig27_tri)):
         open(name + ".svg", "w", encoding="utf-8").write(fn())
     print("схемы собраны")

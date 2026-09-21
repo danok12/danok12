@@ -128,6 +128,17 @@ for nm, (sv, tv) in (("D(σx; −τxy)", (SX, -TXY)), ("K(σy; τxy)", (SY, TXY)
 check("OC + R = σ1", OC + r, s1, 1e-6, "МПа")
 check("OC − R = σ2", OC - r, s2, 1e-6, "МПа")
 
+# --- правило круга Мора: поворот радиуса CX на 2α ---
+print("\nправило круга: поворот радиуса CX на 2α даёт площадку под углом α")
+cx_, cy_ = OC, 0.0
+ax_ = math.degrees(math.atan2(TXY - cy_, SX - cx_))     # радиус к точке X
+for al_deg, sig, tau in ((15.0, -66.3157, -39.7308),
+                         (66.26, s1, 0.0), (-23.74, s2, 0.0)):
+    ap = math.degrees(math.atan2(tau - cy_, sig - cx_))
+    d = (ap - ax_) % 360
+    d = d - 360 if d > 180 else d
+    check(f"α = {al_deg:+7.2f}°: поворот по кругу / 2", d / 2, al_deg, 2e-2, "°")
+
 # --- геометрия рисунков ---------------------------------------------------
 print("\nгеометрия рисунков")
 a_tau = 66.26 - 45
@@ -138,19 +149,27 @@ p = mv(T, n_t)
 check("рис. 2.4: σ на грани элемента (α=21,26°)", dot(n_t, p), -57.5, 2e-2, "МПа")
 check("рис. 2.4: |τ| на грани элемента", abs(dot(t_t, p)), 40.6971, 2e-2, "МПа")
 
+# рис. 2.6 — один круг: радиус и точки на оси σ
 svg = open("fig-2-6.svg", encoding="utf-8").read()
-vb = [float(v) for v in re.search(r'viewBox="([^"]+)"', svg).group(1).split()]
-K, ox, oy = 3.6, 566.0, 215.0
+K6, ox6, oy6 = 4.4, 690.0, 258.0
 crc = re.findall(r'<circle cx="([-\d.]+)" cy="([-\d.]+)" r="([\d.]+)"', svg)
-big = sorted((float(c[2]) for c in crc), reverse=True)[:3]
-check("рис. 2.6: радиус большого круга -> МПа", big[0] / K, 49.0985, 5e-2, "МПа")
-check("рис. 2.6: радиус основного круга -> МПа", big[1] / K, 40.6971, 5e-2, "МПа")
-check("рис. 2.6: радиус малого круга -> МПа", big[2] / K, 8.4015, 5e-2, "МПа")
-kx = [c for c in crc if abs(float(c[2]) - 3.4) < .01]
-sigs = sorted({round((float(c[0]) - ox) / K, 2) for c in kx
-               if abs(float(c[1]) - oy) < .5})
-print(f"  точки на оси σ (МПа): {sigs}")
-check("рис. 2.6: крайняя левая точка = σ2", min(sigs), s2, 5e-2, "МПа")
+kolco = max(float(c[2]) for c in crc)
+check("рис. 2.6: радиус круга -> МПа", kolco / K6, r, 5e-2, "МПа")
+na_osi = sorted({round((float(c[0]) - ox6) / K6, 2) for c in crc
+                 if abs(float(c[1]) - oy6) < .6 and float(c[2]) < 10})
+print(f"  точки на оси σ (МПа): {na_osi}")
+check("рис. 2.6: крайняя левая точка = σ2", min(na_osi), s2, 5e-2, "МПа")
+check("рис. 2.6: крайняя правая точка = σ1", max(na_osi), s1, 5e-2, "МПа")
+
+# рис. 2.7 — три круга: радиусы обязаны равняться трём полуразностям
+svg7 = open("fig-2-7.svg", encoding="utf-8").read()
+K7 = 2.9
+rr7 = sorted((float(c) / K7 for c in
+              re.findall(r'<circle cx="[-\d.]+" cy="[-\d.]+" r="([\d.]+)"', svg7)
+              if float(c) > 10), reverse=True)
+for got, want, nm in zip(rr7, [(s3 - s2) / 2, (s1 - s2) / 2, (s3 - s1) / 2],
+                         ("τ23 = τmax", "τ12", "τ31")):
+    check(f"рис. 2.7: радиус круга {nm}", got, want, 5e-2, "МПа")
 
 print("\n" + "=" * 84)
 print("ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ" if ok_all else "ЕСТЬ РАСХОЖДЕНИЯ — см. строки «НЕТ»")
