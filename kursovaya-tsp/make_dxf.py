@@ -16,6 +16,7 @@ TXT = "ГОСТ тип Б"            # текстовый стиль: ГОСТ 
 doc = ezdxf.new("R2010", setup=["linetypes"])
 doc.units = ezdxf.units.M
 doc.header["$LWDISPLAY"] = 1
+doc.header["$DWGCODEPAGE"] = "ANSI_1251"      # кириллица
 doc.header["$MEASUREMENT"] = 1
 doc.header["$DIMDSEP"] = ord(",")
 GOST_FILE, GOST_FAMILY = "GOST_B.TTF", "GOST type B"
@@ -57,7 +58,7 @@ def fmt(v, sign=True):
     s = f"{abs(f(v)):.2f}".replace(".", ",")
     if not sign or v == 0:
         return s
-    return ("+" if v > 0 else "−") + s
+    return ("+" if v > 0 else "-") + s        # дефис: в шрифте ГОСТ нет знака «минус»
 
 
 def mtext(text, pos, h_mm, layer, align=MA.MIDDLE_CENTER, mask=True, rot=0):
@@ -184,8 +185,8 @@ dim((0, 0), (0, Hh), (-13 * SC, 0), 90)
 psp = doc.layouts.get("Layout1")
 doc.layouts.rename("Layout1", "Лист 1")
 psp.page_setup(size=(420, 297), margins=(0, 0, 0, 0), units="mm")
-for e in list(psp):
-    psp.delete_entity(e)
+# page_setup создаёт главный видовой экран листа (id 1) - без него nanoCAD
+# и AutoCAD не показывают остальные видовые экраны, поэтому его не трогаем
 
 
 def pl(pts, layer="Штамп", closed=False, lw=None):
@@ -198,11 +199,17 @@ def ln(p1, p2, lw=25):
     psp.add_line(p1, p2, dxfattribs={"layer": "Штамп", "lineweight": lw})
 
 
+TA2MA = {TA.MIDDLE_CENTER: MA.MIDDLE_CENTER, TA.MIDDLE_LEFT: MA.MIDDLE_LEFT,
+         TA.BOTTOM_LEFT: MA.BOTTOM_LEFT, TA.BOTTOM_CENTER: MA.BOTTOM_CENTER}
+
+
 def txt(s, pos, h=2.5, align=TA.MIDDLE_CENTER, layer="Штамп", width=None):
-    t = psp.add_text(s, height=h, dxfattribs={"layer": layer, "style": TXT})
-    if width: t.dxf.width = width
-    t.set_placement(pos, align=align)
-    return t
+    """Однострочная надпись. Пишется как MTEXT: у однострочного TEXT с
+    центровкой nanoCAD не пересчитывает точку вставки и сдвигает текст."""
+    content = (f"\\W{width};" if width else "") + s
+    m = psp.add_mtext(content, dxfattribs={"layer": layer, "style": TXT, "char_height": h})
+    m.set_location(pos, attachment_point=TA2MA[align])
+    return m
 
 
 def mt(s, pos, h, width, align=MA.MIDDLE_CENTER, layer="Штамп"):
@@ -242,8 +249,8 @@ for k, (role, name) in enumerate(rows):
     y = Y0 + 27.5 - 5 * k
     txt(role, (X0 + 1, y), 2.0, TA.MIDDLE_LEFT, width=0.8)
     txt(name, (X0 + 21, y), 2.0, TA.MIDDLE_LEFT, width=0.8)
-txt("НИУ МГСУ 08.05.01 – КР – 2026", (X0 + 125, Y0 + 50), 3.5)
-mt("Разработка технологической карты на производство\\Pземляных работ. Вариант 2, грунт — супесь",
+txt("НИУ МГСУ 08.05.01 - КР - 2026", (X0 + 125, Y0 + 50), 3.5)
+mt("Разработка технологической карты на производство\\Pземляных работ. Вариант 2, грунт - супесь",
    (X0 + 125, Y0 + 37.5), 2.5, 115)
 mt("Графическая часть\\Pкурсовой работы", (X0 + 100, Y0 + 22.5), 2.5, 66)
 txt("Стадия", (X0 + 142.5, Y0 + 27.5), 2.0, width=0.8)
@@ -272,10 +279,10 @@ LX, LY = 26, 64
 txt("Условные обозначения", (LX, LY), 3.0, TA.BOTTOM_LEFT, "Надписи", 0.8)
 items = [
     ("lnr", "линия нулевых работ (ЛНР)"),
-    ("hatch", "ПВ — планировочная выемка"),
-    ("box", "ПН — планировочная насыпь"),
-    ("mark", "рабочая отметка, м: «+» насыпь, «−» выемка"),
-    ("fig", "номер фигуры; штрих — насыпная часть квадрата"),
+    ("hatch", "ПВ - планировочная выемка"),
+    ("box", "ПН - планировочная насыпь"),
+    ("mark", "рабочая отметка, м (+ насыпь, - выемка)"),
+    ("fig", "номер фигуры; со штрихом - насыпная часть квадрата"),
     ("dim", "расстояние до точки нулевых работ, м"),
 ]
 for k, (kind, label) in enumerate(items):
@@ -300,7 +307,7 @@ for k, (kind, label) in enumerate(items):
         for xx in (sx0, sx1):
             psp.add_line((xx - 0.9, y - 2.4), (xx + 0.9, y - 0.6), dxfattribs={"layer": "Размеры"})
         txt("37,5", ((sx0 + sx1) / 2, y - 0.7), 2.5, TA.BOTTOM_CENTER, "Размеры", 0.8)
-    txt("— " + label, (sx1 + 3, y), 2.5, TA.MIDDLE_LEFT, "Надписи", 0.8)
+    txt("- " + label, (sx1 + 3, y), 2.5, TA.MIDDLE_LEFT, "Надписи", 0.8)
 
 # ---------- сводка объёмов ----------
 Vc = sum(g["V"] for g in R.FIGS if g["sign"] < 0)
@@ -313,7 +320,7 @@ def num(v):
     return f"{v:,.2f}".replace(",", " ").replace(".", ",")
 
 
-tab = [("", "F, м²", "V, м³"),
+tab = [("", "F, м{\\H0.6x;\\A2;2}", "V, м{\\H0.6x;\\A2;3}"),   # м2, м3: уменьшенная цифра вверху строки
        ("Выемка ПВ", num(f(Fc)), num(f(Vc))),
        ("Насыпь ПН", num(f(Ff)), num(f(Vf))),
        (f"ПН / Kор, Kор = {K_OR:.2f}".replace(".", ","), "", num(f(Vf) / K_OR))]

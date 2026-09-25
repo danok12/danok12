@@ -41,12 +41,25 @@ if verts != zp: ok = False; print("ЛНР в DXF не совпадает с то
 texts = [e.plain_text() for e in msp if e.dxftype() == "MTEXT"]
 for g in R.FIGS:
     if g["name"] not in texts: ok = False; print("нет подписи фигуры", g["name"])
-fmt = lambda v: ("+" if v > 0 else "−") + f"{abs(float(v)):.2f}".replace(".", ",")
+fmt = lambda v: ("+" if v > 0 else "-") + f"{abs(float(v)):.2f}".replace(".", ",")
 for v in R.H:
     if fmt(v) not in texts: ok = False; print("нет отметки", fmt(v))
 bad_styles = {e.dxf.style for L in (msp, doc.paperspace("Лист 1"), *doc.blocks)
               for e in L if e.dxftype() in ("TEXT", "MTEXT")} - {"ГОСТ тип Б"}
 if bad_styles: ok = False; print("текст не ГОСТ тип Б:", bad_styles)
 if doc.audit().has_errors: ok = False; print("аудит DXF нашёл ошибки")
+
+# 4. Совместимость с nanoCAD/AutoCAD (ошибки, найденные при открытии в nanoCAD)
+psp = doc.paperspace("Лист 1")
+vps = sorted((e.dxf.status, e.dxf.id) for e in psp if e.dxftype() == "VIEWPORT")
+if not vps or vps[0] != (1, 1) or len(vps) < 2:
+    ok = False; print("нет главного видового экрана листа или рабочего экрана:", vps)
+layouts = (msp, psp, *doc.blocks)
+if any(e.dxftype() == "TEXT" for L in layouts for e in L):
+    ok = False; print("есть однострочный TEXT - nanoCAD сдвигает его при центровке")
+SAFE = set(map(chr, range(32, 127))) | {chr(c) for c in range(0x410, 0x450)} | set("ЁёН№")
+bad = {ch for L in layouts for e in L if e.dxftype() == "MTEXT"
+       for ch in e.plain_text() if ch not in SAFE and ch != "\n"}
+if bad: ok = False; print("символы, которых может не быть в шрифте ГОСТ:", bad)
 print("DXF: ЛНР через", len(zp), "точек нуля; фигур", len(R.FIGS), "; стили текста ок" if not bad_styles else "")
 print("ВСЁ СХОДИТСЯ" if ok else "ЕСТЬ РАСХОЖДЕНИЯ")
