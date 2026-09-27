@@ -65,4 +65,24 @@ parts = [
 ]
 svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" font-family="Times New Roman, serif"><rect width="100%" height="100%" fill="#fff"/>{"".join(parts)}</svg>'
 open('risunok3.svg', 'w').write(svg)
+
+# Рисунок 2: как считается угол при M. На прямой AB в точке M три угла: AMK + KMN + NMB = 180°.
+assert abs(ang(M, A, K) - (90 - A_ / 2)) < 1e-9 and abs(ang(M, B, N) - (90 - B_ / 2)) < 1e-9
+assert abs(ang(K, A, M) - (90 - A_ / 2)) < 1e-9 and abs(ang(N, B, M) - (90 - B_ / 2)) < 1e-9
+parts2 = [
+    line(A, B, 2.5), line(B, C, 2.5), line(C, A, 2.5),
+    line(M, N), line(N, K), line(K, M),
+    ticks(A, M, 1), ticks(A, K, 1), ticks(B, M, 2), ticks(B, N, 2), ticks(C, N, 3), ticks(C, K, 3),
+    arc(A, B, C, 120, '18°', 150),
+    arc(B, A, C, 45, '70°', 72),
+    arc(M, A, K, 30, '81°', 58, 19),
+    arc(K, A, M, 30, '81°', 56, 19),
+    arc(M, K, N, 50, '44°', 76, 19),
+    arc(M, N, B, 30, '55°', 56, 19),
+    arc(N, B, M, 30, '55°', 56, 19),
+    label(A, 'A', -32, 10), label(B, 'B', 10, 12), label(C, 'C', -8, -14),
+    label(M, 'M', -10, 32), label(N, 'N', 12, -2), label(K, 'K', -14, -14),
+]
+svg2 = f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" font-family="Times New Roman, serif"><rect width="100%" height="100%" fill="#fff"/>{"".join(parts2)}</svg>'
+open('risunok3-shag.svg', 'w').write(svg2)
 print('ok', {k: round(v, 6) for k, v in chk.items()}, 'C=', T(C))
