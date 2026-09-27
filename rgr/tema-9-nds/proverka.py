@@ -4,7 +4,8 @@
 Ничего не берётся из raschet.py: тензор строится заново, главные напряжения
 считаются как собственные числа, напряжения на наклонных площадках — прямым
 преобразованием T·ν, энергия — свёрткой ½·σij·εij, эквивалентное напряжение —
-через девиатор. Отдельно проверяется геометрия рисунков 2.4-2.6.
+через девиатор. Отдельно проверяется геометрия рисунков 4 и 7 (круг Мора — по координатам
+точек, снятым с чертежа в его масштабе).
 """
 import math
 import re
@@ -128,16 +129,33 @@ for nm, (sv, tv) in (("D(σx; −τxy)", (SX, -TXY)), ("K(σy; τxy)", (SY, TXY)
 check("OC + R = σ1", OC + r, s1, 1e-6, "МПа")
 check("OC − R = σ2", OC - r, s2, 1e-6, "МПа")
 
-# --- правило круга Мора: поворот радиуса CX на 2α ---
-print("\nправило круга: поворот радиуса CX на 2α даёт площадку под углом α")
-cx_, cy_ = OC, 0.0
-ax_ = math.degrees(math.atan2(TXY - cy_, SX - cx_))     # радиус к точке X
-for al_deg, sig, tau in ((15.0, -66.3157, -39.7308),
-                         (66.26, s1, 0.0), (-23.74, s2, 0.0)):
-    ap = math.degrees(math.atan2(tau - cy_, sig - cx_))
-    d = (ap - ax_) % 360
-    d = d - 360 if d > 180 else d
-    check(f"α = {al_deg:+7.2f}°: поворот по кругу / 2", d / 2, al_deg, 2e-2, "°")
+# --- правило полюса (как в конспекте) ---
+# Полюс K(σy; τxy). Для площадки с нормалью под α к оси x точка круга —
+# (σα; τα) из прямого преобразования T·ν; проверяем, что отрезок K→точка
+# наклонён к оси σ ровно под α (по модулю 180°).
+print("\nправило полюса: прямая из K(σy; τxy) на точку площадки наклонена под α")
+KP = (SY, TXY)
+
+
+def tochka_ploshchadki(al_deg):
+    a = math.radians(al_deg)
+    nu_ = [math.cos(a), -math.sin(a), 0.0]           # ось y вниз, как в тетради
+    t_ = [math.sin(a), math.cos(a), 0.0]
+    pp = mv(T, nu_)
+    return dot(nu_, pp), dot(t_, pp)
+
+
+for al_deg, nm in ((15.0, "P, α = 15°"), (66.255224, "σ1, α1"),
+                   (-23.744776, "σ2, α2"), (105.0, "P′, α = 105°")):
+    sg_, tg_ = tochka_ploshchadki(al_deg)
+    naklon = math.degrees(math.atan2(tg_ - KP[1], sg_ - KP[0]))
+    d = (naklon - al_deg) % 180
+    d = d - 180 if d > 90 else d
+    check(f"{nm}: наклон K→({sg_:.2f}; {tg_:.2f}) − α", d, 0.0, 1e-6, "°")
+check("α=15°: σ точки = σν из п. 5", tochka_ploshchadki(15)[0], -66.3157, 1e-4, "МПа")
+check("α=15°: τ точки = τtν из п. 5", tochka_ploshchadki(15)[1], -39.7308, 1e-4, "МПа")
+check("α=105°: σ точки = σt из п. 5", tochka_ploshchadki(105)[0], -48.6843, 1e-4, "МПа")
+check("K на круге: (σy−OC)² + τxy² = R²", (SY - OC)**2 + TXY**2, r**2, 1e-9, "МПа²")
 
 # --- геометрия рисунков ---------------------------------------------------
 print("\nгеометрия рисунков")
@@ -149,20 +167,26 @@ p = mv(T, n_t)
 check("рис. 4: σ на грани элемента (α=21,26°)", dot(n_t, p), -57.5, 2e-2, "МПа")
 check("рис. 4: |τ| на грани элемента", abs(dot(t_t, p)), 40.6971, 2e-2, "МПа")
 
-# рис. 8 — круг Мора: радиус и точки на оси σ
+# рис. 7 — круг Мора: координаты точек снимаются с чертежа по его масштабу
 svg = open("fig-7.svg", encoding="utf-8").read()
-K8, ox8, oy8 = 4.6, 622.0, 300.0
-crc = re.findall(r'<circle cx="([-\d.]+)" cy="([-\d.]+)" r="([\d.]+)"', svg)
-check("рис. 7: радиус круга -> МПа",
-      max(float(c[2]) for c in crc) / K8, r, 5e-2, "МПа")
-na_osi = sorted({round((float(c[0]) - ox8) / K8, 2) for c in crc
-                 if abs(float(c[1]) - oy8) < .6 and float(c[2]) < 10})
-print(f"  точки на оси σ (МПа): {na_osi}")
-# на оси отмечены σ2, σx, C, σy, σ1 и начало координат O
-for want, nm in ((s2, "σ2"), (SX, "σx"), (OC, "C"), (SY, "σy"),
-                 (s1, "σ1"), (0.0, "O")):
-    blizh = min(na_osi, key=lambda v: abs(v - want))
-    check(f"рис. 7: точка {nm} на оси σ", blizh, want, 5e-2, "МПа")
+mm_na_ed = 0.187
+for m in re.finditer(r'<g data-panel="(.)" data-ox="([-\d.]+)" data-oy="([-\d.]+)" '
+                     r'data-k="([\d.]+)">(.*?)</g>', svg, re.S):
+    bukva, ox7, oy7, k7, body = m.group(1), *map(float, m.group(2, 3, 4)), m.group(5)
+    if bukva == "а":
+        check("рис. 7: масштаб, мм на 1 МПа (1 см = 10 МПа)", k7 * mm_na_ed, 1.0, 1e-4, "мм")
+    rr = [float(c) for c in re.findall(r'class="plane-edge"', body) and
+          re.findall(r'<circle cx="[-\d.]+" cy="[-\d.]+" r="([\d.]+)" class="plane-edge"', body)]
+    check(f"рис. 7{bukva}: радиус круга -> МПа", rr[0] / k7, r, 2e-3, "МПа")
+    pts = {nm: ((float(x) - ox7) / k7, (oy7 - float(y)) / k7) for nm, x, y in
+           re.findall(r'data-pt="([^"]+)" cx="([-\d.]+)" cy="([-\d.]+)"', body)}
+    want = {"O": (0, 0), "D": (SX, 0), "B": (SY, 0), "C": (OC, 0), "K": KP,
+            "σ1": (s1, 0), "σ2": (s2, 0), "T1": (OC, r), "T2": (OC, -r),
+            "X": (SX, TXY), "P": tochka_ploshchadki(15), "P'": tochka_ploshchadki(105)}
+    for nm, (ws, wt) in want.items():
+        if nm in pts:
+            check(f"рис. 7{bukva}: точка {nm}, σ", pts[nm][0], ws, 1e-2, "МПа")
+            check(f"рис. 7{bukva}: точка {nm}, τ", pts[nm][1], wt, 1e-2, "МПа")
 
 
 print("\n" + "=" * 84)

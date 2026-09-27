@@ -23,7 +23,7 @@ def sqrt_hp(x):
 
 
 print("=" * 72)
-print("ИСХОДНЫЕ ДАННЫЕ, общие для обеих задач")
+print("ИСХОДНЫЕ ДАННЫЕ")
 print("=" * 72)
 E = F(21, 10) * 10**5          # МПа
 nu = F(3, 10)
@@ -114,7 +114,7 @@ a0 = math.degrees(math.atan(tg2)) / 2
 print(f"  tg 2α0 = {2*float(txy2)}/{float(sx2-sy2)} = {tg2:.5f};  2α0 = {2*a0:.2f}°;  α0 = {a0:.2f}°")
 sa = (float(J1)/2 + float((sx2-sy2)/2)*math.cos(math.radians(2*a0))
       + float(txy2)*math.sin(math.radians(2*a0)))
-print(f"  σ(α0) = {sa:.4f} МПа  -> это σ3 (σmin); вторая площадка под α0+90° = {a0+90:.2f}°")
+print(f"  σ(α0) = {sa:.4f} МПа  -> это σ2 (меньшее в плоскости); вторая площадка под α0+90° = {a0+90:.2f}°")
 
 
 # ======================================================================
@@ -125,13 +125,13 @@ print("=" * 72)
 print("ЗАДАЧА 2, п. 4-9")
 print("=" * 72)
 
-s1_2, s2_2, s3_2 = roots            # 0 >= sigma2 >= sigma3, упорядочены выше
+s1_2, s2_2, s3_2 = roots            # σ1, σ2 — в плоскости, σ3 = 0 (как в конспекте)
 
 # --- п. 4. Экстремальные касательные напряжения -----------------------
 print("\nп. 4. ЭКСТРЕМАЛЬНЫЕ КАСАТЕЛЬНЫЕ НАПРЯЖЕНИЯ (площадки под ±45° к главным)")
 par = (("τ12", s1_2, s2_2), ("τ23", s2_2, s3_2), ("τ31", s3_2, s1_2))
 for nm, a, b in par:
-    print(f"  {nm} = ±(({a:.4f}) - ({b:.4f}))/2 = ±{(a - b) / 2:.4f} МПа;"
+    print(f"  {nm} = ±(({a:.4f}) - ({b:.4f}))/2 = ±{abs(a - b) / 2:.4f} МПа;"
           f"   σ' = {(a + b) / 2:.4f} МПа")
 tmax2 = max(abs((a - b) / 2) for _, a, b in par)
 print(f"  наибольшее из трёх: τmax = {tmax2:.4f} МПа (пара σ2, σ3)")
@@ -206,6 +206,33 @@ print("\nп. 9. КРУГ МОРА (данные построения)")
 print(f"  OD = σx = {sx2};  OB = σy = {sy2};  BK = τxy = {txy2}")
 print(f"  OC = (σx+σy)/2 = {float(half)} МПа;  R = CK = {root2:.4f} МПа")
 print(f"  σ(в плоскости): OC + R = {sA:.4f};  OC - R = {sB:.4f} МПа")
-print("  три круга (по паре главных на каждый):")
-for nm, a, b in par:
-    print(f"    {nm}: центр {(a + b) / 2:8.3f} МПа,  радиус {abs((a - b) / 2):7.3f} МПа")
+# Полюс K(σy; τxy), как в конспекте: прямая из K под углом α к оси σ
+# пересекает круг в точке (σα; τα) площадки с нормалью под α к оси x.
+# K лежит на круге, поэтому второй корень квадратного уравнения —
+# s = −2[(σy − OC)·cos α + τxy·sin α], точка = K + s·(cos α; sin α).
+OC9, R9 = float(half), float(root2)
+print(f"  полюс K = (σy; τxy) = ({float(sy2)}; {float(txy2)});  "
+      f"(σy−OC)² + τxy² = {float((sy2 - half)**2 + txy2**2)} = R² = {float(rad2)}")
+for nm, sig in (("σ1", float(sA)), ("σ2", float(sB))):
+    tg = (0 - float(txy2)) / (sig - float(sy2))
+    print(f"  прямая K–{nm}: tg α = (0 − τxy)/({nm} − σy) = {-float(txy2):.1f}/"
+          f"{sig - float(sy2):.4f} = {tg:.4f}  ->  α = {math.degrees(math.atan(tg)):.2f}°")
+
+
+def na_kruge(al_deg):
+    ca, sa = math.cos(math.radians(al_deg)), math.sin(math.radians(al_deg))
+    d = -2 * ((float(sy2) - OC9) * ca + float(txy2) * sa)
+    return d, float(sy2) + d * ca, float(txy2) + d * sa
+
+
+for al_deg, nm in ((15.0, "P  (площадка ν)"), (105.0, "P′ (площадка t)")):
+    d, sg9, tg9 = na_kruge(al_deg)
+    print(f"  прямая из K под {al_deg:5.1f}°: s = {d:.4f};  {nm}: σ = {sg9:.4f}, τ = {tg9:.4f} МПа;"
+          f"  на круге: {(sg9 - OC9)**2 + tg9**2:.6f} = R² = {R9**2:.6f}")
+d, sg9, tg9 = na_kruge(15.0)
+assert abs(sg9 - float(s_nu)) < 1e-9 and abs(tg9 - float(t_tnu)) < 1e-9, "P не совпала с п. 5"
+d, sg9, tg9 = na_kruge(105.0)
+assert abs(sg9 - float(s_t)) < 1e-9 and abs(tg9 + float(t_tnu)) < 1e-9, "P′ не совпала с п. 5"
+print("  P = (σν; τtν) и P′ = (σt; −τtν) совпали с п. 5")
+d, sg9, tg9 = na_kruge(0.0)
+print(f"  прямая из K под 0°: X = ({sg9:.4f}; {tg9:.4f}) = (σx; τxy) — площадка x")
