@@ -398,7 +398,10 @@ const add = (opts) => { const s = pres.addSlide(); slides.push(s); return s; };
 {
   const s = add(); base(s, 11);
   title(s, "КОСМОПОЛИТИЗМ СЕГОДНЯ");
-  globe(s, 10.3, 3.85, 2.2, { color: C.blueMid, width: 1, fill: C.bluePale });
+  // Земля по текстуре NASA Blue Marble (см. zemlya.py); фон картинки совпадает с фоном слайда
+  const er = 2.25, ecx = 10.3, ecy = 3.85, box = 2 * er * 1.035;
+  s.addImage({ path: IMG("earth.jpg"), x: ecx - box / 2, y: ecy - box / 2, w: box, h: box });
+  s.addShape(pres.shapes.OVAL, { x: ecx - er - 0.22, y: ecy - er - 0.22, w: 2 * er + 0.44, h: 2 * er + 0.44, line: { color: C.blueMid, width: 1 } });
   const stat = (y, big, text) => {
     T(s, big, { x: M, y, w: 2.3, h: 1.05, fontFace: F.head, fontSize: 42, bold: true, color: C.blue, valign: "middle" });
     T(s, text, { x: M + 2.45, y, w: 4.0, h: 1.05, fontSize: 15.5, valign: "middle" });
@@ -501,6 +504,7 @@ const add = (opts) => { const s = pres.addSlide(); slides.push(s); return s; };
     "European Commission. The Erasmus Impact Study (2014)",
     "Рафаэль. Афинская школа (1509–1511), Ватикан",
     "Ж.-Л. Давид. Смерть Сократа (1787), Метрополитен-музей",
+    "NASA. Blue Marble — снимки Земли (слайд 11)",
   ], 12);
 }
 
