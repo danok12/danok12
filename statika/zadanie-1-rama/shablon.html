@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Трёхшарнирная рама-ферма, вариант 19</title>
+<style>
+@page { size: A4; margin: 14mm 12mm; }
+:root {
+  --ink: #1d2b30; --petrol: #0f5c63; --petrol-2: #0f6b73; --soft: #e8f1f1; --line: #c9d6d8;
+  --muted: #5b6b71; --ok: #2e7d4f; --load: #b3402d; --int: #6a3d9a; --why: #fbf6ea; --why-line: #d9a441;
+}
+* { box-sizing: border-box; }
+html, body { background: #fff; }
+body { margin: 0; color: var(--ink); font: 10.8pt/1.45 'Source Sans 3', 'Liberation Sans', 'DejaVu Sans', sans-serif; }
+main { max-width: 190mm; margin: 0 auto; padding: 0 16px; }
+h1, h2, h3 { font-family: 'Spectral', 'Liberation Serif', 'DejaVu Serif', serif; color: var(--petrol); break-after: avoid; }
+h1 { font-size: 21pt; margin: 0 0 1mm; line-height: 1.15; }
+h2 { font-size: 14pt; margin: 6mm 0 2mm; padding-bottom: 1mm; border-bottom: 1.5px solid var(--line); }
+h3 { font-size: 11.5pt; margin: 4mm 0 1.5mm; color: var(--ink); }
+p { margin: 1.5mm 0; }
+.sub { color: var(--muted); margin: 0 0 3mm; font-size: 11pt; }
+.stud { color: var(--muted); font-size: 10pt; margin-bottom: 4mm; }
+.f { font-family: 'JetBrains Mono', 'DejaVu Sans Mono', monospace; font-size: 9pt; line-height: 1.55;
+     background: var(--soft); border-left: 3px solid var(--petrol); padding: 2mm 3mm; margin: 2mm 0; break-inside: avoid; }
+.f div { margin: 0.4mm 0; }
+.f .c { color: var(--muted); font-family: 'Source Sans 3', 'Liberation Sans', sans-serif; font-size: 9.6pt; }
+.m { font-family: 'JetBrains Mono', 'DejaVu Sans Mono', monospace; font-size: 0.86em; white-space: nowrap; }
+b.r, .r { color: var(--petrol); font-weight: 700; }
+.ok { color: var(--ok); font-weight: 700; }
+.why { background: var(--why); border-left: 3px solid var(--why-line); padding: 2mm 3mm; margin: 2mm 0; break-inside: avoid; }
+.why > b:first-child { color: #8a6417; }
+ul { margin: 1mm 0; padding-left: 5mm; }
+li { margin: 0.6mm 0; }
+figure { margin: 3mm 0; break-inside: avoid; text-align: center; }
+figure svg { width: 100%; height: auto; }
+figcaption { font-size: 9.5pt; color: var(--muted); margin-top: 1mm; }
+.legend span { white-space: nowrap; margin: 0 2mm; }
+.sw { display: inline-block; width: 9mm; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 1mm; }
+table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 2mm 0; }
+th, td { border: 1px solid var(--line); padding: 1.2mm 2mm; text-align: center; }
+th { background: var(--soft); font-weight: 600; }
+tr { break-inside: avoid; }
+td.l, th.l { text-align: left; }
+.data td { font-size: 11pt; }
+sub, sup { font-size: 0.72em; line-height: 0; }
+sup { font-family: 'Source Sans 3', 'Liberation Sans', 'DejaVu Sans', sans-serif; font-size: 0.82em; font-weight: 700; }
+figure.w80 svg { width: 80%; }
+@media print { main { padding: 0; max-width: none; } }
+.keep { break-inside: avoid; }
+.uzel { display: grid; grid-template-columns: 50mm 1fr; gap: 3mm; align-items: start;
+        border-top: 1px solid var(--line); padding: 2mm 0; break-inside: avoid; }
+.uzel svg { width: 100%; height: auto; }
+.uzel .f { margin: 0; }
+.uzel .note { font-size: 9.6pt; color: var(--muted); margin: 0 0 1mm; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.two table { margin: 0; font-size: 9.2pt; }
+.two td, .two th { padding: 0.45mm 1.6mm; }
+figure.w82 svg { width: 82%; }
+td.z { color: #8a979c; }
+td.t { color: #b3402d; font-weight: 700; }
+td.cm { color: #1f5fa8; font-weight: 700; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Расчёт трёхшарнирной рамы-фермы</h1>
+<p class="sub">Задание № 1 по статике сооружений «Расчёт трёхшарнирных систем» · вариант 19 · вторая схема</p>
+<p class="stud">Студент: ____________________________ &nbsp;&nbsp; Группа: ____________</p>
+
+<h2>0. Условие и расчётная схема</h2>
+
+<table class="data">
+<tr><th>l, м</th><th>P, кН</th><th>2P, кН</th><th>3P, кН</th><th>P/2, кН</th></tr>
+<tr><td>44</td><td>14</td><td>28</td><td>42</td><td>7</td></tr>
+</table>
+
+<p><b>Требуется:</b> определить опорные реакции V<sub>A</sub>, H<sub>A</sub>, V<sub>B</sub>, H<sub>B</sub> и усилия во всех стержнях.</p>
+
+<figure>
+$FIG1
+<figcaption>Рис. 1. Расчётная схема (в масштабе). A, B — шарнирно-неподвижные опоры, C — ключевой шарнир.</figcaption>
+</figure>
+
+<ul>
+<li>Размеры панелей на карточке не проставлены. Схема начерчена в масштабе, и по чертежу панели квадратные: <span class="m">d = l/6 = 44/6 = 7,333 м</span> по горизонтали и по вертикали. Высота до верхнего пояса <span class="m">3d = l/2 = 22 м</span> совпадает с размером на карточке.</li>
+<li>Опоры A и B шарнирно-неподвижные, на одном уровне. Консоли выступают за опоры на одну панель d.</li>
+<li>Ключевой шарнир C — узел верхнего пояса посередине пролёта (<span class="m">x = 3d = l/2</span>).</li>
+<li>Все нагрузки узловые: P в верхнем узле над опорой A и в конце левой консоли, 3P в нижнем узле левой половины у шарнира, 2P в верхнем узле правой половины, P вправо в конце правой консоли, P/2 вправо в узле распорки правой «ноги».</li>
+</ul>
+
+<div class="why"><b>Почему это трёхшарнирная система.</b> Левая половина (все стержни от консоли до шарнира C вместе с «ногой» над опорой A) — геометрически неизменяемая ферма, то есть жёсткий диск. Правая половина — второй такой диск.
+Диски соединены между собой только шарниром C и прикреплены к земле шарнирно-неподвижными опорами A и B — это та же схема, что у трёхшарнирной арки.
+Проверка по формуле для ферм: <span class="m">W = 2У − С − С<sub>0</sub> = 2·23 − 42 − 4 = 0</span> (23 узла, 42 стержня, 4 опорных стержня) — система статически определима.</div>
+
+<figure>
+$FIG2
+<figcaption>Рис. 2. Нумерация узлов: верхний пояс 1…9 (узел 5 — шарнир C), нижний пояс 1′…9′ под одноимёнными узлами, узлы «ног» D, E (слева) и F, G (справа). Стержень обозначаем парой узлов, например 3–4′.</figcaption>
+</figure>
+
+<h2>Правило знаков</h2>
+<ul>
+<li>В уравнениях моментов: вращение <b>по часовой</b> стрелке — «+», <b>против часовой</b> — «−» (как на паре).</li>
+<li>Реакции: V<sub>A</sub>, V<sub>B</sub> — вверх; H<sub>A</sub> — вправо, H<sub>B</sub> — влево (внутрь пролёта, как распор арки).</li>
+<li>Усилие в стержне <b>N &gt; 0 — растяжение</b>. При вырезании узла все неизвестные усилия направляем <b>от узла</b> (как растягивающие). Если ответ отрицательный — стержень сжат.</li>
+</ul>
+
+<h2>Шаг 1. Вертикальные опорные реакции</h2>
+
+<figure>
+$FIG3
+<figcaption>Рис. 3. Опоры заменены реакциями.</figcaption>
+</figure>
+
+<div class="why"><b>Пояснение.</b> Опоры на одном уровне, поэтому H<sub>A</sub> и H<sub>B</sub> лежат на прямой AB и не дают момента ни относительно A, ни относительно B. Из ΣM<sub>A</sub> = 0 сразу находится V<sub>B</sub>, из ΣM<sub>B</sub> = 0 — V<sub>A</sub>.
+Плечи вертикальных сил — горизонтальные расстояния, плечи горизонтальных сил (P в узле 9′ и P/2 в узле F) — их высота над линией AB: 2d и d. Все плечи кратны d, поэтому d сокращается.</div>
+
+<div class="f">
+<div>ΣM<sub>A</sub> = −V<sub>B</sub>·6d − P·d + 3P·2d + 2P·5d + P·2d + (P/2)·d = 0</div>
+<div class="c">P в узле 2 проходит через A — момента нет; P в узле 1′ левее A, вниз — против часовой («−»); 3P и 2P правее A, вниз — по часовой («+»); P и P/2 вправо выше A — по часовой («+»); V<sub>B</sub> правее A, вверх — против часовой («−»).</div>
+<div>V<sub>B</sub> = P·d·(−1 + 6 + 10 + 2 + 0,5) / (6d) = 17,5·P/6 = 17,5·14/6 = 245/6 = <b class="r">$VB кН</b></div>
+</div>
+
+<div class="f">
+<div>ΣM<sub>B</sub> = V<sub>A</sub>·6d − P·6d − P·7d − 3P·4d − 2P·d + P·2d + (P/2)·d = 0</div>
+<div class="c">V<sub>A</sub> левее B, вверх — по часовой («+»); все вертикальные нагрузки левее B, вниз — против часовой («−»); P и P/2 вправо выше B — по часовой («+»).</div>
+<div>V<sub>A</sub> = P·d·(6 + 7 + 12 + 2 − 2 − 0,5) / (6d) = 24,5·P/6 = 24,5·14/6 = 343/6 = <b class="r">$VA кН</b></div>
+</div>
+
+<div class="f">
+<div><b>Проверка:</b> ΣY = V<sub>A</sub> + V<sub>B</sub> − P − P − 3P − 2P = 343/6 + 245/6 − 7·14 = 588/6 − 98 = 98 − 98 = 0 <span class="ok">✓</span></div>
+</div>
+
+<h2>Шаг 2. Распоры H<sub>A</sub> и H<sub>B</sub></h2>
+
+<figure>
+$FIG4
+<figcaption>Рис. 4. Рама, разделённая по шарниру C. X<sub>C</sub>, Y<sub>C</sub> — силы взаимодействия полурам; в ΣM<sub>C</sub> они не входят.</figcaption>
+</figure>
+
+<div class="why"><b>Пояснение.</b> Шарнир C не передаёт момент, поэтому сумма моментов относительно C всех сил, приложенных к одной полураме, равна нулю — так же, как в арке. Из левой полурамы находим H<sub>A</sub>, из правой — H<sub>B</sub>.
+В отличие от арки из конспекта, здесь есть горизонтальные нагрузки (P и P/2), поэтому распоры <b>разные</b>: H<sub>A</sub> ≠ H<sub>B</sub>. Уравнение ΣX = 0 для всей рамы становится проверкой.
+Шарнир C лежит на высоте 3d над опорами; плечо H<sub>A</sub> и H<sub>B</sub> относительно C равно 3d.</div>
+
+<h3>Левая полурама</h3>
+<div class="f">
+<div>ΣM<sub>C</sub><sup>лев</sup> = V<sub>A</sub>·3d − H<sub>A</sub>·3d − P·3d − P·4d − 3P·d = 0</div>
+<div class="c">V<sub>A</sub> левее C, вверх — по часовой («+»); H<sub>A</sub> вправо, ниже C на 3d — против часовой («−»); P в узле 2 (левее C на 3d), P в узле 1′ (на 4d) и 3P в узле 4′ (на d) — вниз левее C, против часовой («−»).</div>
+<div>H<sub>A</sub> = V<sub>A</sub> − (3 + 4 + 3)·P/3 = 343/6 − 10·14/3 = 343/6 − 280/6 = 63/6 = <b class="r">$HA кН</b></div>
+</div>
+
+<h3>Правая полурама</h3>
+<div class="f">
+<div>ΣM<sub>C</sub><sup>прав</sup> = −V<sub>B</sub>·3d + H<sub>B</sub>·3d + 2P·2d − P·d − (P/2)·2d = 0</div>
+<div class="c">V<sub>B</sub> правее C, вверх — против часовой («−»); H<sub>B</sub> влево, ниже C на 3d — по часовой («+»); 2P правее C на 2d, вниз — по часовой («+»); P вправо в узле 9′ (ниже C на d) и P/2 вправо в узле F (ниже C на 2d) — против часовой («−»).</div>
+<div>H<sub>B</sub> = V<sub>B</sub> − (4 − 1 − 1)·P/3 = 245/6 − 2·14/3 = 245/6 − 56/6 = 189/6 = <b class="r">$HB кН</b></div>
+</div>
+
+<div class="f">
+<div><b>Проверка:</b> ΣX = H<sub>A</sub> − H<sub>B</sub> + P + P/2 = 10,5 − 31,5 + 14 + 7 = 0 <span class="ok">✓</span></div>
+</div>
+
+<h2>Шаг 3. Углы наклона стержней</h2>
+<div class="f">
+<div>d = l/6 = 44/6 = 7,333 м</div>
+<div>Раскосы поясов: панель d × d ⇒ угол 45°, cos 45° = sin 45° = 0,70711</div>
+<div>Наклонные стержни «ног» E–A, 3′–E, G–B, 7′–G и раскосы «ног» 2′–E, 8′–G: проекции d/2 по горизонтали и d по вертикали ⇒</div>
+<div>&nbsp;&nbsp;tg α = d / (d/2) = 2, α = 63,435°, sin α = 0,89443, cos α = 0,44721 &nbsp;<span class="c">(α — угол к горизонтали, рис. 2)</span></div>
+<div>Распорки D–E и F–G горизонтальны.</div>
+</div>
+
+<h2>Шаг 4. Усилия в стержнях — вырезание узлов</h2>
+
+<div class="why"><b>Пояснение.</b> Вырезаем узел и составляем для него два уравнения равновесия: ΣX = 0 и ΣY = 0. Поэтому начинать надо с узла, где неизвестных усилий не больше двух, и дальше идти так, чтобы в каждом следующем узле тоже оставалось не больше двух.
+Порядок: 1′ → 1 → 2 → A → D → E → 2′ → 3′ → 3 → 4 → 4′ → C → 6 → 6′ → 9′ → 9 → B → F → G → 8 → 8′ → 7′ → 7.
+Реакции уже известны, поэтому последние узлы дают <b>четыре лишних уравнения</b> — это проверки всего расчёта.
+<br>На схемах узлов неизвестные усилия выделены цветом, уже найденные — серые. Все направлены от узла (растяжение).
+Проекция усилия раскоса на оси: N·cos 45° и N·sin 45°; наклонного стержня «ноги» — N·cos α и N·sin α.</div>
+
+$UZLY
+
+<h2>Шаг 5. Проверка методом сечений (способ Риттера)</h2>
+
+<figure>
+$FIG5
+<figcaption>Рис. 5. Сечение через панель 3–4 левой половины. Рассматриваем левую часть; усилия в разрезанных стержнях направлены от неё (растяжение).</figcaption>
+</figure>
+
+<div class="why"><b>Пояснение.</b> Независимая проверка: проводим сечение через три стержня 3–4, 3–4′, 3′–4′ и составляем для левой части уравнения, в каждое из которых входит только одно неизвестное.
+Для N<sub>3–4</sub> берём моменты относительно узла 4′ (там пересекаются два других стержня), для N<sub>3′–4′</sub> — относительно узла 3, для раскоса N<sub>3–4′</sub> — ΣY (пояса горизонтальны и в ΣY не входят).</div>
+
+<div class="f">
+<div>ΣM<sub>4′</sub> = N<sub>3–4</sub>·d + V<sub>A</sub>·2d − H<sub>A</sub>·2d − P·2d − P·3d = 0</div>
+<div>⇒ N<sub>3–4</sub> = −2V<sub>A</sub> + 2H<sub>A</sub> + 5P = −343/3 + 21 + 70 = −70/3 = <b class="r">$R34 кН</b> &nbsp;<span class="c">(узлы: $H34 кН <span class="ok">✓</span>)</span></div>
+<div>ΣM<sub>3</sub> = −N<sub>3′–4′</sub>·d + V<sub>A</sub>·d − H<sub>A</sub>·3d − P·d − P·2d = 0</div>
+<div>⇒ N<sub>3′–4′</sub> = V<sub>A</sub> − 3H<sub>A</sub> − 3P = 343/6 − 31,5 − 42 = −49/3 = <b class="r">$R3p4p кН</b> &nbsp;<span class="c">(узлы: $H3p4p кН <span class="ok">✓</span>)</span></div>
+<div>ΣY = V<sub>A</sub> − P − P − N<sub>3–4′</sub>·sin 45° = 0</div>
+<div>⇒ N<sub>3–4′</sub> = (V<sub>A</sub> − 2P) / sin 45° = ($VA − 28) / 0,70711 = <b class="r">$R34p кН</b> &nbsp;<span class="c">(узлы: $H34p кН <span class="ok">✓</span>)</span></div>
+<div class="c">Знаки моментов: N<sub>3–4</sub> (вправо, выше точки 4′ на d) — по часовой («+»); V<sub>A</sub> левее моментной точки, вверх — по часовой; H<sub>A</sub> вправо ниже точки — против часовой; силы P левее точки, вниз — против часовой. N<sub>3′–4′</sub> (вправо, ниже точки 3 на d) — против часовой («−»).</div>
+</div>
+
+<h2>Шаг 6. Результаты</h2>
+
+<figure class="w82">
+$FIG6
+<figcaption>Рис. 6. Усилия во всех стержнях, кН.</figcaption>
+</figure>
+
+<div class="two keep">
+$TABLICA
+</div>
+
+<p>Опорные реакции: <b>V<sub>A</sub> = $VA2 кН</b>, <b>V<sub>B</sub> = $VB2 кН</b> (обе вверх), <b>H<sub>A</sub> = 10,5 кН</b> (вправо), <b>H<sub>B</sub> = 31,5 кН</b> (влево).</p>
+<ul>
+<li>Наиболее сжатые стержни — у правой опоры: G–B ($GB кН), 7′–G ($G7 кН) и стойка 7–7′ ($S77 кН). Наиболее растянут раскос 3–4′ ($R34p2 кН).</li>
+<li>Нулевые стержни ($NZ шт.): $ZLIST. Это узлы без нагрузки, где два стержня лежат на одной прямой (4, 6, 8), и концевые узлы правой консоли.</li>
+<li>Проверки: 4 лишних уравнения узлов 4′, 7′ и 7 и три уравнения сечения через панель 3–4 выполняются <span class="ok">✓</span>. Расхождения в тысячных — от округления sin и cos.</li>
+</ul>
+
+</main>
+</body>
+</html>

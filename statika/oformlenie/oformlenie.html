@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Оформление работы на бумаге</title>
+<style>
+@page { size: A4; margin: 14mm 12mm; }
+:root {
+  --ink: #1d2b30; --petrol: #0f5c63; --petrol-2: #0f6b73; --soft: #e8f1f1; --line: #c9d6d8;
+  --muted: #5b6b71; --ok: #2e7d4f; --load: #b3402d; --int: #6a3d9a; --why: #fbf6ea; --why-line: #d9a441;
+}
+* { box-sizing: border-box; }
+html, body { background: #fff; }
+body { margin: 0; color: var(--ink); font: 10.8pt/1.45 'Source Sans 3', 'Liberation Sans', 'DejaVu Sans', sans-serif; }
+main { max-width: 190mm; margin: 0 auto; padding: 0 16px; }
+h1, h2, h3 { font-family: 'Spectral', 'Liberation Serif', 'DejaVu Serif', serif; color: var(--petrol); break-after: avoid; }
+h1 { font-size: 21pt; margin: 0 0 1mm; line-height: 1.15; }
+h2 { font-size: 14pt; margin: 6mm 0 2mm; padding-bottom: 1mm; border-bottom: 1.5px solid var(--line); }
+h3 { font-size: 11.5pt; margin: 4mm 0 1.5mm; color: var(--ink); }
+p { margin: 1.5mm 0; }
+.sub { color: var(--muted); margin: 0 0 3mm; font-size: 11pt; }
+.stud { color: var(--muted); font-size: 10pt; margin-bottom: 4mm; }
+.f { font-family: 'JetBrains Mono', 'DejaVu Sans Mono', monospace; font-size: 9pt; line-height: 1.55;
+     background: var(--soft); border-left: 3px solid var(--petrol); padding: 2mm 3mm; margin: 2mm 0; break-inside: avoid; }
+.f div { margin: 0.4mm 0; }
+.f .c { color: var(--muted); font-family: 'Source Sans 3', 'Liberation Sans', sans-serif; font-size: 9.6pt; }
+.m { font-family: 'JetBrains Mono', 'DejaVu Sans Mono', monospace; font-size: 0.86em; white-space: nowrap; }
+b.r, .r { color: var(--petrol); font-weight: 700; }
+.ok { color: var(--ok); font-weight: 700; }
+.why { background: var(--why); border-left: 3px solid var(--why-line); padding: 2mm 3mm; margin: 2mm 0; break-inside: avoid; }
+.why > b:first-child { color: #8a6417; }
+ul { margin: 1mm 0; padding-left: 5mm; }
+li { margin: 0.6mm 0; }
+figure { margin: 3mm 0; break-inside: avoid; text-align: center; }
+figure svg { width: 100%; height: auto; }
+figcaption { font-size: 9.5pt; color: var(--muted); margin-top: 1mm; }
+.legend span { white-space: nowrap; margin: 0 2mm; }
+.sw { display: inline-block; width: 9mm; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 1mm; }
+table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 2mm 0; }
+th, td { border: 1px solid var(--line); padding: 1.2mm 2mm; text-align: center; }
+th { background: var(--soft); font-weight: 600; }
+tr { break-inside: avoid; }
+td.l, th.l { text-align: left; }
+.data td { font-size: 11pt; }
+sub, sup { font-size: 0.72em; line-height: 0; }
+sup { font-family: 'Source Sans 3', 'Liberation Sans', 'DejaVu Sans', sans-serif; font-size: 0.82em; font-weight: 700; }
+figure.w80 svg { width: 80%; }
+@media print { main { padding: 0; max-width: none; } }
+.keep { break-inside: avoid; }
+.tit { width: 118mm; height: 167mm; margin: 3mm auto; border: 1px solid #9fb3b6; box-shadow: 0 1px 4px rgba(0,0,0,.12);
+       padding: 10mm 8mm 8mm 16mm; display: flex; flex-direction: column; font-size: 8.4pt; line-height: 1.35; background: #fff; }
+.tit .c { text-align: center; }
+.tit .big { font-size: 12pt; font-weight: 700; letter-spacing: .3pt; margin-top: 2mm; }
+.tit .mid { font-size: 10pt; font-weight: 700; }
+.tit .gap { flex: 1; }
+.tit .right { margin-left: 45%; }
+.tit .u { display: inline-block; min-width: 26mm; border-bottom: 1px solid #555; }
+.tit .hint { color: #8a979c; font-size: 7pt; }
+table.plan td, table.plan th { text-align: left; vertical-align: top; }
+table.plan td:first-child { text-align: center; white-space: nowrap; }
+table.plan tr.part td { background: #e8f1f1; font-weight: 700; color: var(--petrol); }
+.ex { font-family: 'JetBrains Mono', 'DejaVu Sans Mono', monospace; font-size: 9.4pt; border: 1px dashed #9fb3b6; padding: 3mm 4mm; margin: 2mm 0; background: #fcfcfa; break-inside: avoid; line-height: 1.7; }
+.ex .t { font-family: 'Source Sans 3', 'Liberation Sans', sans-serif; font-size: 10.5pt; }
+.ex .box { border: 1.5px solid var(--ink); padding: 0 1.5mm; }
+.ex .n { color: #b3402d; font-family: 'Source Sans 3', 'Liberation Sans', sans-serif; font-size: 8.5pt; font-weight: 700; }
+ul.chk { list-style: none; padding-left: 0; }
+ul.chk li { padding-left: 6mm; text-indent: -6mm; break-inside: avoid; }
+ul.chk li::before { content: "☐ "; font-family: 'DejaVu Sans', sans-serif; color: var(--petrol); }
+.warn { background: #fdecea; border-left: 3px solid #c0392b; padding: 2mm 3mm; margin: 2mm 0; break-inside: avoid; }
+.warn > b:first-child { color: #a93226; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Как оформить работу на бумаге</h1>
+<p class="sub">Задание № 1 по статике сооружений «Расчёт трёхшарнирных систем» · вариант 19 · трёхшарнирная арка и рама-ферма</p>
+
+<div class="warn"><b>Сначала — требования кафедры.</b> Если у кафедры есть методичка с правилами оформления или образец титульного листа, они важнее этого документа. Перед тем как переписывать начисто, уточни у преподавателя:
+<ul>
+<li>образец титульного листа и нужна ли рамка со штампом;</li>
+<li>чем чертить — карандашом или ручкой, можно ли выделять цветом;</li>
+<li>что входит в задание: только усилия в сечениях K<sub>1</sub>, K<sub>2</sub> или ещё эпюры M, Q, N и линии влияния; для рамы — все стержни или только отмеченные на карточке;</li>
+<li>форму оси арки (окружность или парабола) и размеры рамы, которые на карточке не проставлены;</li>
+<li>принимает ли он распечатку или только рукописный вариант.</li>
+</ul></div>
+
+<h2>1. Общие требования к листам</h2>
+
+<figure>
+<svg viewBox="0 0 520 262" xmlns="http://www.w3.org/2000/svg" font-family="'Source Sans 3','Liberation Sans','DejaVu Sans',sans-serif" role="img" aria-label="Поля листа">
+<defs><marker id="m-a" viewBox="0 0 8 6" refX="8" refY="3" markerWidth="8" markerHeight="6" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0,0 L8,3 L0,6 Z" fill="#6f7f86"/></marker></defs>
+<g transform="translate(40,12)">
+<rect x="0" y="0" width="157.5" height="222.75" fill="#fff" stroke="#1d2b30" stroke-width="1.4"/>
+<rect x="22.5" y="15" width="123.75" height="192.75" fill="#e8f1f1" stroke="#0f5c63" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="84.4" y="105" font-size="11" fill="#0f5c63" text-anchor="middle">рабочее поле</text>
+<text x="84.4" y="120" font-size="11" fill="#0f5c63" text-anchor="middle">165 × 257 мм</text>
+<line x1="0" y1="190" x2="22.5" y2="190" stroke="#6f7f86" marker-start="url(#m-a)" marker-end="url(#m-a)"/><text x="11" y="185" font-size="10" fill="#1d2b30" text-anchor="middle">30</text>
+<line x1="146.25" y1="60" x2="157.5" y2="60" stroke="#6f7f86" marker-start="url(#m-a)" marker-end="url(#m-a)"/><text x="151.9" y="55" font-size="10" fill="#1d2b30" text-anchor="middle">15</text>
+<line x1="60" y1="0" x2="60" y2="15" stroke="#6f7f86" marker-start="url(#m-a)" marker-end="url(#m-a)"/><text x="66" y="11" font-size="10" fill="#1d2b30">20</text>
+<line x1="60" y1="207.75" x2="60" y2="222.75" stroke="#6f7f86" marker-start="url(#m-a)" marker-end="url(#m-a)"/><text x="66" y="219" font-size="10" fill="#1d2b30">20</text>
+<text x="78.75" y="240" font-size="11.5" fill="#1d2b30" text-anchor="middle" font-weight="700">без рамки (текстовый документ)</text>
+</g>
+<g transform="translate(300,12)">
+<rect x="0" y="0" width="157.5" height="222.75" fill="#fff" stroke="#1d2b30" stroke-width="1.4"/>
+<rect x="15" y="3.75" width="138.75" height="215.25" fill="none" stroke="#1d2b30" stroke-width="1.8"/>
+<rect x="15" y="189" width="138.75" height="30" fill="#e8f1f1" stroke="#1d2b30" stroke-width="1.2"/>
+<text x="84.4" y="208" font-size="10" fill="#0f5c63" text-anchor="middle">основная надпись (штамп)</text>
+<text x="84.4" y="100" font-size="11" fill="#0f5c63" text-anchor="middle">рамка: слева 20 мм,</text>
+<text x="84.4" y="115" font-size="11" fill="#0f5c63" text-anchor="middle">с остальных сторон 5 мм</text>
+<text x="78.75" y="240" font-size="11.5" fill="#1d2b30" text-anchor="middle" font-weight="700">с рамкой — только если требует кафедра</text>
+</g>
+</svg>
+<figcaption>Рис. 1. Поля листа A4. Слева — обычный вариант для текстовых работ, справа — рамка по ЕСКД, если её требует кафедра.</figcaption>
+</figure>
+
+<ul>
+<li><b>Бумага</b> — белые листы A4 (210 × 297 мм), писать на одной стороне. Можно брать листы в клетку, если кафедра не требует белых.</li>
+<li><b>Поля</b> — слева 30 мм (под подшивку), справа 15 мм, сверху и снизу по 20 мм. Это поля по ГОСТ 7.32 для текстовых документов, обычно их и требуют.</li>
+<li><b>Номера листов</b> — внизу по центру. Титульный лист считается первым, но номер на нём не ставится.</li>
+<li><b>Текст и формулы</b> — одной ручкой, синей или чёрной, разборчиво. Не мешать разные цвета и толщину без смысла.</li>
+<li><b>Чертежи</b> — по линейке, дуги — циркулем или лекалом. От руки «на глаз» не рисовать: за кривую схему снижают больше всего.</li>
+<li><b>Исправления</b> — одну-две мелкие аккуратно зачеркнуть одной линией и написать рядом. Если на листе много исправлений, лист лучше переписать. Корректор не использовать.</li>
+<li><b>Скрепление</b> — все листы по порядку, скрепить слева (скоросшиватель или скобы), не сдавать россыпью или в отдельных файлах.</li>
+</ul>
+
+<h2>2. Состав работы и порядок листов</h2>
+<p>Количество листов примерное — зависит от почерка. Главное — порядок и то, что каждый шаг начинается с рисунка.</p>
+
+<table class="plan">
+<tr><th>Лист</th><th>Что на листе</th><th>Масштаб чертежей</th></tr>
+<tr><td>1</td><td>Титульный лист (образец — раздел 3)</td><td>—</td></tr>
+<tr><td>2</td><td>Задание: вклеить <b>оригинал карточки</b> с подписью преподавателя. Ниже — таблица исходных данных: l = 44 м, f = 14 м, q = 10 кН/м, P = 14 кН</td><td>—</td></tr>
+<tr class="part"><td></td><td colspan="2">Часть 1. Трёхшарнирная арка</td></tr>
+<tr><td>3</td><td>Расчётная схема арки: опоры, шарнир C, точки K<sub>1</sub>, K<sub>2</sub>, все нагрузки со значениями, размеры, оси x, y. Под схемой — принятые допущения: ось — дуга окружности, R = 24,2857 м; K<sub>1</sub>, K<sub>2</sub> в четвертях пролёта; q на правой половине</td><td>М 1:200 (220 × 70 мм) на альбомном листе или М 1:400 (110 × 35 мм)</td></tr>
+<tr><td>4</td><td>Правило знаков (маленький рисунок элемента с M, Q, N). Шаг 1: схема арки с реакциями вместо опор, ΣM<sub>B</sub> → V<sub>A</sub>, ΣM<sub>A</sub> → V<sub>B</sub>, проверка ΣY</td><td>схема — М 1:400</td></tr>
+<tr><td>5</td><td>Шаг 2: две полуарки с силами X<sub>C</sub>, Y<sub>C</sub>; ΣM<sub>C</sub><sup>лев</sup> → H<sub>A</sub>, проверка ΣM<sub>C</sub><sup>прав</sup> → H<sub>B</sub></td><td>М 1:400</td></tr>
+<tr><td>6</td><td>Шаг 3: геометрия — рисунок с центром O, радиусами и углом φ; вычисление R, y<sub>K</sub>, sin φ, cos φ, φ</td><td>М 1:400 (110 × 61 мм) или М 1:200 на альбомном</td></tr>
+<tr><td>7</td><td>Шаг 4: сечение K<sub>1</sub> — рисунок левой части с M<sub>1</sub>, Q<sub>1</sub>, N<sub>1</sub>, осями n, m и углом φ; уравнения M<sub>1</sub>, Q<sub>1</sub><sup>л</sup>, Q<sub>1</sub><sup>п</sup>, N<sub>1</sub><sup>л</sup>, N<sub>1</sub><sup>п</sup>; проверки</td><td>М 1:100 (110 × 114 мм)</td></tr>
+<tr><td>8</td><td>Шаг 5: сечение K<sub>2</sub> — то же для правой части</td><td>М 1:100</td></tr>
+<tr><td>9</td><td>Результаты по арке: схема с найденными реакциями и итоговая таблица M, Q, N</td><td>М 1:400</td></tr>
+<tr class="part"><td></td><td colspan="2">Часть 2. Трёхшарнирная рама-ферма</td></tr>
+<tr><td>10</td><td>Расчётная схема рамы с нагрузками и размерами. Рядом — нумерация узлов. Допущения: d = l/6 = 7,333 м, панели квадратные, места сил</td><td>М 1:400 (147 × 55 мм)</td></tr>
+<tr><td>11</td><td>Шаг 1–2: реакции V<sub>A</sub>, V<sub>B</sub> и распоры H<sub>A</sub>, H<sub>B</sub> (схемы полурам), проверки ΣY и ΣX</td><td>М 1:400 (полурама 73 × 55 мм)</td></tr>
+<tr><td>12–15</td><td>Вырезание узлов: для каждого узла — маленькая схема и два уравнения ΣX, ΣY с ответом. 5–7 узлов на лист, в том же порядке, что в PDF</td><td>узлы — без масштаба</td></tr>
+<tr><td>16</td><td>Проверка способом сечений через панель 3–4</td><td>М 1:200 (110 × 110 мм)</td></tr>
+<tr><td>17</td><td>Результаты по раме: схема с усилиями во всех стержнях и таблица</td><td>М 1:400</td></tr>
+<tr><td>последний</td><td>Внизу последнего листа: дата и подпись студента</td><td>—</td></tr>
+</table>
+
+<h2>3. Титульный лист — образец</h2>
+<p>Если у кафедры свой бланк — брать его. Если нет — так:</p>
+
+<div class="tit keep">
+<div class="c">Министерство науки и высшего образования Российской Федерации</div>
+<div class="c"><span class="u" style="min-width:80mm">&nbsp;</span><br><span class="hint">полное название университета</span></div>
+<div class="c" style="margin-top:2mm">Кафедра <span class="u" style="min-width:55mm">&nbsp;</span></div>
+<div class="gap"></div>
+<div class="c big">РАСЧЁТНО-ГРАФИЧЕСКАЯ РАБОТА № 1</div>
+<div class="c">по дисциплине «<span class="u" style="min-width:45mm">&nbsp;</span>»<br><span class="hint">как в учебном плане; на карточке — «статика сооружений»</span></div>
+<div class="c mid" style="margin-top:3mm">«Расчёт трёхшарнирных систем»</div>
+<div class="c" style="margin-top:1mm">Вариант 19</div>
+<div class="gap"></div>
+<div class="right">Выполнил: студент группы <span class="u" style="min-width:14mm">&nbsp;</span></div>
+<div class="right"><span class="u" style="min-width:40mm">&nbsp;</span> <span class="hint">Ф. И. О.</span></div>
+<div class="right" style="margin-top:1mm"><span class="u">&nbsp;</span> <span class="hint">подпись, дата</span></div>
+<div class="right" style="margin-top:3mm">Проверил: <span class="u" style="min-width:34mm">&nbsp;</span></div>
+<div class="right"><span class="hint">должность, Ф. И. О. преподавателя</span></div>
+<div class="gap"></div>
+<div class="c">Город <span class="u" style="min-width:20mm">&nbsp;</span> 2026</div>
+</div>
+
+<h2>4. Как оформлять чертежи</h2>
+<ul>
+<li><b>Расчётная схема — в масштабе</b>, масштаб подписать под рисунком: «М 1:200». Масштабы брать стандартные: 1:100, 1:200, 1:400. Подходящие для каждого листа — в таблице раздела 2.</li>
+<li><b>Все размеры</b> — размерными линиями с засечками или стрелками, в метрах: l, f, l/4, y<sub>K</sub> и т. д. Размер, который нужен как плечо в уравнении, обязательно должен быть на рисунке.</li>
+<li><b>Нагрузки</b> — стрелками с подписью значения: «P = 14 кН», «q = 10 кН/м». Распределённую нагрузку — полосой со стрелками.</li>
+<li><b>Отсечённую часть рисовать каждый раз заново</b>, перед уравнениями. Опоры на ней заменены реакциями, в разрезе показаны M, Q, N в положительном направлении — ровно как в правиле знаков. Без рисунка отсечённой части уравнения не засчитывают: непонятно, откуда знаки.</li>
+<li><b>Угол φ, оси n и m</b> — показать на рисунке сечения, иначе непонятно, откуда sin и cos в уравнениях.</li>
+<li><b>Реакции и искомые усилия</b> выделить: другим цветом (если разрешено) или жирнее. Если усилие получилось отрицательным, на рисунке сечения стрелку <i>не</i> перерисовывать — она показывает принятое направление. На итоговой схеме показать фактическое направление или знак.</li>
+<li><b>Нумеровать рисунки</b> (Рис. 1, Рис. 2 …) и ссылаться на них в тексте: «из ΣM<sub>B</sub> = 0 (рис. 3)».</li>
+<li><b>Обозначения на рисунке и в формулах — одинаковые</b>: если на рисунке V<sub>A</sub>, в формуле тоже V<sub>A</sub>, а не R<sub>A</sub>.</li>
+</ul>
+
+<h2>5. Как записывать вычисления</h2>
+<p>Каждое действие — в четыре строки: что находим → формула в буквах → подстановка чисел → ответ с единицами.</p>
+
+<div class="ex">
+<div class="t"><span class="n">1</span> Определяем реакцию V<sub>A</sub> из условия ΣM<sub>B</sub> = 0 (рис. 3):</div>
+<div><span class="n">2</span> ΣM<sub>B</sub> = V<sub>A</sub>·l − P·3l/4 − 2P·l/4 − q·(l/2)·(l/4) = 0</div>
+<div><span class="n">3</span> V<sub>A</sub> = (P·3l/4 + 2P·l/4 + q·(l/2)·(l/4)) / l = (14·33 + 28·11 + 10·22·11) / 44 =</div>
+<div><span class="n">4</span> &nbsp;&nbsp;&nbsp;= 3190 / 44 = <span class="box">V<sub>A</sub> = 72,5 кН</span></div>
+</div>
+
+<ul>
+<li><b>Не пропускать формулу в буквах.</b> Самое частое замечание — «откуда эти числа?». Сначала общий вид, потом подстановка.</li>
+<li><b>Единицы — у каждого результата</b>: кН, кН·м, м, градусы. В подстановке их можно не писать.</li>
+<li><b>Отрицательные числа в подстановке — в скобках</b>: 18,016 − (−24,256).</li>
+<li><b>Точность одна на всю работу</b>, как в PDF: sin и cos — 6 знаков, промежуточные числа — 3 знака после запятой, ответы — 2 знака. Не менять посреди расчёта.</li>
+<li><b>Десятичная запятая</b>, знак умножения — точка (·).</li>
+<li><b>Отрицательный ответ пояснить одной фразой</b>: «знак минус — стержень сжат», «M<sub>1</sub> &lt; 0 — растянуты наружные волокна».</li>
+<li><b>Проверки обязательны</b> и пишутся отдельной строкой, начиная со слова «Проверка». Если из-за округлений вышло 0,001 — так и написать: «≈ 0 (погрешность округления)». Подгонять под 0 нельзя.</li>
+<li><b>Ответы выделить</b>: обвести рамкой или подчеркнуть двумя линиями.</li>
+</ul>
+
+<h2>6. Что переписывать из PDF, а что можно сократить</h2>
+<table>
+<tr><th class="l">Переписать полностью</th><th class="l">Сократить до одной-двух фраз</th><th class="l">Можно не переписывать</th></tr>
+<tr>
+<td class="l">все рисунки; все уравнения равновесия; подстановки и ответы; все проверки; итоговые таблицы</td>
+<td class="l">блоки «Пояснение»: оставить главное — что находим и почему из этого уравнения; комментарии про знаки («по часовой — плюс») не писать, но уметь объяснить</td>
+<td class="l">«Дополнительную проверку по общим формулам арки» — она для самоконтроля; пометки про округление — по желанию</td>
+</tr>
+</table>
+<p>Для рамы все 23 узла переписывать, только если нужны усилия во всех стержнях. Если преподаватель задал отдельные стержни (на карточке есть пометки), достаточно реакций, распоров и усилий в этих стержнях — узлами или сечениями.</p>
+
+<h2>7. Типичные замечания и как их избежать</h2>
+<table>
+<tr><th class="l">Замечание преподавателя</th><th class="l">Как избежать</th></tr>
+<tr><td class="l">«Нет расчётной схемы» / «схема не в масштабе»</td><td class="l">Лист со схемой — первый в каждой части, масштаб подписан, размеры проставлены</td></tr>
+<tr><td class="l">«Откуда знаки в уравнении?»</td><td class="l">Правило знаков в начале работы; рисунок отсечённой части перед каждым уравнением</td></tr>
+<tr><td class="l">«Откуда числа?»</td><td class="l">Формула в буквах перед подстановкой; ссылка на рисунок</td></tr>
+<tr><td class="l">«Нет единиц»</td><td class="l">Единицы у каждого ответа</td></tr>
+<tr><td class="l">«Где проверка?»</td><td class="l">ΣY для вертикальных реакций, второе ΣM<sub>C</sub> для распора, скачки Q и N, ΣX и ΣY для отсечённой части, лишние уравнения узлов рамы</td></tr>
+<tr><td class="l">«В точке с силой одно значение Q»</td><td class="l">Q и N под сосредоточенной силой — два значения: слева (л) и справа (п)</td></tr>
+<tr><td class="l">«Разные обозначения»</td><td class="l">Обозначения как в конспекте: V<sub>A</sub>, H<sub>A</sub>, f, l, y<sub>K</sub>, φ, Q<sup>л</sup>, Q<sup>п</sup>, Σn, Σm</td></tr>
+<tr><td class="l">«Неаккуратно»</td><td class="l">Чертить по линейке, исправлений минимум, лист с помарками переписать</td></tr>
+<tr><td class="l">«Где задание?»</td><td class="l">Вклеить оригинал карточки вторым листом</td></tr>
+<tr><td class="l">Ошибка из тетради</td><td class="l">В проверке ΣY для отсечённой части писать <span class="m">+N·sin φ − Q·cos φ</span>, как в PDF. В тетради sin и cos перепутаны</td></tr>
+</table>
+
+<h2>8. Чек-лист перед сдачей</h2>
+<ul class="chk">
+<li>Требования кафедры уточнены (титул, рамка, чем чертить, состав задания)</li>
+<li>Титульный лист заполнен: группа, Ф. И. О., преподаватель, вариант 19</li>
+<li>Карточка задания вклеена вторым листом</li>
+<li>Поля 30/15/20/20 мм, листы пронумерованы, порядок как в разделе 2</li>
+<li>У каждой схемы подписан масштаб, проставлены все размеры и нагрузки со значениями</li>
+<li>Правило знаков записано в начале</li>
+<li>Перед каждым уравнением — рисунок отсечённой части с M, Q, N (или узла с N)</li>
+<li>В каждом действии: формула в буквах → подстановка → ответ с единицами</li>
+<li>Под силами P и 2P — по два значения Q и N (л, п)</li>
+<li>Все проверки записаны и сходятся</li>
+<li>Итоговые таблицы по арке и по раме</li>
+<li>Числа совпадают с PDF (сверить каждую строку после переписывания)</li>
+<li>Дата и подпись на последнем листе</li>
+</ul>
+
+<h2>9. К защите — что могут спросить</h2>
+<ul>
+<li>Почему у арки H<sub>A</sub> = H<sub>B</sub>, а у рамы распоры разные? <i>У арки все нагрузки вертикальные; у рамы есть горизонтальные силы P и P/2, поэтому ΣX даёт H<sub>B</sub> − H<sub>A</sub> = P + P/2.</i></li>
+<li>Откуда уравнение ΣM<sub>C</sub> = 0? <i>Шарнир C не передаёт изгибающий момент, поэтому сумма моментов сил одной половины относительно C равна нулю.</i></li>
+<li>Почему V<sub>A</sub>, V<sub>B</sub> как у простой балки? <i>Опоры на одном уровне, распоры лежат на линии AB и не дают момента относительно A и B.</i></li>
+<li>Откуда sin φ = (l/2 − x)/R? <i>Радиус перпендикулярен касательной, поэтому угол радиуса с вертикалью равен углу касательной с горизонталью.</i></li>
+<li>Почему Q и N в точке K имеют два значения, а M — одно? <i>Сосредоточенная сила даёт скачок проекций, но её плечо относительно K равно нулю.</i></li>
+<li>Что значит знак «−» у N и у M<sub>1</sub>? <i>N &lt; 0 — сжатие; M<sub>1</sub> &lt; 0 — растянуты наружные волокна.</i></li>
+<li>Почему в раме нулевые стержни? <i>Ненагруженный узел, где два стержня на одной прямой, а третий — нет: третий нулевой. На концах консолей — то же по одному уравнению.</i></li>
+<li>Почему рама статически определима? <i>W = 2У − С − С<sub>0</sub> = 2·23 − 42 − 4 = 0, а обе половины геометрически неизменяемы и связаны тремя шарнирами A, B, C.</i></li>
+</ul>
+
+</main>
+</body>
+</html>
