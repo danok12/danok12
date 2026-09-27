@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Трёхшарнирная арка, вариант 19</title>
+<style>
+@page { size: A4; margin: 14mm 12mm; }
+:root {
+  --ink: #1d2b30; --petrol: #0f5c63; --petrol-2: #0f6b73; --soft: #e8f1f1; --line: #c9d6d8;
+  --muted: #5b6b71; --ok: #2e7d4f; --load: #b3402d; --int: #6a3d9a; --why: #fbf6ea; --why-line: #d9a441;
+}
+* { box-sizing: border-box; }
+html, body { background: #fff; }
+body { margin: 0; color: var(--ink); font: 10.8pt/1.45 'Source Sans 3', 'Liberation Sans', 'DejaVu Sans', sans-serif; }
+main { max-width: 190mm; margin: 0 auto; padding: 0 16px; }
+h1, h2, h3 { font-family: 'Spectral', 'Liberation Serif', 'DejaVu Serif', serif; color: var(--petrol); break-after: avoid; }
+h1 { font-size: 21pt; margin: 0 0 1mm; line-height: 1.15; }
+h2 { font-size: 14pt; margin: 6mm 0 2mm; padding-bottom: 1mm; border-bottom: 1.5px solid var(--line); }
+h3 { font-size: 11.5pt; margin: 4mm 0 1.5mm; color: var(--ink); }
+p { margin: 1.5mm 0; }
+.sub { color: var(--muted); margin: 0 0 3mm; font-size: 11pt; }
+.stud { color: var(--muted); font-size: 10pt; margin-bottom: 4mm; }
+.f { font-family: 'JetBrains Mono', 'DejaVu Sans Mono', monospace; font-size: 9pt; line-height: 1.55;
+     background: var(--soft); border-left: 3px solid var(--petrol); padding: 2mm 3mm; margin: 2mm 0; break-inside: avoid; }
+.f div { margin: 0.4mm 0; }
+.f .c { color: var(--muted); font-family: 'Source Sans 3', 'Liberation Sans', sans-serif; font-size: 9.6pt; }
+.m { font-family: 'JetBrains Mono', 'DejaVu Sans Mono', monospace; font-size: 0.86em; white-space: nowrap; }
+b.r, .r { color: var(--petrol); font-weight: 700; }
+.ok { color: var(--ok); font-weight: 700; }
+.why { background: var(--why); border-left: 3px solid var(--why-line); padding: 2mm 3mm; margin: 2mm 0; break-inside: avoid; }
+.why > b:first-child { color: #8a6417; }
+ul { margin: 1mm 0; padding-left: 5mm; }
+li { margin: 0.6mm 0; }
+figure { margin: 3mm 0; break-inside: avoid; text-align: center; }
+figure svg { width: 100%; height: auto; }
+figcaption { font-size: 9.5pt; color: var(--muted); margin-top: 1mm; }
+.legend span { white-space: nowrap; margin: 0 2mm; }
+.sw { display: inline-block; width: 9mm; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 1mm; }
+table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 2mm 0; }
+th, td { border: 1px solid var(--line); padding: 1.2mm 2mm; text-align: center; }
+th { background: var(--soft); font-weight: 600; }
+tr { break-inside: avoid; }
+td.l, th.l { text-align: left; }
+.data td { font-size: 11pt; }
+sub, sup { font-size: 0.72em; line-height: 0; }
+sup { font-family: 'Source Sans 3', 'Liberation Sans', 'DejaVu Sans', sans-serif; font-size: 0.82em; font-weight: 700; }
+figure.w80 svg { width: 80%; }
+@media print { main { padding: 0; max-width: none; } }
+.keep { break-inside: avoid; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Расчёт трёхшарнирной арки</h1>
+<p class="sub">Задание № 1 по статике сооружений «Расчёт трёхшарнирных систем» · вариант 19</p>
+<p class="stud">Студент: ____________________________ &nbsp;&nbsp; Группа: ____________</p>
+
+<h2>0. Условие и расчётная схема</h2>
+
+<table class="data">
+<tr><th>l, м</th><th>f, м</th><th>q, кН/м</th><th>P, кН</th><th>2P, кН</th></tr>
+<tr><td>44</td><td>14</td><td>10</td><td>14</td><td>28</td></tr>
+</table>
+
+<p><b>Требуется:</b> определить опорные реакции V<sub>A</sub>, V<sub>B</sub>, H<sub>A</sub>, H<sub>B</sub> и внутренние усилия M, Q, N в сечениях K<sub>1</sub> и K<sub>2</sub>.</p>
+
+<figure>
+$FIG1
+<figcaption>Рис. 1. Расчётная схема (в масштабе). A, B — шарнирно-неподвижные опоры, C — ключевой шарнир.</figcaption>
+</figure>
+
+<ul>
+<li>Ось арки — квадратная парабола <span class="m">y = 4f/l²·(lx − x²)</span>. Начало координат в опоре A, ось x вправо, ось y вверх.</li>
+<li>Опоры A и B на одном уровне. Шарнир C — в вершине: <span class="m">x = l/2 = 22 м</span>, <span class="m">y = f = 14 м</span>.</li>
+<li>Сила P приложена в сечении K<sub>1</sub> (<span class="m">x = l/4 = 11 м</span>), сила 2P — в сечении K<sub>2</sub> (<span class="m">x = 3l/4 = 33 м</span>).</li>
+<li>Равномерная нагрузка q действует на правой половине пролёта, от C до B (длина <span class="m">l/2 = 22 м</span>), на единицу длины горизонтальной проекции.</li>
+</ul>
+
+<h2>Правило знаков</h2>
+
+<figure>
+$FIG2
+<figcaption>Рис. 2. Положительные направления усилий на торцах элемента и знак моментов в уравнениях.</figcaption>
+</figure>
+
+<ul>
+<li>В уравнениях моментов: вращение <b>по часовой</b> стрелке — «+», <b>против часовой</b> — «−». Это правило только для составления уравнений.</li>
+<li><b>N &gt; 0</b> — растяжение: сила направлена от сечения. В арке N направлена по касательной к оси.</li>
+<li><b>Q &gt; 0</b> — вращает отсечённую часть по часовой стрелке. В арке Q направлена по нормали к оси.</li>
+<li><b>M &gt; 0</b> — растянуты нижние (внутренние) волокна. На правом торце левой части он направлен против часовой стрелки, на левом торце правой части — по часовой.</li>
+<li>Если ответ получился со знаком «−», усилие направлено противоположно показанному на рисунке.</li>
+</ul>
+
+<h2>Шаг 1. Вертикальные опорные реакции</h2>
+
+<figure>
+$FIG3
+<figcaption>Рис. 3. Опоры заменены реакциями: в каждой шарнирно-неподвижной опоре — вертикальная V и горизонтальная H (распор).</figcaption>
+</figure>
+
+<div class="why"><b>Пояснение.</b> Неизвестных четыре (V<sub>A</sub>, H<sub>A</sub>, V<sub>B</sub>, H<sub>B</sub>), уравнений равновесия всей арки — три, четвёртое даёт шарнир C (шаг 2).
+Опоры стоят на одном уровне, поэтому распоры H<sub>A</sub> и H<sub>B</sub> действуют по прямой AB и проходят через обе опорные точки. В уравнение моментов относительно B не входят V<sub>B</sub>, H<sub>B</sub> и H<sub>A</sub> — остаётся одна неизвестная V<sub>A</sub>.
+Поэтому вертикальные реакции арки такие же, как у простой балки пролётом l с той же нагрузкой.
+<br>Нагрузку q заменяем равнодействующей <span class="m">R<sub>q</sub> = q·l/2 = 10·22 = 220 кН</span>. Она приложена в середине загруженного участка, при x = 3l/4 = 33 м; её плечо до B равно l/4 = 11 м, до A — 3l/4 = 33 м.</div>
+
+<div class="f">
+<div>ΣM<sub>B</sub> = V<sub>A</sub>·l − P·3l/4 − 2P·l/4 − q·(l/2)·(l/4) = 0</div>
+<div class="c">V<sub>A</sub> вращает арку вокруг B по часовой стрелке («+»), P, 2P и R<sub>q</sub> — против часовой («−»).</div>
+<div>V<sub>A</sub> = (P·3l/4 + 2P·l/4 + q·(l/2)·(l/4)) / l = (14·33 + 28·11 + 10·22·11) / 44 =</div>
+<div>&nbsp;&nbsp;&nbsp;= (462 + 308 + 2420) / 44 = 3190 / 44 = <b class="r">72,5 кН</b></div>
+</div>
+
+<div class="f">
+<div>ΣM<sub>A</sub> = −V<sub>B</sub>·l + P·l/4 + 2P·3l/4 + q·(l/2)·(3l/4) = 0</div>
+<div>V<sub>B</sub> = (P·l/4 + 2P·3l/4 + q·(l/2)·(3l/4)) / l = (14·11 + 28·33 + 10·22·33) / 44 =</div>
+<div>&nbsp;&nbsp;&nbsp;= (154 + 924 + 7260) / 44 = 8338 / 44 = <b class="r">189,5 кН</b></div>
+</div>
+
+<div class="f">
+<div><b>Проверка:</b> ΣY = V<sub>A</sub> + V<sub>B</sub> − P − 2P − q·l/2 = 72,5 + 189,5 − 14 − 28 − 220 = 262 − 262 = 0 <span class="ok">✓</span></div>
+</div>
+<p>V<sub>B</sub> больше V<sub>A</sub>, потому что основная нагрузка (q и 2P) приложена к правой половине арки.</p>
+
+<h2>Шаг 2. Распор H</h2>
+
+<figure>
+$FIG4
+<figcaption>Рис. 4. Арка, разделённая по шарниру C. X<sub>C</sub>, Y<sub>C</sub> — силы взаимодействия полуарок; в ΣM<sub>C</sub> они не входят.</figcaption>
+</figure>
+
+<div class="why"><b>Пояснение.</b> Все нагрузки вертикальные, поэтому из ΣX = H<sub>A</sub> − H<sub>B</sub> = 0 получаем <span class="m">H<sub>A</sub> = H<sub>B</sub> = H</span>: распор с обеих сторон одинаковый.
+Недостающее уравнение даёт шарнир C. Он не передаёт изгибающий момент, поэтому сумма моментов относительно C всех сил, приложенных к одной полуарке, равна нулю.
+Силы взаимодействия X<sub>C</sub>, Y<sub>C</sub> приложены в самой точке C и в это уравнение не входят.</div>
+
+<h3>Левая полуарка AC</h3>
+<p>На ней кроме реакций действует только сила P: нагрузки q на левой половине нет. Плечо P до C: l/2 − l/4 = l/4 = 11 м.</p>
+<div class="f">
+<div>ΣM<sub>C</sub><sup>лев</sup> = −H<sub>A</sub>·f + V<sub>A</sub>·l/2 − P·l/4 = 0</div>
+<div class="c">H<sub>A</sub> направлен вправо и приложен ниже C на f — вращает против часовой («−»); V<sub>A</sub> левее C, вверх — по часовой («+»); P левее C, вниз — против часовой («−»).</div>
+<div>H<sub>A</sub> = (V<sub>A</sub>·l/2 − P·l/4) / f = (72,5·22 − 14·11) / 14 =</div>
+<div>&nbsp;&nbsp;&nbsp;= (1595 − 154) / 14 = 1441/14 = <b class="r">$H4 кН</b></div>
+</div>
+
+<h3>Проверка по правой полуарке CB</h3>
+<p>На ней нагрузка q на всей длине l/2 (равнодействующая q·l/2 = 220 кН, плечо до C — l/4) и сила 2P с плечом l/4.</p>
+<div class="f">
+<div>ΣM<sub>C</sub><sup>прав</sup> = H<sub>B</sub>·f − V<sub>B</sub>·l/2 + q·(l/2)·(l/4) + 2P·l/4 = 0</div>
+<div>H<sub>B</sub> = (V<sub>B</sub>·l/2 − q·(l/2)·(l/4) − 2P·l/4) / f = (189,5·22 − 10·22·11 − 28·11) / 14 =</div>
+<div>&nbsp;&nbsp;&nbsp;= (4169 − 2420 − 308) / 14 = 1441/14 = $H4 кН = H<sub>A</sub> <span class="ok">✓</span></div>
+</div>
+<p><b>H = $H4 кН ≈ $H2 кН</b>, направлен от опор внутрь пролёта. Произведение, которое понадобится дальше: <span class="m">H·y<sub>K</sub> = 1441/14·10,5 = 1080,75 кН·м</span>.</p>
+
+<h2>Шаг 3. Геометрия сечений K<sub>1</sub> и K<sub>2</sub></h2>
+
+<div class="why"><b>Пояснение.</b> Ординату сечения находим по уравнению оси, наклон — по производной:
+<span class="m">tg φ = y′ = 4f/l²·(l − 2x)</span>. Угол φ — между касательной к оси арки в сечении и горизонталью.
+Продольная сила N направлена по касательной, поперечная Q — по нормали, поэтому при проектировании сил на эти направления появляются sin φ и cos φ.</div>
+
+<div class="f">
+<div>4f/l² = 4·14 / 44² = 56/1936 = 7/242</div>
+<div><b>K<sub>1</sub></b>, x = l/4 = 11 м:</div>
+<div>&nbsp;&nbsp;y<sub>K1</sub> = 7/242·(44·11 − 11²) = 7/242·363 = <b class="r">10,5 м</b> &nbsp;<span class="c">(= 3f/4)</span></div>
+<div>&nbsp;&nbsp;tg φ = 7/242·(44 − 2·11) = 7/242·22 = 0,63636 &nbsp;<span class="c">(= 7/11)</span></div>
+<div>&nbsp;&nbsp;φ = arctg 0,63636 = <b class="r">$phi°</b>; &nbsp; sin φ = <b class="r">$S</b>; &nbsp; cos φ = <b class="r">$C</b></div>
+<div><b>K<sub>2</sub></b>, x = 3l/4 = 33 м:</div>
+<div>&nbsp;&nbsp;y<sub>K2</sub> = 7/242·(44·33 − 33²) = 7/242·363 = <b class="r">10,5 м</b></div>
+<div>&nbsp;&nbsp;tg φ<sub>2</sub> = 7/242·(44 − 2·33) = −0,63636 &nbsp;→&nbsp; φ<sub>2</sub> = −$phi°</div>
+</div>
+<p>Знак «−» у φ<sub>2</sub> означает, что в правой полуарке касательная опускается вправо. Сечения K<sub>1</sub> и K<sub>2</sub> симметричны относительно ключа, поэтому модуль угла у них одинаковый.
+Для сечения правой полуарки угол берём по модулю: φ = $phi°, sin φ = $S, cos φ = $C. Наклон касательной в другую сторону учитываем знаками в уравнениях проекций (рис. 6).</p>
+
+<h2>Шаг 4. Сечение K<sub>1</sub> — рассматриваем левую часть AK<sub>1</sub></h2>
+
+<figure class="w80">
+$FIG5
+<figcaption>Рис. 5. Левая часть арки. M<sub>1</sub>, Q<sub>1</sub>, N<sub>1</sub> показаны в положительном направлении; m — касательная, n — нормаль к оси арки. Сила P входит в левую часть только для сечения справа от неё (индекс «п»).</figcaption>
+</figure>
+
+<div class="why"><b>Пояснение.</b> Разрезаем арку по сечению K<sub>1</sub> и рассматриваем левую часть: на ней меньше сил. Действие отброшенной правой части заменяем усилиями M<sub>1</sub>, Q<sub>1</sub>, N<sub>1</sub>, направленными в положительную сторону (рис. 2).
+<br>Сила P приложена точно в K<sub>1</sub>, поэтому Q и N в этой точке меняются скачком. Считаем их дважды:
+бесконечно близко <b>слева</b> от P (P в рассматриваемую часть не входит, индекс «л») и <b>справа</b> от P (P входит, индекс «п»).
+Изгибающий момент скачка не имеет: плечо P относительно K<sub>1</sub> равно нулю.
+<br>Проекции сил на оси. Угол между вертикалью и нормалью n равен φ (рис. 5), поэтому:
+V<sub>A</sub> даёт на n <span class="m">+V<sub>A</sub>·cos φ</span>, на m <span class="m">+V<sub>A</sub>·sin φ</span>;
+H (вправо) — на n <span class="m">−H·sin φ</span>, на m <span class="m">+H·cos φ</span>;
+P (вниз) — на n <span class="m">−P·cos φ</span>, на m <span class="m">−P·sin φ</span>.
+Положительная Q<sub>1</sub> направлена против оси n, поэтому входит в Σn со знаком «−».</div>
+
+<h3>4.1. Изгибающий момент M<sub>1</sub></h3>
+<div class="f">
+<div>ΣM<sub>K1</sub> = −M<sub>1</sub> + V<sub>A</sub>·l/4 − H·y<sub>K1</sub> = 0</div>
+<div class="c">M<sub>1</sub> показан против часовой («−»); V<sub>A</sub> вращает часть вокруг K<sub>1</sub> по часовой («+»); H приложен ниже K<sub>1</sub> на y<sub>K1</sub>, направлен вправо — против часовой («−»). Сила P проходит через K<sub>1</sub>.</div>
+<div>M<sub>1</sub> = V<sub>A</sub>·l/4 − H·y<sub>K1</sub> = 72,5·11 − $H4·10,5 = 797,5 − 1080,75 = <b class="r">$M1 кН·м</b></div>
+</div>
+<p>M<sub>1</sub> &lt; 0: момент направлен противоположно показанному, в сечении K<sub>1</sub> растянуты верхние (наружные) волокна арки.</p>
+
+<h3>4.2. Поперечная сила Q<sub>1</sub> (Σn = 0)</h3>
+<div class="f">
+<div><b>слева от P:</b> Σn = −Q<sub>1</sub><sup>л</sup> + V<sub>A</sub>·cos φ − H·sin φ = 0</div>
+<div>Q<sub>1</sub><sup>л</sup> = V<sub>A</sub>·cos φ − H·sin φ = 72,5·$C − $H4·$S =</div>
+<div>&nbsp;&nbsp;&nbsp;= $VAc − $Hs = <b class="r">$Q1l кН</b></div>
+<div><b>справа от P:</b> Σn = −Q<sub>1</sub><sup>п</sup> + V<sub>A</sub>·cos φ − P·cos φ − H·sin φ = 0</div>
+<div>Q<sub>1</sub><sup>п</sup> = (V<sub>A</sub> − P)·cos φ − H·sin φ = (72,5 − 14)·$C − $Hs =</div>
+<div>&nbsp;&nbsp;&nbsp;= $VAPc − $Hs = <b class="r">$Q1p кН</b></div>
+</div>
+
+<h3>4.3. Продольная сила N<sub>1</sub> (Σm = 0)</h3>
+<div class="f">
+<div><b>слева от P:</b> Σm = N<sub>1</sub><sup>л</sup> + V<sub>A</sub>·sin φ + H·cos φ = 0</div>
+<div>N<sub>1</sub><sup>л</sup> = −V<sub>A</sub>·sin φ − H·cos φ = −72,5·$S − $H4·$C =</div>
+<div>&nbsp;&nbsp;&nbsp;= −$VAs − $Hc = <b class="r">$N1l кН</b></div>
+<div><b>справа от P:</b> Σm = N<sub>1</sub><sup>п</sup> + V<sub>A</sub>·sin φ − P·sin φ + H·cos φ = 0</div>
+<div>N<sub>1</sub><sup>п</sup> = −(V<sub>A</sub> − P)·sin φ − H·cos φ = −(72,5 − 14)·$S − $Hc =</div>
+<div>&nbsp;&nbsp;&nbsp;= −$VAPs − $Hc = <b class="r">$N1p кН</b></div>
+</div>
+<p>N &lt; 0 — сечение сжато. Для арки это нормально: она работает в основном на сжатие.</p>
+
+<h3>4.4. Проверки для сечения K<sub>1</sub></h3>
+<div class="f">
+<div><b>Скачок Q от силы P:</b> Q<sub>1</sub><sup>л</sup> − Q<sub>1</sub><sup>п</sup> = P·cos φ</div>
+<div>&nbsp;&nbsp;$Q1l − $Q1p_b = $jQ1; &nbsp; 14·$C = $Pc <span class="ok">✓</span></div>
+<div><b>Скачок N от силы P:</b> N<sub>1</sub><sup>п</sup> − N<sub>1</sub><sup>л</sup> = P·sin φ</div>
+<div>&nbsp;&nbsp;$N1p − ($N1l) = $jN1; &nbsp; 14·$S = $Ps <span class="ok">✓</span> <span class="c">(разница 0,001 — округление)</span></div>
+</div>
+<div class="why"><b>Проверка равновесия отсечённой части в осях x, y.</b> Берём левую часть с сечением справа от P. Проекции усилий: N<sub>1</sub> (вдоль m) даёт на x <span class="m">N·cos φ</span>, на y <span class="m">N·sin φ</span>; Q<sub>1</sub> (против n) — на x <span class="m">Q·sin φ</span>, на y <span class="m">−Q·cos φ</span>.</div>
+<div class="f">
+<div>ΣX = N<sub>1</sub><sup>п</sup>·cos φ + Q<sub>1</sub><sup>п</sup>·sin φ + H = $N1p_b·$C + $Q1p_b·$S + $H4 =</div>
+<div>&nbsp;&nbsp;&nbsp;= $x1a $x1b_op + $H4 = $X1 ≈ 0 <span class="ok">✓</span></div>
+<div>ΣY = V<sub>A</sub> − P + N<sub>1</sub><sup>п</sup>·sin φ − Q<sub>1</sub><sup>п</sup>·cos φ = 58,5 + $N1p_b·$S − $Q1p_b·$C =</div>
+<div>&nbsp;&nbsp;&nbsp;= 58,5 $y1a_op $negy1b_op = $Y1 <span class="ok">✓</span></div>
+</div>
+
+<h2>Шаг 5. Сечение K<sub>2</sub> — рассматриваем правую часть K<sub>2</sub>B</h2>
+
+<figure class="w80">
+$FIG6
+<figcaption>Рис. 6. Правая часть арки. M<sub>2</sub>, Q<sub>2</sub>, N<sub>2</sub> на левом торце показаны в положительном направлении; φ взят по модулю. Сила 2P входит в правую часть только для сечения слева от неё (индекс «л»).</figcaption>
+</figure>
+
+<div class="why"><b>Пояснение.</b> Для сечения в правой полуарке рассматриваем правую часть K<sub>2</sub>B: на ней меньше сил, чем на левой.
+Усилия на левом торце правой части в положительном направлении:
+N<sub>2</sub> — от сечения вверх-влево по касательной;
+Q<sub>2</sub> — по нормали вверх-вправо (вращает часть по часовой стрелке);
+M<sub>2</sub> — по часовой стрелке. Ось m направлена вдоль N<sub>2</sub>, ось n — вдоль Q<sub>2</sub>.
+<br>Нагрузки на правой части: q на длине l/4 (равнодействующая <span class="m">R<sub>q</sub> = q·l/4 = 10·11 = 110 кН</span>, плечо относительно K<sub>2</sub> — l/8 = 5,5 м) и сила 2P в самом сечении K<sub>2</sub>.
+Как и в K<sub>1</sub>: для сечения <b>слева</b> от 2P сила входит в правую часть (индекс «л»), для сечения <b>справа</b> — не входит (индекс «п»).
+<br>Проекции (угол между вертикалью и нормалью n снова φ):
+V<sub>B</sub> — на n <span class="m">+V<sub>B</sub>·cos φ</span>, на m <span class="m">+V<sub>B</sub>·sin φ</span>;
+H (влево) — на n <span class="m">−H·sin φ</span>, на m <span class="m">+H·cos φ</span>;
+нагрузки вниз — на n <span class="m">−(…)·cos φ</span>, на m <span class="m">−(…)·sin φ</span>.</div>
+
+<h3>5.1. Изгибающий момент M<sub>2</sub></h3>
+<div class="f">
+<div>ΣM<sub>K2</sub> = M<sub>2</sub> − V<sub>B</sub>·l/4 + q·(l/4)·(l/8) + H·y<sub>K2</sub> = 0</div>
+<div class="c">M<sub>2</sub> показан по часовой («+»); V<sub>B</sub> правее K<sub>2</sub>, вверх — против часовой («−»); R<sub>q</sub> правее K<sub>2</sub>, вниз — по часовой («+»); H приложен ниже K<sub>2</sub> на y<sub>K2</sub>, направлен влево — по часовой («+»). Сила 2P проходит через K<sub>2</sub>.</div>
+<div>M<sub>2</sub> = V<sub>B</sub>·l/4 − q·l²/32 − H·y<sub>K2</sub> = 189,5·11 − 10·44²/32 − $H4·10,5 =</div>
+<div>&nbsp;&nbsp;&nbsp;= 2084,5 − 605 − 1080,75 = <b class="r">$M2 кН·м</b></div>
+<div><b>Контроль по левой части AK<sub>2</sub>:</b></div>
+<div>M<sub>2</sub> = V<sub>A</sub>·3l/4 − P·l/2 − q·(l/4)·(l/8) − H·y<sub>K2</sub> = 72,5·33 − 14·22 − 10·11·5,5 − 1080,75 =</div>
+<div>&nbsp;&nbsp;&nbsp;= 2392,5 − 308 − 605 − 1080,75 = $M2 кН·м <span class="ok">✓</span></div>
+</div>
+<p>M<sub>2</sub> &gt; 0: в сечении K<sub>2</sub> растянуты нижние (внутренние) волокна.</p>
+
+<h3>5.2. Поперечная сила Q<sub>2</sub> (Σn = 0)</h3>
+<div class="f">
+<div><b>слева от 2P</b> (2P входит в правую часть):</div>
+<div>Σn = Q<sub>2</sub><sup>л</sup> + V<sub>B</sub>·cos φ − q·(l/4)·cos φ − 2P·cos φ − H·sin φ = 0</div>
+<div>Q<sub>2</sub><sup>л</sup> = −(V<sub>B</sub> − q·l/4 − 2P)·cos φ + H·sin φ = −(189,5 − 110 − 28)·$C + $Hs =</div>
+<div>&nbsp;&nbsp;&nbsp;= −51,5·$C + $Hs = −$B2c + $Hs = <b class="r">$Q2l кН</b></div>
+<div><b>справа от 2P</b> (2P не входит):</div>
+<div>Σn = Q<sub>2</sub><sup>п</sup> + V<sub>B</sub>·cos φ − q·(l/4)·cos φ − H·sin φ = 0</div>
+<div>Q<sub>2</sub><sup>п</sup> = −(V<sub>B</sub> − q·l/4)·cos φ + H·sin φ = −(189,5 − 110)·$C + $Hs =</div>
+<div>&nbsp;&nbsp;&nbsp;= −79,5·$C + $Hs = −$B1c + $Hs = <b class="r">$Q2p кН</b></div>
+</div>
+
+<h3>5.3. Продольная сила N<sub>2</sub> (Σm = 0)</h3>
+<div class="f">
+<div><b>слева от 2P:</b> Σm = N<sub>2</sub><sup>л</sup> + V<sub>B</sub>·sin φ − q·(l/4)·sin φ − 2P·sin φ + H·cos φ = 0</div>
+<div>N<sub>2</sub><sup>л</sup> = −(V<sub>B</sub> − q·l/4 − 2P)·sin φ − H·cos φ = −51,5·$S − $Hc =</div>
+<div>&nbsp;&nbsp;&nbsp;= −$B2s − $Hc = <b class="r">$N2l кН</b></div>
+<div><b>справа от 2P:</b> Σm = N<sub>2</sub><sup>п</sup> + V<sub>B</sub>·sin φ − q·(l/4)·sin φ + H·cos φ = 0</div>
+<div>N<sub>2</sub><sup>п</sup> = −(V<sub>B</sub> − q·l/4)·sin φ − H·cos φ = −79,5·$S − $Hc =</div>
+<div>&nbsp;&nbsp;&nbsp;= −$B1s − $Hc = <b class="r">$N2p кН</b></div>
+</div>
+
+<h3>5.4. Проверки для сечения K<sub>2</sub></h3>
+<div class="f">
+<div><b>Скачок Q от силы 2P:</b> Q<sub>2</sub><sup>л</sup> − Q<sub>2</sub><sup>п</sup> = 2P·cos φ</div>
+<div>&nbsp;&nbsp;$Q2l − $Q2p_b = $jQ2; &nbsp; 28·$C = $P2c <span class="ok">✓</span> <span class="c">(разница 0,001 — округление)</span></div>
+<div><b>Скачок N от силы 2P:</b> N<sub>2</sub><sup>л</sup> − N<sub>2</sub><sup>п</sup> = 2P·sin φ</div>
+<div>&nbsp;&nbsp;$N2l − ($N2p) = $jN2; &nbsp; 28·$S = $P2s <span class="ok">✓</span></div>
+<div class="c">Скачок N здесь записан в обратном порядке по сравнению с K<sub>1</sub>: касательная в правой полуарке наклонена в другую сторону.</div>
+</div>
+<div class="why"><b>Проверка равновесия отсечённой части в осях x, y.</b> Берём правую часть с сечением справа от 2P (на ней только R<sub>q</sub> = 110 кН, V<sub>B</sub> и H). Проекции усилий: N<sub>2</sub> (вверх-влево, вдоль m) даёт на x <span class="m">−N·cos φ</span>, на y <span class="m">+N·sin φ</span>; Q<sub>2</sub> (вверх-вправо, вдоль n) — на x <span class="m">+Q·sin φ</span>, на y <span class="m">+Q·cos φ</span>.</div>
+<div class="f">
+<div>ΣX = −N<sub>2</sub><sup>п</sup>·cos φ + Q<sub>2</sub><sup>п</sup>·sin φ − H = −$N2p_b·$C + $Q2p_b·$S − $H4 =</div>
+<div>&nbsp;&nbsp;&nbsp;= $x2a $x2b_op − $H4 = $X2 ≈ 0 <span class="ok">✓</span></div>
+<div>ΣY = V<sub>B</sub> − q·l/4 + N<sub>2</sub><sup>п</sup>·sin φ + Q<sub>2</sub><sup>п</sup>·cos φ = 79,5 + $N2p_b·$S + $Q2p_b·$C =</div>
+<div>&nbsp;&nbsp;&nbsp;= 79,5 $y2a_op $y2b_op = $Y2 <span class="ok">✓</span></div>
+</div>
+
+<h2>Шаг 6. Результаты</h2>
+
+<figure>
+$FIG7
+<figcaption>Рис. 7. Найденные опорные реакции. Все реакции направлены так, как были приняты на рис. 3.</figcaption>
+</figure>
+
+<table>
+<tr><th class="l">Сечение</th><th>x, м</th><th>y, м</th><th>φ</th><th>M, кН·м</th><th>Q<sup>л</sup>, кН</th><th>Q<sup>п</sup>, кН</th><th>N<sup>л</sup>, кН</th><th>N<sup>п</sup>, кН</th></tr>
+<tr><td class="l">K<sub>1</sub> (сила P)</td><td>11</td><td>10,5</td><td>$phi2°</td><td><b>$M1</b></td><td><b>$Q1l_2</b></td><td><b>$Q1p_2</b></td><td><b>$N1l_2</b></td><td><b>$N1p_2</b></td></tr>
+<tr><td class="l">K<sub>2</sub> (сила 2P)</td><td>33</td><td>10,5</td><td>−$phi2°</td><td><b>$M2</b></td><td><b>$Q2l_2</b></td><td><b>$Q2p_2</b></td><td><b>$N2l_2</b></td><td><b>$N2p_2</b></td></tr>
+</table>
+<p>Опорные реакции: <b>V<sub>A</sub> = 72,5 кН</b>, <b>V<sub>B</sub> = 189,5 кН</b> (обе вверх), <b>H<sub>A</sub> = H<sub>B</sub> = $H2 кН</b> (к середине пролёта).
+Индекс «л» — сечение бесконечно близко слева от сосредоточенной силы, «п» — справа.</p>
+
+<ul>
+<li>Во всех сечениях N &lt; 0: арка сжата, как и должно быть.</li>
+<li>M<sub>1</sub> &lt; 0 (у K<sub>1</sub> растянуты наружные волокна), M<sub>2</sub> &gt; 0 (у K<sub>2</sub> — внутренние). Изгиб разного знака объясняется несимметричной нагрузкой: q и бо́льшая сила 2P приложены справа.</li>
+<li>В точках приложения сосредоточенных сил Q и N меняются скачком, M — нет. Скачки совпадают с проекциями силы: P·cos φ и P·sin φ.</li>
+</ul>
+
+<div class="keep">
+<h3>Дополнительная проверка по общим формулам трёхшарнирной арки</h3>
+<p>Те же усилия выражаются через балочные величины M<sup>0</sup> и Q<sup>0</sup> — момент и поперечную силу в простой балке того же пролёта с той же нагрузкой:
+<span class="m">M = M<sup>0</sup> − H·y</span>, <span class="m">Q = Q<sup>0</sup>·cos φ − H·sin φ</span>, <span class="m">N = −Q<sup>0</sup>·sin φ − H·cos φ</span>.
+Здесь φ берётся со знаком, в K<sub>2</sub> φ = −$phi°. Все значения считаются по левой части балки.</p>
+<table>
+<tr><th class="l">Сечение</th><th>M<sup>0</sup>, кН·м</th><th>M, кН·м</th><th>Q<sup>0</sup>, кН</th><th>Q, кН</th><th>N, кН</th></tr>
+<tr><td class="l" rowspan="2">K<sub>1</sub></td><td rowspan="2">72,5·11 = 797,5</td><td rowspan="2">797,5 − 1080,75 = $M1</td><td>слева: 72,5</td><td>$Q1l_ex</td><td>$N1l_ex</td></tr>
+<tr><td>справа: 72,5 − 14 = 58,5</td><td>$Q1p_ex</td><td>$N1p_ex</td></tr>
+<tr><td class="l" rowspan="2">K<sub>2</sub></td><td rowspan="2">72,5·33 − 14·22 − 10·11·5,5 = $M0_2</td><td rowspan="2">$M0_2 − 1080,75 = $M2</td><td>слева: 72,5 − 14 − 110 = −51,5</td><td>$Q2l_ex</td><td>$N2l_ex</td></tr>
+<tr><td>справа: −51,5 − 28 = −79,5</td><td>$Q2p_ex</td><td>$N2p_ex</td></tr>
+</table>
+<p>Результаты совпадают со значениями шагов 4 и 5 <span class="ok">✓</span></p>
+</div>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,578 @@
+"""Сборка решения задания №1 (трёхшарнирная арка, вариант 19) в reshenie.html.
+
+Все числа в тексте берутся из расчёта ниже — руками в шаблон ничего не вписано.
+«Ручная» арифметика ведётся в Decimal с теми же округлениями, что написаны
+в решении (sin, cos — 5 знаков, H — 4 знака, произведения — 3 знака),
+и сверяется с точным расчётом (Fraction + math) до 0,005.
+Чертежи — SVG в масштабе, координаты считаются по уравнению оси.
+"""
+import math
+import re
+from decimal import Decimal as D, ROUND_HALF_UP
+from fractions import Fraction as Fr
+from pathlib import Path
+from string import Template
+
+HERE = Path(__file__).parent
+
+# ============================ расчёт ============================
+l, f, q, P = 44, 14, 10, 14
+P2 = 2 * P
+x1, x2 = l / 4, 3 * l / 4
+
+
+def y_of(x):
+    return 4 * f / l**2 * (l * x - x * x)
+
+
+def tg_of(x):
+    return 4 * f / l**2 * (l - 2 * x)
+
+
+def R(v, n=3):
+    return D(v).quantize(D(1).scaleb(-n), rounding=ROUND_HALF_UP)
+
+
+# точно
+VA = Fr(P * 3 * l, 4 * l) + Fr(P2 * l, 4 * l) + Fr(q * (l // 2) * (l // 4), l)
+VB = Fr(P * l, 4 * l) + Fr(P2 * 3 * l, 4 * l) + Fr(q * (l // 2) * (3 * l // 4), l)
+H = (VA * l / 2 - P * Fr(l, 4)) / f
+HB = (VB * l / 2 - q * Fr(l, 2) * Fr(l, 4) - P2 * Fr(l, 4)) / f
+assert VA == Fr(145, 2) and VB == Fr(379, 2) and H == HB == Fr(1441, 14)
+yk = Fr(4 * f, l**2) * (l * Fr(l, 4) - Fr(l, 4) ** 2)
+tgk = Fr(4 * f, l**2) * (l - 2 * Fr(l, 4))
+assert yk == Fr(21, 2) and tgk == Fr(7, 11)
+Hy = H * yk
+M1 = VA * Fr(l, 4) - Hy
+M2 = VB * Fr(l, 4) - q * Fr(l, 4) * Fr(l, 8) - Hy
+M0_2 = VA * Fr(3 * l, 4) - P * Fr(l, 2) - q * Fr(l, 4) * Fr(l, 8)
+assert M0_2 - Hy == M2
+
+s_ex = float(tgk) / math.sqrt(1 + float(tgk) ** 2)
+c_ex = 1 / math.sqrt(1 + float(tgk) ** 2)
+phi = math.degrees(math.atan(float(tgk)))
+Hf = float(H)
+ex = {
+    "Q1l": float(VA) * c_ex - Hf * s_ex, "N1l": -float(VA) * s_ex - Hf * c_ex,
+    "Q1p": float(VA - P) * c_ex - Hf * s_ex, "N1p": -float(VA - P) * s_ex - Hf * c_ex,
+    "Q2l": -float(VB - 110 - 28) * c_ex + Hf * s_ex, "N2l": -float(VB - 110 - 28) * s_ex - Hf * c_ex,
+    "Q2p": -float(VB - 110) * c_ex + Hf * s_ex, "N2p": -float(VB - 110) * s_ex - Hf * c_ex,
+}
+
+# вручную — как записано в решении
+S, C = R(repr(s_ex), 5), R(repr(c_ex), 5)
+Hd = R(D(1441) / D(14), 4)
+Hs, Hc = R(Hd * S), R(Hd * C)
+VAd, VBd = D("72.5"), D("189.5")
+h = {}
+h["VAc"], h["VAs"] = R(VAd * C), R(VAd * S)
+h["VAPc"], h["VAPs"] = R((VAd - P) * C), R((VAd - P) * S)
+h["Q1l"], h["Q1p"] = h["VAc"] - Hs, h["VAPc"] - Hs
+h["N1l"], h["N1p"] = -h["VAs"] - Hc, -h["VAPs"] - Hc
+B1, B2 = VBd - 110, VBd - 110 - 28                     # 79,5 и 51,5
+h["B1c"], h["B1s"], h["B2c"], h["B2s"] = R(B1 * C), R(B1 * S), R(B2 * C), R(B2 * S)
+h["Q2p"], h["Q2l"] = -h["B1c"] + Hs, -h["B2c"] + Hs
+h["N2p"], h["N2l"] = -h["B1s"] - Hc, -h["B2s"] - Hc
+for k in ex:
+    assert abs(float(h[k]) - ex[k]) < 0.005, (k, h[k], ex[k])
+    assert R(h[k], 2) == R(repr(ex[k]), 2), (k, h[k], ex[k])
+Hyd = R(Hd * D("10.5"))
+assert Hyd == D("1080.750")
+
+# скачки и проверки равновесия (ручные значения)
+h["Pc"], h["Ps"] = R(P * C), R(P * S)
+h["P2c"], h["P2s"] = R(P2 * C), R(P2 * S)
+h["jQ1"], h["jN1"] = h["Q1l"] - h["Q1p"], h["N1p"] - h["N1l"]
+h["jQ2"], h["jN2"] = h["Q2l"] - h["Q2p"], h["N2l"] - h["N2p"]
+h["x1a"], h["x1b"] = R(h["N1p"] * C), R(h["Q1p"] * S)
+h["X1"] = h["x1a"] + h["x1b"] + Hd
+h["y1a"], h["y1b"] = R(h["N1p"] * S), R(h["Q1p"] * C)
+h["Y1"] = (VAd - P) + h["y1a"] - h["y1b"]
+h["x2a"], h["x2b"] = R(-h["N2p"] * C), R(h["Q2p"] * S)
+h["X2"] = h["x2a"] + h["x2b"] - Hd
+h["y2a"], h["y2b"] = R(h["N2p"] * S), R(h["Q2p"] * C)
+h["Y2"] = B1 + h["y2a"] + h["y2b"]
+h["negy1b"] = -h["y1b"]
+for k in ("X1", "Y1", "X2", "Y2"):
+    assert abs(h[k]) <= D("0.002"), (k, h[k])
+for a, b in (("jQ1", "Pc"), ("jN1", "Ps"), ("jQ2", "P2c"), ("jN2", "P2s")):
+    assert abs(h[a] - h[b]) <= D("0.002"), (a, h[a], h[b])
+
+
+def fmt(v, n=None):
+    """Число по-русски: запятая, длинный минус."""
+    if isinstance(v, Fr):
+        v = D(v.numerator) / D(v.denominator)
+    if n is not None:
+        v = R(v, n)
+    s = format(D(v), "f") if isinstance(v, D) else str(v)
+    if "." in s:
+        s = s.rstrip("0").rstrip(".") if n is None else s
+    return s.replace("-", "−").replace(".", ",")
+
+
+def sgn(v, n=3):
+    """Для подстановки: отрицательное — в скобках."""
+    s = fmt(v, n)
+    return f"({s})" if s.startswith("−") else s
+
+
+V = {k: fmt(v, 3) for k, v in h.items()}
+V.update(
+    S=fmt(S, 5), C=fmt(C, 5), H4=fmt(Hd, 4), H2=fmt(H, 2), Hs=fmt(Hs, 3), Hc=fmt(Hc, 3),
+    phi=fmt(R(repr(phi), 3)), phi2=fmt(R(repr(phi), 2)),
+    M1=fmt(M1, 2), M2=fmt(M2, 2), M0_2=fmt(M0_2, 1),
+    Q1p_b=sgn(h["Q1p"]), N1p_b=sgn(h["N1p"]), Q2p_b=sgn(h["Q2p"]), N2p_b=sgn(h["N2p"]),
+    N2p_neg=fmt(-h["N2p"], 3), X1=fmt(h["X1"], 4), X2=fmt(h["X2"], 4),
+    Y1=fmt(abs(h["Y1"]), 3), Y2=fmt(abs(h["Y2"]), 3),
+    **{k + "_op": ("− " if h[k] < 0 else "+ ") + fmt(abs(h[k]), 3) for k in ("x1b", "y1a", "negy1b", "x2b", "y2a", "y2b")},
+    **{k + "_2": fmt(h[k], 2) for k in ("Q1l", "Q1p", "N1l", "N1p", "Q2l", "Q2p", "N2l", "N2p")},
+    **{k + "_ex": fmt(R(repr(v), 2)) for k, v in ex.items()},
+)
+
+# ============================ чертежи ============================
+INK, LOAD, REAC, INT, DIM, GRAY = "#1d2b30", "#b3402d", "#0f6b73", "#6a3d9a", "#6f7f86", "#8a979c"
+FONT = "'Source Sans 3','Liberation Sans','DejaVu Sans',sans-serif"
+MARK = {"load": (LOAD, 12, 8), "loadS": (LOAD, 8, 5.5), "reac": (REAC, 12, 8),
+        "int": (INT, 12, 8), "dim": (DIM, 9, 6), "gray": (GRAY, 10, 7), "ink": (INK, 10, 7)}
+
+
+def esc(s):
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def rich(s, size):
+    """Разметка подписей: X_{A} — индекс, x^{2} — степень."""
+    out, shift = [], 0.0
+    for p in re.split(r"([_^]\{[^}]*\})", s):
+        if not p:
+            continue
+        if p[0] in "_^" and len(p) > 2 and p[1] == "{":
+            d = size * 0.3 if p[0] == "_" else -size * 0.4
+            out.append(f'<tspan dy="{d - shift:.1f}" font-size="{size * 0.72:.1f}">{esc(p[2:-1])}</tspan>')
+            shift = d
+        else:
+            out.append(f'<tspan dy="{-shift:.1f}">{esc(p)}</tspan>' if shift else esc(p))
+            shift = 0.0
+    return "".join(out)
+
+
+class Svg:
+    def __init__(self, sid, w, h):
+        self.sid, self.w, self.h, self.items = sid, w, h, []
+
+    def add(self, s):
+        self.items.append(s)
+
+    def line(self, x1, y1, x2, y2, col=INK, w=1.2, dash=None):
+        d = f' stroke-dasharray="{dash}"' if dash else ""
+        self.add(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
+                 f'stroke="{col}" stroke-width="{w}"{d} stroke-linecap="round"/>')
+
+    def poly(self, pts, col=INK, w=2.0, fill="none", close=False, dash=None):
+        d = "M" + " L".join(f"{x:.1f},{y:.1f}" for x, y in pts) + (" Z" if close else "")
+        da = f' stroke-dasharray="{dash}"' if dash else ""
+        self.add(f'<path d="{d}" stroke="{col}" stroke-width="{w}" fill="{fill}"{da} '
+                 f'stroke-linejoin="round" stroke-linecap="round"/>')
+
+    def arrow(self, x1, y1, x2, y2, kind="load", w=1.8, dash=None):
+        col, L, _ = MARK[kind]
+        ln = math.hypot(x2 - x1, y2 - y1)
+        sh = L * 0.6
+        ux, uy = (x2 - x1) / ln, (y2 - y1) / ln
+        d = f' stroke-dasharray="{dash}"' if dash else ""
+        self.add(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2 - ux * sh:.1f}" y2="{y2 - uy * sh:.1f}" '
+                 f'stroke="{col}" stroke-width="{w}"{d} marker-end="url(#{self.sid}-{kind})"/>')
+
+    def arc(self, cx, cy, r, a1, a2, kind="int", w=1.6, head=True):
+        """Дуга от угла a1 к a2 (градусы, против часовой — плюс, как в математике)."""
+        col = MARK[kind][0]
+        p1 = (cx + r * math.cos(math.radians(a1)), cy - r * math.sin(math.radians(a1)))
+        p2 = (cx + r * math.cos(math.radians(a2)), cy - r * math.sin(math.radians(a2)))
+        large = 1 if abs(a2 - a1) > 180 else 0
+        sweep = 0 if a2 > a1 else 1
+        m = f' marker-end="url(#{self.sid}-{kind})"' if head else ""
+        self.add(f'<path d="M{p1[0]:.1f},{p1[1]:.1f} A{r},{r} 0 {large},{sweep} {p2[0]:.1f},{p2[1]:.1f}" '
+                 f'fill="none" stroke="{col}" stroke-width="{w}"{m}/>')
+
+    def text(self, x, y, s, col=INK, size=13, anchor="start", weight="normal", rot=None, halo=True, italic=False):
+        tr = f' transform="rotate({rot} {x:.1f} {y:.1f})"' if rot else ""
+        ha = ' paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"' if halo else ""
+        it = ' font-style="italic"' if italic else ""
+        self.add(f'<text x="{x:.1f}" y="{y:.1f}" font-size="{size}" fill="{col}" text-anchor="{anchor}" '
+                 f'font-weight="{weight}"{it}{tr}{ha}>{rich(s, size)}</text>')
+
+    def hinge(self, x, y, r=4.6):
+        self.add(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="#fff" stroke="{INK}" stroke-width="1.6"/>')
+
+    def dot(self, x, y, r=3.2, col=INK):
+        self.add(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="{col}"/>')
+
+    def support(self, x, y):
+        """Шарнирно-неподвижная опора."""
+        self.poly([(x, y), (x - 13, y + 20), (x + 13, y + 20)], INK, 1.3, fill="#fff", close=True)
+        self.line(x - 22, y + 20, x + 22, y + 20, INK, 1.4)
+        for i in range(-20, 23, 6):
+            self.line(x + i, y + 20, x + i - 6, y + 27, INK, 0.9)
+        self.hinge(x, y)
+
+    def qload(self, xa, xb, ytop, ybot, n):
+        self.line(xa, ytop, xb, ytop, LOAD, 1.5)
+        for i in range(n + 1):
+            x = xa + (xb - xa) * i / n
+            self.arrow(x, ytop, x, ybot, "loadS", 1.1)
+
+    def tick(self, x, y):
+        self.line(x - 4, y + 4, x + 4, y - 4, DIM, 1.5)
+
+    def dim_h(self, xa, xb, y, label, size=12.5):
+        self.line(xa - 5, y, xb + 5, y, DIM, 0.9)
+        self.tick(xa, y)
+        self.tick(xb, y)
+        self.text((xa + xb) / 2, y - 5, label, DIM, size, "middle")
+
+    def dim_v(self, x, ya, yb, label, side=-1, size=12.5):
+        self.line(x, ya - 5, x, yb + 5, DIM, 0.9)
+        self.tick(x, ya)
+        self.tick(x, yb)
+        tx = x + (-6 if side < 0 else 15)
+        self.text(tx, (ya + yb) / 2, label, DIM, size, "middle", rot=-90)
+
+    def ext(self, x1, y1, x2, y2):
+        self.line(x1, y1, x2, y2, DIM, 0.7, "3 3")
+
+    def svg(self, label):
+        defs = "".join(
+            f'<marker id="{self.sid}-{k}" viewBox="0 0 {L} {W}" refX="{L - L * 0.6:.1f}" refY="{W / 2}" '
+            f'markerWidth="{L}" markerHeight="{W}" markerUnits="userSpaceOnUse" orient="auto">'
+            f'<path d="M0,0 L{L},{W / 2} L0,{W} Z" fill="{c}"/></marker>'
+            for k, (c, L, W) in MARK.items())
+        return (f'<svg viewBox="0 0 {self.w} {self.h}" role="img" aria-label="{esc(label)}" '
+                f'font-family="{FONT}" xmlns="http://www.w3.org/2000/svg"><defs>{defs}</defs>'
+                + "".join(self.items) + "</svg>")
+
+
+def arch_pts(tr, xa, xb, n=160):
+    return [tr(xa + (xb - xa) * i / n, y_of(xa + (xb - xa) * i / n)) for i in range(n + 1)]
+
+
+PHI = math.radians(phi)
+SIN, COS = math.sin(PHI), math.cos(PHI)
+
+
+def fig_scheme():
+    """Рис. 1 — расчётная схема по заданию."""
+    g = Svg("f1", 720, 390)
+    s, ox, oy = 11.5, 110, 285
+    T = lambda x, yy: (ox + s * x, oy - s * yy)
+    A, B, Cc, K1, K2 = T(0, 0), T(l, 0), T(l / 2, f), T(x1, y_of(x1)), T(x2, y_of(x2))
+    g.poly(arch_pts(T, 0, l), INK, 2.6)
+    g.support(*A)
+    g.support(*B)
+    g.hinge(*Cc)
+    g.dot(*K1)
+    g.dot(*K2)
+    # нагрузки
+    g.arrow(K1[0], K1[1] - 72, K1[0], K1[1] - 4, "load", 2)
+    g.text(K1[0], K1[1] - 80, "P = 14 кН", LOAD, 13.5, "middle", "600")
+    yq1, yq2 = oy - s * 16.2, oy - s * 17.6
+    g.qload(Cc[0], B[0], yq2, yq1, 12)
+    g.text(B[0] + 8, yq1 - 2, "q = 10 кН/м", LOAD, 13.5, "start", "600")
+    g.arrow(K2[0], 34, K2[0], K2[1] - 4, "load", 2)
+    g.text(K2[0], 26, "2P = 28 кН", LOAD, 13.5, "middle", "600")
+    # подписи точек
+    g.text(A[0] - 14, A[1] - 4, "A", INK, 14, "end", "700")
+    g.text(B[0] + 14, B[1] - 4, "B", INK, 14, "start", "700")
+    g.text(Cc[0] - 9, Cc[1] - 9, "C", INK, 14, "end", "700")
+    g.text(K1[0] + 9, K1[1] + 24, "K_{1}", INK, 14, "start", "700")
+    g.text(K2[0] - 9, K2[1] + 24, "K_{2}", INK, 14, "end", "700")
+    # оси
+    g.arrow(A[0], A[1], A[0], A[1] - 52, "ink", 1.1)
+    g.text(A[0] - 6, A[1] - 44, "y", INK, 13, "end", italic=True)
+    g.arrow(A[0], A[1], A[0] + 54, A[1], "ink", 1.1)
+    g.text(A[0] + 50, A[1] - 6, "x", INK, 13, "middle", italic=True)
+    # размеры
+    yd = oy + 58
+    for xx in (0, l):
+        g.line(T(xx, 0)[0], oy + 30, T(xx, 0)[0], oy + 94, DIM, 0.7)
+    for xx, p in ((x1, K1), (l / 2, Cc), (x2, K2)):
+        g.ext(p[0], p[1] + 5, p[0], yd + 6)
+    for a, b in ((0, x1), (x1, l / 2), (l / 2, x2), (x2, l)):
+        g.dim_h(T(a, 0)[0], T(b, 0)[0], yd, "l/4 = 11 м")
+    g.dim_h(A[0], B[0], oy + 88, "l = 44 м")
+    xf = B[0] + 58
+    g.ext(Cc[0] + 6, Cc[1], xf + 6, Cc[1])
+    g.line(B[0] + 26, oy, xf + 6, oy, DIM, 0.7)
+    g.dim_v(xf, Cc[1], oy, "f = 14 м", side=+1)
+    xy = A[0] - 62
+    g.ext(K1[0] - 6, K1[1], xy - 6, K1[1])
+    g.line(A[0] - 26, oy, xy - 6, oy, DIM, 0.7)
+    g.dim_v(xy, K1[1], oy, "y_{K} = 10,5 м")
+    return g.svg("Расчётная схема арки")
+
+
+def fig_signs():
+    """Рис. 2 — положительные направления M, Q, N и знак моментов в уравнениях."""
+    g = Svg("f2", 720, 188)
+    xl, xr, yc = 300, 420, 95
+    g.add(f'<rect x="{xl}" y="{yc - 15}" width="{xr - xl}" height="30" fill="#e8f1f1" stroke="{INK}" stroke-width="1.4"/>')
+    g.text((xl + xr) / 2, yc + 5, "элемент", GRAY, 12, "middle", halo=False)
+    # правый торец (= сечение левой отсечённой части)
+    g.arrow(xr, yc, xr + 42, yc, "int", 2)
+    g.text(xr + 30, yc - 7, "N", INT, 14, "middle", "700")
+    g.arrow(xr + 12, yc - 34, xr + 12, yc + 34, "int", 2)
+    g.text(xr + 12, yc + 52, "Q", INT, 14, "middle", "700")
+    g.arc(xr, yc, 62, -52, 52, "int", 1.8)
+    g.text(xr + 52, yc - 58, "M", INT, 14, "start", "700")
+    # левый торец (= сечение правой отсечённой части)
+    g.arrow(xl, yc, xl - 42, yc, "int", 2)
+    g.text(xl - 30, yc - 7, "N", INT, 14, "middle", "700")
+    g.arrow(xl - 12, yc + 34, xl - 12, yc - 34, "int", 2)
+    g.text(xl - 12, yc - 42, "Q", INT, 14, "middle", "700")
+    g.arc(xl, yc, 62, 232, 128, "int", 1.8)
+    g.text(xl - 52, yc + 68, "M", INT, 14, "end", "700")
+    g.text(xr + 6, 180, "правый торец — как сечение K₁ левой части", GRAY, 11.5, "start")
+    g.text(xl - 6, 180, "левый торец — как сечение K₂ правой части", GRAY, 11.5, "end")
+    # знак моментов в уравнениях
+    g.text(110, 34, "в уравнениях ΣM:", GRAY, 12, "middle")
+    g.arc(52, 70, 15, 150, -120, "ink", 1.5)
+    g.text(78, 75, "по часовой — «+»", INK, 13, "start")
+    g.arc(52, 120, 15, 30, 300, "ink", 1.5)
+    g.text(78, 125, "против часовой — «−»", INK, 13, "start")
+    return g.svg("Правило знаков")
+
+
+def fig_whole(values):
+    """Рис. 3 / 7 — арка без опор, с реакциями."""
+    g = Svg("f3" if not values else "f7", 720, 410)
+    s, ox, oy = 11, 118, 280
+    T = lambda x, yy: (ox + s * x, oy - s * yy)
+    A, B, Cc, K1, K2 = T(0, 0), T(l, 0), T(l / 2, f), T(x1, y_of(x1)), T(x2, y_of(x2))
+    g.poly(arch_pts(T, 0, l), INK, 2.6)
+    g.hinge(*A)
+    g.hinge(*B)
+    g.hinge(*Cc)
+    g.dot(*K1)
+    g.dot(*K2)
+    g.arrow(K1[0], K1[1] - 70, K1[0], K1[1] - 4, "load", 2)
+    g.text(K1[0], K1[1] - 78, "P = 14 кН", LOAD, 13.5, "middle", "600")
+    yq1, yq2 = oy - s * 16.2, oy - s * 17.6
+    g.qload(Cc[0], B[0], yq2, yq1, 12)
+    g.text(B[0] - 6, yq2 - 8, "q = 10 кН/м", LOAD, 13.5, "end", "600")
+    g.arrow(K2[0], 30, K2[0], K2[1] - 4, "load", 2)
+    g.text(K2[0] - 8, 30, "2P = 28 кН", LOAD, 13.5, "end", "600")
+    g.text(A[0] + 12, A[1] + 18, "A", INK, 14, "start", "700")
+    g.text(B[0] - 12, B[1] + 18, "B", INK, 14, "end", "700")
+    g.text(Cc[0] - 9, Cc[1] - 9, "C", INK, 14, "end", "700")
+    g.text(K1[0] + 9, K1[1] + 24, "K_{1}", INK, 14, "start", "700")
+    g.text(K2[0] - 9, K2[1] + 24, "K_{2}", INK, 14, "end", "700")
+    va = "V_{A} = 72,5 кН" if values else "V_{A}"
+    vb = "V_{B} = 189,5 кН" if values else "V_{B}"
+    ha = f"H_{{A}} = {V['H2']} кН" if values else "H_{A}"
+    hb = f"H_{{B}} = {V['H2']} кН" if values else "H_{B}"
+    g.arrow(A[0], A[1] + 62, A[0], A[1] + 6, "reac", 2.2)
+    g.text(A[0] + 8, A[1] + 58, va, REAC, 13.5, "start", "700")
+    g.arrow(A[0] - 66, A[1], A[0] - 6, A[1], "reac", 2.2)
+    g.text(A[0] - 8, A[1] - 12, ha, REAC, 13.5, "end", "700")
+    g.arrow(B[0], B[1] + 62, B[0], B[1] + 6, "reac", 2.2)
+    g.text(B[0] - 8, B[1] + 58, vb, REAC, 13.5, "end", "700")
+    g.arrow(B[0] + 66, B[1], B[0] + 6, B[1], "reac", 2.2)
+    g.text(B[0] + 8, B[1] - 12, hb, REAC, 13.5, "start", "700")
+    if not values:
+        g.text(K2[0] + 10, yq1 + 20, "R_{q} = q·l/2 = 220 кН  (при x = 33 м)", GRAY, 12, "start")
+    yd = oy + 92
+    g.line(A[0], oy + 68, A[0], yd + 30, DIM, 0.7)
+    g.line(B[0], oy + 68, B[0], yd + 30, DIM, 0.7)
+    for p in (K1, Cc, K2):
+        g.ext(p[0], p[1] + 5, p[0], yd + 6)
+    for a, b in ((0, x1), (x1, l / 2), (l / 2, x2), (x2, l)):
+        g.dim_h(T(a, 0)[0], T(b, 0)[0], yd, "l/4 = 11 м")
+    g.dim_h(A[0], B[0], yd + 24, "l = 44 м")
+    return g.svg("Арка с опорными реакциями")
+
+
+def fig_halves():
+    """Рис. 4 — полуарки для ΣM_C."""
+    g = Svg("f4", 740, 385)
+    s, oy = 11, 268
+    oxl, oxr = 92, 176
+    TL = lambda x, yy: (oxl + s * x, oy - s * yy)
+    TR = lambda x, yy: (oxr + s * x, oy - s * yy)
+    A, Cl, K1 = TL(0, 0), TL(l / 2, f), TL(x1, y_of(x1))
+    Cr, K2, B = TR(l / 2, f), TR(x2, y_of(x2)), TR(l, 0)
+    g.poly(arch_pts(TL, 0, l / 2), INK, 2.6)
+    g.poly(arch_pts(TR, l / 2, l), INK, 2.6)
+    for p in (A, Cl, Cr, B):
+        g.hinge(*p)
+    g.dot(*K1)
+    g.dot(*K2)
+    g.text(TL(11, 0)[0], 20, "левая полуарка AC", GRAY, 12.5, "middle")
+    g.text(TR(38, 0)[0], 20, "правая полуарка CB", GRAY, 12.5, "middle")
+    # левая
+    g.arrow(K1[0], K1[1] - 66, K1[0], K1[1] - 4, "load", 2)
+    g.text(K1[0], K1[1] - 74, "P = 14 кН", LOAD, 13.5, "middle", "600")
+    g.arrow(A[0], A[1] + 58, A[0], A[1] + 6, "reac", 2.2)
+    g.text(A[0] + 8, A[1] + 54, "V_{A} = 72,5 кН", REAC, 13, "start", "700")
+    g.arrow(A[0] - 60, A[1], A[0] - 6, A[1], "reac", 2.2)
+    g.text(A[0] - 62, A[1] - 10, "H_{A}", REAC, 14, "start", "700")
+    g.arrow(Cl[0] + 5, Cl[1], Cl[0] + 34, Cl[1], "gray", 1.5, "4 3")
+    g.text(Cl[0] + 14, Cl[1] - 8, "X_{C}", GRAY, 13, "start")
+    g.arrow(Cl[0], Cl[1] - 5, Cl[0], Cl[1] - 36, "gray", 1.5, "4 3")
+    g.text(Cl[0] - 6, Cl[1] - 26, "Y_{C}", GRAY, 13, "end")
+    g.text(A[0] - 10, A[1] + 22, "A", INK, 14, "end", "700")
+    g.text(Cl[0] + 9, Cl[1] + 22, "C", INK, 14, "start", "700")
+    g.text(K1[0] + 9, K1[1] + 24, "K_{1}", INK, 14, "start", "700")
+    # правая
+    yq1, yq2 = oy - s * 15.8, oy - s * 17.2
+    g.qload(Cr[0], B[0], yq2, yq1, 11)
+    g.text(B[0] - 4, yq2 - 8, "q = 10 кН/м", LOAD, 13.5, "end", "600")
+    g.arrow(K2[0], 34, K2[0], K2[1] - 4, "load", 2)
+    g.text(K2[0] - 8, 44, "2P = 28 кН", LOAD, 13.5, "end", "600")
+    g.arrow(B[0], B[1] + 58, B[0], B[1] + 6, "reac", 2.2)
+    g.text(B[0] - 8, B[1] + 54, "V_{B} = 189,5 кН", REAC, 13, "end", "700")
+    g.arrow(B[0] + 60, B[1], B[0] + 6, B[1], "reac", 2.2)
+    g.text(B[0] + 62, B[1] - 10, "H_{B}", REAC, 14, "end", "700")
+    g.arrow(Cr[0] - 5, Cr[1], Cr[0] - 34, Cr[1], "gray", 1.5, "4 3")
+    g.text(Cr[0] - 14, Cr[1] + 20, "X_{C}", GRAY, 13, "end")
+    g.arrow(Cr[0], Cr[1] + 5, Cr[0], Cr[1] + 36, "gray", 1.5, "4 3")
+    g.text(Cr[0] + 6, Cr[1] + 34, "Y_{C}", GRAY, 13, "start")
+    g.text(B[0] + 10, B[1] + 22, "B", INK, 14, "start", "700")
+    g.text(Cr[0] + 8, Cr[1] - 8, "C", INK, 14, "start", "700")
+    g.text(K2[0] - 9, K2[1] + 24, "K_{2}", INK, 14, "end", "700")
+    # f и размеры
+    g.ext(A[0] + 6, oy, Cl[0] + 6, oy)
+    g.dim_v(Cl[0], Cl[1] + 5, oy, "f = 14 м")
+    yd = oy + 82
+    g.line(A[0], oy + 62, A[0], yd + 6, DIM, 0.7)
+    g.line(B[0], oy + 62, B[0], yd + 6, DIM, 0.7)
+    for p in (K1, K2):
+        g.ext(p[0], p[1] + 5, p[0], yd + 6)
+    g.ext(Cl[0], oy + 5, Cl[0], yd + 6)
+    g.ext(Cr[0], Cr[1] + 42, Cr[0], yd + 6)
+    g.dim_h(A[0], K1[0], yd, "l/4 = 11 м")
+    g.dim_h(K1[0], Cl[0], yd, "l/4 = 11 м")
+    g.dim_h(Cr[0], K2[0], yd, "l/4 = 11 м")
+    g.dim_h(K2[0], B[0], yd, "l/4 = 11 м")
+    return g.svg("Полуарки для уравнения моментов относительно шарнира C")
+
+
+def unit(deg):
+    """Единичный вектор на экране для угла deg (математического)."""
+    return math.cos(math.radians(deg)), -math.sin(math.radians(deg))
+
+
+def fig_left_K1():
+    """Рис. 5 — левая часть A–K1."""
+    g = Svg("f5", 720, 455)
+    s, ox, oy = 20, 176, 338
+    T = lambda x, yy: (ox + s * x, oy - s * yy)
+    A, K = T(0, 0), T(x1, y_of(x1))
+    g.poly(arch_pts(T, 0, x1), INK, 2.8)
+    g.hinge(*A)
+    ph = phi
+    at = lambda deg, r: (K[0] + r * unit(deg)[0], K[1] + r * unit(deg)[1])
+    # оси m (касательная) и n (нормаль)
+    g.line(*K, *at(ph, 132), GRAY, 0.9, "5 4")
+    g.text(*at(ph, 142), "m", GRAY, 14, "middle", italic=True)
+    g.line(*at(90 + ph, 62), *at(ph - 90, 80), GRAY, 0.9, "5 4")
+    g.text(*at(90 + ph, 72), "n", GRAY, 14, "middle", italic=True)
+    # горизонталь и угол φ
+    xdim = ox + 400
+    g.ext(K[0] + 4, K[1], xdim + 6, K[1])
+    g.arc(K[0], K[1], 54, 0, ph, "ink", 1.1, head=False)
+    g.text(*at(ph / 2, 67), "φ", INK, 14, "middle", italic=True)
+    g.arc(K[0], K[1], 30, 90, 90 + ph, "ink", 1.0, head=False)
+    g.text(*at(90 + ph / 2, 42), "φ", INK, 13, "middle", italic=True)
+    # усилия
+    g.arrow(*K, *at(ph, 84), "int", 2.4)
+    g.text(at(ph, 84)[0] - 6, at(ph, 84)[1] - 12, "N_{1}", INT, 15, "end", "700")
+    g.arrow(*K, *at(ph - 90, 66), "int", 2.4)
+    g.text(at(ph - 90, 66)[0] + 10, at(ph - 90, 66)[1] + 4, "Q_{1}", INT, 15, "start", "700")
+    g.arc(K[0], K[1], 32, 140, 198, "int", 2)
+    g.text(*at(170, 52), "M_{1}", INT, 15, "middle", "700")
+    # нагрузки и реакции
+    g.arrow(K[0], K[1] - 84, K[0], K[1] - 5, "load", 2.2)
+    g.text(K[0] + 8, K[1] - 76, "P = 14 кН", LOAD, 13.5, "start", "600")
+    g.arrow(A[0], A[1] + 62, A[0], A[1] + 6, "reac", 2.2)
+    g.text(A[0] + 10, A[1] + 58, "V_{A} = 72,5 кН", REAC, 13.5, "start", "700")
+    g.arrow(A[0] - 70, A[1], A[0] - 6, A[1], "reac", 2.2)
+    g.text(A[0] - 10, A[1] - 12, f"H = {V['H2']} кН", REAC, 13.5, "end", "700")
+    g.text(A[0] - 10, A[1] + 22, "A", INK, 14, "end", "700")
+    g.dot(*K)
+    g.text(K[0] - 8, K[1] + 36, "K_{1}", INK, 14, "end", "700")
+    # размеры
+    g.ext(A[0] + 6, oy, xdim + 6, oy)
+    g.dim_v(xdim, K[1], oy, "y_{K1} = 10,5 м", side=+1)
+    yd = oy + 96
+    g.line(A[0], oy + 68, A[0], yd + 6, DIM, 0.7)
+    g.ext(K[0], K[1] + 5, K[0], yd + 6)
+    g.dim_h(A[0], K[0], yd, "l/4 = 11 м")
+    return g.svg("Левая часть арки, отсечённая по сечению K1")
+
+
+def fig_right_K2():
+    """Рис. 6 — правая часть K2–B."""
+    g = Svg("f6", 720, 520)
+    s, ox, oy = 20, 330 - 20 * x2, 392
+    T = lambda x, yy: (ox + s * x, oy - s * yy)
+    K, B = T(x2, y_of(x2)), T(l, 0)
+    g.poly(arch_pts(T, x2, l), INK, 2.8)
+    g.hinge(*B)
+    ph = phi
+    at = lambda deg, r: (K[0] + r * unit(deg)[0], K[1] + r * unit(deg)[1])
+    # нагрузка q, равнодействующая, 2P
+    yq1, yq2 = oy - s * 14.3, oy - s * 15.5
+    g.qload(K[0], B[0], yq2, yq1, 10)
+    g.text(B[0] + 8, yq1 - 3, "q = 10 кН/м", LOAD, 13.5, "start", "600")
+    xr = T(x2 + l / 8, 0)[0]
+    g.arrow(xr, yq2 - 34, xr, yq2 - 3, "load", 1.6, "5 3")
+    g.text(xr + 8, yq2 - 24, "R_{q} = q·l/4 = 110 кН", LOAD, 13, "start")
+    g.arrow(K[0], 40, K[0], K[1] - 5, "load", 2.2)
+    g.text(K[0], 32, "2P = 28 кН", LOAD, 13.5, "middle", "600")
+    # оси
+    g.line(*K, *at(180 - ph, 128), GRAY, 0.9, "5 4")
+    g.text(*at(180 - ph, 139), "m", GRAY, 14, "middle", italic=True)
+    g.line(*K, *at(90 - ph, 70), GRAY, 0.9, "5 4")
+    g.line(*K, *at(270 - ph, 48), GRAY, 0.9, "5 4")
+    g.text(*at(90 - ph, 80), "n", GRAY, 14, "middle", italic=True)
+    # горизонталь и угол φ
+    xdim = B[0] + 128
+    g.ext(K[0] + 4, K[1], xdim + 6, K[1])
+    g.arc(K[0], K[1], 54, 0, -ph, "ink", 1.1, head=False)
+    g.text(*at(-ph / 2, 68), "φ", INK, 14, "middle", italic=True)
+    g.arc(K[0], K[1], 28, 90, 90 - ph, "ink", 1.0, head=False)
+    g.text(*at(90 - ph / 2, 40), "φ", INK, 13, "middle", italic=True)
+    # усилия
+    g.arrow(*K, *at(180 - ph, 84), "int", 2.4)
+    g.text(at(180 - ph, 84)[0] - 2, at(180 - ph, 84)[1] + 22, "N_{2}", INT, 15, "end", "700")
+    g.arrow(*K, *at(90 - ph, 56), "int", 2.4)
+    g.text(at(90 - ph, 56)[0] + 12, at(90 - ph, 56)[1] + 14, "Q_{2}", INT, 15, "start", "700")
+    g.arc(K[0], K[1], 32, 226, 160, "int", 2)
+    g.text(*at(194, 52), "M_{2}", INT, 15, "middle", "700")
+    # реакции
+    g.arrow(B[0], B[1] + 62, B[0], B[1] + 6, "reac", 2.2)
+    g.text(B[0] + 10, B[1] + 58, "V_{B} = 189,5 кН", REAC, 13.5, "start", "700")
+    g.arrow(B[0] + 70, B[1], B[0] + 6, B[1], "reac", 2.2)
+    g.text(B[0] + 10, B[1] - 12, f"H = {V['H2']} кН", REAC, 13.5, "start", "700")
+    g.text(B[0] - 10, B[1] + 22, "B", INK, 14, "end", "700")
+    g.dot(*K)
+    g.text(K[0] + 10, K[1] + 36, "K_{2}", INK, 14, "start", "700")
+    # размеры
+    g.line(B[0] + 76, oy, xdim + 6, oy, DIM, 0.7)
+    g.dim_v(xdim, K[1], oy, "y_{K2} = 10,5 м", side=+1)
+    yd = oy + 92
+    g.line(B[0], oy + 68, B[0], yd + 30, DIM, 0.7)
+    g.ext(K[0], K[1] + 5, K[0], yd + 30)
+    g.ext(xr, yq1 + 2, xr, yd + 6)
+    g.dim_h(K[0], xr, yd, "l/8 = 5,5 м")
+    g.dim_h(xr, B[0], yd, "l/8 = 5,5 м")
+    g.dim_h(K[0], B[0], yd + 24, "l/4 = 11 м")
+    return g.svg("Правая часть арки, отсечённая по сечению K2")
+
+
+FIGS = dict(FIG1=fig_scheme(), FIG2=fig_signs(), FIG3=fig_whole(False), FIG4=fig_halves(),
+            FIG5=fig_left_K1(), FIG6=fig_right_K2(), FIG7=fig_whole(True))
+
+html = Template((HERE / "shablon.html").read_text(encoding="utf-8")).substitute(**V, **FIGS)
+(HERE / "reshenie.html").write_text(html, encoding="utf-8")
+print("reshenie.html собран;", ", ".join(f"{k}={V[k]}" for k in ("Q1l", "Q1p", "N1l", "N1p", "Q2l", "Q2p", "N2l", "N2p")))
