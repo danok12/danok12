@@ -72,7 +72,7 @@ $FIG1
 </figure>
 
 <ul>
-<li>Ось арки — квадратная парабола <span class="m">y = 4f/l²·(lx − x²)</span>. Начало координат в опоре A, ось x вправо, ось y вверх.</li>
+<li>Ось арки — дуга окружности, проходящая через опоры A, B и ключевой шарнир C: пролёт l = 44 м, высота f = 14 м, радиус R = $Rr м (шаг 3). Начало координат в опоре A, ось x вправо, ось y вверх.</li>
 <li>Опоры A и B на одном уровне. Шарнир C — в вершине: <span class="m">x = l/2 = 22 м</span>, <span class="m">y = f = 14 м</span>.</li>
 <li>Сила P приложена в сечении K<sub>1</sub> (<span class="m">x = l/4 = 11 м</span>), сила 2P — в сечении K<sub>2</sub> (<span class="m">x = 3l/4 = 33 м</span>).</li>
 <li>Равномерная нагрузка q действует на правой половине пролёта, от C до B (длина <span class="m">l/2 = 22 м</span>), на единицу длины горизонтальной проекции.</li>
@@ -150,39 +150,53 @@ $FIG4
 <div>H<sub>B</sub> = (V<sub>B</sub>·l/2 − q·(l/2)·(l/4) − 2P·l/4) / f = (189,5·22 − 10·22·11 − 28·11) / 14 =</div>
 <div>&nbsp;&nbsp;&nbsp;= (4169 − 2420 − 308) / 14 = 1441/14 = $H4 кН = H<sub>A</sub> <span class="ok">✓</span></div>
 </div>
-<p><b>H = $H4 кН ≈ $H2 кН</b>, направлен от опор внутрь пролёта. Произведение, которое понадобится дальше: <span class="m">H·y<sub>K</sub> = 1441/14·10,5 = 1080,75 кН·м</span>.</p>
+<p><b>H = $H4 кН ≈ $H2 кН</b>, направлен от опор внутрь пролёта. Распор зависит только от f и нагрузки, поэтому форма оси на него не влияет.</p>
 
 <h2>Шаг 3. Геометрия сечений K<sub>1</sub> и K<sub>2</sub></h2>
 
-<div class="why"><b>Пояснение.</b> Ординату сечения находим по уравнению оси, наклон — по производной:
-<span class="m">tg φ = y′ = 4f/l²·(l − 2x)</span>. Угол φ — между касательной к оси арки в сечении и горизонталью.
-Продольная сила N направлена по касательной, поперечная Q — по нормали, поэтому при проектировании сил на эти направления появляются sin φ и cos φ.</div>
+<figure class="w80">
+$FIGG
+<figcaption>Рис. 5. Геометрия круговой оси. O — центр окружности, OM — перпендикуляр к хорде AB. Радиус OK<sub>1</sub> перпендикулярен касательной, поэтому угол между радиусом и вертикалью равен углу φ между касательной и горизонталью.</figcaption>
+</figure>
+
+<div class="why"><b>Пояснение.</b> Ось арки — дуга окружности через точки A, C и B. Центр O лежит на вертикали, проходящей через ключ C, ниже линии опор.
+Из прямоугольного треугольника OMA (рис. 5): <span class="m">R² = (l/2)² + (R − f)²</span>, откуда <span class="m">R = (l²/4 + f²) / (2f)</span>.
+<br>Для сечения с абсциссой x горизонтальное расстояние до вертикали OC равно <span class="m">l/2 − x</span>. Из треугольника с гипотенузой R (радиус OK):
+<span class="m">sin φ = (l/2 − x) / R</span>, <span class="m">cos φ = √(R² − (l/2 − x)²) / R</span>,
+а высота сечения над опорами <span class="m">y<sub>K</sub> = √(R² − (l/2 − x)²) − (R − f)</span>.
+Здесь φ — угол между касательной к оси в сечении и горизонталью; он равен углу между радиусом и вертикалью, потому что радиус перпендикулярен касательной.
+<br>Замечание: это не полуокружность. У полуокружности высота равна половине пролёта (22 м); при f = 14 м дуга меньше половины окружности, и её центр лежит ниже опор.</div>
 
 <div class="f">
-<div>4f/l² = 4·14 / 44² = 56/1936 = 7/242</div>
-<div><b>K<sub>1</sub></b>, x = l/4 = 11 м:</div>
-<div>&nbsp;&nbsp;y<sub>K1</sub> = 7/242·(44·11 − 11²) = 7/242·363 = <b class="r">10,5 м</b> &nbsp;<span class="c">(= 3f/4)</span></div>
-<div>&nbsp;&nbsp;tg φ = 7/242·(44 − 2·11) = 7/242·22 = 0,63636 &nbsp;<span class="c">(= 7/11)</span></div>
-<div>&nbsp;&nbsp;φ = arctg 0,63636 = <b class="r">$phi°</b>; &nbsp; sin φ = <b class="r">$S</b>; &nbsp; cos φ = <b class="r">$C</b></div>
-<div><b>K<sub>2</sub></b>, x = 3l/4 = 33 м:</div>
-<div>&nbsp;&nbsp;y<sub>K2</sub> = 7/242·(44·33 − 33²) = 7/242·363 = <b class="r">10,5 м</b></div>
-<div>&nbsp;&nbsp;tg φ<sub>2</sub> = 7/242·(44 − 2·33) = −0,63636 &nbsp;→&nbsp; φ<sub>2</sub> = −$phi°</div>
+<div>R = (l²/4 + f²) / (2f) = (44²/4 + 14²) / (2·14) = (484 + 196) / 28 = 680/28 = 170/7 = <b class="r">$Rr м</b></div>
+<div>R − f = $Rr − 14 = $RmF м &nbsp;<span class="c">(на столько центр O ниже линии опор)</span></div>
+<div><b>K<sub>1</sub></b>, x = l/4 = 11 м, l/2 − x = 22 − 11 = 11 м:</div>
+<div>&nbsp;&nbsp;R² − (l/2 − x)² = (170/7)² − 11² = 28900/49 − 121 = 22971/49</div>
+<div>&nbsp;&nbsp;√(R² − (l/2 − x)²) = √22971 / 7 = $sq / 7 = $root м</div>
+<div>&nbsp;&nbsp;y<sub>K1</sub> = √22971/7 − 72/7 = ($sq − 72) / 7 = <b class="r">$Y м</b></div>
+<div>&nbsp;&nbsp;sin φ = (l/2 − x) / R = 11 / (170/7) = 77/170 = <b class="r">$S</b></div>
+<div>&nbsp;&nbsp;cos φ = √(R² − (l/2 − x)²) / R = (√22971/7) / (170/7) = $sq / 170 = <b class="r">$C</b></div>
+<div>&nbsp;&nbsp;tg φ = $S / $C = $tg; &nbsp; φ = arcsin $S = <b class="r">$phi°</b></div>
+<div><b>K<sub>2</sub></b>, x = 3l/4 = 33 м, l/2 − x = 22 − 33 = −11 м:</div>
+<div>&nbsp;&nbsp;y<sub>K2</sub> = y<sub>K1</sub> = <b class="r">$Y м</b> &nbsp;<span class="c">(симметрично K<sub>1</sub>)</span></div>
+<div>&nbsp;&nbsp;sin φ<sub>2</sub> = −11 / (170/7) = −$S &nbsp;→&nbsp; φ<sub>2</sub> = −$phi°</div>
+<div>H·y<sub>K</sub> = 1441/14 · $Y = <b class="r">$Hy кН·м</b> &nbsp;<span class="c">(понадобится в шагах 4 и 5)</span></div>
 </div>
 <p>Знак «−» у φ<sub>2</sub> означает, что в правой полуарке касательная опускается вправо. Сечения K<sub>1</sub> и K<sub>2</sub> симметричны относительно ключа, поэтому модуль угла у них одинаковый.
-Для сечения правой полуарки угол берём по модулю: φ = $phi°, sin φ = $S, cos φ = $C. Наклон касательной в другую сторону учитываем знаками в уравнениях проекций (рис. 6).</p>
+Для сечения правой полуарки угол берём по модулю: φ = $phi°, sin φ = $S, cos φ = $C. Наклон касательной в другую сторону учитываем знаками в уравнениях проекций (рис. 7).</p>
 
 <h2>Шаг 4. Сечение K<sub>1</sub> — рассматриваем левую часть AK<sub>1</sub></h2>
 
 <figure class="w80">
 $FIG5
-<figcaption>Рис. 5. Левая часть арки. M<sub>1</sub>, Q<sub>1</sub>, N<sub>1</sub> показаны в положительном направлении; m — касательная, n — нормаль к оси арки. Сила P входит в левую часть только для сечения справа от неё (индекс «п»).</figcaption>
+<figcaption>Рис. 6. Левая часть арки. M<sub>1</sub>, Q<sub>1</sub>, N<sub>1</sub> показаны в положительном направлении; m — касательная, n — нормаль к оси арки. Сила P входит в левую часть только для сечения справа от неё (индекс «п»).</figcaption>
 </figure>
 
 <div class="why"><b>Пояснение.</b> Разрезаем арку по сечению K<sub>1</sub> и рассматриваем левую часть: на ней меньше сил. Действие отброшенной правой части заменяем усилиями M<sub>1</sub>, Q<sub>1</sub>, N<sub>1</sub>, направленными в положительную сторону (рис. 2).
 <br>Сила P приложена точно в K<sub>1</sub>, поэтому Q и N в этой точке меняются скачком. Считаем их дважды:
 бесконечно близко <b>слева</b> от P (P в рассматриваемую часть не входит, индекс «л») и <b>справа</b> от P (P входит, индекс «п»).
 Изгибающий момент скачка не имеет: плечо P относительно K<sub>1</sub> равно нулю.
-<br>Проекции сил на оси. Угол между вертикалью и нормалью n равен φ (рис. 5), поэтому:
+<br>Проекции сил на оси. Угол между вертикалью и нормалью n равен φ (рис. 6), поэтому:
 V<sub>A</sub> даёт на n <span class="m">+V<sub>A</sub>·cos φ</span>, на m <span class="m">+V<sub>A</sub>·sin φ</span>;
 H (вправо) — на n <span class="m">−H·sin φ</span>, на m <span class="m">+H·cos φ</span>;
 P (вниз) — на n <span class="m">−P·cos φ</span>, на m <span class="m">−P·sin φ</span>.
@@ -192,7 +206,7 @@ P (вниз) — на n <span class="m">−P·cos φ</span>, на m <span class=
 <div class="f">
 <div>ΣM<sub>K1</sub> = −M<sub>1</sub> + V<sub>A</sub>·l/4 − H·y<sub>K1</sub> = 0</div>
 <div class="c">M<sub>1</sub> показан против часовой («−»); V<sub>A</sub> вращает часть вокруг K<sub>1</sub> по часовой («+»); H приложен ниже K<sub>1</sub> на y<sub>K1</sub>, направлен вправо — против часовой («−»). Сила P проходит через K<sub>1</sub>.</div>
-<div>M<sub>1</sub> = V<sub>A</sub>·l/4 − H·y<sub>K1</sub> = 72,5·11 − $H4·10,5 = 797,5 − 1080,75 = <b class="r">$M1 кН·м</b></div>
+<div>M<sub>1</sub> = V<sub>A</sub>·l/4 − H·y<sub>K1</sub> = 72,5·11 − 1441/14·$Y = 797,5 − $Hy = <b class="r">$M1_3 кН·м</b></div>
 </div>
 <p>M<sub>1</sub> &lt; 0: момент направлен противоположно показанному, в сечении K<sub>1</sub> растянуты верхние (наружные) волокна арки.</p>
 
@@ -220,9 +234,9 @@ P (вниз) — на n <span class="m">−P·cos φ</span>, на m <span class=
 <h3>4.4. Проверки для сечения K<sub>1</sub></h3>
 <div class="f">
 <div><b>Скачок Q от силы P:</b> Q<sub>1</sub><sup>л</sup> − Q<sub>1</sub><sup>п</sup> = P·cos φ</div>
-<div>&nbsp;&nbsp;$Q1l − $Q1p_b = $jQ1; &nbsp; 14·$C = $Pc <span class="ok">✓</span></div>
+<div>&nbsp;&nbsp;$Q1l − $Q1p_b = $jQ1; &nbsp; 14·$C = $Pc <span class="ok">✓</span>$nPc</div>
 <div><b>Скачок N от силы P:</b> N<sub>1</sub><sup>п</sup> − N<sub>1</sub><sup>л</sup> = P·sin φ</div>
-<div>&nbsp;&nbsp;$N1p − ($N1l) = $jN1; &nbsp; 14·$S = $Ps <span class="ok">✓</span> <span class="c">(разница 0,001 — округление)</span></div>
+<div>&nbsp;&nbsp;$N1p − ($N1l) = $jN1; &nbsp; 14·$S = $Ps <span class="ok">✓</span>$nPs</div>
 </div>
 <div class="why"><b>Проверка равновесия отсечённой части в осях x, y.</b> Берём левую часть с сечением справа от P. Проекции усилий: N<sub>1</sub> (вдоль m) даёт на x <span class="m">N·cos φ</span>, на y <span class="m">N·sin φ</span>; Q<sub>1</sub> (против n) — на x <span class="m">Q·sin φ</span>, на y <span class="m">−Q·cos φ</span>.</div>
 <div class="f">
@@ -236,7 +250,7 @@ P (вниз) — на n <span class="m">−P·cos φ</span>, на m <span class=
 
 <figure class="w80">
 $FIG6
-<figcaption>Рис. 6. Правая часть арки. M<sub>2</sub>, Q<sub>2</sub>, N<sub>2</sub> на левом торце показаны в положительном направлении; φ взят по модулю. Сила 2P входит в правую часть только для сечения слева от неё (индекс «л»).</figcaption>
+<figcaption>Рис. 7. Правая часть арки. M<sub>2</sub>, Q<sub>2</sub>, N<sub>2</sub> на левом торце показаны в положительном направлении; φ взят по модулю. Сила 2P входит в правую часть только для сечения слева от неё (индекс «л»).</figcaption>
 </figure>
 
 <div class="why"><b>Пояснение.</b> Для сечения в правой полуарке рассматриваем правую часть K<sub>2</sub>B: на ней меньше сил, чем на левой.
@@ -255,11 +269,11 @@ H (влево) — на n <span class="m">−H·sin φ</span>, на m <span clas
 <div class="f">
 <div>ΣM<sub>K2</sub> = M<sub>2</sub> − V<sub>B</sub>·l/4 + q·(l/4)·(l/8) + H·y<sub>K2</sub> = 0</div>
 <div class="c">M<sub>2</sub> показан по часовой («+»); V<sub>B</sub> правее K<sub>2</sub>, вверх — против часовой («−»); R<sub>q</sub> правее K<sub>2</sub>, вниз — по часовой («+»); H приложен ниже K<sub>2</sub> на y<sub>K2</sub>, направлен влево — по часовой («+»). Сила 2P проходит через K<sub>2</sub>.</div>
-<div>M<sub>2</sub> = V<sub>B</sub>·l/4 − q·l²/32 − H·y<sub>K2</sub> = 189,5·11 − 10·44²/32 − $H4·10,5 =</div>
-<div>&nbsp;&nbsp;&nbsp;= 2084,5 − 605 − 1080,75 = <b class="r">$M2 кН·м</b></div>
+<div>M<sub>2</sub> = V<sub>B</sub>·l/4 − q·l²/32 − H·y<sub>K2</sub> = 189,5·11 − 10·44²/32 − 1441/14·$Y =</div>
+<div>&nbsp;&nbsp;&nbsp;= 2084,5 − 605 − $Hy = <b class="r">$M2_3 кН·м</b></div>
 <div><b>Контроль по левой части AK<sub>2</sub>:</b></div>
-<div>M<sub>2</sub> = V<sub>A</sub>·3l/4 − P·l/2 − q·(l/4)·(l/8) − H·y<sub>K2</sub> = 72,5·33 − 14·22 − 10·11·5,5 − 1080,75 =</div>
-<div>&nbsp;&nbsp;&nbsp;= 2392,5 − 308 − 605 − 1080,75 = $M2 кН·м <span class="ok">✓</span></div>
+<div>M<sub>2</sub> = V<sub>A</sub>·3l/4 − P·l/2 − q·(l/4)·(l/8) − H·y<sub>K2</sub> = 72,5·33 − 14·22 − 10·11·5,5 − $Hy =</div>
+<div>&nbsp;&nbsp;&nbsp;= 2392,5 − 308 − 605 − $Hy = $M2_3 кН·м <span class="ok">✓</span></div>
 </div>
 <p>M<sub>2</sub> &gt; 0: в сечении K<sub>2</sub> растянуты нижние (внутренние) волокна.</p>
 
@@ -288,9 +302,9 @@ H (влево) — на n <span class="m">−H·sin φ</span>, на m <span clas
 <h3>5.4. Проверки для сечения K<sub>2</sub></h3>
 <div class="f">
 <div><b>Скачок Q от силы 2P:</b> Q<sub>2</sub><sup>л</sup> − Q<sub>2</sub><sup>п</sup> = 2P·cos φ</div>
-<div>&nbsp;&nbsp;$Q2l − $Q2p_b = $jQ2; &nbsp; 28·$C = $P2c <span class="ok">✓</span> <span class="c">(разница 0,001 — округление)</span></div>
+<div>&nbsp;&nbsp;$Q2l − $Q2p_b = $jQ2; &nbsp; 28·$C = $P2c <span class="ok">✓</span>$nP2c</div>
 <div><b>Скачок N от силы 2P:</b> N<sub>2</sub><sup>л</sup> − N<sub>2</sub><sup>п</sup> = 2P·sin φ</div>
-<div>&nbsp;&nbsp;$N2l − ($N2p) = $jN2; &nbsp; 28·$S = $P2s <span class="ok">✓</span></div>
+<div>&nbsp;&nbsp;$N2l − ($N2p) = $jN2; &nbsp; 28·$S = $P2s <span class="ok">✓</span>$nP2s</div>
 <div class="c">Скачок N здесь записан в обратном порядке по сравнению с K<sub>1</sub>: касательная в правой полуарке наклонена в другую сторону.</div>
 </div>
 <div class="why"><b>Проверка равновесия отсечённой части в осях x, y.</b> Берём правую часть с сечением справа от 2P (на ней только R<sub>q</sub> = 110 кН, V<sub>B</sub> и H). Проекции усилий: N<sub>2</sub> (вверх-влево, вдоль m) даёт на x <span class="m">−N·cos φ</span>, на y <span class="m">+N·sin φ</span>; Q<sub>2</sub> (вверх-вправо, вдоль n) — на x <span class="m">+Q·sin φ</span>, на y <span class="m">+Q·cos φ</span>.</div>
@@ -305,13 +319,13 @@ H (влево) — на n <span class="m">−H·sin φ</span>, на m <span clas
 
 <figure>
 $FIG7
-<figcaption>Рис. 7. Найденные опорные реакции. Все реакции направлены так, как были приняты на рис. 3.</figcaption>
+<figcaption>Рис. 8. Найденные опорные реакции. Все реакции направлены так, как были приняты на рис. 3.</figcaption>
 </figure>
 
 <table>
 <tr><th class="l">Сечение</th><th>x, м</th><th>y, м</th><th>φ</th><th>M, кН·м</th><th>Q<sup>л</sup>, кН</th><th>Q<sup>п</sup>, кН</th><th>N<sup>л</sup>, кН</th><th>N<sup>п</sup>, кН</th></tr>
-<tr><td class="l">K<sub>1</sub> (сила P)</td><td>11</td><td>10,5</td><td>$phi2°</td><td><b>$M1</b></td><td><b>$Q1l_2</b></td><td><b>$Q1p_2</b></td><td><b>$N1l_2</b></td><td><b>$N1p_2</b></td></tr>
-<tr><td class="l">K<sub>2</sub> (сила 2P)</td><td>33</td><td>10,5</td><td>−$phi2°</td><td><b>$M2</b></td><td><b>$Q2l_2</b></td><td><b>$Q2p_2</b></td><td><b>$N2l_2</b></td><td><b>$N2p_2</b></td></tr>
+<tr><td class="l">K<sub>1</sub> (сила P)</td><td>11</td><td>$Y2d</td><td>$phi2°</td><td><b>$M1</b></td><td><b>$Q1l_2</b></td><td><b>$Q1p_2</b></td><td><b>$N1l_2</b></td><td><b>$N1p_2</b></td></tr>
+<tr><td class="l">K<sub>2</sub> (сила 2P)</td><td>33</td><td>$Y2d</td><td>−$phi2°</td><td><b>$M2</b></td><td><b>$Q2l_2</b></td><td><b>$Q2p_2</b></td><td><b>$N2l_2</b></td><td><b>$N2p_2</b></td></tr>
 </table>
 <p>Опорные реакции: <b>V<sub>A</sub> = 72,5 кН</b>, <b>V<sub>B</sub> = 189,5 кН</b> (обе вверх), <b>H<sub>A</sub> = H<sub>B</sub> = $H2 кН</b> (к середине пролёта).
 Индекс «л» — сечение бесконечно близко слева от сосредоточенной силы, «п» — справа.</p>
@@ -329,9 +343,9 @@ $FIG7
 Здесь φ берётся со знаком, в K<sub>2</sub> φ = −$phi°. Все значения считаются по левой части балки.</p>
 <table>
 <tr><th class="l">Сечение</th><th>M<sup>0</sup>, кН·м</th><th>M, кН·м</th><th>Q<sup>0</sup>, кН</th><th>Q, кН</th><th>N, кН</th></tr>
-<tr><td class="l" rowspan="2">K<sub>1</sub></td><td rowspan="2">72,5·11 = 797,5</td><td rowspan="2">797,5 − 1080,75 = $M1</td><td>слева: 72,5</td><td>$Q1l_ex</td><td>$N1l_ex</td></tr>
+<tr><td class="l" rowspan="2">K<sub>1</sub></td><td rowspan="2">72,5·11 = 797,5</td><td rowspan="2">797,5 − $Hy = $M1</td><td>слева: 72,5</td><td>$Q1l_ex</td><td>$N1l_ex</td></tr>
 <tr><td>справа: 72,5 − 14 = 58,5</td><td>$Q1p_ex</td><td>$N1p_ex</td></tr>
-<tr><td class="l" rowspan="2">K<sub>2</sub></td><td rowspan="2">72,5·33 − 14·22 − 10·11·5,5 = $M0_2</td><td rowspan="2">$M0_2 − 1080,75 = $M2</td><td>слева: 72,5 − 14 − 110 = −51,5</td><td>$Q2l_ex</td><td>$N2l_ex</td></tr>
+<tr><td class="l" rowspan="2">K<sub>2</sub></td><td rowspan="2">72,5·33 − 14·22 − 10·11·5,5 = $M0_2</td><td rowspan="2">$M0_2 − $Hy = $M2</td><td>слева: 72,5 − 14 − 110 = −51,5</td><td>$Q2l_ex</td><td>$N2l_ex</td></tr>
 <tr><td>справа: −51,5 − 28 = −79,5</td><td>$Q2p_ex</td><td>$N2p_ex</td></tr>
 </table>
 <p>Результаты совпадают со значениями шагов 4 и 5 <span class="ok">✓</span></p>

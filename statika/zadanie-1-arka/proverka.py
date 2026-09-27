@@ -1,16 +1,19 @@
 """Проверка решения: задание №1, трёхшарнирная арка, вариант 19.
 
 Данные: l = 44 м, f = 14 м, q = 10 кН/м, P = 14 кН.
-Схема: ось — квадратная парабола, опоры A и B шарнирно-неподвижные на одном
+Схема: ось — дуга окружности через A, C, B (R = (l²/4 + f²)/(2f) = 170/7 м),
+опоры A и B шарнирно-неподвижные на одном
 уровне, шарнир C в ключе. P в K1 (x = l/4), 2P в K2 (x = 3l/4),
 q на правой половине пролёта (от C до B).
 
 Два независимых способа:
   1) формулы конспекта (ΣM, Σn, Σm для отсечённой части) — точная арифметика
      Fraction там, где нет корней; sin/cos — через sqrt, плюс «ручные» значения
-     с округлением sin, cos до 5 знаков (H — до 4), как они записаны в решении;
+     с округлением sin, cos до 6 знаков (H — до 4), как они записаны в решении;
   2) линейная система равновесия двух полуарок + векторная сумма сил,
-     действующих на отсечённую часть, с проекцией на касательную и нормаль.
+     действующих на отсечённую часть, с проекцией на касательную и нормаль;
+     касательная здесь — численная производная уравнения окружности,
+     а не формула sin φ = (l/2 − x)/R из способа 1.
 Запуск: python3 proverka.py  (ничего не падает = всё сошлось).
 """
 from fractions import Fraction as Fr
@@ -21,8 +24,11 @@ P2 = 2 * P
 x1, x2 = l / 4, 3 * l / 4                     # K1, K2
 qa, qb = l / 2, l                             # участок q
 
-y = lambda x: 4 * f / l**2 * (l * x - x**2)
-tg = lambda x: 4 * f / l**2 * (l - 2 * x)
+RAD = (l * l / 4 + f * f) / (2 * f)
+assert RAD == Fr(170, 7)
+Rf = float(RAD)
+y = lambda x: math.sqrt(Rf**2 - (float(x) - float(l) / 2) ** 2) - (Rf - float(f))
+assert abs(y(0)) < 1e-12 and abs(y(l)) < 1e-12 and abs(y(l / 2) - float(f)) < 1e-12   # A, B, C на оси
 
 def r3(v):
     return round(float(v), 3)
@@ -41,18 +47,17 @@ assert HA == HB
 H = HA
 
 yk1, yk2 = y(x1), y(x2)
-t1, t2 = tg(x1), tg(x2)
-assert yk1 == yk2 == 3 * f / 4 and t1 == -t2 == 2 * f / l
-
-phi = math.degrees(math.atan(float(t1)))
-s = float(t1) / math.sqrt(1 + float(t1) ** 2)
-c = 1 / math.sqrt(1 + float(t1) ** 2)
-sr, cr, Hr = round(s, 5), round(c, 5), round(float(H), 4)   # как записано в решении
+assert abs(yk1 - yk2) < 1e-12
+# способ 1: геометрия окружности — радиус перпендикулярен касательной
+s = float((l / 2 - x1) / RAD)                          # sin φ = (l/2 − x)/R = 77/170
+c = math.sqrt(Rf**2 - float(l / 2 - x1) ** 2) / Rf     # cos φ
+phi = math.degrees(math.asin(s))
+sr, cr, Hr = round(s, 6), round(c, 6), round(float(H), 4)   # как записано в решении
 
 # K1 — левая часть
-M1 = VA * l / 4 - H * yk1
+M1 = float(VA * l / 4) - float(H) * yk1
 # K2 — правая часть: ΣM_K2 = M2 − V_B·l/4 + q·(l/4)·(l/8) + H·y_k = 0
-M2 = VB * l / 4 - q * (l / 4) * (l / 8) - H * yk2
+M2 = float(VB * l / 4 - q * (l / 4) * (l / 8)) - float(H) * yk2
 
 def left_QN(Qb, s, c, H):          # левая часть, φ > 0
     return Qb * c - H * s, -Qb * s - H * c
@@ -101,7 +106,9 @@ def section(xk, side):
         Mz += (float((qa + b) / 2) - xK) * (-R)
     Fint = (-X, -Y)                       # сила от правой части на левую
     Mint = -Mz                            # момент от правой части (против часовой +)
-    tx, ty = 1 / math.sqrt(1 + float(tg(xk)) ** 2), float(tg(xk)) / math.sqrt(1 + float(tg(xk)) ** 2)
+    e = 1e-6                               # касательная — численно, по уравнению оси
+    t = (y(float(xk) + e) - y(float(xk) - e)) / (2 * e)
+    tx, ty = 1 / math.sqrt(1 + t * t), t / math.sqrt(1 + t * t)
     N = Fint[0] * tx + Fint[1] * ty       # вдоль касательной, от сечения
     Q = Fint[0] * ty - Fint[1] * tx       # положительная Q на правом торце левой части — вдоль (ty, −tx)
     M = Mint                              # положительный M на правом торце левой части — против часовой
@@ -115,15 +122,15 @@ chk = {
     "Q2p": section(x2, "п")[1], "N2p": section(x2, "п")[2],
 }
 for k in ("Q1l", "Q1p", "N1l", "N1p", "Q2l", "Q2p", "N2l", "N2p"):
-    assert abs(chk[k] - res["точно"][k]) < 1e-9, (k, chk[k], res["точно"][k])
-assert abs(chk["M1"] - float(M1)) < 1e-9 and abs(chk["M2"] - float(M2)) < 1e-9
+    assert abs(chk[k] - res["точно"][k]) < 1e-6, (k, chk[k], res["точно"][k])
+assert abs(chk["M1"] - M1) < 1e-9 and abs(chk["M2"] - M2) < 1e-9
 
 # ---------------- вывод ----------------
 print(f"V_A = {VA} кН, V_B = {VB} кН, ΣY = {VA + VB - P - P2 - q * l / 2}")
-print(f"H_A = H_B = {H} = {float(H):.6f} кН  (H·y_k = {H * yk1})")
-print(f"y_K1 = y_K2 = {yk1} м, tgφ = {t1} = {float(t1):.6f}, φ = {phi:.4f}°, sinφ = {s:.6f}, cosφ = {c:.6f}")
-print(f"M1 = {M1} = {float(M1)} кН·м;  M2 = {M2} = {float(M2)} кН·м")
-print(f"{'':6}{'точно':>12}{'ручн (sin,cos 5 зн.)':>24}")
+print(f"H_A = H_B = {H} = {float(H):.6f} кН  (H·y_k = {float(H) * yk1:.4f})")
+print(f"R = {RAD} = {Rf:.4f} м; y_K1 = y_K2 = {yk1:.5f} м, φ = {phi:.4f}°, sinφ = {s:.6f}, cosφ = {c:.6f}")
+print(f"M1 = {M1:.4f} кН·м;  M2 = {M2:.4f} кН·м")
+print(f"{'':6}{'точно':>12}{'ручн (sin,cos 6 зн.)':>24}")
 for k in ("Q1l", "Q1p", "N1l", "N1p", "Q2l", "Q2p", "N2l", "N2p"):
     print(f"{k:6}{res['точно'][k]:12.4f}{res['ручн'][k]:24.4f}")
 
@@ -142,6 +149,6 @@ print(" K2, правая часть: ΣX = −N2п·cosφ + Q2п·sinφ − H ="
       "; ΣY = V_B − q·l/4 + N2п·sinφ + Q2п·cosφ =", r3(float(VB - q * l / 4) + h["N2p"] * sr + h["Q2p"] * cr))
 # балочные формулы как контроль M2 с другой стороны
 M0_2 = VA * x2 - P * (x2 - x1) - q * (x2 - qa) * (x2 - qa) / 2
-print(f" M2 через левую часть: M⁰ − H·y = {M0_2} − {H * yk2} = {M0_2 - H * yk2}")
-assert M0_2 - H * yk2 == M2
+print(f" M2 через левую часть: M⁰ − H·y = {M0_2} − {float(H) * yk2:.4f} = {float(M0_2) - float(H) * yk2:.4f}")
+assert abs(float(M0_2) - float(H) * yk2 - M2) < 1e-9
 print("\nВсё сошлось: способ 1 (формулы конспекта) = способ 2 (система равновесия + векторы).")

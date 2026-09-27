@@ -2,7 +2,7 @@
 
 Все числа в тексте берутся из расчёта ниже — руками в шаблон ничего не вписано.
 «Ручная» арифметика ведётся в Decimal с теми же округлениями, что написаны
-в решении (sin, cos — 5 знаков, H — 4 знака, произведения — 3 знака),
+в решении (sin, cos — 6 знаков, H — 4 знака, произведения — 3 знака),
 и сверяется с точным расчётом (Fraction + math) до 0,005.
 Чертежи — SVG в масштабе, координаты считаются по уравнению оси.
 """
@@ -20,13 +20,19 @@ l, f, q, P = 44, 14, 10, 14
 P2 = 2 * P
 x1, x2 = l / 4, 3 * l / 4
 
+# Ось — дуга окружности через A(0; 0), C(l/2; f), B(l; 0):
+# R = (l²/4 + f²) / (2f), центр O(l/2; −(R − f)).
+RAD = (Fr(l * l, 4) + f * f) / (2 * f)
+assert RAD == Fr(170, 7)
+Rf = float(RAD)
+
 
 def y_of(x):
-    return 4 * f / l**2 * (l * x - x * x)
+    return math.sqrt(Rf**2 - (x - l / 2) ** 2) - (Rf - f)
 
 
 def tg_of(x):
-    return 4 * f / l**2 * (l - 2 * x)
+    return (l / 2 - x) / math.sqrt(Rf**2 - (x - l / 2) ** 2)
 
 
 def R(v, n=3):
@@ -39,19 +45,25 @@ VB = Fr(P * l, 4 * l) + Fr(P2 * 3 * l, 4 * l) + Fr(q * (l // 2) * (3 * l // 4), 
 H = (VA * l / 2 - P * Fr(l, 4)) / f
 HB = (VB * l / 2 - q * Fr(l, 2) * Fr(l, 4) - P2 * Fr(l, 4)) / f
 assert VA == Fr(145, 2) and VB == Fr(379, 2) and H == HB == Fr(1441, 14)
-yk = Fr(4 * f, l**2) * (l * Fr(l, 4) - Fr(l, 4) ** 2)
-tgk = Fr(4 * f, l**2) * (l - 2 * Fr(l, 4))
-assert yk == Fr(21, 2) and tgk == Fr(7, 11)
-Hy = H * yk
-M1 = VA * Fr(l, 4) - Hy
-M2 = VB * Fr(l, 4) - q * Fr(l, 4) * Fr(l, 8) - Hy
-M0_2 = VA * Fr(3 * l, 4) - P * Fr(l, 2) - q * Fr(l, 4) * Fr(l, 8)
-assert M0_2 - Hy == M2
-
-s_ex = float(tgk) / math.sqrt(1 + float(tgk) ** 2)
-c_ex = 1 / math.sqrt(1 + float(tgk) ** 2)
-phi = math.degrees(math.atan(float(tgk)))
+dx = Fr(l, 2) - Fr(l, 4)                       # l/2 − x для K1 (для K2 — то же по модулю)
+sin_k = dx / RAD                               # sin φ = (l/2 − x)/R — точно
+assert sin_k == Fr(77, 170)
+R2m = RAD**2 - dx**2                           # R² − (l/2 − x)² = 22971/49
+assert R2m == Fr(22971, 49)
+root = math.sqrt(float(R2m))                   # √(R² − (l/2 − x)²)
+yk = root - float(RAD - f)
+assert abs(yk - y_of(x1)) < 1e-12 and abs(yk - y_of(x2)) < 1e-12
 Hf = float(H)
+Hy = Hf * yk
+M1 = float(VA) * 11 - Hy
+M2 = float(VB) * 11 - 605 - Hy
+M0_2 = VA * Fr(3 * l, 4) - P * Fr(l, 2) - q * Fr(l, 4) * Fr(l, 8)
+assert abs(float(M0_2) - Hy - M2) < 1e-9
+
+s_ex = float(sin_k)
+c_ex = root / Rf
+assert abs(s_ex / c_ex - tg_of(x1)) < 1e-12
+phi = math.degrees(math.asin(s_ex))
 ex = {
     "Q1l": float(VA) * c_ex - Hf * s_ex, "N1l": -float(VA) * s_ex - Hf * c_ex,
     "Q1p": float(VA - P) * c_ex - Hf * s_ex, "N1p": -float(VA - P) * s_ex - Hf * c_ex,
@@ -60,10 +72,17 @@ ex = {
 }
 
 # вручную — как записано в решении
-S, C = R(repr(s_ex), 5), R(repr(c_ex), 5)
+S, C = R(repr(s_ex), 6), R(repr(c_ex), 6)
 Hd = R(D(1441) / D(14), 4)
 Hs, Hc = R(Hd * S), R(Hd * C)
 VAd, VBd = D("72.5"), D("189.5")
+Rd, RmF = R(D(170) / D(7), 4), R(D(72) / D(7), 4)          # R и R − f
+sqd = R(D(22971).sqrt(), 5)                                 # √22971
+rootd = R(sqd / 7, 5)                                       # √(R² − 11²) = √22971 / 7
+Yd = R((sqd - 72) / 7, 5)                                   # y_K = (√22971 − 72) / 7
+assert abs(float(Yd) - yk) < 1e-5 and abs(float(rootd) - root) < 1e-5, (Yd, yk)
+assert R(sqd / 170, 6) == C and R(D(77) / D(170), 6) == S
+tgd = R(S / C, 5)
 h = {}
 h["VAc"], h["VAs"] = R(VAd * C), R(VAd * S)
 h["VAPc"], h["VAPs"] = R((VAd - P) * C), R((VAd - P) * S)
@@ -76,8 +95,12 @@ h["N2p"], h["N2l"] = -h["B1s"] - Hc, -h["B2s"] - Hc
 for k in ex:
     assert abs(float(h[k]) - ex[k]) < 0.005, (k, h[k], ex[k])
     assert R(h[k], 2) == R(repr(ex[k]), 2), (k, h[k], ex[k])
-Hyd = R(Hd * D("10.5"))
-assert Hyd == D("1080.750")
+Hyd = R(D(1441) * Yd / 14)                                  # H·y_K с H = 1441/14
+M1d = D("797.5") - Hyd
+M2d = D("2084.5") - 605 - Hyd
+M0_2d = D(M0_2.numerator) / D(M0_2.denominator)
+assert R(M1d, 2) == R(repr(M1), 2) and R(M2d, 2) == R(repr(M2), 2), (M1d, M1, M2d, M2)
+assert M0_2d - Hyd == M2d
 
 # скачки и проверки равновесия (ручные значения)
 h["Pc"], h["Ps"] = R(P * C), R(P * S)
@@ -119,13 +142,17 @@ def sgn(v, n=3):
 
 V = {k: fmt(v, 3) for k, v in h.items()}
 V.update(
-    S=fmt(S, 5), C=fmt(C, 5), H4=fmt(Hd, 4), H2=fmt(H, 2), Hs=fmt(Hs, 3), Hc=fmt(Hc, 3),
+    S=fmt(S, 6), C=fmt(C, 6), H4=fmt(Hd, 4), H2=fmt(H, 2), Hs=fmt(Hs, 3), Hc=fmt(Hc, 3),
     phi=fmt(R(repr(phi), 3)), phi2=fmt(R(repr(phi), 2)),
-    M1=fmt(M1, 2), M2=fmt(M2, 2), M0_2=fmt(M0_2, 1),
+    M1=fmt(M1d, 2), M2=fmt(M2d, 2), M0_2=fmt(M0_2, 1), M1_3=fmt(M1d, 3), M2_3=fmt(M2d, 3),
+    Rr=fmt(Rd, 4), RmF=fmt(RmF, 4), sq=fmt(sqd, 5), root=fmt(rootd, 5),
+    Y=fmt(Yd, 5), Y3=fmt(Yd, 3), Y2d=fmt(Yd, 2), Hy=fmt(Hyd, 3), tg=fmt(tgd, 5),
     Q1p_b=sgn(h["Q1p"]), N1p_b=sgn(h["N1p"]), Q2p_b=sgn(h["Q2p"]), N2p_b=sgn(h["N2p"]),
     N2p_neg=fmt(-h["N2p"], 3), X1=fmt(h["X1"], 4), X2=fmt(h["X2"], 4),
     Y1=fmt(abs(h["Y1"]), 3), Y2=fmt(abs(h["Y2"]), 3),
     **{k + "_op": ("− " if h[k] < 0 else "+ ") + fmt(abs(h[k]), 3) for k in ("x1b", "y1a", "negy1b", "x2b", "y2a", "y2b")},
+    **{"n" + b: ("" if h[a] == h[b] else ' <span class="c">(разница ' + fmt(abs(h[a] - h[b]), 3) + ' — округление)</span>')
+       for a, b in (("jQ1", "Pc"), ("jN1", "Ps"), ("jQ2", "P2c"), ("jN2", "P2s"))},
     **{k + "_2": fmt(h[k], 2) for k in ("Q1l", "Q1p", "N1l", "N1p", "Q2l", "Q2p", "N2l", "N2p")},
     **{k + "_ex": fmt(R(repr(v), 2)) for k, v in ex.items()},
 )
@@ -189,7 +216,7 @@ def fig_scheme():
     xy = A[0] - 62
     g.ext(K1[0] - 6, K1[1], xy - 6, K1[1])
     g.line(A[0] - 26, oy, xy - 6, oy, DIM, 0.7)
-    g.dim_v(xy, K1[1], oy, "y_{K} = 10,5 м")
+    g.dim_v(xy, K1[1], oy, f"y_{{K}} = {V['Y3']} м")
     return g.svg("Расчётная схема арки")
 
 
@@ -384,7 +411,7 @@ def fig_left_K1():
     g.text(K[0] - 8, K[1] + 36, "K_{1}", INK, 14, "end", "700")
     # размеры
     g.ext(A[0] + 6, oy, xdim + 6, oy)
-    g.dim_v(xdim, K[1], oy, "y_{K1} = 10,5 м", side=+1)
+    g.dim_v(xdim, K[1], oy, f"y_{{K1}} = {V['Y3']} м", side=+1)
     yd = oy + 96
     g.line(A[0], oy + 68, A[0], yd + 6, DIM, 0.7)
     g.ext(K[0], K[1] + 5, K[0], yd + 6)
@@ -441,7 +468,7 @@ def fig_right_K2():
     g.text(K[0] + 10, K[1] + 36, "K_{2}", INK, 14, "start", "700")
     # размеры
     g.line(B[0] + 76, oy, xdim + 6, oy, DIM, 0.7)
-    g.dim_v(xdim, K[1], oy, "y_{K2} = 10,5 м", side=+1)
+    g.dim_v(xdim, K[1], oy, f"y_{{K2}} = {V['Y3']} м", side=+1)
     yd = oy + 92
     g.line(B[0], oy + 68, B[0], yd + 30, DIM, 0.7)
     g.ext(K[0], K[1] + 5, K[0], yd + 30)
@@ -452,7 +479,78 @@ def fig_right_K2():
     return g.svg("Правая часть арки, отсечённая по сечению K2")
 
 
-FIGS = dict(FIG1=fig_scheme(), FIG2=fig_signs(), FIG3=fig_whole(False), FIG4=fig_halves(),
+def fig_geom():
+    """Рис. 5 — геометрия круговой оси: центр O, радиусы, угол φ."""
+    g = Svg("fg", 720, 420)
+    s, ox, oy = 10.5, 150, 236
+    T = lambda x, yy: (ox + s * x, oy - s * yy)
+    A, B, Cc = T(0, 0), T(l, 0), T(l / 2, f)
+    O = T(l / 2, -(Rf - f))
+    K1 = T(x1, y_of(x1))
+    M = T(l / 2, 0)
+    # полная окружность бледно, рабочая дуга — жирно
+    g.add(f'<circle cx="{O[0]:.1f}" cy="{O[1]:.1f}" r="{s * Rf:.1f}" fill="none" stroke="{GRAY}" '
+          f'stroke-width="0.8" stroke-dasharray="3 4"/>')
+    g.poly(arch_pts(T, 0, l), INK, 2.6)
+    g.line(*A, *B, DIM, 0.8, "5 4")
+    for p_ in (A, B, Cc):
+        g.hinge(*p_)
+    g.dot(*K1)
+    g.dot(*O, 3.4, INT)
+    # радиусы
+    g.line(*O, *Cc, INT, 1.4)
+    g.line(*O, *K1, INT, 1.6)
+    g.line(*O, *A, INT, 1.2, "6 4")
+    g.text((O[0] + K1[0]) / 2 - 10, (O[1] + K1[1]) / 2, "R", INT, 15, "end", "700", italic=True)
+    g.text((O[0] + A[0]) / 2 - 8, (O[1] + A[1]) / 2 + 16, "R", INT, 15, "end", "700", italic=True)
+    # угол φ у центра — между OC (вертикаль) и OK1
+    a_k = math.degrees(math.atan2(y_of(x1) + (Rf - f), x1 - l / 2))
+    g.arc(O[0], O[1], 46, 90, a_k, "ink", 1.1, head=False)
+    g.text(O[0] + 60 * math.cos(math.radians((90 + a_k) / 2)) - 2,
+           O[1] - 60 * math.sin(math.radians((90 + a_k) / 2)) + 5, "φ", INK, 14, "middle", italic=True)
+    # касательная в K1 и угол φ к горизонтали
+    ux, uy = math.cos(PHI), -math.sin(PHI)
+    g.line(K1[0] - 70 * ux, K1[1] - 70 * uy, K1[0] + 90 * ux, K1[1] + 90 * uy, GRAY, 1.0, "5 4")
+    g.ext(K1[0] + 4, K1[1], K1[0] + 78, K1[1])
+    g.arc(K1[0], K1[1], 58, 0, phi, "ink", 1.1, head=False)
+    g.text(K1[0] + 72 * math.cos(PHI / 2), K1[1] - 72 * math.sin(PHI / 2) + 5, "φ", INK, 14, "middle", italic=True)
+    # прямой угол между радиусом и касательной
+    rx, ry = (O[0] - K1[0]), (O[1] - K1[1])
+    rl = math.hypot(rx, ry)
+    rx, ry = rx / rl * 11, ry / rl * 11
+    tx, ty = ux * 11, uy * 11
+    g.poly([(K1[0] + rx, K1[1] + ry), (K1[0] + rx + tx, K1[1] + ry + ty), (K1[0] + tx, K1[1] + ty)], INK, 1.0)
+    g.text(K1[0] - 72 * ux - 4, K1[1] - 72 * uy + 16, "касательная", GRAY, 12, "end")
+    # подписи
+    g.text(A[0] - 10, A[1] + 20, "A", INK, 14, "end", "700")
+    g.text(B[0] + 10, B[1] + 20, "B", INK, 14, "start", "700")
+    g.text(Cc[0] + 9, Cc[1] - 9, "C", INK, 14, "start", "700")
+    g.text(K1[0] - 12, K1[1] - 6, "K_{1}", INK, 14, "end", "700")
+    g.text(O[0] + 10, O[1] + 18, "O — центр", INT, 13, "start", "700")
+    g.text(M[0] + 6, M[1] + 16, "M", GRAY, 12, "start")
+    # размеры
+    yd = Cc[1] - 40
+    g.ext(K1[0], K1[1] - 6, K1[0], yd - 6)
+    g.ext(Cc[0], Cc[1] - 6, Cc[0], yd - 6)
+    g.dim_h(K1[0], Cc[0], yd, "l/2 − x = 11 м")
+    xv = B[0] + 60
+    g.ext(Cc[0] + 8, Cc[1], xv + 6, Cc[1])
+    g.ext(B[0] + 8, oy, xv + 6, oy)
+    g.ext(O[0] + 8, O[1], xv + 6, O[1])
+    g.dim_v(xv, Cc[1], oy, "f = 14 м", side=+1)
+    g.dim_v(xv, oy, O[1], f"R − f = {V['RmF']} м", side=+1, size=11.5)
+    xl = A[0] - 56
+    g.ext(K1[0] - 8, K1[1], xl - 6, K1[1])
+    g.ext(A[0] - 8, oy, xl - 6, oy)
+    g.dim_v(xl, K1[1], oy, f"y_{{K1}} = {V['Y3']} м", size=11.5)
+    xl2 = xl - 34
+    g.ext(xl - 6, O[1], xl2 - 6, O[1])
+    g.ext(O[0] - 8, O[1], xl - 6, O[1])
+    g.dim_v(xl2, K1[1], O[1], f"√(R² − 11²) = {V['root']} м", size=11.5)
+    return g.svg("Геометрия круговой оси арки")
+
+
+FIGS = dict(FIGG=fig_geom(), FIG1=fig_scheme(), FIG2=fig_signs(), FIG3=fig_whole(False), FIG4=fig_halves(),
             FIG5=fig_left_K1(), FIG6=fig_right_K2(), FIG7=fig_whole(True))
 
 html = Template((HERE / "shablon.html").read_text(encoding="utf-8")).substitute(**V, **FIGS)
