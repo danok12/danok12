@@ -173,11 +173,10 @@ mm_na_ed = 0.187
 for m in re.finditer(r'<g data-panel="(.)" data-ox="([-\d.]+)" data-oy="([-\d.]+)" '
                      r'data-k="([\d.]+)">(.*?)</g>', svg, re.S):
     bukva, ox7, oy7, k7, body = m.group(1), *map(float, m.group(2, 3, 4)), m.group(5)
-    if bukva == "а":
-        check("рис. 7: масштаб, мм на 1 МПа (1 см = 10 МПа)", k7 * mm_na_ed, 1.0, 1e-4, "мм")
+    check("рис. 7: масштаб, мм на 1 МПа (1 см = 10 МПа)", k7 * mm_na_ed, 1.0, 1e-4, "мм")
     rr = [float(c) for c in re.findall(r'class="plane-edge"', body) and
           re.findall(r'<circle cx="[-\d.]+" cy="[-\d.]+" r="([\d.]+)" class="plane-edge"', body)]
-    check(f"рис. 7{bukva}: радиус круга -> МПа", rr[0] / k7, r, 2e-3, "МПа")
+    check(f"рис. 7: радиус круга -> МПа", rr[0] / k7, r, 2e-3, "МПа")
     pts = {nm: ((float(x) - ox7) / k7, (oy7 - float(y)) / k7) for nm, x, y in
            re.findall(r'data-pt="([^"]+)" cx="([-\d.]+)" cy="([-\d.]+)"', body)}
     want = {"O": (0, 0), "D": (SX, 0), "B": (SY, 0), "C": (OC, 0), "K": KP,
@@ -185,8 +184,8 @@ for m in re.finditer(r'<g data-panel="(.)" data-ox="([-\d.]+)" data-oy="([-\d.]+
             "X": (SX, TXY), "P": tochka_ploshchadki(15), "P'": tochka_ploshchadki(105)}
     for nm, (ws, wt) in want.items():
         if nm in pts:
-            check(f"рис. 7{bukva}: точка {nm}, σ", pts[nm][0], ws, 1e-2, "МПа")
-            check(f"рис. 7{bukva}: точка {nm}, τ", pts[nm][1], wt, 1e-2, "МПа")
+            check(f"рис. 7: точка {nm}, σ", pts[nm][0], ws, 1e-2, "МПа")
+            check(f"рис. 7: точка {nm}, τ", pts[nm][1], wt, 1e-2, "МПа")
 
 
 print("\n" + "=" * 84)

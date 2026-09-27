@@ -611,9 +611,11 @@ def dug(cx, cy, r, a0, a1):
 def fig26_mohr():
     """Круг Мора в масштабе тетради: 1 см = 10 МПа (1 МПа = 1 мм на листе).
 
-    Две панели на одних осях: (а) построение — D, B, C, K, радиус CK;
-    (б) что снимается с круга — главные напряжения, углы через полюс K,
-    экстремальные касательные и площадки под α = 15°.
+    Всё на одной окружности, как в конспекте: построение (D, B, C, K,
+    радиус CK, размеры) и то, что с круга снимается (σ₁, σ₂, углы через
+    полюс K, экстремальные касательные T₁, T₂, площадки под α = 15° — P, P′).
+    Числа у точек T, P, P′ не пишутся — они в подписи к рисунку, чтобы
+    не загромождать чертёж; у точек только буквы.
 
     Полюс K(σy; τxy): прямая из K под углом α к оси σ пересекает круг
     в точке (σα; τα) площадки с нормалью под α к оси x — так в конспекте
@@ -638,26 +640,25 @@ def fig26_mohr():
 
     ox = 122 * k                   # σ = 0 на расстоянии 122 мм от левого края
     w = ox + 30 * k
-    top_a, top_b = 62 * k, 182 * k            # оси τ = 0 двух панелей
-    h = top_b + 58 * k
+    oy0 = 62 * k                  # ось τ = 0
+    h = oy0 + 70 * k
     s = HEAD.format(w=f"{w:.0f}", h=f"{h:.0f}", m=MID,
                     alt="Круг Мора: построение и что с него снимается")
 
-    def osnova(oy, bukva, zagolovok):
+    def osnova(oy, bukva):
         X = lambda v: ox + v * k
         Y = lambda v: oy - v * k
         g = (f'<g data-panel="{bukva}" data-ox="{ox:.3f}" data-oy="{oy:.3f}" '
              f'data-k="{k:.5f}">\n')
         for v in range(-110, 11, 10):                          # сетка 10 МПа
-            g += ln((X(v), Y(50)), (X(v), Y(-50)), "grid")
-        for v in range(-50, 51, 10):
+            g += ln((X(v), Y(40)), (X(v), Y(-40)), "grid")
+        for v in range(-40, 41, 10):
             g += ln((X(-110), Y(v)), (X(10), Y(v)), "grid")
         g += ar((X(-114), Y(0)), (X(17), Y(0)), "ax", small=True)
         g += txt(X(18), Y(0) + 5, "σ, МПа", "ax-lbl", "start")
-        g += ar((X(0), Y(-52)), (X(0), Y(53)), "ax", small=True)
-        g += txt(X(0) + 9, Y(53) + 9, "τ, МПа", "ax-lbl", "start")
+        g += ar((X(0), Y(-44)), (X(0), Y(47)), "ax", small=True)
+        g += txt(X(0) + 9, Y(47) + 9, "τ, МПа", "ax-lbl", "start")
         g += txt(X(1.2), Y(0) + 17, "O", "lbl halo", "start")
-        g += txt(X(-110), Y(50) - 6, zagolovok, "ttl", "start")
         g += (f'<circle cx="{X(c_):.2f}" cy="{Y(0):.2f}" r="{r_ * k:.2f}" '
               f'class="plane-edge"/>\n')
         return g, X, Y
@@ -679,40 +680,34 @@ def fig26_mohr():
     sxs, sys_ = sub("σ", "x"), sub("σ", "y")
     tau_xy = sub("τ", "xy")
 
-    # ============================== а) построение
-    g, X, Y = osnova(top_a, "а", "а) построение круга  (сетка — 10 МПа, 1 см = 10 МПа)")
+    g, X, Y = osnova(oy0, "1")
     D, B, C, Kp = (sx_, 0.0), (sy_, 0.0), (c_, 0.0), (sy_, t_)
+    T1, T2 = (c_, r_), (c_, -r_)
+    Xp = (sx_, t_)                                 # площадка x, α = 0
+
+    # ---- построение: катеты CB и BK, гипотенуза CK = R
     g += ln((X(C[0]), Y(0)), (X(Kp[0]), Y(Kp[1])), "tri")        # CK = R
     g += ln((X(B[0]), Y(0)), (X(Kp[0]), Y(Kp[1])), "tri")        # BK = τxy
     pr = 9
     g += ('<polyline points="' + " ".join(f"{a:.1f},{b:.1f}" for a, b in (
         (X(B[0]) - pr, Y(0)), (X(B[0]) - pr, Y(0) + pr), (X(B[0]), Y(0) + pr)))
         + '" class="right-angle"/>\n')
-    # подписи вдоль катета и гипотенузы
-    g += txt_r(X(B[0]) + 11, Y(t_ / 2), f"BK = {tau_xy} = {sg(t_, 0)}", -90)
+    g += txt_r(X(B[0]) + 11, Y(-11), f"{tau_xy} = {sg(t_, 0)}", -90)
     ug = math.degrees(math.atan2(Y(Kp[1]) - Y(0), X(Kp[0]) - X(C[0])))
     mx, my = (X(C[0]) + X(Kp[0])) / 2, (Y(0) + Y(Kp[1])) / 2
     nx, ny = math.sin(math.radians(ug)), -math.cos(math.radians(ug))
-    g += txt_r(mx - 13 * nx, my - 13 * ny + 5, f"R = CK = {sg(r_)}", ug)
-    # размерная цепочка DC = CB над кругом
-    g += razmer(X, Y, D[0], C[0], 45, f"DC = {sg((sy_ - sx_) / 2, 1)}")
-    g += razmer(X, Y, C[0], B[0], 45, f"CB = {sg((sy_ - sx_) / 2, 1)}")
-    # размеры от начала координат под кругом
+    g += txt_r(mx - 12 * nx - 14, my - 12 * ny - 6, f"R = {sg(r_)}", ug)
+    # размерная цепочка DC = CB над кругом, размеры от O — под кругом
+    # DC = CB — короткой цепочкой прямо над осью
+    for a, b in ((D[0], C[0]), (C[0], B[0])):
+        for v in (a, b):
+            g += ln((X(v), Y(1)), (X(v), Y(7.5)), "ext")
+        g += ar2((X(a), Y(5.5)), (X(b), Y(5.5)), "dim")
+    g += txt((X(D[0]) + X(C[0])) / 2, Y(5.5) - 5, f"DC = {sg((sy_ - sx_) / 2, 1)}", "val halo")
+    g += txt((X(C[0]) + X(B[0])) / 2 - 3.5 * k, Y(5.5) - 5, f"CB = {sg((sy_ - sx_) / 2, 1)}", "val halo")
     g += razmer(X, Y, 0.0, B[0], -46, f"OB = {sys_} = {sg(sy_, 0)}")
-    g += razmer(X, Y, 0.0, C[0], -52.5, f"OC = ({sxs} + {sys_})/2 = {sg(c_)}")
-    g += razmer(X, Y, 0.0, D[0], -59, f"OD = {sxs} = {sg(sx_, 0)}")
-    for nm, v in (("O", (0.0, 0.0)), ("D", D), ("C", C), ("B", B), ("K", Kp)):
-        g += tochka(X, Y, nm, v)
-    g += txt(X(D[0]) - 5, Y(0) - 7, "D", "lbl halo", "end")
-    g += txt(X(C[0]) - 5, Y(0) - 7, "C", "lbl halo", "end")
-    g += txt(X(B[0]) + 5, Y(0) - 7, "B", "lbl halo", "start")
-    g += txt(X(Kp[0]) + 7, Y(Kp[1]) + 18, "K", "lbl halo", "start")
-    s += g + "</g>\n"
-
-    # ============================== б) что снимается с круга
-    g, X, Y = osnova(top_b, "б", "б) что снимается с круга; K — полюс, из него проводятся лучи")
-    T1, T2 = (c_, r_), (c_, -r_)
-    Xp = (sx_, t_)                                 # площадка x, α = 0
+    g += razmer(X, Y, 0.0, C[0], -51.5, f"OC = ({sxs} + {sys_})/2 = {sg(c_)}")
+    g += razmer(X, Y, 0.0, D[0], -57, f"OD = {sxs} = {sg(sx_, 0)}")
 
     def luch(p_from, p_to, za, cls, metka=None, m_off=(0, 0)):
         """Прямая через p_from и p_to, продлённая за p_to на za МПа (со стрелкой)."""
@@ -726,41 +721,38 @@ def fig26_mohr():
             out += txt(X(b[0]) + m_off[0], Y(b[1]) + m_off[1], metka, "lbl halo")
         return out
 
-    # горизонталь через полюс: хорда K–X (α = 0) и отсчётная линия вправо
-    g += ln((X(Xp[0]), Y(t_)), (X(sy_ + 21), Y(t_)), "norm")
-    # главные направления: лучи из K через σ₁ и σ₂
+    # ---- что снимается: лучи из полюса K
+    g += ln((X(Xp[0]), Y(t_)), (X(sy_ + 21), Y(t_)), "norm")   # горизонталь K–X
     g += luch((sy_, t_), (s1, 0.0), 24, "ray", "1", (8, 4))
-    g += luch((s2, 0.0), (sy_, t_), 24, "ray", "2", (4, 18))
-    # площадки под α = 15°: ν под α, t под α + 90°
+    g += luch((s2, 0.0), (sy_, t_), 16, "ray", "2", (6, 16))
     g += luch(Pn, (sy_, t_), 20, "ray2", "ν", (10, 3))
-    g += luch(Pt, (sy_, t_), 17, "ray2", "t", (12, 8))
+    g += luch(Pt, (sy_, t_), 11, "ray2", "t", (11, 6))
     # углы
     g += dug(X(s1), Y(0), 11 * k, 0, a1)
     g += txt(X(s1) + 12.5 * k, Y(0) - 5.5 * k, "α₁", "ang halo", "start")
-    g += txt(X(sy_ + 51 * math.cos(math.radians(a1)) - 2.5), Y(t_ + 51 * math.sin(math.radians(a1))) + 5,
+    g += txt(X(sy_ + 51 * math.cos(math.radians(a1)) - 2.5),
+             Y(t_ + 51 * math.sin(math.radians(a1))) + 5,
              f"α₁ = {sg(a1)}°", "val halo", "end")
     g += dug(X(s2), Y(0), 15 * k, a2, 0)
     g += txt(X(s2) + 17 * k, Y(0) + 4.2 * k, f"α₂ = {sg(a2)}°", "val halo", "start")
     g += dug(X(sy_), Y(t_), 13 * k, 0, AL)
     g += txt(X(sy_) + 14.5 * k, Y(t_) - 0.6 * k, f"α = {AL:.0f}°", "val halo", "start")
 
-    for nm, v in (("O", (0.0, 0.0)), ("C", (c_, 0.0)), ("K", (sy_, t_)),
+    for nm, v in (("O", (0.0, 0.0)), ("D", D), ("C", C), ("B", B), ("K", Kp),
                   ("σ1", (s1, 0.0)), ("σ2", (s2, 0.0)), ("T1", T1), ("T2", T2),
                   ("X", Xp), ("P", Pn), ("P'", Pt)):
         g += tochka(X, Y, nm, v)
-    g += txt(X(c_) - 5, Y(0) - 7, "C", "lbl halo", "end")
+    g += txt(X(D[0]) - 5, Y(0) - 7, "D", "lbl halo", "end")
+    g += txt(X(C[0]) - 5, Y(0) + 18, "C", "lbl halo", "end")
+    g += txt(X(B[0]) + 5, Y(0) - 7, "B", "lbl halo", "start")
     g += txt(X(sy_) + 16, Y(t_) + 30, "K", "lbl halo", "start")
     g += txt(X(s1) + 4, Y(0) + 18, f"σ₁ = {sg(s1)}", "val halo", "start")
     g += txt(X(s2) - 6, Y(0) - 7, f"σ₂ = {sg(s2)}", "val halo", "end")
-    g += txt(X(Xp[0]) - 7, Y(Xp[1]) + 5, f"X ({sxs}; {tau_xy})", "val halo", "end")
-    g += txt(X(T1[0]) - 6, Y(T1[1]) - 8,
-             f"T₁: τ₁ = +{sg(r_)};  σ′ = OC = {sg(c_)}", "val halo", "end")
-    g += txt(X(T2[0]) + 7, Y(T2[1]) + 17, f"T₂: τ₂ = {sg(-r_)}", "val halo", "start")
-    g += txt(X(Pn[0]) - 7, Y(Pn[1]) + 17,
-             f"P: {sub('σ', 'ν')} = {sg(Pn[0])};  {sub('τ', 'tν')} = {sg(Pn[1])}",
-             "val halo", "end")
-    g += txt(X(Pt[0]) + 7, Y(Pt[1]) - 8,
-             f"P′: {sub('σ', 't')} = {sg(Pt[0])}", "val halo", "start")
+    g += txt(X(Xp[0]) - 7, Y(Xp[1]) + 6, "X", "lbl halo", "end")
+    g += txt(X(T1[0]) - 7, Y(T1[1]) - 6, "T₁", "lbl halo", "end")
+    g += txt(X(T2[0]) + 7, Y(T2[1]) + 6, "T₂", "lbl halo", "start")
+    g += txt(X(Pn[0]) + 1, Y(Pn[1]) + 21, "P", "lbl halo", "middle")
+    g += txt(X(Pt[0]) + 8, Y(Pt[1]) - 5, "P′", "lbl halo", "start")
     s += g + "</g>\n"
     s += "</svg>\n"
     return s
