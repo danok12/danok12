@@ -1,0 +1,950 @@
+<title>Функции и их свойства</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;1,500&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --ground:#F4F7F8;
+  --surface:#FFFFFF;
+  --surface-2:#EAF0F2;
+  --ink:#111D22;
+  --ink-soft:#40565E;
+  --muted:#6E858D;
+  --rule:#D3DFE3;
+  --rule-soft:#E3EBEE;
+  --primary:#0F5A6E;
+  --primary-soft:#DCEEF2;
+  --coral:#B4423A;
+  --coral-soft:#FAE7E4;
+  --moss:#33734A;
+  --moss-soft:#E1F0E5;
+  --shadow:0 1px 2px rgba(17,29,34,.05);
+  --display:"Spectral",Georgia,"Times New Roman",serif;
+  --body:"Source Sans 3","Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C1417;
+    --surface:#131F23;
+    --surface-2:#18272C;
+    --ink:#E6EFF1;
+    --ink-soft:#B4C7CD;
+    --muted:#8AA3AB;
+    --rule:#27383E;
+    --rule-soft:#1E2E33;
+    --primary:#59B7CC;
+    --primary-soft:#12313A;
+    --coral:#E8887E;
+    --coral-soft:#33201E;
+    --moss:#7CBE92;
+    --moss-soft:#172C1F;
+    --shadow:0 1px 2px rgba(0,0,0,.3);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C1417;
+  --surface:#131F23;
+  --surface-2:#18272C;
+  --ink:#E6EFF1;
+  --ink-soft:#B4C7CD;
+  --muted:#8AA3AB;
+  --rule:#27383E;
+  --rule-soft:#1E2E33;
+  --primary:#59B7CC;
+  --primary-soft:#12313A;
+  --coral:#E8887E;
+  --coral-soft:#33201E;
+  --moss:#7CBE92;
+  --moss-soft:#172C1F;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.62;
+  margin:0;
+  padding-inline:20px;
+  padding-block:0 64px;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px;margin:0 auto}
+p{margin:0 0 .85em}
+a{color:var(--primary)}
+strong{font-weight:600}
+em{font-style:italic}
+sup{font-size:.72em;line-height:0}
+
+/* ---------- masthead ---------- */
+.masthead{border-bottom:2px solid var(--ink);padding-block:44px 18px;margin-bottom:34px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--primary);margin:0 0 14px}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(34px,7vw,54px);line-height:1.06;letter-spacing:-.015em;margin:0 0 14px;text-wrap:balance}
+.standfirst{font-family:var(--display);font-style:italic;font-size:clamp(17px,2.4vw,20px);color:var(--ink-soft);max-width:60ch;margin:0 0 22px}
+.facts{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0}
+.facts li{font-family:var(--mono);font-size:12px;border:1px solid var(--rule);background:var(--surface);color:var(--ink-soft);border-radius:2px;padding:4px 9px;margin:0}
+
+/* ---------- run of show ---------- */
+.runsheet{margin-bottom:24px}
+.runsheet ol{list-style:none;margin:0;padding:0}
+.runsheet li{display:grid;grid-template-columns:76px 1fr;gap:16px;align-items:baseline;padding-block:9px;border-bottom:1px solid var(--rule-soft);margin:0}
+.runsheet li:first-child{border-top:1px solid var(--rule-soft)}
+.runsheet .clock{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--primary)}
+.runsheet a{text-decoration:none;color:var(--ink);border-bottom:1px solid transparent}
+.runsheet a:hover{border-bottom-color:var(--primary)}
+.runsheet a:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+
+/* ---------- blocks ---------- */
+section.block{margin-block:0 46px;scroll-margin-top:16px}
+.blockhead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-top:2px solid var(--ink);padding-top:12px;margin-bottom:18px}
+.minutes{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;color:var(--surface);background:var(--primary);border-radius:2px;padding:3px 8px;white-space:nowrap}
+h2{font-family:var(--display);font-weight:600;font-size:clamp(24px,3.6vw,31px);line-height:1.18;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:20px;margin:26px 0 8px;text-wrap:balance}
+h4{font-family:var(--body);font-weight:600;font-size:15px;letter-spacing:.02em;margin:18px 0 6px;color:var(--ink-soft)}
+ul,ol{padding-left:1.25em;margin:0 0 .9em}
+li{margin-bottom:.3em}
+
+/* ---------- math bits ---------- */
+.mono,code{font-family:var(--mono);font-size:.9em}
+.eq{font-family:var(--mono);font-size:14.5px;background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--primary);border-radius:2px;padding:12px 14px;margin:0 0 16px;overflow-x:auto;white-space:pre;line-height:1.75;box-shadow:var(--shadow)}
+
+/* ---------- callouts ---------- */
+.callout{border:1px solid var(--rule);background:var(--surface);border-radius:3px;padding:15px 17px;margin:0 0 18px;box-shadow:var(--shadow)}
+.callout > :last-child{margin-bottom:0}
+.callout .tag,.card .tag{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;margin-bottom:7px}
+.theorem{border-left:3px solid var(--primary)}
+.theorem .tag{color:var(--primary)}
+.theorem .body{font-family:var(--display);font-size:18px;line-height:1.5}
+.trap{border-left:3px solid var(--coral);background:var(--coral-soft)}
+.trap .tag{color:var(--coral)}
+.check{border-left:3px solid var(--moss);background:var(--moss-soft)}
+.check .tag{color:var(--moss)}
+.say{border:none;border-left:2px solid var(--rule);background:transparent;box-shadow:none;border-radius:0;padding:2px 0 2px 16px;font-family:var(--display);font-size:18px;font-style:italic;color:var(--ink-soft)}
+.say .tag{font-style:normal;color:var(--muted)}
+
+/* ---------- theory card ---------- */
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:16px 18px;margin:0 0 18px;box-shadow:var(--shadow)}
+.card > :last-child{margin-bottom:0}
+.card .tag{color:var(--primary);margin-bottom:9px}
+.card .eq{box-shadow:none}
+.rules{font-family:var(--mono);font-size:14px;line-height:1.9;display:grid;grid-template-columns:auto 1fr;gap:2px 26px;margin:0 0 12px}
+.rules span:nth-child(odd){color:var(--ink)}
+.rules span:nth-child(even){color:var(--ink-soft)}
+.rules .hl{color:var(--primary)}
+@media (max-width:560px){.rules{grid-template-columns:1fr;gap:0}.rules span:nth-child(even){padding-left:14px;margin-bottom:6px}}
+
+/* ---------- schema ---------- */
+.schema{list-style:none;counter-reset:s;margin:0 0 16px;padding:0;display:grid;gap:0}
+.schema li{counter-increment:s;display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:baseline;padding-block:8px;border-bottom:1px solid var(--rule-soft);margin:0}
+.schema li:first-child{border-top:1px solid var(--rule-soft)}
+.schema li::before{content:counter(s);font-family:var(--mono);font-size:13px;color:var(--surface);background:var(--primary);border-radius:2px;text-align:center;padding:1px 0}
+.schema small{display:block;color:var(--muted);font-size:14px}
+
+/* ---------- tasks ---------- */
+.task{border:1px dashed var(--rule);border-radius:3px;padding:15px 17px;margin:0 0 14px;background:var(--surface)}
+.task > h4{margin-top:0}
+.task > :last-child{margin-bottom:0}
+.task .wrong{font-family:var(--mono);font-size:14px;color:var(--ink-soft);border-left:2px solid var(--coral);padding-left:12px;margin:8px 0 0}
+details{margin-top:10px;border-top:1px solid var(--rule-soft);padding-top:10px}
+summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";display:inline-block}
+details[open] summary::before{content:"▾ "}
+summary:focus-visible{outline:2px solid var(--primary);outline-offset:3px;border-radius:2px}
+details > :nth-child(2){margin-top:12px}
+details > :last-child{margin-bottom:0}
+
+.drill{list-style:none;counter-reset:d;display:grid;grid-template-columns:repeat(2,1fr);gap:9px 22px;margin:0 0 14px;padding:0}
+.drill li{counter-increment:d;position:relative;margin:0;padding:0 0 7px 36px;font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;border-bottom:1px solid var(--rule-soft)}
+.drill li::before{content:counter(d) ".";position:absolute;left:0;top:.15em;color:var(--muted);font-size:12px}
+.drill.three{grid-template-columns:repeat(3,1fr)}
+.drill.one{grid-template-columns:1fr}
+.drill.e li::before{content:"E" counter(d)}
+@media (max-width:760px){.drill.three{grid-template-columns:repeat(2,1fr);gap:8px 16px}}
+@media (max-width:520px){.drill,.drill.three{grid-template-columns:1fr}}
+.sub{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+
+.ans{font-family:var(--mono);font-size:13.5px;line-height:2;background:var(--moss-soft);border:1px solid var(--rule);border-left:3px solid var(--moss);border-radius:2px;padding:11px 14px;margin:0 0 10px}
+.ans b{font-weight:600;color:var(--moss)}
+.timer{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;background:var(--coral-soft);color:var(--coral);border-radius:2px;padding:3px 8px;margin-left:8px;vertical-align:2px}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto;margin:0 0 18px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+thead th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule);font-weight:600}
+tbody tr:hover{background:var(--surface-2)}
+td.m,th.m{font-family:var(--mono);font-size:13.5px;white-space:nowrap}
+table.wide{min-width:640px}
+
+/* ---------- plots ---------- */
+.plots{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 18px}
+@media (max-width:700px){.plots{grid-template-columns:repeat(2,1fr)}}
+figure{margin:0}
+.plots figure{background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:8px 8px 10px}
+figure svg{display:block;max-width:100%;height:auto;margin:0 auto}
+figcaption{font-size:14px;color:var(--ink-soft);margin-top:6px;line-height:1.35}
+figcaption b{font-family:var(--mono);font-weight:600;color:var(--ink);font-size:13.5px}
+.bigplot{background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:10px 10px 12px;margin:0 0 14px;overflow-x:auto}
+.bigplot figcaption{text-align:center;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+svg .grid line{stroke:var(--rule-soft);stroke-width:1}
+svg .axis line{stroke:var(--ink-soft);stroke-width:1.3}
+svg .axis path{fill:var(--ink-soft)}
+svg text{font-family:var(--mono);font-size:10px;fill:var(--muted);paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}
+svg text.name{font-size:12px;fill:var(--ink-soft);font-style:italic}
+svg .curve{fill:none;stroke:var(--primary);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
+svg .dot{fill:var(--primary);stroke:none}
+svg .dot.open{fill:var(--surface);stroke:var(--primary);stroke-width:1.6}
+svg .dot.mark{fill:var(--coral)}
+svg .asym{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 4;fill:none}
+
+/* ---------- cheatsheet ---------- */
+.cheat{background:var(--surface-2);border:1px solid var(--rule);border-radius:3px;padding:20px 22px;margin:0 0 22px}
+.cheat h3{margin-top:0}
+.cheat .eq{background:var(--surface)}
+
+footer{border-top:1px solid var(--rule);margin-top:8px;padding-top:18px;font-size:14px;color:var(--muted)}
+
+@media (max-width:520px){
+  body{font-size:16px;padding-inline:16px}
+  .runsheet li{grid-template-columns:66px 1fr;gap:10px}
+  .eq{font-size:12.5px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Алгебра и начала анализа · Алимов · глава II, §6</p>
+  <h1>Функции и их свойства</h1>
+  <p class="standfirst">Как описать функцию по формуле и по графику: семь вопросов, которые задаются любой функции, степенная функция и девять типовых ошибок. Занятие на 90 минут, все ответы пересчитаны.</p>
+  <ul class="facts">
+    <li>10 класс</li>
+    <li>схема из 7 пунктов</li>
+    <li>6 случаев y = xᵖ</li>
+    <li>126 задач с ответами</li>
+  </ul>
+</header>
+
+<section class="block" id="about">
+  <div class="blockhead"><h2>О чём занятие</h2></div>
+  <p class="t">Запрос ученика: <em>«позанимаемся функциями и их описанием», учебник Алимова 10–11</em>. В учебнике это глава II «Степенная функция»: §6 «Степенная функция, её свойства и график» и начало §7 «Взаимно обратные функции». Схема описания функции отсюда дальше работает во всех главах: показательная, логарифмическая, тригонометрические функции.</p>
+
+  <div class="callout theorem">
+    <span class="tag">Главная мысль занятия</span>
+    <p class="body">Описать функцию — значит ответить на <strong>семь вопросов, всегда в одном порядке</strong>. Кто знает вопросы, тот описывает любую функцию, даже незнакомую. Кто учит свойства каждой функции отдельно, путается уже на третьей.</p>
+  </div>
+
+  <div class="card">
+    <span class="tag">Схема описания функции</span>
+    <ol class="schema">
+      <li><div><strong>Область определения</strong><small>при каких x формула имеет смысл; по графику — проекция на ось Ox</small></div></li>
+      <li><div><strong>Множество значений</strong><small>какие y функция принимает; по графику — проекция на ось Oy</small></div></li>
+      <li><div><strong>Чётность или нечётность</strong><small>симметрия графика относительно оси Oy или начала координат</small></div></li>
+      <li><div><strong>Нули</strong><small>при каких x значение равно нулю; точки пересечения с осью Ox</small></div></li>
+      <li><div><strong>Промежутки знакопостоянства</strong><small>где y &gt; 0 и где y &lt; 0</small></div></li>
+      <li><div><strong>Промежутки возрастания и убывания</strong><small>где график идёт вверх и где вниз, если смотреть слева направо</small></div></li>
+      <li><div><strong>Наибольшее и наименьшее значения; ограниченность</strong><small>самая высокая и самая низкая точки графика, если они есть</small></div></li>
+    </ol>
+    <p>Периодичность появится в тригонометрии, точки максимума и минимума — в главе о производной.</p>
+  </div>
+
+  <h3>Обозначения — как у Алимова</h3>
+  <p>В учебнике промежутки почти всегда записаны <strong>неравенствами</strong>: «возрастает на промежутке x ≥ 0». Пишем так же, а скобочную запись держим рядом, чтобы узнавать её в других книгах.</p>
+  <div class="tablewrap">
+    <table class="wide">
+      <thead><tr><th>У Алимова</th><th>Часто пишут иначе</th><th>Что это</th></tr></thead>
+      <tbody>
+        <tr><td>«область определения: x ≥ 0»</td><td class="m">D(f) = [0; +∞)</td><td>при каких x формула имеет смысл</td></tr>
+        <tr><td>«множество значений: y ≥ 0»</td><td class="m">E(f) = [0; +∞)</td><td>какие y функция принимает; ещё говорят «область значений»</td></tr>
+        <tr><td>«возрастает на промежутке x ≥ 0»</td><td class="m">возрастает на [0; +∞)</td><td>промежуток возрастания</td></tr>
+        <tr><td>«множество R»</td><td class="m">ℝ, (−∞; +∞)</td><td>все действительные числа</td></tr>
+        <tr><td>x<sup>1/3</sup> определена при x ≥ 0</td><td>в части источников x<sup>1/3</sup> = ∛x при всех x</td><td>ловушка блока A</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout trap t">
+    <span class="tag">Сверьте номера параграфов по своему изданию</span>
+    <p>Тексты учебника из среды, где готовился материал, недоступны. Номера §6 и §7 подтверждены оглавлением издания «Просвещения», остальное — по структуре учебника. Если ученик в 11 классе и под «функциями» имеет в виду тригонометрические, схема та же, меняются только примеры.</p>
+  </div>
+</section>
+
+<section class="block t" id="plan">
+  <div class="blockhead"><h2>План занятия</h2></div>
+  <div class="runsheet">
+    <ol>
+      <li><span class="clock">0–5</span><a href="#enter">Что такое функция: четыре устных вопроса</a></li>
+      <li><span class="clock">5–12</span><a href="#diag">Входная диагностика: 8 задач</a></li>
+      <li><span class="clock">12–24</span><a href="#blockA">Блок A. Область определения</a></li>
+      <li><span class="clock">24–36</span><a href="#blockB">Блок B. Значения, нули, знаки</a></li>
+      <li><span class="clock">36–48</span><a href="#blockC">Блок C. Чётность и нечётность</a></li>
+      <li><span class="clock">48–64</span><a href="#blockD">Блок D. Монотонность и степенная функция</a></li>
+      <li><span class="clock">64–78</span><a href="#blockE">Блок E. Описание функции по схеме</a></li>
+      <li><span class="clock">78–86</span><a href="#blockF">Блок F. Найди ошибку</a></li>
+      <li><span class="clock">86–90</span><a href="#hw">Итог и домашнее задание</a></li>
+    </ol>
+  </div>
+  <div class="callout say">
+    <span class="tag">План Б, если графики 9 класса забыты</span>
+    Девяносто минут — темп для ученика, который уверенно помнит параболу, гиперболу и корень. Если диагностика показала, что нет, делим на два занятия: <strong>первое</strong> — блоки A, B, C и задачи Н1–Н5; <strong>второе</strong> — блоки D, E и Н6–Н8. Разрез естественный: второе занятие — это как раз §6 учебника.
+  </div>
+</section>
+
+<section class="block" id="enter">
+  <div class="blockhead"><span class="minutes">0–5 мин</span><h2>Что такое функция</h2></div>
+  <div class="callout say t">
+    <span class="tag">Говорим ученику</span>
+    Функция — это правило, которое каждому допустимому x даёт ровно одно y. Не «формула»: формула только один из способов задать правило. Сегодня научимся по формуле или по графику рассказывать о функции всё — где она живёт, какие значения принимает, где растёт и где падает.
+  </div>
+  <div class="callout theorem">
+    <span class="tag">Определение</span>
+    <p class="body">Функция — правило, по которому каждому значению x из некоторого множества ставится в соответствие <strong>единственное</strong> число y. Пишут y = f(x); x — аргумент, y — значение функции.</p>
+    <p style="margin-top:10px">Задать функцию можно формулой, графиком, таблицей или словами. <strong>Проверка по графику:</strong> любая вертикальная прямая пересекает график функции не больше чем в одной точке.</p>
+  </div>
+
+  <h3>Разминка: функция или нет?</h3>
+  <ol class="drill one">
+    <li style="font-family:var(--body);font-size:16px">Каждому ученику класса сопоставлен его рост.</li>
+    <li style="font-family:var(--body);font-size:16px">Каждому числу x сопоставлены числа, квадрат которых равен x.</li>
+    <li style="font-family:var(--body);font-size:16px">Каждому натуральному числу сопоставлена его последняя цифра.</li>
+    <li style="font-family:var(--body);font-size:16px">Задаёт ли уравнение x² + y² = 25 переменную y как функцию x?</li>
+  </ol>
+  <details>
+    <summary>Ответы</summary>
+    <p class="ans"><b>1)</b> функция: у человека один рост &nbsp; <b>2)</b> не функция: числу 4 соответствуют 2 и −2 &nbsp; <b>3)</b> функция: разные числа могут дать одну цифру, это разрешено &nbsp; <b>4)</b> нет: при x = 3 получаем y = 4 и y = −4</p>
+    <p class="t">Вопрос 3 важен: ученики путают «одному x одно y» с «одному y одно x». Второе функции не требуется.</p>
+  </details>
+</section>
+
+<section class="block" id="diag">
+  <div class="blockhead"><span class="minutes">5–12 мин</span><h2>Входная диагностика</h2></div>
+  <p>Восемь коротких задач по всем блокам занятия. Решаем молча, без подсказок.<span class="timer">7 минут</span></p>
+  <ol class="drill">
+    <li>f(x) = x² − 3x. Найдите f(−2).</li>
+    <li>Область определения y = 1/(x − 4)</li>
+    <li>Область определения y = √(x + 3)</li>
+    <li>Нули функции y = x² − 9</li>
+    <li>Множество значений y = x² + 2</li>
+    <li>Чётна ли функция y = x⁴ + 1?</li>
+    <li>Возрастает или убывает y = −2x + 5?</li>
+    <li>Лежит ли точка (−2; −8) на графике y = x³?</li>
+  </ol>
+  <details>
+    <summary>Ответы</summary>
+    <p class="ans"><b>1)</b> 10 &nbsp; <b>2)</b> x ≠ 4 &nbsp; <b>3)</b> x ≥ −3 &nbsp; <b>4)</b> −3; 3 &nbsp; <b>5)</b> y ≥ 2 &nbsp; <b>6)</b> да, чётная &nbsp; <b>7)</b> убывает на R &nbsp; <b>8)</b> да, (−2)³ = −8</p>
+  </details>
+  <div class="callout check t">
+    <span class="tag">Как читать результат</span>
+    <ul style="margin-bottom:0">
+      <li><strong>Ошибка в 1 или 8</strong> → нет понятия «значение функции», начинаем с него и не торопимся.</li>
+      <li><strong>Ошибка в 2–3</strong> → блок A полностью.</li>
+      <li><strong>Ошибка в 4–5</strong> → в блоке B главное — не путать нули с множеством значений.</li>
+      <li><strong>Ошибка в 6</strong> → блок C с самого определения.</li>
+      <li><strong>Ошибка в 7</strong> → в блоке D повторить линейную функцию: знак k решает всё.</li>
+      <li><strong>Всё верно за 5 минут</strong> → блоки A–C бегло, время отдаём блокам D и E.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="block" id="blockA">
+  <div class="blockhead"><span class="minutes">12–24 мин</span><h2>Блок A. Область определения</h2></div>
+  <p><strong>Область определения</strong> — все значения x, при которых формула имеет смысл. Ищем, что может «сломать» формулу.</p>
+
+  <div class="card">
+    <span class="tag">Что может сломать формулу</span>
+    <div class="rules">
+      <span>дробь</span><span>знаменатель ≠ 0</span>
+      <span>√, ⁴√ — корень чётной степени</span><span>подкоренное выражение ≥ 0</span>
+      <span>√ в знаменателе</span><span>подкоренное выражение &gt; 0</span>
+      <span>x⁻ⁿ = 1/xⁿ</span><span>x ≠ 0</span>
+      <span>xᵖ, p &gt; 0 нецелое</span><span class="hl">x ≥ 0 &nbsp;(по учебнику)</span>
+      <span>xᵖ, p &lt; 0 нецелое</span><span class="hl">x &gt; 0 &nbsp;(по учебнику)</span>
+      <span>∛ и корни нечётной степени</span><span>ограничений нет</span>
+    </div>
+    <p>Если условий несколько, выполняться должны <strong>все сразу</strong> — пишем систему.</p>
+  </div>
+
+  <div class="callout trap">
+    <span class="tag">Ловушка учебника: ∛x и x<sup>1/3</sup> — разные функции</span>
+    <p>У Алимова степень с нецелым показателем определена только для неотрицательного основания. Поэтому <span class="mono">y = ∛x</span> определена при всех x, а <span class="mono">y = x<sup>1/3</sup></span> — только при x ≥ 0. Задачи A10–A11 и C14–C15 стоят парами именно ради этого.</p>
+  </div>
+
+  <div class="callout theorem">
+    <span class="tag">Разбор на доске</span>
+    <p class="body" style="font-family:var(--mono);font-size:15px">y = √(x + 2) + 1/(x − 3)</p>
+    <div class="eq">корень:  x + 2 ≥ 0   →  x ≥ −2
+дробь:   x − 3 ≠ 0   →  x ≠ 3
+вместе:  x ≥ −2, x ≠ 3          [−2; 3) ∪ (3; +∞)</div>
+    <p class="t">Проговорить: «нашёл одно условие — ищу следующее». Вторую половину теряют чаще всего (ошибка Э1).</p>
+  </div>
+
+  <h3>Практика — 14 задач<span class="timer">8 минут</span></h3>
+  <ol class="drill">
+    <li>y = 3x − 7</li>
+    <li>y = 5/(x + 2)</li>
+    <li>y = (x + 1)/(x² − 16)</li>
+    <li>y = √(6 − 2x)</li>
+    <li>y = √(x² − 25)</li>
+    <li>y = 1/√(x − 1)</li>
+    <li>y = x⁻³</li>
+    <li>y = x<sup>2/5</sup></li>
+    <li>y = x<sup>−1/2</sup></li>
+    <li>y = ∛(x − 8)</li>
+    <li>y = (x − 8)<sup>1/3</sup></li>
+    <li>y = √(x + 2) + 1/(x − 3)</li>
+    <li>y = √x + √(4 − x)</li>
+    <li>y = (x − 5)/(x² + 4)</li>
+  </ol>
+  <details>
+    <summary>Ответы блока A</summary>
+    <p class="ans"><b>1)</b> R &nbsp; <b>2)</b> x ≠ −2 &nbsp; <b>3)</b> x ≠ −4, x ≠ 4 &nbsp; <b>4)</b> x ≤ 3 &nbsp; <b>5)</b> x ≤ −5 или x ≥ 5 &nbsp; <b>6)</b> x &gt; 1 &nbsp; <b>7)</b> x ≠ 0 &nbsp; <b>8)</b> x ≥ 0 &nbsp; <b>9)</b> x &gt; 0 &nbsp; <b>10)</b> R &nbsp; <b>11)</b> x ≥ 8 &nbsp; <b>12)</b> x ≥ −2, x ≠ 3 &nbsp; <b>13)</b> 0 ≤ x ≤ 4 &nbsp; <b>14)</b> R</p>
+    <p class="t"><strong>№ 14 — ловушка:</strong> ученик видит дробь и ищет, что исключить. Но x² + 4 ≥ 4, знаменатель нулём не бывает. <strong>№ 5</strong> требует квадратного неравенства: если застрял — нарисовать параболу y = x² − 25 и посмотреть, где она выше оси.</p>
+  </details>
+</section>
+
+<section class="block" id="blockB">
+  <div class="blockhead"><span class="minutes">24–36 мин</span><h2>Блок B. Значения, нули, знаки</h2></div>
+
+  <div class="card">
+    <span class="tag">Четыре вопроса к функции</span>
+    <div class="rules">
+      <span>значение f(a)</span><span>подставить a вместо x</span>
+      <span>нули</span><span>решить f(x) = 0 и <strong>проверить, что корни входят в область определения</strong></span>
+      <span>знаки</span><span>где f(x) &gt; 0 и где f(x) &lt; 0 — метод интервалов</span>
+      <span>множество значений</span><span>какие y получаются; по графику — проекция на Oy</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag">Множество значений без графика</span>
+    <div class="rules">
+      <span>x² ≥ 0, √x ≥ 0, |x| ≥ 0</span><span>отсюда оценка снизу</span>
+      <span>парабола</span><span>вершина x₀ = −b/(2a), y₀ = f(x₀); ветви вверх — y ≥ y₀, вниз — y ≤ y₀</span>
+      <span>k/x ≠ 0 никогда</span><span>значит, y = k/x + b не принимает значение b</span>
+    </div>
+  </div>
+
+  <div class="callout theorem">
+    <span class="tag">Разбор на доске</span>
+    <p class="body" style="font-family:var(--mono);font-size:15px">Нули функции y = (x² − 9)/(x − 3)</p>
+    <div class="eq">x² − 9 = 0   →   x = −3  или  x = 3
+x = 3 обнуляет знаменатель — в область определения не входит
+нуль функции один:  x = −3</div>
+  </div>
+
+  <h3>Практика — 16 задач<span class="timer">10 минут</span></h3>
+  <p class="sub">Значения</p>
+  <ol class="drill one">
+    <li>f(x) = 2x² − x. Найдите f(3), f(−1), f(1/2).</li>
+    <li>f(x) = x² − 2x. При каких x значение f(x) равно 3?</li>
+    <li>f(x) = √(x + 5). При каком x значение f(x) равно 4?</li>
+  </ol>
+  <p class="sub">Нули</p>
+  <ol class="drill" style="counter-reset:d 3">
+    <li>y = x² − 5x + 6</li>
+    <li>y = x³ − 4x</li>
+    <li>y = (x² − 9)/(x − 3)</li>
+    <li>y = (x + 4)·√(x − 1)</li>
+    <li>y = x² + 1</li>
+  </ol>
+  <p class="sub">Множество значений</p>
+  <ol class="drill three" style="counter-reset:d 8">
+    <li>y = x² − 4</li>
+    <li>y = −x² + 6x</li>
+    <li>y = √x + 2</li>
+    <li>y = 3 − √x</li>
+    <li>y = 1/x + 1</li>
+    <li>y = 5 − x⁴</li>
+  </ol>
+  <p class="sub">Знаки: где y &gt; 0, где y &lt; 0</p>
+  <ol class="drill" style="counter-reset:d 14">
+    <li>y = x² − x − 6</li>
+    <li>y = (x − 1)/(x + 2)</li>
+  </ol>
+  <details>
+    <summary>Ответы блока B</summary>
+    <p class="ans"><b>1)</b> 15; 3; 0 &nbsp; <b>2)</b> x = −1 или x = 3 &nbsp; <b>3)</b> x = 11 &nbsp; <b>4)</b> 2; 3 &nbsp; <b>5)</b> −2; 0; 2 &nbsp; <b>6)</b> −3 &nbsp; <b>7)</b> 1 &nbsp; <b>8)</b> нулей нет &nbsp; <b>9)</b> y ≥ −4 &nbsp; <b>10)</b> y ≤ 9 &nbsp; <b>11)</b> y ≥ 2 &nbsp; <b>12)</b> y ≤ 3 &nbsp; <b>13)</b> y ≠ 1 &nbsp; <b>14)</b> y ≤ 5<br>
+    <b>15)</b> y &gt; 0 при x &lt; −2 или x &gt; 3; y &lt; 0 при −2 &lt; x &lt; 3<br>
+    <b>16)</b> y &gt; 0 при x &lt; −2 или x &gt; 1; y &lt; 0 при −2 &lt; x &lt; 1</p>
+    <p class="t"><strong>№ 6 и № 7</strong> — нули за пределами области определения: в № 7 множитель x + 4 обнуляется при x = −4, но там √(−5) не существует. <strong>№ 13:</strong> ученик пишет «все числа». Спросить: может ли 1/x равняться нулю? Нет — значит, y никогда не равен 1.</p>
+  </details>
+</section>
+
+<section class="block" id="blockC">
+  <div class="blockhead"><span class="minutes">36–48 мин</span><h2>Блок C. Чётность и нечётность</h2></div>
+
+  <div class="card">
+    <span class="tag">Определения</span>
+    <div class="rules">
+      <span>чётная</span><span>f(−x) = f(x) для всех x из области определения; график симметричен относительно оси Oy</span>
+      <span>нечётная</span><span>f(−x) = −f(x) для всех x из области определения; график симметричен относительно начала координат</span>
+    </div>
+  </div>
+
+  <div class="callout theorem">
+    <span class="tag">Алгоритм — строго в два шага</span>
+    <div class="eq">Шаг 1. Симметрична ли область определения относительно нуля?
+       (вместе с каждым x в неё входит −x?)
+       НЕТ  →  ни чётная, ни нечётная. Стоп, шаг 2 не нужен.
+Шаг 2. Найти f(−x), упростить, сравнить с f(x) и с −f(x).</div>
+    <p><strong>Шаг 1 пропускают почти все.</strong> y = x² на отрезке −2 ≤ x ≤ 3 не чётная: f(3) есть, а f(−3) не существует.</p>
+  </div>
+
+  <div class="callout trap">
+    <span class="tag">Числа опровергают, но не доказывают</span>
+    <p>Одна пара f(1) и f(−1) может опровергнуть чётность, но доказать её не может. У f(x) = x³ + x² − x значения f(1) = f(−1) = 1, а f(2) = 10 и f(−2) = −2.</p>
+  </div>
+
+  <h3>Практика — 16 задач<span class="timer">10 минут</span></h3>
+  <p>Чётная, нечётная или ни та ни другая?</p>
+  <ol class="drill three">
+    <li>y = x⁶ − 3x²</li>
+    <li>y = x⁵ + x</li>
+    <li>y = x³ + 1</li>
+    <li>y = 2/x</li>
+    <li>y = x²/(x² − 4)</li>
+    <li>y = |x| + x²</li>
+    <li>y = x·|x|</li>
+    <li>y = √x</li>
+    <li>y = x², −2 ≤ x ≤ 3</li>
+    <li>y = (x + 1)²</li>
+    <li>y = x³/(x² + 1)</li>
+    <li>y = x⁴ − x³</li>
+    <li>y = (x − 2)/(x + 2)</li>
+    <li>y = x<sup>2/3</sup></li>
+    <li>y = ∛(x²)</li>
+  </ol>
+  <div class="task">
+    <h4>16. Достройте график</h4>
+    <p>Функция задана на отрезке 0 ≤ x ≤ 4 ломаной через точки (0; 0), (2; 3), (4; 1). Достройте её график на отрезке −4 ≤ x ≤ 0, если функция а) чётная; б) нечётная.</p>
+    <figure class="bigplot"><div data-plot="c16"></div></figure>
+  </div>
+  <details>
+    <summary>Ответы блока C</summary>
+    <p class="ans"><b>1)</b> чётная &nbsp; <b>2)</b> нечётная &nbsp; <b>3)</b> ни та ни другая &nbsp; <b>4)</b> нечётная &nbsp; <b>5)</b> чётная &nbsp; <b>6)</b> чётная &nbsp; <b>7)</b> нечётная &nbsp; <b>8)</b> ни та ни другая &nbsp; <b>9)</b> ни та ни другая &nbsp; <b>10)</b> ни та ни другая &nbsp; <b>11)</b> нечётная &nbsp; <b>12)</b> ни та ни другая &nbsp; <b>13)</b> ни та ни другая &nbsp; <b>14)</b> ни та ни другая &nbsp; <b>15)</b> чётная<br>
+    <b>16)</b> а) через (−2; 3) и (−4; 1) — отражение относительно Oy; б) через (−2; −3) и (−4; −1) — отражение относительно начала координат</p>
+    <p class="t"><strong>№ 8, 9, 13, 14</strong> отсекаются на шаге 1: область несимметрична. В № 13 её ломает одна выколотая точка x = −2. <strong>№ 14 и № 15</strong> — формулы «про одно и то же», а ответы разные: возвращаемся к ловушке блока A. Семь задач из пятнадцати дают ответ «ни та ни другая» — специально, чтобы ученик перестал его стесняться.</p>
+  </details>
+</section>
+
+<section class="block" id="blockD">
+  <div class="blockhead"><span class="minutes">48–64 мин</span><h2>Блок D. Монотонность и степенная функция</h2></div>
+
+  <div class="card">
+    <span class="tag">Определения</span>
+    <div class="rules">
+      <span>возрастает на промежутке</span><span>x₂ &gt; x₁ ⇒ f(x₂) &gt; f(x₁): больше x — больше y</span>
+      <span>убывает на промежутке</span><span>x₂ &gt; x₁ ⇒ f(x₂) &lt; f(x₁): больше x — меньше y</span>
+      <span>ограничена снизу</span><span>есть число m, что f(x) ≥ m при всех x</span>
+      <span>ограничена сверху</span><span>есть число M, что f(x) ≤ M при всех x</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag">Знакомые функции</span>
+    <div class="rules">
+      <span>y = kx + b</span><span>k &gt; 0 — возрастает на R; k &lt; 0 — убывает на R</span>
+      <span>y = ax² + bx + c</span><span>меняет характер монотонности в вершине x₀ = −b/(2a)</span>
+      <span>y = k/x, k &gt; 0</span><span>убывает при x &lt; 0 и убывает при x &gt; 0</span>
+    </div>
+  </div>
+
+  <div class="callout trap">
+    <span class="tag">Промежутки монотонности не склеивают</span>
+    <p>y = 4/x убывает на каждом из промежутков x &lt; 0 и x &gt; 0, но <strong>не на всей области определения</strong>: −1 &lt; 1, а 4/(−1) = −4 &lt; 4 = 4/1. Запись «убывает на (−∞; 0) ∪ (0; +∞)» — ошибка.</p>
+  </div>
+
+  <h3>Степенная функция y = xᵖ</h3>
+  <p>Главная таблица параграфа. Её не зубрят: каждая строка восстанавливается по одному эскизу. Все графики проходят через точку (1; 1).</p>
+  <div class="plots">
+    <figure><div data-plot="p1"></div><figcaption><b>y = x⁴</b><br>p — чётное натуральное</figcaption></figure>
+    <figure><div data-plot="p2"></div><figcaption><b>y = x³</b><br>p — нечётное натуральное</figcaption></figure>
+    <figure><div data-plot="p3"></div><figcaption><b>y = x⁻²</b><br>p — отрицательное чётное</figcaption></figure>
+    <figure><div data-plot="p4"></div><figcaption><b>y = x⁻¹</b><br>p — отрицательное нечётное</figcaption></figure>
+    <figure><div data-plot="p5"></div><figcaption><b>y = x<sup>1/2</sup></b><br>p — положительное нецелое</figcaption></figure>
+    <figure><div data-plot="p6"></div><figcaption><b>y = x<sup>−1/2</sup></b><br>p — отрицательное нецелое</figcaption></figure>
+  </div>
+  <div class="tablewrap">
+    <table class="wide">
+      <thead><tr><th>Показатель p</th><th>Область определения</th><th>Множество значений</th><th>Чётность</th><th>Монотонность</th></tr></thead>
+      <tbody>
+        <tr><td>чётное натуральное</td><td class="m">R</td><td class="m">y ≥ 0</td><td>чётная</td><td>убывает при x ≤ 0, возрастает при x ≥ 0</td></tr>
+        <tr><td>нечётное натуральное</td><td class="m">R</td><td class="m">R</td><td>нечётная</td><td>возрастает на R</td></tr>
+        <tr><td>отрицательное чётное</td><td class="m">x ≠ 0</td><td class="m">y &gt; 0</td><td>чётная</td><td>возрастает при x &lt; 0, убывает при x &gt; 0</td></tr>
+        <tr><td>отрицательное нечётное</td><td class="m">x ≠ 0</td><td class="m">y ≠ 0</td><td>нечётная</td><td>убывает при x &lt; 0 и при x &gt; 0</td></tr>
+        <tr><td>положительное нецелое</td><td class="m">x ≥ 0</td><td class="m">y ≥ 0</td><td>ни та ни другая</td><td>возрастает при x ≥ 0</td></tr>
+        <tr><td>отрицательное нецелое</td><td class="m">x &gt; 0</td><td class="m">y &gt; 0</td><td>ни та ни другая</td><td>убывает при x &gt; 0</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout theorem">
+    <span class="tag">Сравнение чисел через монотонность</span>
+    <p>Возрастающая функция <strong>сохраняет</strong> знак неравенства, убывающая — <strong>меняет</strong>.</p>
+    <div class="eq">Сравнить 0,7⁻³ и 0,8⁻³.
+y = x⁻³ убывает при x &gt; 0;   0,7 &lt; 0,8   ⇒   0,7⁻³ &gt; 0,8⁻³</div>
+    <p>Три шага: какая функция → на каком промежутке лежат оба числа → возрастает или убывает она там.</p>
+  </div>
+
+  <h3>Практика — 24 задачи<span class="timer">12 минут</span></h3>
+  <p class="sub">По таблице: область определения, множество значений, чётность, монотонность</p>
+  <ol class="drill three">
+    <li>y = x⁵</li>
+    <li>y = x⁸</li>
+    <li>y = x⁻⁴</li>
+    <li>y = x⁻³</li>
+    <li>y = x<sup>π</sup></li>
+    <li>y = x<sup>−2/3</sup></li>
+  </ol>
+  <p class="sub">Промежутки возрастания и убывания</p>
+  <ol class="drill" style="counter-reset:d 6">
+    <li>y = −3x + 1</li>
+    <li>y = x² − 6x + 5</li>
+    <li>y = −2x² − 8x</li>
+    <li>y = 4/x</li>
+  </ol>
+  <p class="sub">Сравните числа</p>
+  <ol class="drill" style="counter-reset:d 10">
+    <li>3,1⁷ и 4,3⁷</li>
+    <li>(−2,5)⁴ и (−1,5)⁴</li>
+    <li>0,7⁻³ и 0,8⁻³</li>
+    <li>(−0,3)⁻² и (−0,2)⁻²</li>
+    <li>(5/6)<sup>1/3</sup> и (6/7)<sup>1/3</sup></li>
+    <li>2,5<sup>−√3</sup> и 2,6<sup>−√3</sup></li>
+    <li>(−5)⁻³ и (−4)⁻³</li>
+    <li>(−3)⁵ и (−2)⁵</li>
+  </ol>
+  <p class="sub">Наибольшее и наименьшее значения на отрезке</p>
+  <ol class="drill three" style="counter-reset:d 18">
+    <li>y = x⁴, −2 ≤ x ≤ 1</li>
+    <li>y = x⁻², 1 ≤ x ≤ 3</li>
+    <li>y = x³, −2 ≤ x ≤ 3</li>
+  </ol>
+  <p class="sub">Ограничена ли функция? Наибольшее и наименьшее значения, если есть</p>
+  <ol class="drill three" style="counter-reset:d 21">
+    <li>y = x² − 4x</li>
+    <li>y = 3/(x² + 1)</li>
+    <li>y = √(9 − x²)</li>
+  </ol>
+  <details>
+    <summary>Ответы блока D</summary>
+    <div class="tablewrap">
+      <table class="wide">
+        <thead><tr><th>№</th><th>Область определения</th><th>Множество значений</th><th>Чётность</th><th>Монотонность</th></tr></thead>
+        <tbody>
+          <tr><td class="m">1</td><td class="m">R</td><td class="m">R</td><td>нечётная</td><td>возрастает на R</td></tr>
+          <tr><td class="m">2</td><td class="m">R</td><td class="m">y ≥ 0</td><td>чётная</td><td>убывает при x ≤ 0, возрастает при x ≥ 0</td></tr>
+          <tr><td class="m">3</td><td class="m">x ≠ 0</td><td class="m">y &gt; 0</td><td>чётная</td><td>возрастает при x &lt; 0, убывает при x &gt; 0</td></tr>
+          <tr><td class="m">4</td><td class="m">x ≠ 0</td><td class="m">y ≠ 0</td><td>нечётная</td><td>убывает при x &lt; 0 и при x &gt; 0</td></tr>
+          <tr><td class="m">5</td><td class="m">x ≥ 0</td><td class="m">y ≥ 0</td><td>ни та ни другая</td><td>возрастает при x ≥ 0</td></tr>
+          <tr><td class="m">6</td><td class="m">x &gt; 0</td><td class="m">y &gt; 0</td><td>ни та ни другая</td><td>убывает при x &gt; 0</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="ans"><b>7)</b> убывает на R &nbsp; <b>8)</b> убывает при x ≤ 3, возрастает при x ≥ 3 &nbsp; <b>9)</b> возрастает при x ≤ −2, убывает при x ≥ −2 &nbsp; <b>10)</b> убывает при x &lt; 0 и при x &gt; 0<br>
+    <b>11)</b> &lt; &nbsp; <b>12)</b> &gt; &nbsp; <b>13)</b> &gt; &nbsp; <b>14)</b> &lt; &nbsp; <b>15)</b> &lt; &nbsp; <b>16)</b> &gt; &nbsp; <b>17)</b> &gt; &nbsp; <b>18)</b> &lt;<br>
+    <b>19)</b> наим. 0 при x = 0, наиб. 16 при x = −2 &nbsp; <b>20)</b> наиб. 1 при x = 1, наим. 1/9 при x = 3 &nbsp; <b>21)</b> наим. −8 при x = −2, наиб. 27 при x = 3<br>
+    <b>22)</b> ограничена снизу; наим. −4 при x = 2; наибольшего нет<br>
+    <b>23)</b> ограничена: 0 &lt; y ≤ 3; наиб. 3 при x = 0; наименьшего нет<br>
+    <b>24)</b> ограничена: 0 ≤ y ≤ 3; наиб. 3 при x = 0; наим. 0 при x = ±3</p>
+    <p class="t"><strong>№ 5:</strong> π — нецелое число, пятая строка таблицы. <strong>№ 12, 14, 17, 18</strong> — отрицательные основания: смотреть на левую половину графика. В № 17 ученик пишет «&lt;», потому что «−5 меньше»; убывающая функция знак меняет: −1/125 &gt; −1/64. <strong>№ 19:</strong> наименьшее значение не на конце отрезка — нельзя просто подставить концы. <strong>№ 23:</strong> к нулю функция подходит сколь угодно близко, но не достигает его, поэтому наименьшего значения нет.</p>
+  </details>
+</section>
+
+<section class="block" id="blockE">
+  <div class="blockhead"><span class="minutes">64–78 мин</span><h2>Блок E. Описание функции по схеме</h2></div>
+
+  <div class="card">
+    <span class="tag">Сдвиги: как получить график из знакомого</span>
+    <div class="rules">
+      <span>y = f(x − a)</span><span>сдвиг графика y = f(x) на a вправо &nbsp;(x − 2 → вправо на 2)</span>
+      <span>y = f(x + a)</span><span>сдвиг на a влево &nbsp;(x + 3 → влево на 3)</span>
+      <span>y = f(x) + b</span><span>сдвиг на b вверх, при b &lt; 0 — вниз</span>
+    </div>
+    <p>Проверка направления: вершина y = (x − 2)² там, где скобка равна нулю, — при x = 2, справа.</p>
+  </div>
+
+  <div class="task">
+    <h4>E1. По графику — разбираем вместе</h4>
+    <figure class="bigplot"><div data-plot="e1"></div><figcaption>ломаная через (−6; −2), (−4; 2), (−1; −4), (2; 2), (5; −1)</figcaption></figure>
+    <details>
+      <summary>Описание</summary>
+      <div class="tablewrap">
+        <table>
+          <tbody>
+            <tr><td class="m">1</td><td>Область определения</td><td>−6 ≤ x ≤ 5</td></tr>
+            <tr><td class="m">2</td><td>Множество значений</td><td>−4 ≤ y ≤ 2</td></tr>
+            <tr><td class="m">3</td><td>Чётность</td><td>ни та ни другая — область несимметрична</td></tr>
+            <tr><td class="m">4</td><td>Нули</td><td>−5; −3; 1; 4</td></tr>
+            <tr><td class="m">5</td><td>Знаки</td><td>y &gt; 0 при −5 &lt; x &lt; −3 и 1 &lt; x &lt; 4;<br>y &lt; 0 при −6 ≤ x &lt; −5, −3 &lt; x &lt; 1, 4 &lt; x ≤ 5</td></tr>
+            <tr><td class="m">6</td><td>Монотонность</td><td>возрастает при −6 ≤ x ≤ −4 и −1 ≤ x ≤ 2;<br>убывает при −4 ≤ x ≤ −1 и 2 ≤ x ≤ 5</td></tr>
+            <tr><td class="m">7</td><td>Наиб. и наим.</td><td>наибольшее 2 при x = −4 и x = 2; наименьшее −4 при x = −1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <div class="task">
+    <h4>E2. По графику — самостоятельно</h4>
+    <figure class="bigplot"><div data-plot="e2"></div><figcaption>ломаная через (−4; 2), (−2; −2), (0; 2), (2; −2), (4; 2)</figcaption></figure>
+    <details>
+      <summary>Описание</summary>
+      <p class="ans"><b>1)</b> −4 ≤ x ≤ 4 &nbsp; <b>2)</b> −2 ≤ y ≤ 2 &nbsp; <b>3)</b> чётная: график симметричен относительно Oy &nbsp; <b>4)</b> −3; −1; 1; 3<br>
+      <b>5)</b> y &gt; 0 при −4 ≤ x &lt; −3, −1 &lt; x &lt; 1, 3 &lt; x ≤ 4; y &lt; 0 при −3 &lt; x &lt; −1 и 1 &lt; x &lt; 3<br>
+      <b>6)</b> возрастает при −2 ≤ x ≤ 0 и 2 ≤ x ≤ 4; убывает при −4 ≤ x ≤ −2 и 0 ≤ x ≤ 2<br>
+      <b>7)</b> наибольшее 2 при x = −4, 0, 4; наименьшее −2 при x = ±2</p>
+    </details>
+  </div>
+
+  <h3>E3–E6. По формуле</h3>
+  <p>Сначала эскиз графика, потом семь пунктов.</p>
+  <ol class="drill e" style="counter-reset:d 2">
+    <li>y = (x − 2)² − 1</li>
+    <li>y = √(x + 4) − 2</li>
+    <li>y = 2/(x − 1)</li>
+    <li>y = 1 − x⁴</li>
+  </ol>
+  <details>
+    <summary>Ответы E3–E6</summary>
+    <p class="ans"><b>E3)</b> R; y ≥ −1; ни та ни другая; нули 1 и 3; y &gt; 0 при x &lt; 1 или x &gt; 3, y &lt; 0 при 1 &lt; x &lt; 3; убывает при x ≤ 2, возрастает при x ≥ 2; наим. −1 при x = 2, наибольшего нет; ограничена снизу</p>
+    <p class="ans"><b>E4)</b> x ≥ −4; y ≥ −2; ни та ни другая; нуль 0; y &lt; 0 при −4 ≤ x &lt; 0, y &gt; 0 при x &gt; 0; возрастает на всей области определения; наим. −2 при x = −4, наибольшего нет; ограничена снизу</p>
+    <p class="ans"><b>E5)</b> x ≠ 1; y ≠ 0; ни та ни другая; нулей нет; y &lt; 0 при x &lt; 1, y &gt; 0 при x &gt; 1; убывает при x &lt; 1 и при x &gt; 1; наибольшего и наименьшего нет; не ограничена</p>
+    <p class="ans"><b>E6)</b> R; y ≤ 1; чётная; нули −1 и 1; y &gt; 0 при −1 &lt; x &lt; 1, y &lt; 0 при x &lt; −1 или x &gt; 1; возрастает при x ≤ 0, убывает при x ≥ 0; наиб. 1 при x = 0, наименьшего нет; ограничена сверху</p>
+    <p class="t">Требуйте сначала эскиз. По эскизу семь пунктов читаются за минуту, без эскиза — угадываются.</p>
+  </details>
+</section>
+
+<section class="block" id="blockF">
+  <div class="blockhead"><span class="minutes">78–86 мин</span><h2>Блок F. Найди ошибку</h2></div>
+  <p>Не решайте заново — найдите, на каком шаге решение сломалось, и объясните почему.<span class="timer">по 2 минуты</span></p>
+
+  <div class="task">
+    <h4>Н1. Область определения y = √(x + 2) + 1/(x − 3)</h4>
+    <p class="wrong">x + 2 ≥ 0, значит x ≥ −2. Ответ: x ≥ −2.</p>
+    <details><summary>Разбор</summary><p>Потеряно второе условие: дробь требует x ≠ 3. Верно: <strong>x ≥ −2, x ≠ 3</strong>.</p></details>
+  </div>
+  <div class="task">
+    <h4>Н2. Нули функции y = (x² − 9)/(x − 3)</h4>
+    <p class="wrong">x² − 9 = 0, x = ±3. Ответ: −3; 3.</p>
+    <details><summary>Разбор</summary><p>x = 3 обнуляет знаменатель и в область определения не входит. Верно: один нуль <strong>x = −3</strong>.</p></details>
+  </div>
+  <div class="task">
+    <h4>Н3. Множество значений y = √(x − 5)</h4>
+    <p class="wrong">Подкоренное выражение неотрицательно: x − 5 ≥ 0, x ≥ 5. Ответ: x ≥ 5.</p>
+    <details><summary>Разбор</summary><p>Найдена область определения, а спрашивали значения. Квадратный корень принимает все неотрицательные значения: <strong>y ≥ 0</strong>.</p></details>
+  </div>
+  <div class="task">
+    <h4>Н4. Чётна ли f(x) = x³ + x² − x?</h4>
+    <p class="wrong">f(1) = 1 + 1 − 1 = 1, f(−1) = −1 + 1 + 1 = 1. Так как f(−1) = f(1), функция чётная.</p>
+    <details><summary>Разбор</summary><p>Одна пара чисел чётность не доказывает: f(2) = 10, а f(−2) = −2. f(−x) = −x³ + x² + x не совпадает ни с f(x), ни с −f(x). Верно: <strong>ни та ни другая</strong>.</p></details>
+  </div>
+  <div class="task">
+    <h4>Н5. Чётна ли y = x², −2 ≤ x ≤ 3?</h4>
+    <p class="wrong">(−x)² = x², значит f(−x) = f(x), функция чётная.</p>
+    <details><summary>Разбор</summary><p>Пропущен шаг 1: область −2 ≤ x ≤ 3 несимметрична — f(3) = 9 есть, f(−3) нет. Верно: <strong>ни та ни другая</strong>.</p></details>
+  </div>
+  <div class="task">
+    <h4>Н6. Промежутки монотонности y = 4/x</h4>
+    <p class="wrong">Гипербола в первой и третьей четвертях убывает. Ответ: убывает на всей области определения, то есть при x ≠ 0.</p>
+    <details><summary>Разбор</summary><p>Промежутки склеены. −1 &lt; 1, но f(−1) = −4 &lt; 4 = f(1) — определение убывания нарушено. Верно: <strong>убывает при x &lt; 0 и при x &gt; 0</strong>, каждый промежуток отдельно.</p></details>
+  </div>
+  <div class="task">
+    <h4>Н7. Описать y = (x + 3)² − 2</h4>
+    <p class="wrong">Парабола y = x², сдвинутая на 3 вправо и на 2 вниз. Вершина (3; −2), наименьшее значение −2 при x = 3.</p>
+    <details><summary>Разбор</summary><p>x + 3 — сдвиг <strong>влево</strong>. Вершина (−3; −2), наименьшее −2 при x = −3. Проверка подстановкой: f(3) = 36 − 2 = 34, а не −2.</p></details>
+  </div>
+  <div class="task">
+    <h4>Н8. Сравнить (−5)⁻³ и (−4)⁻³</h4>
+    <p class="wrong">y = x⁻³ убывает при x &lt; 0. Так как −5 &lt; −4, то (−5)⁻³ &lt; (−4)⁻³.</p>
+    <details><summary>Разбор</summary><p>Убывающая функция меняет знак неравенства: <strong>(−5)⁻³ &gt; (−4)⁻³</strong>. Проверка: −1/125 = −0,008, −1/64 = −0,015625, и −0,008 &gt; −0,015625.</p></details>
+  </div>
+</section>
+
+<section class="block t" id="mistakes">
+  <div class="blockhead"><h2>Каталог ошибок</h2></div>
+  <p>Какую задачу дать, если ошибка замечена на уроке или в домашнем задании.</p>
+  <div class="tablewrap">
+    <table class="wide">
+      <thead><tr><th>Ошибка</th><th>Откуда берётся</th><th>Как поймать</th><th>Противоядие</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Э1.</strong> Теряет условие области определения</td><td>ищет «одно ограничение»</td><td>пройти формулу глазами: каждая дробь, каждый корень</td><td class="m">Н1, A12, A13</td></tr>
+        <tr><td><strong>Э2.</strong> Нули вне области определения</td><td>ищет нули как у многочлена</td><td>подставить найденный нуль в исходную формулу</td><td class="m">Н2, B6, B7</td></tr>
+        <tr><td><strong>Э3.</strong> Путает область определения и множество значений</td><td>оба ответа — неравенства</td><td>«это ограничение на x или на y?»</td><td class="m">Н3, B9–B14</td></tr>
+        <tr><td><strong>Э4.</strong> Проверяет чётность на одной паре чисел</td><td>числа убедительнее букв</td><td>числа могут только опровергнуть</td><td class="m">Н4, C10, C12</td></tr>
+        <tr><td><strong>Э5.</strong> Пропускает шаг 1 алгоритма чётности</td><td>смотрит только на формулу</td><td>записывать шаг 1 отдельной строкой</td><td class="m">Н5, C8, C9, C13</td></tr>
+        <tr><td><strong>Э6.</strong> Склеивает промежутки монотонности</td><td>«на каждом куске убывает — значит везде»</td><td>контрпример: числа −1 и 1</td><td class="m">Н6, D10</td></tr>
+        <tr><td><strong>Э7.</strong> Сдвиг не в ту сторону</td><td>«плюс — значит вправо»</td><td>где скобка равна нулю, там вершина</td><td class="m">Н7, E3, E4</td></tr>
+        <tr><td><strong>Э8.</strong> Не меняет знак для убывающей функции</td><td>переносит неравенство оснований на степени</td><td>прикинуть значения хотя бы приближённо</td><td class="m">Н8, D13, D16, D17</td></tr>
+        <tr><td><strong>Э9.</strong> Считает x<sup>1/3</sup> тем же, что ∛x</td><td>в интернете другое соглашение</td><td>сверить с определением степени в учебнике</td><td class="m">A10–A11, C14–C15</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="block" id="hw">
+  <div class="blockhead"><span class="minutes">86–90 мин</span><h2>Итог и домашнее задание</h2></div>
+  <div class="cheat">
+    <h3>Что унести с занятия</h3>
+    <div class="eq">Описать функцию = семь вопросов по порядку:
+где живёт → какие значения → симметрия → нули → знаки → рост и спад → наиб./наим.
+
+Область определения: пройди по формуле — каждая дробь, каждый корень.
+Нули: проверь, что они входят в область определения.
+Чётность: сначала симметрия области, потом f(−x).
+Монотонность: промежутки не склеивать через ∪.
+Возрастающая функция сохраняет знак неравенства, убывающая меняет.</div>
+  </div>
+
+  <h3>Домашнее задание</h3>
+  <div class="task">
+    <h4>1. Найдите область определения</h4>
+    <p class="mono">а) y = (2x + 1)/(x² − 5x) &nbsp;&nbsp; б) y = √(12 − 3x) &nbsp;&nbsp; в) y = √(x − 2) + 1/(x − 7) &nbsp;&nbsp; г) y = x<sup>−3/4</sup> &nbsp;&nbsp; д) y = 1/√(x² − 4x)</p>
+  </div>
+  <div class="task">
+    <h4>2. Найдите нули функции</h4>
+    <p class="mono">а) y = x² + 3x − 10 &nbsp;&nbsp; б) y = (x² − 4)/(x + 2) &nbsp;&nbsp; в) y = x³ − 9x &nbsp;&nbsp; г) y = (x + 1)·√(x − 3)</p>
+  </div>
+  <div class="task">
+    <h4>3. Чётная, нечётная или ни та ни другая?</h4>
+    <p class="mono">а) y = 3x⁴ − x² &nbsp;&nbsp; б) y = x³ − 2/x &nbsp;&nbsp; в) y = x² + x &nbsp;&nbsp; г) y = |x|/(x² − 1) &nbsp;&nbsp; д) y = √(x + 1) &nbsp;&nbsp; е) y = x⁵·|x|</p>
+  </div>
+  <div class="task">
+    <h4>4. Найдите множество значений</h4>
+    <p class="mono">а) y = x² − 6x + 1 &nbsp;&nbsp; б) y = 4 − √x &nbsp;&nbsp; в) y = 3/x − 2 &nbsp;&nbsp; г) y = −x⁶</p>
+  </div>
+  <div class="task">
+    <h4>5. Сравните числа</h4>
+    <p class="mono">а) 1,2⁵ и 1,3⁵ &nbsp;&nbsp; б) (−3,2)⁶ и (−3,1)⁶ &nbsp;&nbsp; в) (4/5)⁻² и (5/6)⁻² &nbsp;&nbsp; г) 2,7<sup>√2</sup> и 3<sup>√2</sup> &nbsp;&nbsp; д) (−7)⁻¹ и (−6)⁻¹</p>
+  </div>
+  <div class="task">
+    <h4>6. Опишите функцию по схеме</h4>
+    <p class="mono">а) y = (x + 1)² − 4 &nbsp;&nbsp; б) y = 2 − √(x − 1) &nbsp;&nbsp; в) y = x³ − 1</p>
+  </div>
+  <div class="task">
+    <h4>7. Опишите по схеме функцию, заданную графиком</h4>
+    <figure class="bigplot"><div data-plot="h7"></div><figcaption>ломаная через (−5; 2), (−3; −2), (1; 6), (6; −4)</figcaption></figure>
+  </div>
+  <div class="task">
+    <h4>8. Придумайте сами</h4>
+    <p>а) Формулу функции, область определения которой x ≥ 1, x ≠ 4.<br>
+    б) График функции: область определения −3 ≤ x ≤ 3, чётная, нули ±2, наибольшее значение 4, наименьшее −1.</p>
+  </div>
+  <details>
+    <summary>Ответы к домашнему заданию</summary>
+    <p class="ans"><b>1)</b> а) x ≠ 0, x ≠ 5 &nbsp; б) x ≤ 4 &nbsp; в) x ≥ 2, x ≠ 7 &nbsp; г) x &gt; 0 &nbsp; д) x &lt; 0 или x &gt; 4<br>
+    <b>2)</b> а) −5; 2 &nbsp; б) 2 &nbsp; в) −3; 0; 3 &nbsp; г) 3<br>
+    <b>3)</b> а) чётная &nbsp; б) нечётная &nbsp; в) ни та ни другая &nbsp; г) чётная &nbsp; д) ни та ни другая &nbsp; е) нечётная<br>
+    <b>4)</b> а) y ≥ −8 &nbsp; б) y ≤ 4 &nbsp; в) y ≠ −2 &nbsp; г) y ≤ 0<br>
+    <b>5)</b> а) &lt; &nbsp; б) &gt; &nbsp; в) &gt; &nbsp; г) &lt; &nbsp; д) &gt;</p>
+    <p class="ans"><b>6а)</b> R; y ≥ −4; ни та ни другая; нули −3 и 1; y &gt; 0 при x &lt; −3 или x &gt; 1, y &lt; 0 при −3 &lt; x &lt; 1; убывает при x ≤ −1, возрастает при x ≥ −1; наим. −4 при x = −1, наибольшего нет<br>
+    <b>6б)</b> x ≥ 1; y ≤ 2; ни та ни другая; нуль 5; y &gt; 0 при 1 ≤ x &lt; 5, y &lt; 0 при x &gt; 5; убывает при x ≥ 1; наиб. 2 при x = 1, наименьшего нет; ограничена сверху<br>
+    <b>6в)</b> R; R; ни та ни другая; нуль 1; y &lt; 0 при x &lt; 1, y &gt; 0 при x &gt; 1; возрастает на R; наибольшего и наименьшего нет; не ограничена</p>
+    <p class="ans"><b>7)</b> −5 ≤ x ≤ 6; −4 ≤ y ≤ 6; ни та ни другая; нули −4, −2, 4; y &gt; 0 при −5 ≤ x &lt; −4 и −2 &lt; x &lt; 4, y &lt; 0 при −4 &lt; x &lt; −2 и 4 &lt; x ≤ 6; убывает при −5 ≤ x ≤ −3 и 1 ≤ x ≤ 6, возрастает при −3 ≤ x ≤ 1; наиб. 6 при x = 1, наим. −4 при x = 6</p>
+    <p class="ans"><b>8)</b> ответов много, проверять по свойствам. Например: а) y = √(x − 1) + 1/(x − 4); б) ломаная через (−3; −1), (−2; 0), (0; 4), (2; 0), (3; −1)</p>
+    <p class="t"><strong>Как проверять:</strong> по номерам, а не по количеству верных. Номер — это блок урока: 1 → A, 2 и 4 → B, 3 → C, 5 → D, 6–7 → E. Провал в одном номере говорит, с чего начать следующее занятие. Задание 8 — лучшая проверка понимания: придумать функцию под свойства, не понимая свойств, нельзя.</p>
+  </details>
+</section>
+
+<section class="block t" id="notes">
+  <div class="blockhead"><h2>Заметки преподавателю</h2></div>
+  <ul>
+    <li><strong>Эскиз раньше ответа.</strong> В блоке E не принимайте семь пунктов без картинки. Ученик, который рисует, отвечает за минуту; ученик, который «вычисляет свойства», ошибается в каждом втором пункте.</li>
+    <li><strong>Промежутки — неравенствами, как в учебнике.</strong> Скобочную запись показывайте рядом, но в тетради пусть пишет как Алимов: так его ответ совпадёт с ответами в конце учебника.</li>
+    <li><strong>«Ни та ни другая» — полноценный ответ.</strong> Ученики стесняются его и натягивают чётность. В блоке C семь задач из пятнадцати дают именно его.</li>
+    <li><strong>Возвращайте к определению, а не к правилу.</strong> «Почему 4/x не убывает везде?» — «потому что так в учебнике» не ответ. Ответ — два числа, для которых определение не выполняется.</li>
+    <li><strong>Таблица степенной функции понадобится весь год:</strong> показательная и логарифмическая функции описываются по той же схеме. Пусть ученик перепишет её в тетрадь от руки.</li>
+  </ul>
+</section>
+
+<footer>
+  <p>Все задачи составлены для этого занятия; ответы пересчитаны программой на точной арифметике. Номера параграфов даны по изданию «Просвещения» — сверьте со своим экземпляром учебника.</p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var NS = "http://www.w3.org/2000/svg", uid = 0;
+  function el(tag, attrs, parent){
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function plot(host, o){
+    var x0 = o.x[0], x1 = o.x[1], y0 = o.y[0], y1 = o.y[1];
+    var U = o.u || 24, P = 18, lab = o.lab || 1;
+    var W = (x1 - x0) * U + 2 * P, H = (y1 - y0) * U + 2 * P;
+    function X(x){ return P + (x - x0) * U; }
+    function Y(y){ return P + (y1 - y) * U; }
+    var svg = el("svg", {viewBox: "0 0 " + W + " " + H, width: W, height: H, role: "img", "aria-label": o.label || "график"});
+    var id = "clip" + (++uid);
+    var cp = el("clipPath", {id: id}, el("defs", {}, svg));
+    el("rect", {x: P, y: P, width: W - 2 * P, height: H - 2 * P}, cp);
+    var g = el("g", {"class": "grid"}, svg), x, y;
+    for (x = Math.ceil(x0); x <= x1; x++) el("line", {x1: X(x), x2: X(x), y1: P, y2: H - P}, g);
+    for (y = Math.ceil(y0); y <= y1; y++) el("line", {x1: P, x2: W - P, y1: Y(y), y2: Y(y)}, g);
+    var ax = el("g", {"class": "axis"}, svg);
+    el("line", {x1: P - 4, x2: W - P + 6, y1: Y(0), y2: Y(0)}, ax);
+    el("line", {x1: X(0), x2: X(0), y1: H - P + 4, y2: P - 6}, ax);
+    el("path", {d: "M" + (W - P + 10) + " " + Y(0) + "l-7 -3.5v7z"}, ax);
+    el("path", {d: "M" + X(0) + " " + (P - 10) + "l-3.5 7h7z"}, ax);
+    var tx = el("text", {x: W - P + 6, y: Y(0) - 6, "class": "name", "text-anchor": "end"}, svg); tx.textContent = "x";
+    var ty = el("text", {x: X(0) + 7, y: P - 1, "class": "name"}, svg); ty.textContent = "y";
+    var lo = o.posOnly ? 1 : -Infinity;
+    for (x = Math.ceil(x0); x <= x1; x++) if (x !== 0 && x >= lo && x % lab === 0 && x < x1) {
+      var t = el("text", {x: X(x), y: Y(0) + 13, "text-anchor": "middle"}, svg); t.textContent = x < 0 ? "−" + (-x) : x;
+    }
+    for (y = Math.ceil(y0); y <= y1; y++) if (y !== 0 && y >= lo && y % lab === 0 && y < y1) {
+      var s = el("text", {x: X(0) - 5, y: Y(y) + 3.5, "text-anchor": "end"}, svg); s.textContent = y < 0 ? "−" + (-y) : y;
+    }
+    if (!o.posOnly) { var z = el("text", {x: X(0) - 5, y: Y(0) + 13, "text-anchor": "end"}, svg); z.textContent = "0"; }
+    var cg = el("g", {"clip-path": "url(#" + id + ")"}, svg);
+    (o.fns || []).forEach(function(fn){
+      var n = 240, d = "", i, xv, yv;
+      for (i = 0; i <= n; i++) {
+        xv = fn.a + (fn.b - fn.a) * i / n;
+        yv = Math.max(y0 - 2, Math.min(y1 + 2, fn.f(xv)));
+        d += (i ? "L" : "M") + X(xv).toFixed(2) + " " + Y(yv).toFixed(2);
+      }
+      el("path", {d: d, "class": "curve"}, cg);
+    });
+    (o.polys || []).forEach(function(pts){
+      el("path", {d: pts.map(function(p, i){ return (i ? "L" : "M") + X(p[0]) + " " + Y(p[1]); }).join(""), "class": "curve"}, cg);
+    });
+    (o.dots || []).forEach(function(p){
+      el("circle", {cx: X(p[0]), cy: Y(p[1]), r: 3.4, "class": "dot" + (p[2] ? " " + p[2] : "")}, svg);
+    });
+    host.appendChild(svg);
+  }
+  var E = 0.004;
+  var powerBox = {x: [-3, 3], y: [-3, 3], u: 20};
+  function pw(fns, dots, label){
+    return {x: powerBox.x, y: powerBox.y, u: powerBox.u, posOnly: true, fns: fns, dots: (dots || []).concat([[1, 1, "mark"]]), label: label};
+  }
+  var cfg = {
+    p1: pw([{a: -3, b: 3, f: function(x){ return Math.pow(x, 4); }}], [], "график y = x в четвёртой степени"),
+    p2: pw([{a: -3, b: 3, f: function(x){ return x * x * x; }}], [], "график y = x в кубе"),
+    p3: pw([{a: -3, b: -E * 50, f: function(x){ return 1 / (x * x); }}, {a: E * 50, b: 3, f: function(x){ return 1 / (x * x); }}], [], "график y = x в степени минус 2"),
+    p4: pw([{a: -3, b: -E, f: function(x){ return 1 / x; }}, {a: E, b: 3, f: function(x){ return 1 / x; }}], [], "график y = x в степени минус 1"),
+    p5: pw([{a: 0, b: 3, f: function(x){ return Math.sqrt(x); }}], [[0, 0]], "график y = x в степени одна вторая"),
+    p6: pw([{a: E * 2, b: 3, f: function(x){ return 1 / Math.sqrt(x); }}], [], "график y = x в степени минус одна вторая"),
+    c16: {u: 28, x: [-5, 5], y: [-4, 4], polys: [[[0, 0], [2, 3], [4, 1]]], dots: [[0, 0], [2, 3], [4, 1]], label: "ломаная через (0;0), (2;3), (4;1)"},
+    e1: {u: 28, x: [-7, 6], y: [-5, 3], polys: [[[-6, -2], [-4, 2], [-1, -4], [2, 2], [5, -1]]], dots: [[-6, -2], [5, -1]], label: "график функции к задаче E1"},
+    e2: {u: 28, x: [-5, 5], y: [-3, 3], polys: [[[-4, 2], [-2, -2], [0, 2], [2, -2], [4, 2]]], dots: [[-4, 2], [4, 2]], label: "график функции к задаче E2"},
+    h7: {u: 28, x: [-6, 7], y: [-5, 7], polys: [[[-5, 2], [-3, -2], [1, 6], [6, -4]]], dots: [[-5, 2], [6, -4]], label: "график функции к задаче 7 домашнего задания"}
+  };
+  var hosts = document.querySelectorAll("[data-plot]");
+  for (var i = 0; i < hosts.length; i++) {
+    var c = cfg[hosts[i].getAttribute("data-plot")];
+    if (c) plot(hosts[i], c);
+  }
+})();
+</script>
