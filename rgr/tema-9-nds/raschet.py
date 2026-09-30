@@ -238,7 +238,8 @@ d, sg9, tg9 = na_kruge(0.0)
 print(f"  прямая из K под 0°: X = ({sg9:.4f}; {tg9:.4f}) = (σx; τxy) — площадка x")
 for nm, tau9 in (("T1", R9), ("T2", -R9)):
     ug9 = math.degrees(math.atan2(tau9 - float(txy2), OC9 - float(sy2))) % 180
-    print(f"  прямая K–{nm}: наклон {ug9:.2f}° (площадка экстремального τ, ср. рис. 4: 66.26 − 45 = 21.26)")
+    os9 = "x1 = α1 + 45°" if nm == "T1" else "y1 = α1 − 45°"
+    print(f"  ось {os9}: прямая K–{nm}, наклон {ug9:.2f}°;  {nm} = ({OC9:.2f}; {tau9:+.2f})")
 k1 = (0 - float(txy2)) / (float(sA) - float(sy2))
 k2 = (0 - float(txy2)) / (float(sB) - float(sy2))
 print(f"  лучи 1 и 2 перпендикулярны: tg α1 · tg α2 = {k1 * k2:.6f} (должно быть −1)")

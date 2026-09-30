@@ -182,6 +182,20 @@ for m in re.finditer(r'<g data-panel="(.)" data-ox="([-\d.]+)" data-oy="([-\d.]+
     want = {"O": (0, 0), "D": (SX, 0), "B": (SY, 0), "C": (OC, 0), "K": KP,
             "σ1": (s1, 0), "σ2": (s2, 0), "T1": (OC, r), "T2": (OC, -r),
             "X": (SX, TXY), "P": tochka_ploshchadki(15), "P'": tochka_ploshchadki(105)}
+    # прямые через полюс: направление и прохождение через K
+    ugly = {"1": 66.255224, "2": -23.744776, "ν": 15.0, "t": 105.0,
+            "x1": 66.255224 + 45, "y1": 66.255224 - 45}
+    for nm, x1_, y1_, x2_, y2_ in re.findall(
+            r'data-os="([^"]+)" x1="([-\d.]+)" y1="([-\d.]+)" x2="([-\d.]+)" y2="([-\d.]+)"', body):
+        a1_ = ((float(x1_) - ox7) / k7, (oy7 - float(y1_)) / k7)
+        a2_ = ((float(x2_) - ox7) / k7, (oy7 - float(y2_)) / k7)
+        ug7 = math.degrees(math.atan2(a2_[1] - a1_[1], a2_[0] - a1_[0]))
+        d7 = (ug7 - ugly[nm]) % 180
+        d7 = d7 - 180 if d7 > 90 else d7
+        check(f"рис. 7: прямая {nm} — наклон к оси σ минус α", d7, 0.0, 0.05, "°")
+        L7 = math.hypot(a2_[0] - a1_[0], a2_[1] - a1_[1])
+        dk = abs((a2_[0] - a1_[0]) * (a1_[1] - KP[1]) - (a1_[0] - KP[0]) * (a2_[1] - a1_[1])) / L7
+        check(f"рис. 7: прямая {nm} проходит через полюс K", dk, 0.0, 0.05, "МПа")
     for nm, (ws, wt) in want.items():
         if nm in pts:
             check(f"рис. 7: точка {nm}, σ", pts[nm][0], ws, 1e-2, "МПа")

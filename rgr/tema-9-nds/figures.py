@@ -656,8 +656,8 @@ def fig26_mohr():
             g += ln((X(-110), Y(v)), (X(10), Y(v)), "grid")
         g += ar((X(-114), Y(0)), (X(17), Y(0)), "ax", small=True)
         g += txt(X(18), Y(0) + 5, "σ, МПа", "ax-lbl", "start")
-        g += ar((X(0), Y(-44)), (X(0), Y(47)), "ax", small=True)
-        g += txt(X(0) + 9, Y(47) + 9, "τ, МПа", "ax-lbl", "start")
+        g += ar((X(0), Y(-44)), (X(0), Y(53)), "ax", small=True)
+        g += txt(X(0) + 9, Y(53) + 9, "τ, МПа", "ax-lbl", "start")
         g += txt(X(1.2), Y(0) + 17, "O", "lbl halo", "start")
         g += (f'<circle cx="{X(c_):.2f}" cy="{Y(0):.2f}" r="{r_ * k:.2f}" '
               f'class="plane-edge"/>\n')
@@ -703,13 +703,32 @@ def fig26_mohr():
         for v in (a, b):
             g += ln((X(v), Y(1)), (X(v), Y(7.5)), "ext")
         g += ar2((X(a), Y(5.5)), (X(b), Y(5.5)), "dim")
-    g += txt((X(D[0]) + X(C[0])) / 2, Y(5.5) - 5, f"DC = {sg((sy_ - sx_) / 2, 1)}", "val halo")
-    g += txt((X(C[0]) + X(B[0])) / 2 - 3.5 * k, Y(5.5) - 5, f"CB = {sg((sy_ - sx_) / 2, 1)}", "val halo")
+    g += txt((X(D[0]) + X(C[0])) / 2, Y(5.5) - 5, f"DC = CB = {sg((sy_ - sx_) / 2, 1)}", "val halo")
+    # на CB только число: правее его пересекают прямые x₁ и t
+    g += txt(X(C[0] + 6.5), Y(5.5) - 5, sg((sy_ - sx_) / 2, 1), "val halo")
     g += razmer(X, Y, 0.0, B[0], -46, f"OB = {sys_} = {sg(sy_, 0)}")
-    g += razmer(X, Y, 0.0, C[0], -51.5, f"OC = ({sxs} + {sys_})/2 = {sg(c_)}")
-    g += razmer(X, Y, 0.0, D[0], -57, f"OD = {sxs} = {sg(sx_, 0)}")
+    g += razmer(X, Y, 0.0, C[0], -51.5,
+                f"OC = ({sxs} + {sys_})/2 = {sub('σ', 'x1')} = {sub('σ', 'y1')} = {sg(c_)}")
+    g += razmer(X, Y, 0.0, Pn[0], -57, f"{sub('σ', 'ν')} = {sg(Pn[0])}", ot=Pn[1])
+    g += razmer(X, Y, 0.0, D[0], -62.5, f"OD = {sxs} = {sg(sx_, 0)}")
+    # над кругом — абсцисса точки P′
+    g += razmer(X, Y, 0.0, Pt[0], 46, f"{sub('σ', 't')} = {sg(Pt[0])}", ot=Pt[1])
 
-    def luch(p_from, p_to, za, cls, metka=None, m_off=(0, 0)):
+    def razmer_v(tochka_, x_dim, text, sleva):
+        """Вертикальный размер: ордината точки, от оси σ до уровня точки."""
+        sx9, st9 = tochka_
+        z = 1 if x_dim > sx9 else -1
+        out = ln((X(sx9) + 5 * z, Y(st9)), (X(x_dim) + 6 * z, Y(st9)), "ext")
+        out += ar2((X(x_dim), Y(0)), (X(x_dim), Y(st9)), "dim")
+        xt = X(x_dim) - 5 if sleva else X(x_dim) + 16
+        out += txt_r(xt, (Y(0) + Y(st9)) / 2, text, -90)
+        return out
+
+    # ординаты точек P и P′ — у полей чертежа, чтобы не пересекать лучи
+    g += razmer_v(Pn, -106, f"{sub('τ', 'tν')} = {sg(Pn[1])}", True)
+    g += razmer_v(Pt, 6, f"τ = +{sg(Pt[1])} = −{sub('τ', 'tν')}", False)
+
+    def luch(p_from, p_to, za, cls, metka=None, m_off=(0, 0), os_=None):
         """Прямая через p_from и p_to, продлённая за p_to на za МПа (со стрелкой)."""
         dx, dy = p_to[0] - p_from[0], p_to[1] - p_from[1]
         L = math.hypot(dx, dy)
@@ -717,16 +736,22 @@ def fig26_mohr():
         a = (p_from[0] - 5 * ux, p_from[1] - 5 * uy)
         b = (p_to[0] + za * ux, p_to[1] + za * uy)
         out = ar((X(a[0]), Y(a[1])), (X(b[0]), Y(b[1])), cls)
+        if os_:
+            out = out.replace("<line ", f'<line data-os="{os_}" ', 1)
         if metka:
             out += txt(X(b[0]) + m_off[0], Y(b[1]) + m_off[1], metka, "lbl halo")
         return out
 
     # ---- что снимается: лучи из полюса K
     g += ln((X(Xp[0]), Y(t_)), (X(sy_ + 21), Y(t_)), "norm")   # горизонталь K–X
-    g += luch((sy_, t_), (s1, 0.0), 24, "ray", "1", (8, 4))
-    g += luch((s2, 0.0), (sy_, t_), 16, "ray", "2", (6, 16))
-    g += luch(Pn, (sy_, t_), 20, "ray2", "ν", (10, 3))
-    g += luch(Pt, (sy_, t_), 11, "ray2", "t", (11, 6))
+    g += luch((sy_, t_), (s1, 0.0), 24, "ray", "1", (8, 4), "1")
+    g += luch((s2, 0.0), (sy_, t_), 16, "ray", "2", (6, 16), "2")
+    g += luch(Pn, (sy_, t_), 20, "ray2", "ν", (10, 3), "ν")
+    g += luch(Pt, (sy_, t_), 11, "ray2", "t", (11, 6), "t")
+    # оси x₁, y₁ элемента с экстремальными касательными (рисунок 3 конспекта):
+    # x₁ = ось 1 + 45° — через T₁, y₁ = ось 1 − 45° — через T₂
+    g += luch((sy_, t_), T1, 8, "ray3", "x₁", (-9, -4), "x1")
+    g += luch(T2, (sy_, t_), 27, "ray3", "y₁", (11, 2), "y1")
     # углы
     g += dug(X(s1), Y(0), 11 * k, 0, a1)
     g += txt(X(s1) + 12.5 * k, Y(0) - 5.5 * k, "α₁", "ang halo", "start")
@@ -750,8 +775,8 @@ def fig26_mohr():
     g += txt(X(s2) - 6, Y(0) - 7, f"σ₂ = {sg(s2)}", "val halo", "end")
     g += txt(X(Xp[0]) - 7, Y(Xp[1]) + 6, "X", "lbl halo", "end")
     g += txt(X(T1[0]) - 7, Y(T1[1]) - 6, "T₁", "lbl halo", "end")
-    g += txt(X(T2[0]) + 7, Y(T2[1]) + 6, "T₂", "lbl halo", "start")
-    g += txt(X(Pn[0]) + 1, Y(Pn[1]) + 21, "P", "lbl halo", "middle")
+    g += txt(X(T2[0]) + 5, Y(T2[1]) + 21, "T₂", "lbl halo", "start")
+    g += txt(X(Pn[0]) - 7, Y(Pn[1]) + 19, "P", "lbl halo", "end")
     g += txt(X(Pt[0]) + 8, Y(Pt[1]) - 5, "P′", "lbl halo", "start")
     s += g + "</g>\n"
     s += "</svg>\n"
