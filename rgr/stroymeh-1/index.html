@@ -80,6 +80,7 @@ svg text{font-family:'Times New Roman','Liberation Serif',Times,serif; fill:#000
 svg .lbl{font-size:17px}
 svg .sub{font-size:12px} svg .sup{font-size:12px}
 svg .dim-lbl{font-size:15px; font-style:italic}
+svg .pair{stroke:#000; stroke-width:1; stroke-dasharray:3 4; fill:none}
 svg .fibre{stroke:#000; stroke-width:1; stroke-dasharray:5 4; fill:none}
 svg .val{font-size:15px}
 svg .note{font-size:14px; font-style:italic}
@@ -1656,7 +1657,7 @@ R₁ — вверх, оба горизонтальных стержня — вл
 <span class="cm">6.</span> Считаем <b>сверху вниз</b>: сначала верхний этаж, затем его реакции в опоре H
    переносим на нижний этаж с обратным направлением — это давление верхнего этажа.</div>
 
-<figure><svg style="width:118mm;max-width:118mm" viewBox="0 0 546 636" role="img" aria-label="Схема 4: поэтажная схема" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:118mm;max-width:118mm" viewBox="0 0 522 525" role="img" aria-label="Схема 4: поэтажная схема" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
 <marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
@@ -1708,50 +1709,35 @@ R₁ — вверх, оба горизонтальных стержня — вл
 <text x="98.0" y="214.0" class="lbl" text-anchor="middle">S</text>
 <text x="240.0" y="250.0" class="lbl" text-anchor="end">C</text>
 <text x="242.0" y="118.0" class="lbl" text-anchor="end">H</text>
-<line x1="62.0" y1="220.0" x2="62.0" y2="266.0" class="force" marker-end="url(#ah)"/>
-<text x="36.0" y="288.0" class="val" text-anchor="middle">R<tspan class='sub'>S</tspan> = 13,33</text>
-<text x="304.0" y="126.0" class="val" text-anchor="start">реакции: X<tspan class='sub'>H</tspan> = 20 →,  Y<tspan class='sub'>H</tspan> = 13,33 ↑</text>
-<text x="10.0" y="356.0" class="lbl-b" text-anchor="start">Этаж 1 — диск II (основной)</text>
-<line x1="252.0" y1="452.0" x2="408.0" y2="452.0" class="bar"/>
-<line x1="408.0" y1="452.0" x2="408.0" y2="582.0" class="bar"/>
-<line x1="252.0" y1="460.0" x2="408.0" y2="460.0" class="fibre"/>
-<line x1="400.0" y1="452.0" x2="400.0" y2="582.0" class="fibre"/>
-<circle cx="252.0" cy="452.0" r="5.2" class="hinge"/>
-<line x1="383.0" y1="582.0" x2="433.0" y2="582.0" class="hatch-line"/>
-<line x1="385.8" y1="582.0" x2="378.8" y2="589.0" class="hatch"/>
-<line x1="391.3" y1="582.0" x2="384.3" y2="589.0" class="hatch"/>
-<line x1="396.9" y1="582.0" x2="389.9" y2="589.0" class="hatch"/>
-<line x1="402.4" y1="582.0" x2="395.4" y2="589.0" class="hatch"/>
-<line x1="408.0" y1="582.0" x2="401.0" y2="589.0" class="hatch"/>
-<line x1="413.6" y1="582.0" x2="406.6" y2="589.0" class="hatch"/>
-<line x1="419.1" y1="582.0" x2="412.1" y2="589.0" class="hatch"/>
-<line x1="424.7" y1="582.0" x2="417.7" y2="589.0" class="hatch"/>
-<line x1="430.2" y1="582.0" x2="423.2" y2="589.0" class="hatch"/>
-<line x1="450.0" y1="452.0" x2="450.0" y2="582.0" class="q-line"/>
-<line x1="450.0" y1="452.0" x2="408.0" y2="452.0" class="q-arrow" marker-end="url(#ahs)"/>
-<line x1="450.0" y1="478.0" x2="408.0" y2="478.0" class="q-arrow" marker-end="url(#ahs)"/>
-<line x1="450.0" y1="504.0" x2="408.0" y2="504.0" class="q-arrow" marker-end="url(#ahs)"/>
-<line x1="450.0" y1="530.0" x2="408.0" y2="530.0" class="q-arrow" marker-end="url(#ahs)"/>
-<line x1="450.0" y1="556.0" x2="408.0" y2="556.0" class="q-arrow" marker-end="url(#ahs)"/>
-<line x1="450.0" y1="582.0" x2="408.0" y2="582.0" class="q-arrow" marker-end="url(#ahs)"/>
-<text x="486.0" y="521.0" class="lbl" text-anchor="middle">q = 1</text>
-<path d="M 392.7 456.8 A 16 16 0 1 0 399.4 438.5" class="moment" marker-end="url(#ah)"/>
-<text x="430.0" y="430.0" class="val" text-anchor="start">m = 10</text>
-<text x="250.0" y="478.0" class="lbl" text-anchor="end">H</text>
-<text x="394.0" y="478.0" class="lbl" text-anchor="end">R</text>
-<text x="394.0" y="574.0" class="lbl" text-anchor="end">B</text>
-<line x1="248.0" y1="452.0" x2="200.0" y2="452.0" class="force" marker-end="url(#ah)"/>
-<text x="212.0" y="442.0" class="val" text-anchor="middle">20</text>
-<line x1="252.0" y1="400.0" x2="252.0" y2="452.0" class="force" marker-end="url(#ah)"/>
-<text x="252.0" y="393.0" class="lbl" text-anchor="middle"></text>
-<text x="262.0" y="418.0" class="val" text-anchor="start">13,33</text>
-<text x="222.0" y="386.0" class="note" text-anchor="end">давление диска I</text>
-<line x1="346.0" y1="612.0" x2="400.0" y2="612.0" class="force" marker-end="url(#ah)"/>
-<text x="340.0" y="617.0" class="val" text-anchor="end">R<tspan class='sub'>Bx</tspan> = 24</text>
-<line x1="378.0" y1="574.0" x2="378.0" y2="522.0" class="force" marker-end="url(#ah)"/>
-<text x="364.0" y="552.0" class="val" text-anchor="end">R<tspan class='sub'>By</tspan> = 13,33</text>
-<path d="M 412.2 558.4 A 24 24 0 0 1 412.2 605.6" class="moment" marker-end="url(#ah)"/>
-<text x="440.0" y="612.0" class="val" text-anchor="start">M<tspan class='sub'>B</tspan> = 178</text>
+<text x="10.0" y="322.0" class="lbl-b" text-anchor="start">Этаж 1 — диск II (основной)</text>
+<line x1="252.0" y1="372.0" x2="408.0" y2="372.0" class="bar"/>
+<line x1="408.0" y1="372.0" x2="408.0" y2="502.0" class="bar"/>
+<line x1="252.0" y1="380.0" x2="408.0" y2="380.0" class="fibre"/>
+<line x1="400.0" y1="372.0" x2="400.0" y2="502.0" class="fibre"/>
+<circle cx="252.0" cy="372.0" r="5.2" class="hinge"/>
+<line x1="383.0" y1="502.0" x2="433.0" y2="502.0" class="hatch-line"/>
+<line x1="385.8" y1="502.0" x2="378.8" y2="509.0" class="hatch"/>
+<line x1="391.3" y1="502.0" x2="384.3" y2="509.0" class="hatch"/>
+<line x1="396.9" y1="502.0" x2="389.9" y2="509.0" class="hatch"/>
+<line x1="402.4" y1="502.0" x2="395.4" y2="509.0" class="hatch"/>
+<line x1="408.0" y1="502.0" x2="401.0" y2="509.0" class="hatch"/>
+<line x1="413.6" y1="502.0" x2="406.6" y2="509.0" class="hatch"/>
+<line x1="419.1" y1="502.0" x2="412.1" y2="509.0" class="hatch"/>
+<line x1="424.7" y1="502.0" x2="417.7" y2="509.0" class="hatch"/>
+<line x1="430.2" y1="502.0" x2="423.2" y2="509.0" class="hatch"/>
+<line x1="450.0" y1="372.0" x2="450.0" y2="502.0" class="q-line"/>
+<line x1="450.0" y1="372.0" x2="408.0" y2="372.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="450.0" y1="398.0" x2="408.0" y2="398.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="450.0" y1="424.0" x2="408.0" y2="424.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="450.0" y1="450.0" x2="408.0" y2="450.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="450.0" y1="476.0" x2="408.0" y2="476.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="450.0" y1="502.0" x2="408.0" y2="502.0" class="q-arrow" marker-end="url(#ahs)"/>
+<text x="486.0" y="441.0" class="lbl" text-anchor="middle">q = 1</text>
+<path d="M 392.7 376.8 A 16 16 0 1 0 399.4 358.5" class="moment" marker-end="url(#ah)"/>
+<text x="430.0" y="350.0" class="val" text-anchor="start">m = 10</text>
+<text x="250.0" y="398.0" class="lbl" text-anchor="end">H</text>
+<text x="394.0" y="398.0" class="lbl" text-anchor="end">R</text>
+<text x="394.0" y="494.0" class="lbl" text-anchor="end">B</text>
 </svg><figcaption>Схема 4 — поэтажная схема. Пунктир — отмеченное
 волокно стержня (по нему ставится знак M при построении эпюры Q). Силы в кН,
 моменты в кН·м</figcaption></figure>
@@ -1785,6 +1771,73 @@ q = 1 кН/м на стойке R–B (равнодействующая q·h = 4
 F проходит через S по горизонтали (плечо 0); q: 4·2 = 8; m = 10; R<sub>By</sub>:
 13,33·12 = 160; R<sub>Bx</sub> на уровне S (плечо 0); M<sub>B</sub> = −178:</p>
 <div class="f">0 + 8 + 10 + 160 + 0 − 178 = 0  ✓</div>
+
+<figure><svg style="width:150mm;max-width:150mm" viewBox="31 0 631 293" role="img" aria-label="Схема 4: силы взаимодействия этажей" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
+<marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
+</defs>
+<text x="60.0" y="26.0" class="lbl-b" text-anchor="start">диск I — этаж 2</text>
+<text x="400.0" y="26.0" class="lbl-b" text-anchor="start">диск II — этаж 1</text>
+<line x1="60.0" y1="240.0" x2="216.0" y2="240.0" class="bar"/>
+<line x1="216.0" y1="240.0" x2="216.0" y2="110.0" class="bar"/>
+<circle cx="216.0" cy="110.0" r="5.2" class="hinge"/>
+<line x1="264.0" y1="240.0" x2="216.0" y2="240.0" class="force" marker-end="url(#ah)"/>
+<text x="276.0" y="245.0" class="lbl" text-anchor="middle"></text>
+<text x="270.0" y="245.0" class="val" text-anchor="start">F = 20</text>
+<line x1="60.0" y1="192.0" x2="60.0" y2="240.0" class="force" marker-end="url(#ah)"/>
+<text x="60.0" y="185.0" class="lbl" text-anchor="middle"></text>
+<text x="68.0" y="206.0" class="val" text-anchor="start">R<tspan class='sub'>S</tspan> = 13,33</text>
+<line x1="220.0" y1="110.0" x2="264.0" y2="110.0" class="force" marker-end="url(#ah)"/>
+<text x="256.0" y="88.0" class="val" text-anchor="middle">X<tspan class='sub'>H</tspan> = 20</text>
+<line x1="216.0" y1="106.0" x2="216.0" y2="62.0" class="force" marker-end="url(#ah)"/>
+<text x="206.0" y="70.0" class="val" text-anchor="end">Y<tspan class='sub'>H</tspan> = 13,33</text>
+<text x="54.0" y="262.0" class="lbl" text-anchor="end">S</text>
+<text x="224.0" y="264.0" class="lbl" text-anchor="start">C</text>
+<text x="206.0" y="132.0" class="lbl" text-anchor="end">H</text>
+<line x1="400.0" y1="110.0" x2="556.0" y2="110.0" class="bar"/>
+<line x1="556.0" y1="110.0" x2="556.0" y2="240.0" class="bar"/>
+<circle cx="400.0" cy="110.0" r="5.2" class="hinge"/>
+<line x1="396.0" y1="110.0" x2="352.0" y2="110.0" class="force" marker-end="url(#ah)"/>
+<text x="370.0" y="96.0" class="val" text-anchor="middle">20</text>
+<line x1="400.0" y1="114.0" x2="400.0" y2="158.0" class="force" marker-end="url(#ah)"/>
+<text x="410.0" y="154.0" class="val" text-anchor="start">13,33</text>
+<text x="408.0" y="98.0" class="lbl" text-anchor="start">H</text>
+<line x1="596.0" y1="110.0" x2="596.0" y2="240.0" class="q-line"/>
+<line x1="596.0" y1="110.0" x2="556.0" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="596.0" y1="136.0" x2="556.0" y2="136.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="596.0" y1="162.0" x2="556.0" y2="162.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="596.0" y1="188.0" x2="556.0" y2="188.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="596.0" y1="214.0" x2="556.0" y2="214.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="596.0" y1="240.0" x2="556.0" y2="240.0" class="q-arrow" marker-end="url(#ahs)"/>
+<text x="630.0" y="179.0" class="lbl" text-anchor="middle">q = 1</text>
+<path d="M 540.7 114.8 A 16 16 0 1 0 547.4 96.5" class="moment" marker-end="url(#ah)"/>
+<text x="576.0" y="88.0" class="val" text-anchor="start">m = 10</text>
+<text x="544.0" y="134.0" class="lbl" text-anchor="end">R</text>
+<text x="546.0" y="258.0" class="lbl" text-anchor="end">B</text>
+<line x1="496.0" y1="266.0" x2="550.0" y2="266.0" class="force" marker-end="url(#ah)"/>
+<text x="490.0" y="271.0" class="val" text-anchor="end">R<tspan class='sub'>Bx</tspan> = 24</text>
+<line x1="526.0" y1="234.0" x2="526.0" y2="184.0" class="force" marker-end="url(#ah)"/>
+<text x="514.0" y="214.0" class="val" text-anchor="end">R<tspan class='sub'>By</tspan> = 13,33</text>
+<path d="M 560.2 216.4 A 24 24 0 0 1 560.2 263.6" class="moment" marker-end="url(#ah)"/>
+<text x="586.0" y="274.0" class="val" text-anchor="start">M<tspan class='sub'>B</tspan> = 178</text>
+<line x1="220.0" y1="146.0" x2="396.0" y2="146.0" class="pair"/>
+<text x="308.0" y="166.0" class="note" text-anchor="middle">в шарнире H силы</text>
+<text x="308.0" y="184.0" class="note" text-anchor="middle">равны и направлены</text>
+<text x="308.0" y="202.0" class="note" text-anchor="middle">противоположно</text>
+</svg><figcaption>Схема 4 — этажи, разнесённые по шарниру H: найденные
+реакции в истинном направлении и давление диска I на диск II. Силы в кН,
+моменты в кН·м</figcaption></figure>
+
+<p><b>Как давление переходит с этажа на этаж.</b> В шарнире H диски действуют
+друг на друга. Опора H держит диск I силами X<sub>H</sub> = 20 кН → и
+Y<sub>H</sub> = 13,33 кН ↑ — это реакции верхнего этажа. По третьему закону
+Ньютона диск I давит на диск II силами той же величины, но направленными
+<b>в противоположную сторону</b>: 20 кН ← и 13,33 кН ↓. Их мы и приложили
+к диску II как нагрузку. Поэтому в одной и той же точке H стрелки на верхнем
+и нижнем этажах всегда противоположны. Если взять давление в ту же сторону,
+что и реакцию, нижний этаж получит лишние 2·20 и 2·13,33 кН и равновесие
+нарушится.</p>
 
 <h3>Как строятся эпюры (правила для схем 4 и 5)</h3>
 <div class="pravila">
@@ -2401,7 +2454,7 @@ B и C; при вертикальной нагрузке он восприним
 Горизонтальных нагрузок в схеме нет (R<sub>Ax</sub> = 0), поэтому, как принято
 для многопролётных балок, на поэтажной схеме он показан балкой на двух опорах.</p>
 
-<figure><svg style="width:150mm;max-width:150mm" viewBox="0 50 670 279" role="img" aria-label="Схема 5: поэтажная схема" xmlns="http://www.w3.org/2000/svg">
+<figure><svg style="width:150mm;max-width:150mm" viewBox="0 50 670 257" role="img" aria-label="Схема 5: поэтажная схема" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
 <marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
@@ -2427,8 +2480,6 @@ B и C; при вертикальной нагрузке он восприним
 <circle cx="312.0" cy="220.0" r="5.2" class="hinge"/>
 <text x="186.0" y="125.0" class="lbl" text-anchor="end">H₁</text>
 <text x="322.0" y="125.0" class="lbl" text-anchor="start">H₂</text>
-<text x="204.0" y="182.0" class="val" text-anchor="start">V = 3</text>
-<text x="304.0" y="182.0" class="val" text-anchor="end">V = 3</text>
 <line x1="80.0" y1="220.0" x2="196.0" y2="220.0" class="bar"/>
 <line x1="80.0" y1="228.0" x2="196.0" y2="228.0" class="fibre"/>
 <line x1="80.0" y1="197.0" x2="80.0" y2="243.0" class="hatch-line"/>
@@ -2450,7 +2501,6 @@ B и C; при вертикальной нагрузке он восприним
 <line x1="190.0" y1="190.0" x2="190.0" y2="220.0" class="q-arrow" marker-end="url(#ahs)"/>
 <text x="129.0" y="182.0" class="lbl" text-anchor="middle">q = 1</text>
 <text x="88.0" y="250.0" class="lbl" text-anchor="start">A</text>
-<text x="76.0" y="282.0" class="val" text-anchor="start">R<tspan class='sub'>Ay</tspan> = 9;  M<tspan class='sub'>A</tspan> = 36</text>
 <line x1="312.0" y1="220.0" x2="602.0" y2="220.0" class="bar"/>
 <line x1="312.0" y1="228.0" x2="602.0" y2="228.0" class="fibre"/>
 <circle cx="370.0" cy="220.0" r="5.2" class="hinge"/>
@@ -2481,8 +2531,6 @@ B и C; при вертикальной нагрузке он восприним
 <text x="628.0" y="202.0" class="lbl" text-anchor="middle">m = 10</text>
 <text x="370.0" y="290.0" class="lbl" text-anchor="middle">B</text>
 <text x="486.0" y="290.0" class="lbl" text-anchor="middle">C</text>
-<text x="370.0" y="312.0" class="val" text-anchor="middle">R<tspan class='sub'>B</tspan> = 12,83</text>
-<text x="486.0" y="312.0" class="val" text-anchor="middle">R<tspan class='sub'>C</tspan> = 10,17</text>
 <text x="606.0" y="250.0" class="lbl" text-anchor="start">E</text>
 </svg><figcaption>Схема 5 — поэтажная схема. Пунктир — отмеченное
 (нижнее) волокно. Силы в кН, моменты в кН·м</figcaption></figure>
@@ -2501,6 +2549,85 @@ B и C; при вертикальной нагрузке он восприним
    ΣM<sub>C</sub> = 0:   −6·R<sub>B</sub> + 3·9 + 20·3 − 10 = 0   →   R<sub>B</sub> = 77/6 = <b>12,83 кН</b> (↑)
    ΣM<sub>B</sub> = 0:    6·R<sub>C</sub> + 3·3 − 20·3 − 10 = 0   →   R<sub>C</sub> = 61/6 = <b>10,17 кН</b> (↑)
    проверка ΣY:   12,83 + 10,17 − 3 − 20 = 0  ✓</div>
+
+<figure><svg style="width:150mm;max-width:150mm" viewBox="0 42 719 352" role="img" aria-label="Схема 5: силы взаимодействия этажей" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
+<marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
+</defs>
+<text x="10.0" y="70.0" class="lbl-b" text-anchor="start">этаж 2</text>
+<text x="10.0" y="230.0" class="lbl-b" text-anchor="start">этаж 1</text>
+<line x1="246.0" y1="110.0" x2="362.0" y2="110.0" class="bar"/>
+<circle cx="246.0" cy="110.0" r="5.2" class="hinge"/>
+<circle cx="362.0" cy="110.0" r="5.2" class="hinge"/>
+<line x1="246.0" y1="80.0" x2="362.0" y2="80.0" class="q-line"/>
+<line x1="246.0" y1="80.0" x2="246.0" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="265.3" y1="80.0" x2="265.3" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="284.7" y1="80.0" x2="284.7" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="304.0" y1="80.0" x2="304.0" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="323.3" y1="80.0" x2="323.3" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="342.7" y1="80.0" x2="342.7" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="362.0" y1="80.0" x2="362.0" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<text x="304.0" y="72.0" class="lbl" text-anchor="middle">q = 1</text>
+<line x1="246.0" y1="160.0" x2="246.0" y2="115.0" class="force" marker-end="url(#ah)"/>
+<line x1="362.0" y1="160.0" x2="362.0" y2="115.0" class="force" marker-end="url(#ah)"/>
+<text x="238.0" y="154.0" class="val" text-anchor="end">V = 3</text>
+<text x="370.0" y="154.0" class="val" text-anchor="start">V = 3</text>
+<text x="238.0" y="104.0" class="lbl" text-anchor="end">H₁</text>
+<text x="370.0" y="104.0" class="lbl" text-anchor="start">H₂</text>
+<line x1="246.0" y1="166.0" x2="246.0" y2="202.0" class="pair"/>
+<line x1="362.0" y1="166.0" x2="362.0" y2="202.0" class="pair"/>
+<text x="376.0" y="192.0" class="note" text-anchor="start">давление на нижний этаж =</text>
+<text x="376.0" y="210.0" class="note" text-anchor="start">реакция верхнего, но вниз</text>
+<line x1="130.0" y1="300.0" x2="246.0" y2="300.0" class="bar"/>
+<circle cx="246.0" cy="300.0" r="5.2" class="hinge"/>
+<line x1="130.0" y1="270.0" x2="246.0" y2="270.0" class="q-line"/>
+<line x1="130.0" y1="270.0" x2="130.0" y2="300.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="153.2" y1="270.0" x2="153.2" y2="300.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="176.4" y1="270.0" x2="176.4" y2="300.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="199.6" y1="270.0" x2="199.6" y2="300.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="222.8" y1="270.0" x2="222.8" y2="300.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="246.0" y1="270.0" x2="246.0" y2="300.0" class="q-arrow" marker-end="url(#ahs)"/>
+<text x="174.0" y="262.0" class="lbl" text-anchor="middle">q = 1</text>
+<line x1="246.0" y1="208.0" x2="246.0" y2="300.0" class="force" marker-end="url(#ah)"/>
+<text x="246.0" y="201.0" class="lbl" text-anchor="middle"></text>
+<text x="254.0" y="234.0" class="val" text-anchor="start">3</text>
+<line x1="130.0" y1="356.0" x2="130.0" y2="306.0" class="force" marker-end="url(#ah)"/>
+<text x="124.0" y="360.0" class="val" text-anchor="end">R<tspan class='sub'>Ay</tspan> = 9</text>
+<path d="M 133.5 280.3 A 20 20 0 1 0 133.5 319.7" class="moment" marker-end="url(#ah)"/>
+<text x="104.0" y="280.0" class="val" text-anchor="end">M<tspan class='sub'>A</tspan> = 36</text>
+<text x="138.0" y="324.0" class="lbl" text-anchor="start">A</text>
+<line x1="362.0" y1="300.0" x2="652.0" y2="300.0" class="bar"/>
+<circle cx="362.0" cy="300.0" r="5.2" class="hinge"/>
+<line x1="362.0" y1="208.0" x2="362.0" y2="300.0" class="force" marker-end="url(#ah)"/>
+<text x="362.0" y="201.0" class="lbl" text-anchor="middle"></text>
+<text x="370.0" y="234.0" class="val" text-anchor="start">3</text>
+<line x1="478.0" y1="250.0" x2="478.0" y2="300.0" class="force" marker-end="url(#ah)"/>
+<text x="478.0" y="243.0" class="lbl" text-anchor="middle"></text>
+<text x="486.0" y="266.0" class="val" text-anchor="start">F = 20</text>
+<path d="M 639.3 290.3 A 16 16 0 1 1 639.3 309.7" class="moment" marker-end="url(#ah)"/>
+<text x="658.0" y="274.0" class="val" text-anchor="start">m = 10</text>
+<text x="660.0" y="334.0" class="lbl" text-anchor="start">E</text>
+<line x1="420.0" y1="356.0" x2="420.0" y2="306.0" class="force" marker-end="url(#ah)"/>
+<text x="420.0" y="376.0" class="val" text-anchor="middle">R<tspan class='sub'>B</tspan> = 12,83</text>
+<line x1="536.0" y1="356.0" x2="536.0" y2="306.0" class="force" marker-end="url(#ah)"/>
+<text x="536.0" y="376.0" class="val" text-anchor="middle">R<tspan class='sub'>C</tspan> = 10,17</text>
+<text x="428.0" y="290.0" class="lbl" text-anchor="start">B</text>
+<text x="544.0" y="290.0" class="lbl" text-anchor="start">C</text>
+</svg><figcaption>Схема 5 — этажи разнесены: реакции верхней балки
+H₁–H₂ и её давление на нижние балки, опоры заменены найденными реакциями.
+Силы в кН, моменты в кН·м</figcaption></figure>
+
+<p><b>Почему обе реакции верхней балки направлены вверх, а давления на нижние
+балки — вниз.</b> Балка H₁–H₂ лежит на двух опорах и нагружена q вниз. Чтобы её
+удержать, обе опоры должны толкать её вверх: V<sub>H1</sub> = V<sub>H2</sub> =
+3 кН ↑. У простой балки под нагрузкой, направленной вниз, обе опорные реакции
+направлены вверх — это не ошибка. Противоположными должны быть силы
+<b>в каждой отдельной точке опирания</b>: в H₁ верхняя балка получает 3 кН ↑,
+а консоль A–H₁ — 3 кН ↓; в H₂ балка H₁–H₂ получает 3 кН ↑, а балка H₂–E —
+3 кН ↓. На рисунке эти пары соединены пунктиром. Правило общее: давление
+вышележащей балки на нижележащую равно её опорной реакции и направлено
+в обратную сторону.</p>
 
 <h3>Эпюра M</h3>
 <p>Отмеченное волокно у всех участков — нижнее. Строим по этажам.</p>

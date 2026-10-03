@@ -397,7 +397,7 @@ def puktir(p1, p2, d):
     return ln((p1[0] + d[0], p1[1] + d[1]), (p2[0] + d[0], p2[1] + d[1]), "fibre")
 
 
-def strelka(p, dx, dy, label, lab, length=44, ot=False):
+def strelka(p, dx, dy, label, lab, length=44, ot=False, anchor="middle"):
     """Сила с подписью-значением. ot=False — остриём в точку p,
     ot=True — хвостом от точки p (чтобы не ложиться на стержень)."""
     if not ot:
@@ -405,7 +405,7 @@ def strelka(p, dx, dy, label, lab, length=44, ot=False):
     L = math.hypot(dx, dy)
     ux, uy = dx / L, dy / L
     s = ar((p[0] + ux * 4, p[1] + uy * 4), (p[0] + ux * length, p[1] + uy * length), "force")
-    return s + txt(p[0] + lab[0], p[1] + lab[1], label, "val")
+    return s + txt(p[0] + lab[0], p[1] + lab[1], label, "val", anchor)
 
 
 def shema4_etazhi():
@@ -416,10 +416,10 @@ def shema4_etazhi():
     передаётся теми же силами в обратную сторону. Пунктир — отмеченное
     волокно (по нему ставится знак M в формуле для Q).
     """
-    w, h = 640, 700
+    w, h = 640, 600
     xs, xc, xr = 96, 252, 408
     yt1, yb1 = 96, 96 + 130                 # этаж 2 (диск I)
-    yt2, yb2 = 452, 452 + 130               # этаж 1 (диск II)
+    yt2, yb2 = 372, 372 + 130               # этаж 1 (диск II)
     s = HEAD.format(w=w, h=h, alt="Схема 4: поэтажная схема")
     # ---- этаж 2: диск I
     s += txt(10, 26, "Этаж 2 — диск I (второстепенный)", "lbl-b", "start")
@@ -434,11 +434,8 @@ def shema4_etazhi():
     s += txt(xs + 2, yb1 - 12, "S", "lbl", "middle")
     s += txt(xc - 12, yb1 + 24, "C", "lbl", "end")
     s += txt(xc - 10, yt1 + 22, "H", "lbl", "end")
-    # реакции диска I
-    s += strelka((xs - 34, yb1 - 10), 0, 1, "R_S = 13,33", (-26, 72), 50, ot=True)
-    s += txt(xc + 52, yt1 + 30, "реакции: X_H = 20 →,  Y_H = 13,33 ↑", "val", "start")
     # ---- этаж 1: диск II
-    s += txt(10, yt2 - 96, "Этаж 1 — диск II (основной)", "lbl-b", "start")
+    s += txt(10, yt2 - 50, "Этаж 1 — диск II (основной)", "lbl-b", "start")
     s += ln((xc, yt2), (xr, yt2)) + ln((xr, yt2), (xr, yb2))
     s += puktir((xc, yt2), (xr, yt2), (0, 8)) + puktir((xr, yt2), (xr, yb2), (-8, 0))
     s += hinge((xc, yt2))
@@ -449,18 +446,6 @@ def shema4_etazhi():
     s += txt(xc - 2, yt2 + 26, "H", "lbl", "end")
     s += txt(xr - 14, yt2 + 26, "R", "lbl", "end")
     s += txt(xr - 14, yb2 - 8, "B", "lbl", "end")
-    # давление диска I — те же силы в обратную сторону
-    s += strelka((xc, yt2), -1, 0, "20", (-40, -10), 52, ot=True)
-    s += force((xc, yt2), 0, 1, "", (0, 0), 52)
-    s += txt(xc + 10, yt2 - 34, "13,33", "val", "start")
-    s += txt(xc - 30, yt2 - 66, "давление диска I", "note", "end")
-    # реакции заделки
-    s += ar((xr - 62, yb2 + 30), (xr - 8, yb2 + 30), "force", "ah")
-    s += txt(xr - 68, yb2 + 35, "R_Bx = 24", "val", "end")
-    s += ar((xr - 30, yb2 - 8), (xr - 30, yb2 - 60), "force", "ah")
-    s += txt(xr - 44, yb2 - 30, "R_By = 13,33", "val", "end")
-    s += moment((xr, yb2), "", 24, False, 180, (0, 0), 160)
-    s += txt(xr + 32, yb2 + 30, "M_B = 178", "val", "start")
     s += '</svg>\n'
     for a, b in (("R_S", sub("R", "S")), ("R_Bx", sub("R", "Bx")), ("R_By", sub("R", "By")),
                  ("M_B", sub("M", "B")), ("X_H", sub("X", "H")), ("Y_H", sub("Y", "H"))):
@@ -485,22 +470,116 @@ def shema5_etazhi():
     s += stoyka((xH1, yu), (xH1, yl)) + stoyka((xH2, yu), (xH2, yl))
     s += txt(xH1 - 10, yu + 5, "H₁", "lbl", "end")
     s += txt(xH2 + 10, yu + 5, "H₂", "lbl", "start")
-    s += txt(xH1 + 8, (yu + yl) / 2 + 12, "V = 3", "val", "start")
-    s += txt(xH2 - 8, (yu + yl) / 2 + 12, "V = 3", "val", "end")
     # нижний этаж: консоль A–H₁
     s += ln((x0, yl), (xH1, yl)) + puktir((x0, yl), (xH1, yl), (0, 8))
     s += fixed((x0, yl), 90, 46, -1)
     s += qload((x0, yl), (xH1 - 6, yl), (0, -30), 5, "q = 1", (-6, -8))
     s += txt(x0 + 8, yl + 30, "A", "lbl", "start")
-    s += txt(x0 - 4, yl + 62, "R_Ay = 9;  M_A = 36", "val", "start")
     # нижний этаж: балка H₂–E
     s += ln((xH2, yl), (xE, yl)) + puktir((xH2, yl), (xE, yl), (0, 8))
     s += link_v((xB, yl), 24) + link_v((xC, yl), 24)
     s += force((xP, yl), 0, 1, "F = 20", (16, 0), 48)
     s += moment((xE, yl), "m = 10", 16, False, 180, (26, -18))
     s += txt(xB, yl + 70, "B", "lbl") + txt(xC, yl + 70, "C", "lbl")
-    s += txt(xB, yl + 92, "R_B = 12,83", "val") + txt(xC, yl + 92, "R_C = 10,17", "val")
     s += txt(xE + 4, yl + 30, "E", "lbl", "start")
+    s += '</svg>\n'
+    for a, b in (("R_Ay", sub("R", "Ay")), ("M_A", sub("M", "A")),
+                 ("R_B", sub("R", "B")), ("R_C", sub("R", "C"))):
+        s = s.replace(a, b)
+    return s
+
+
+def shema4_sily():
+    """Схема 4: этажи разнесены по шарниру H. Каждый диск — со своей
+    нагрузкой и найденными реакциями в истинном направлении. В шарнире H
+    пары сил: на диск I — X_H → и Y_H ↑, на диск II — те же 20 и 13,33,
+    но ← и ↓ (давление верхнего этажа на нижний)."""
+    w, h = 690, 360
+    xs, xc = 60, 216                 # диск I: S, C (и H над C)
+    xh2, xr = 400, 556               # диск II: H, R (и B под R)
+    yt, yb = 110, 240
+    s = HEAD.format(w=w, h=h, alt="Схема 4: силы взаимодействия этажей")
+    s += txt(xs, 26, "диск I — этаж 2", "lbl-b", "start")
+    s += txt(xh2, 26, "диск II — этаж 1", "lbl-b", "start")
+    # ---- диск I
+    s += ln((xs, yb), (xc, yb)) + ln((xc, yb), (xc, yt)) + hinge((xc, yt))
+    s += force((xc, yb), -1, 0, "", (0, 0), 48) + txt(xc + 54, yb + 5, "F = 20", "val", "start")
+    s += force((xs, yb), 0, 1, "", (0, 0), 48) + txt(xs + 8, yb - 34, "R_S = 13,33", "val", "start")
+    s += strelka((xc, yt), 1, 0, "X_H = 20", (40, -22), 48, ot=True)
+    s += strelka((xc, yt), 0, -1, "Y_H = 13,33", (-10, -40), 48, ot=True)
+    s += txt(xs - 6, yb + 22, "S", "lbl", "end") + txt(xc + 8, yb + 24, "C", "lbl", "start")
+    s += txt(xc - 10, yt + 22, "H", "lbl", "end")
+    s = s.replace('class="val" text-anchor="middle">Y_H', 'class="val" text-anchor="end">Y_H')
+    # ---- диск II
+    s += ln((xh2, yt), (xr, yt)) + ln((xr, yt), (xr, yb)) + hinge((xh2, yt))
+    s += strelka((xh2, yt), -1, 0, "20", (-30, -14), 48, ot=True)
+    s += strelka((xh2, yt), 0, 1, "13,33", (10, 44), 48, ot=True, anchor="start")
+    s += txt(xh2 + 8, yt - 12, "H", "lbl", "start")
+    s += qload((xr, yt), (xr, yb), (40, 0), 5, "q = 1", (34, 4))
+    s += moment((xr, yt), "", 16, True, 200, (0, 0)) + txt(xr + 20, yt - 22, "m = 10", "val", "start")
+    s += txt(xr - 12, yt + 24, "R", "lbl", "end") + txt(xr - 10, yb + 18, "B", "lbl", "end")
+    s += ar((xr - 60, yb + 26), (xr - 6, yb + 26), "force", "ah")
+    s += txt(xr - 66, yb + 31, "R_Bx = 24", "val", "end")
+    s += ar((xr - 30, yb - 6), (xr - 30, yb - 56), "force", "ah")
+    s += txt(xr - 42, yb - 26, "R_By = 13,33", "val", "end")
+    s += moment((xr, yb), "", 24, False, 180, (0, 0), 160)
+    s += txt(xr + 30, yb + 34, "M_B = 178", "val", "start")
+    # связь пар сил в шарнире
+    s += ln((xc + 4, yt + 36), (xh2 - 4, yt + 36), "pair")
+    s += txt((xc + xh2) / 2, yt + 56, "в шарнире H силы", "note")
+    s += txt((xc + xh2) / 2, yt + 74, "равны и направлены", "note")
+    s += txt((xc + xh2) / 2, yt + 92, "противоположно", "note")
+    s += '</svg>\n'
+    for a, b in (("R_S", sub("R", "S")), ("R_Bx", sub("R", "Bx")), ("R_By", sub("R", "By")),
+                 ("M_B", sub("M", "B")), ("X_H", sub("X", "H")), ("Y_H", sub("Y", "H"))):
+        s = s.replace(a, b)
+    return s
+
+
+def shema5_sily():
+    """Схема 5: этажи разнесены. Верхняя балка H₁–H₂ — с реакциями
+    3 ↑ на обеих опорах; нижние балки — с давлением 3 ↓ в тех же точках
+    и со своими реакциями. Опоры заменены реакциями."""
+    w, h = 760, 420
+    x0, u = 130, 116
+    yu, yl = 110, 300
+    xH1, xH2 = x0 + u, x0 + 2 * u
+    half = u / 2
+    xB, xP, xC, xE = xH2 + half, xH2 + 2 * half, xH2 + 3 * half, xH2 + 5 * half
+    s = HEAD.format(w=w, h=h, alt="Схема 5: силы взаимодействия этажей")
+    s += txt(10, yu - 40, "этаж 2", "lbl-b", "start")
+    s += txt(10, yl - 70, "этаж 1", "lbl-b", "start")
+    # верхняя балка и её реакции (обе вверх — балка лежит на двух опорах)
+    s += ln((xH1, yu), (xH2, yu)) + hinge((xH1, yu)) + hinge((xH2, yu))
+    s += qload((xH1, yu), (xH2, yu), (0, -30), 6, "q = 1", (0, -8))
+    for x in (xH1, xH2):
+        s += ar((x, yu + 50), (x, yu + 5), "force", "ah")
+    s += txt(xH1 - 8, yu + 44, "V = 3", "val", "end") + txt(xH2 + 8, yu + 44, "V = 3", "val", "start")
+    s += txt(xH1 - 8, yu - 6, "H₁", "lbl", "end") + txt(xH2 + 8, yu - 6, "H₂", "lbl", "start")
+    # передача: те же 3 кН вниз на нижние балки
+    for x in (xH1, xH2):
+        s += ln((x, yu + 56), (x, yl - 98), "pair")
+    s += txt(xH2 + 14, yu + 82, "давление на нижний этаж =", "note", "start")
+    s += txt(xH2 + 14, yu + 100, "реакция верхнего, но вниз", "note", "start")
+    # консоль A–H₁
+    s += ln((x0, yl), (xH1, yl)) + hinge((xH1, yl))
+    s += qload((x0, yl), (xH1, yl), (0, -30), 5, "q = 1", (-14, -8))
+    s += force((xH1, yl), 0, 1, "", (0, 0), 92) + txt(xH1 + 8, yl - 66, "3", "val", "start")
+    s += ar((x0, yl + 56), (x0, yl + 6), "force", "ah")
+    s += txt(x0 - 6, yl + 60, "R_Ay = 9", "val", "end")
+    s += moment((x0, yl), "", 20, True, 0, (0, 0), 200)
+    s += txt(x0 - 26, yl - 20, "M_A = 36", "val", "end")
+    s += txt(x0 + 8, yl + 24, "A", "lbl", "start")
+    # балка H₂–E
+    s += ln((xH2, yl), (xE, yl)) + hinge((xH2, yl))
+    s += force((xH2, yl), 0, 1, "", (0, 0), 92) + txt(xH2 + 8, yl - 66, "3", "val", "start")
+    s += force((xP, yl), 0, 1, "", (0, 0), 50) + txt(xP + 8, yl - 34, "F = 20", "val", "start")
+    s += moment((xE, yl), "", 16, False, 180, (0, 0)) + txt(xE + 6, yl - 26, "m = 10", "val", "start")
+    s += txt(xE + 8, yl + 34, "E", "lbl", "start")
+    for x, lab in ((xB, "R_B = 12,83"), (xC, "R_C = 10,17")):
+        s += ar((x, yl + 56), (x, yl + 6), "force", "ah")
+        s += txt(x, yl + 76, lab, "val")
+    s += txt(xB + 8, yl - 10, "B", "lbl", "start") + txt(xC + 8, yl - 10, "C", "lbl", "start")
     s += '</svg>\n'
     for a, b in (("R_Ay", sub("R", "Ay")), ("M_A", sub("M", "A")),
                  ("R_B", sub("R", "B")), ("R_C", sub("R", "C"))):
@@ -514,6 +593,8 @@ if __name__ == "__main__":
                      ("shema-1-reakcii", shema1_reakcii),
                      ("shema-2-reakcii", shema2_reakcii),
                      ("shema-4-etazhi", shema4_etazhi),
-                     ("shema-5-etazhi", shema5_etazhi)):
+                     ("shema-5-etazhi", shema5_etazhi),
+                     ("shema-4-sily", shema4_sily),
+                     ("shema-5-sily", shema5_sily)):
         open(name + ".svg", "w", encoding="utf-8").write(fn())
         print("записано", name + ".svg")

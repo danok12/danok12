@@ -1,0 +1,54 @@
+<svg viewBox="31 0 631 293" role="img" aria-label="Схема 4: силы взаимодействия этажей" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
+<marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
+</defs>
+<text x="60.0" y="26.0" class="lbl-b" text-anchor="start">диск I — этаж 2</text>
+<text x="400.0" y="26.0" class="lbl-b" text-anchor="start">диск II — этаж 1</text>
+<line x1="60.0" y1="240.0" x2="216.0" y2="240.0" class="bar"/>
+<line x1="216.0" y1="240.0" x2="216.0" y2="110.0" class="bar"/>
+<circle cx="216.0" cy="110.0" r="5.2" class="hinge"/>
+<line x1="264.0" y1="240.0" x2="216.0" y2="240.0" class="force" marker-end="url(#ah)"/>
+<text x="276.0" y="245.0" class="lbl" text-anchor="middle"></text>
+<text x="270.0" y="245.0" class="val" text-anchor="start">F = 20</text>
+<line x1="60.0" y1="192.0" x2="60.0" y2="240.0" class="force" marker-end="url(#ah)"/>
+<text x="60.0" y="185.0" class="lbl" text-anchor="middle"></text>
+<text x="68.0" y="206.0" class="val" text-anchor="start">R<tspan class='sub'>S</tspan> = 13,33</text>
+<line x1="220.0" y1="110.0" x2="264.0" y2="110.0" class="force" marker-end="url(#ah)"/>
+<text x="256.0" y="88.0" class="val" text-anchor="middle">X<tspan class='sub'>H</tspan> = 20</text>
+<line x1="216.0" y1="106.0" x2="216.0" y2="62.0" class="force" marker-end="url(#ah)"/>
+<text x="206.0" y="70.0" class="val" text-anchor="end">Y<tspan class='sub'>H</tspan> = 13,33</text>
+<text x="54.0" y="262.0" class="lbl" text-anchor="end">S</text>
+<text x="224.0" y="264.0" class="lbl" text-anchor="start">C</text>
+<text x="206.0" y="132.0" class="lbl" text-anchor="end">H</text>
+<line x1="400.0" y1="110.0" x2="556.0" y2="110.0" class="bar"/>
+<line x1="556.0" y1="110.0" x2="556.0" y2="240.0" class="bar"/>
+<circle cx="400.0" cy="110.0" r="5.2" class="hinge"/>
+<line x1="396.0" y1="110.0" x2="352.0" y2="110.0" class="force" marker-end="url(#ah)"/>
+<text x="370.0" y="96.0" class="val" text-anchor="middle">20</text>
+<line x1="400.0" y1="114.0" x2="400.0" y2="158.0" class="force" marker-end="url(#ah)"/>
+<text x="410.0" y="154.0" class="val" text-anchor="start">13,33</text>
+<text x="408.0" y="98.0" class="lbl" text-anchor="start">H</text>
+<line x1="596.0" y1="110.0" x2="596.0" y2="240.0" class="q-line"/>
+<line x1="596.0" y1="110.0" x2="556.0" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="596.0" y1="136.0" x2="556.0" y2="136.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="596.0" y1="162.0" x2="556.0" y2="162.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="596.0" y1="188.0" x2="556.0" y2="188.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="596.0" y1="214.0" x2="556.0" y2="214.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="596.0" y1="240.0" x2="556.0" y2="240.0" class="q-arrow" marker-end="url(#ahs)"/>
+<text x="630.0" y="179.0" class="lbl" text-anchor="middle">q = 1</text>
+<path d="M 540.7 114.8 A 16 16 0 1 0 547.4 96.5" class="moment" marker-end="url(#ah)"/>
+<text x="576.0" y="88.0" class="val" text-anchor="start">m = 10</text>
+<text x="544.0" y="134.0" class="lbl" text-anchor="end">R</text>
+<text x="546.0" y="258.0" class="lbl" text-anchor="end">B</text>
+<line x1="496.0" y1="266.0" x2="550.0" y2="266.0" class="force" marker-end="url(#ah)"/>
+<text x="490.0" y="271.0" class="val" text-anchor="end">R<tspan class='sub'>Bx</tspan> = 24</text>
+<line x1="526.0" y1="234.0" x2="526.0" y2="184.0" class="force" marker-end="url(#ah)"/>
+<text x="514.0" y="214.0" class="val" text-anchor="end">R<tspan class='sub'>By</tspan> = 13,33</text>
+<path d="M 560.2 216.4 A 24 24 0 0 1 560.2 263.6" class="moment" marker-end="url(#ah)"/>
+<text x="586.0" y="274.0" class="val" text-anchor="start">M<tspan class='sub'>B</tspan> = 178</text>
+<line x1="220.0" y1="146.0" x2="396.0" y2="146.0" class="pair"/>
+<text x="308.0" y="166.0" class="note" text-anchor="middle">в шарнире H силы</text>
+<text x="308.0" y="184.0" class="note" text-anchor="middle">равны и направлены</text>
+<text x="308.0" y="202.0" class="note" text-anchor="middle">противоположно</text>
+</svg>

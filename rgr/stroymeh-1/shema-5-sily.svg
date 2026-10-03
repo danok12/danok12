@@ -1,0 +1,65 @@
+<svg viewBox="0 42 719 352" role="img" aria-label="Схема 5: силы взаимодействия этажей" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
+<marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
+</defs>
+<text x="10.0" y="70.0" class="lbl-b" text-anchor="start">этаж 2</text>
+<text x="10.0" y="230.0" class="lbl-b" text-anchor="start">этаж 1</text>
+<line x1="246.0" y1="110.0" x2="362.0" y2="110.0" class="bar"/>
+<circle cx="246.0" cy="110.0" r="5.2" class="hinge"/>
+<circle cx="362.0" cy="110.0" r="5.2" class="hinge"/>
+<line x1="246.0" y1="80.0" x2="362.0" y2="80.0" class="q-line"/>
+<line x1="246.0" y1="80.0" x2="246.0" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="265.3" y1="80.0" x2="265.3" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="284.7" y1="80.0" x2="284.7" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="304.0" y1="80.0" x2="304.0" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="323.3" y1="80.0" x2="323.3" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="342.7" y1="80.0" x2="342.7" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="362.0" y1="80.0" x2="362.0" y2="110.0" class="q-arrow" marker-end="url(#ahs)"/>
+<text x="304.0" y="72.0" class="lbl" text-anchor="middle">q = 1</text>
+<line x1="246.0" y1="160.0" x2="246.0" y2="115.0" class="force" marker-end="url(#ah)"/>
+<line x1="362.0" y1="160.0" x2="362.0" y2="115.0" class="force" marker-end="url(#ah)"/>
+<text x="238.0" y="154.0" class="val" text-anchor="end">V = 3</text>
+<text x="370.0" y="154.0" class="val" text-anchor="start">V = 3</text>
+<text x="238.0" y="104.0" class="lbl" text-anchor="end">H₁</text>
+<text x="370.0" y="104.0" class="lbl" text-anchor="start">H₂</text>
+<line x1="246.0" y1="166.0" x2="246.0" y2="202.0" class="pair"/>
+<line x1="362.0" y1="166.0" x2="362.0" y2="202.0" class="pair"/>
+<text x="376.0" y="192.0" class="note" text-anchor="start">давление на нижний этаж =</text>
+<text x="376.0" y="210.0" class="note" text-anchor="start">реакция верхнего, но вниз</text>
+<line x1="130.0" y1="300.0" x2="246.0" y2="300.0" class="bar"/>
+<circle cx="246.0" cy="300.0" r="5.2" class="hinge"/>
+<line x1="130.0" y1="270.0" x2="246.0" y2="270.0" class="q-line"/>
+<line x1="130.0" y1="270.0" x2="130.0" y2="300.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="153.2" y1="270.0" x2="153.2" y2="300.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="176.4" y1="270.0" x2="176.4" y2="300.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="199.6" y1="270.0" x2="199.6" y2="300.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="222.8" y1="270.0" x2="222.8" y2="300.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="246.0" y1="270.0" x2="246.0" y2="300.0" class="q-arrow" marker-end="url(#ahs)"/>
+<text x="174.0" y="262.0" class="lbl" text-anchor="middle">q = 1</text>
+<line x1="246.0" y1="208.0" x2="246.0" y2="300.0" class="force" marker-end="url(#ah)"/>
+<text x="246.0" y="201.0" class="lbl" text-anchor="middle"></text>
+<text x="254.0" y="234.0" class="val" text-anchor="start">3</text>
+<line x1="130.0" y1="356.0" x2="130.0" y2="306.0" class="force" marker-end="url(#ah)"/>
+<text x="124.0" y="360.0" class="val" text-anchor="end">R<tspan class='sub'>Ay</tspan> = 9</text>
+<path d="M 133.5 280.3 A 20 20 0 1 0 133.5 319.7" class="moment" marker-end="url(#ah)"/>
+<text x="104.0" y="280.0" class="val" text-anchor="end">M<tspan class='sub'>A</tspan> = 36</text>
+<text x="138.0" y="324.0" class="lbl" text-anchor="start">A</text>
+<line x1="362.0" y1="300.0" x2="652.0" y2="300.0" class="bar"/>
+<circle cx="362.0" cy="300.0" r="5.2" class="hinge"/>
+<line x1="362.0" y1="208.0" x2="362.0" y2="300.0" class="force" marker-end="url(#ah)"/>
+<text x="362.0" y="201.0" class="lbl" text-anchor="middle"></text>
+<text x="370.0" y="234.0" class="val" text-anchor="start">3</text>
+<line x1="478.0" y1="250.0" x2="478.0" y2="300.0" class="force" marker-end="url(#ah)"/>
+<text x="478.0" y="243.0" class="lbl" text-anchor="middle"></text>
+<text x="486.0" y="266.0" class="val" text-anchor="start">F = 20</text>
+<path d="M 639.3 290.3 A 16 16 0 1 1 639.3 309.7" class="moment" marker-end="url(#ah)"/>
+<text x="658.0" y="274.0" class="val" text-anchor="start">m = 10</text>
+<text x="660.0" y="334.0" class="lbl" text-anchor="start">E</text>
+<line x1="420.0" y1="356.0" x2="420.0" y2="306.0" class="force" marker-end="url(#ah)"/>
+<text x="420.0" y="376.0" class="val" text-anchor="middle">R<tspan class='sub'>B</tspan> = 12,83</text>
+<line x1="536.0" y1="356.0" x2="536.0" y2="306.0" class="force" marker-end="url(#ah)"/>
+<text x="536.0" y="376.0" class="val" text-anchor="middle">R<tspan class='sub'>C</tspan> = 10,17</text>
+<text x="428.0" y="290.0" class="lbl" text-anchor="start">B</text>
+<text x="544.0" y="290.0" class="lbl" text-anchor="start">C</text>
+</svg>
