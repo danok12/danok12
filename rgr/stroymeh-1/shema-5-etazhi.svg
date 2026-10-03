@@ -1,0 +1,84 @@
+<svg viewBox="0 50 670 279" role="img" aria-label="Схема 5: поэтажная схема" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
+<marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
+</defs>
+<text x="10.0" y="125.0" class="note" text-anchor="start">этаж 2</text>
+<text x="10.0" y="225.0" class="note" text-anchor="start">этаж 1</text>
+<line x1="196.0" y1="120.0" x2="312.0" y2="120.0" class="bar"/>
+<line x1="196.0" y1="128.0" x2="312.0" y2="128.0" class="fibre"/>
+<line x1="196.0" y1="88.0" x2="312.0" y2="88.0" class="q-line"/>
+<line x1="196.0" y1="88.0" x2="196.0" y2="120.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="215.3" y1="88.0" x2="215.3" y2="120.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="234.7" y1="88.0" x2="234.7" y2="120.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="254.0" y1="88.0" x2="254.0" y2="120.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="273.3" y1="88.0" x2="273.3" y2="120.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="292.7" y1="88.0" x2="292.7" y2="120.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="312.0" y1="88.0" x2="312.0" y2="120.0" class="q-arrow" marker-end="url(#ahs)"/>
+<text x="254.0" y="80.0" class="lbl" text-anchor="middle">q = 1</text>
+<circle cx="196.0" cy="120.0" r="5.2" class="hinge"/>
+<line x1="196.0" y1="120.0" x2="196.0" y2="220.0" class="bar-thin"/>
+<circle cx="196.0" cy="220.0" r="5.2" class="hinge"/>
+<circle cx="312.0" cy="120.0" r="5.2" class="hinge"/>
+<line x1="312.0" y1="120.0" x2="312.0" y2="220.0" class="bar-thin"/>
+<circle cx="312.0" cy="220.0" r="5.2" class="hinge"/>
+<text x="186.0" y="125.0" class="lbl" text-anchor="end">H₁</text>
+<text x="322.0" y="125.0" class="lbl" text-anchor="start">H₂</text>
+<text x="204.0" y="182.0" class="val" text-anchor="start">V = 3</text>
+<text x="304.0" y="182.0" class="val" text-anchor="end">V = 3</text>
+<line x1="80.0" y1="220.0" x2="196.0" y2="220.0" class="bar"/>
+<line x1="80.0" y1="228.0" x2="196.0" y2="228.0" class="fibre"/>
+<line x1="80.0" y1="197.0" x2="80.0" y2="243.0" class="hatch-line"/>
+<line x1="80.0" y1="199.6" x2="87.0" y2="192.6" class="hatch"/>
+<line x1="80.0" y1="204.7" x2="87.0" y2="197.7" class="hatch"/>
+<line x1="80.0" y1="209.8" x2="87.0" y2="202.8" class="hatch"/>
+<line x1="80.0" y1="214.9" x2="87.0" y2="207.9" class="hatch"/>
+<line x1="80.0" y1="220.0" x2="87.0" y2="213.0" class="hatch"/>
+<line x1="80.0" y1="225.1" x2="87.0" y2="218.1" class="hatch"/>
+<line x1="80.0" y1="230.2" x2="87.0" y2="223.2" class="hatch"/>
+<line x1="80.0" y1="235.3" x2="87.0" y2="228.3" class="hatch"/>
+<line x1="80.0" y1="240.4" x2="87.0" y2="233.4" class="hatch"/>
+<line x1="80.0" y1="190.0" x2="190.0" y2="190.0" class="q-line"/>
+<line x1="80.0" y1="190.0" x2="80.0" y2="220.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="102.0" y1="190.0" x2="102.0" y2="220.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="124.0" y1="190.0" x2="124.0" y2="220.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="146.0" y1="190.0" x2="146.0" y2="220.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="168.0" y1="190.0" x2="168.0" y2="220.0" class="q-arrow" marker-end="url(#ahs)"/>
+<line x1="190.0" y1="190.0" x2="190.0" y2="220.0" class="q-arrow" marker-end="url(#ahs)"/>
+<text x="129.0" y="182.0" class="lbl" text-anchor="middle">q = 1</text>
+<text x="88.0" y="250.0" class="lbl" text-anchor="start">A</text>
+<text x="76.0" y="282.0" class="val" text-anchor="start">R<tspan class='sub'>Ay</tspan> = 9;  M<tspan class='sub'>A</tspan> = 36</text>
+<line x1="312.0" y1="220.0" x2="602.0" y2="220.0" class="bar"/>
+<line x1="312.0" y1="228.0" x2="602.0" y2="228.0" class="fibre"/>
+<circle cx="370.0" cy="220.0" r="5.2" class="hinge"/>
+<line x1="370.0" y1="220.0" x2="370.0" y2="244.0" class="bar-thin"/>
+<circle cx="370.0" cy="244.0" r="5.2" class="hinge"/>
+<line x1="353.0" y1="250.2" x2="387.0" y2="250.2" class="hatch-line"/>
+<line x1="355.4" y1="250.2" x2="348.4" y2="257.2" class="hatch"/>
+<line x1="360.3" y1="250.2" x2="353.3" y2="257.2" class="hatch"/>
+<line x1="365.1" y1="250.2" x2="358.1" y2="257.2" class="hatch"/>
+<line x1="370.0" y1="250.2" x2="363.0" y2="257.2" class="hatch"/>
+<line x1="374.9" y1="250.2" x2="367.9" y2="257.2" class="hatch"/>
+<line x1="379.7" y1="250.2" x2="372.7" y2="257.2" class="hatch"/>
+<line x1="384.6" y1="250.2" x2="377.6" y2="257.2" class="hatch"/>
+<circle cx="486.0" cy="220.0" r="5.2" class="hinge"/>
+<line x1="486.0" y1="220.0" x2="486.0" y2="244.0" class="bar-thin"/>
+<circle cx="486.0" cy="244.0" r="5.2" class="hinge"/>
+<line x1="469.0" y1="250.2" x2="503.0" y2="250.2" class="hatch-line"/>
+<line x1="471.4" y1="250.2" x2="464.4" y2="257.2" class="hatch"/>
+<line x1="476.3" y1="250.2" x2="469.3" y2="257.2" class="hatch"/>
+<line x1="481.1" y1="250.2" x2="474.1" y2="257.2" class="hatch"/>
+<line x1="486.0" y1="250.2" x2="479.0" y2="257.2" class="hatch"/>
+<line x1="490.9" y1="250.2" x2="483.9" y2="257.2" class="hatch"/>
+<line x1="495.7" y1="250.2" x2="488.7" y2="257.2" class="hatch"/>
+<line x1="500.6" y1="250.2" x2="493.6" y2="257.2" class="hatch"/>
+<line x1="428.0" y1="172.0" x2="428.0" y2="220.0" class="force" marker-end="url(#ah)"/>
+<text x="444.0" y="165.0" class="lbl" text-anchor="middle">F = 20</text>
+<path d="M 589.3 210.3 A 16 16 0 1 1 589.3 229.7" class="moment" marker-end="url(#ah)"/>
+<text x="628.0" y="202.0" class="lbl" text-anchor="middle">m = 10</text>
+<text x="370.0" y="290.0" class="lbl" text-anchor="middle">B</text>
+<text x="486.0" y="290.0" class="lbl" text-anchor="middle">C</text>
+<text x="370.0" y="312.0" class="val" text-anchor="middle">R<tspan class='sub'>B</tspan> = 12,83</text>
+<text x="486.0" y="312.0" class="val" text-anchor="middle">R<tspan class='sub'>C</tspan> = 10,17</text>
+<text x="606.0" y="250.0" class="lbl" text-anchor="start">E</text>
+</svg>

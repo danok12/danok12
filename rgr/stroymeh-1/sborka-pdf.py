@@ -34,6 +34,12 @@ for k in (1, 2):
     h = h.replace(f"__SH_{k}R__",
                   open(f"shema-{k}-reakcii.svg",
                        encoding="utf-8").read().strip())
+# поэтажные схемы: свой размер — схема 4 высокая (два этажа друг над другом)
+for k, (wmm, hmm) in ((4, (118, 140)), (5, (150, 70))):
+    svg = open(f"shema-{k}-etazhi.svg", encoding="utf-8").read().strip()
+    vb = [float(v) for v in re.search(r'viewBox="([^"]+)"', svg).group(1).split()]
+    w = min(wmm, hmm * vb[2] / vb[3])
+    h = h.replace(f"__SH_{k}E__", svg.replace("<svg ", f'<svg style="width:{w:.0f}mm;max-width:{w:.0f}mm" ', 1))
 for i in range(1, 6):
     h = h.replace(f"__SH_{i}__", open(f"shema-{i}.svg", encoding="utf-8").read().strip())
     for k in "MQN":
