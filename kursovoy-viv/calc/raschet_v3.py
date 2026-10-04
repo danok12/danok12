@@ -396,6 +396,12 @@ with open(os.path.join(HERE, "..", "RASCHET_V3.md"), "w", encoding="utf-8") as f
 with open(os.path.join(HERE, "rezultaty_v3.json"), "w", encoding="utf-8") as f:
     json.dump(dict(U=U, N=N, rasx=rasx, P=dict(tot=P_tot, c=P_c, hr_tot=P_hr_tot, hr_c=P_hr_c), v1=v1,
                    vvod=dict(dn=dn_vv, v=v_vv, i=i_vv, h=h_vvod), schetchik_dom=sch_dom, H_tr=H_tr, H_nas=H_nas,
-                   et_reg=et_reg, k1_stoyaki=k1_st, k1=k1_vnutr + dvor, lotok=lotok, zeml=zeml, stoyaki=STOYAKI),
+                   et_reg=et_reg, k1_stoyaki=k1_st, k1=k1_vnutr + dvor, lotok=lotok, zeml=zeml, stoyaki=STOYAKI,
+                   dikt=DIKT, varianty={k: dict(z=vv["z"], z_pr=vv["z_pr"], sum_h=vv["sum_h"]) for k, vv in varianty.items()},
+                   z_gor_verh=z_gor_verh, z_dikt=z_dikt, H_geom=H_geom, H_vod=H_vod, sch_kv=sch_kv, q_kv=q_kv,
+                   L_vvod=L_VVOD, H_st_niz=H_st_niz, glub=glub, min_glub=min_glub, perepad_gkk=perepad_gkk,
+                   Z_GKK_GOR=Z_GKK_GOR, Z0_ABS=Z0_ABS, n_kv=n_kv_vsego, N_KV=N_KV, U0=U0, sum_h_v1=sum_h_v1,
+                   iznach=dict(N_SEK=N_SEK, N_ET=N_ET, H_ET=H_ET, H_PODVAL=H_PODVAL, T_PEREKR=T_PEREKR, DH_POL=DH_POL,
+                               H_PROMERZ=H_PROMERZ, H_GAR=H_GAR, D_GOR_V=D_GOR_V, D_GOR_K=D_GOR_K)),
               f, ensure_ascii=False, indent=1)
 print("\n".join(L))
