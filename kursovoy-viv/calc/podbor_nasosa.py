@@ -1,0 +1,108 @@
+"""Подбор повысительной насосной установки на рабочую точку из raschet_v3.py.
+
+Запуск: py podbor_nasosa.py  ->  ../PODBOR_NASOSA.md и nasos_v3.json (тип семейства для Revit).
+
+Характеристики сняты программно с векторных графиков каталога Wilo «Многоступенчатый насос вертикального
+исполнения серии MVL» (стр. 9 — MVL 8, стр. 11 — MVL 12): кривые H(Q) при 50 Гц, КПД и мощность P2 одной ступени.
+Источник: https://dn.ru/storage/certificates/wilo/nasosnye-stancii/katalog_wilo_nasos_mvl.pdf
+Типоразмеры установок — из каталога семейства «COR-MVL_2-32_Revit2019(08.25).txt» (папка «Семейства ВК»).
+"""
+import json
+import math
+import os
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REZ = json.load(open(os.path.join(HERE, "rezultaty_v3.json"), encoding="utf-8"))
+
+Q_TR = REZ["rasx"]["q_tot"] * 3.6          # м³/ч: общий расход, за насосом ответвление на ГВС
+H_TR = REZ["H_nas"]                        # м
+DH_UST = 1.5                               # м: потери в коллекторах, затворах и обратных клапанах установки (оценка)
+
+# Напор при 50 Гц, м, при Q = 8,0 / 9,1 / 10,0 м³/ч (сплошная часть кривых — рабочая зона).
+SERII = {
+    "MVL 8": dict(zona=(5.0, 11.0), eta=62.4, p2_st=0.341, dn=40, H={
+        "802": (17.7, 16.1, 14.5), "803": (27.7, 26.0, 24.5), "804": (34.3, 32.0, 29.8), "805": (45.1, 42.4, 39.9),
+        "806": (53.7, 50.4, 47.4), "808": (72.9, 68.3, 64.0), "810": (90.8, 84.9, 79.4), "811": (100.4, 93.6, 87.3),
+        "812": (109.6, 102.5, 96.0)}),
+    "MVL 12": dict(zona=(7.0, 16.0), eta=59.5, p2_st=0.487, dn=50, H={
+        "1202": (22.8, 22.4, 21.9), "1203": (34.5, 33.6, 32.6), "1204": (46.2, 45.1, 43.8), "1205": (58.7, 56.6, 54.7),
+        "1206": (69.2, 67.3, 65.5), "1207": (81.7, 79.3, 76.9), "1208": (93.3, 90.7, 87.7)}),
+}
+# Мощность мотора P2, кВт (таблицы каталога, стр. 10 и 12)
+MOTOR = {"802": 0.75, "803": 1.1, "804": 1.5, "805": 2.2, "806": 2.2, "808": 3.0, "810": 4.0, "811": 4.0,
+         "812": 4.0, "1202": 1.5, "1203": 2.2, "1204": 3.0, "1205": 3.0, "1206": 4.0, "1207": 5.5, "1208": 5.5}
+Q_TAB = (8.0, 9.1, 10.0)
+
+
+def h_pri(hs, q):
+    """Напор при расходе q: квадратичная интерполяция по трём точкам."""
+    (x0, x1, x2), (y0, y1, y2) = Q_TAB, hs
+    return (y0 * (q - x1) * (q - x2) / ((x0 - x1) * (x0 - x2)) + y1 * (q - x0) * (q - x2) / ((x1 - x0) * (x1 - x2))
+            + y2 * (q - x0) * (q - x1) / ((x2 - x0) * (x2 - x1)))
+
+
+kand = []
+for seriya, s in SERII.items():
+    for nom, hs in s["H"].items():
+        h = h_pri(hs, Q_TR)
+        st = int(nom[-2:])
+        kand.append(dict(nasos="MVL " + nom, seriya=seriya, H=h, zapas=h - H_TR, motor=MOTOR[nom],
+                         p2=s["p2_st"] * st, eta=s["eta"], v_zone=s["zona"][0] <= Q_TR <= s["zona"][1]))
+
+podhodit = [k for k in kand if k["v_zone"] and k["zapas"] >= DH_UST]
+# из подходящих — наименьший по напору в серии (меньше избыточного давления), затем по КПД и мотору
+luchshie = {}
+for k in sorted(podhodit, key=lambda k: k["H"]):
+    luchshie.setdefault(k["seriya"], k)
+vybor = max(luchshie.values(), key=lambda k: (k["eta"], -k["motor"]))
+N_GIDR = 1000 * 9.81 * Q_TR / 3600 * H_TR / 1000          # кВт
+tip = "COR-2 %s/SKw-EB-R" % vybor["nasos"]
+
+
+def f(v, n=1):
+    return ("{:.%df}" % n).format(v).replace(".", ",")
+
+
+md = ["# Подбор повысительной насосной установки — вариант 3", "",
+      "Сгенерировано `calc/podbor_nasosa.py`; руками не править.", "",
+      "## Рабочая точка", "",
+      "- Q = q^tot = %s л/с = **%s м³/ч** (общий расход: за установкой ответвление на ГВС в ИТП);"
+      % (f(REZ["rasx"]["q_tot"], 3), f(Q_TR, 2)),
+      "- H_р = H_тр − H_гар = %s − %s = **%s м**;" % (f(REZ["H_tr"], 2), f(REZ["iznach"]["H_GAR"], 1), f(H_TR, 2)),
+      "- полезная мощность N = ρgQH = %s кВт." % f(N_GIDR, 2), "",
+      "## Условия подбора", "",
+      "1. Рабочая точка в рабочей зоне характеристики (сплошная часть кривой по каталогу).",
+      "2. Напор насоса при 50 Гц не меньше H_р + %s м: запас на потери в коллекторах, затворах и обратных "
+      "клапанах самой установки." % f(DH_UST, 1),
+      "3. Из подходящих — насос с наибольшим КПД в рабочей точке и меньшим мотором; избыток напора снимает "
+      "частотный преобразователь (поддержание давления на выходе).",
+      "4. Схема: 1 рабочий + 1 резервный насос (установка COR-2), СП 30.13330.2020, разд. 9.", "",
+      "## Кандидаты (Q = %s м³/ч)" % f(Q_TR, 2), "",
+      "| Насос | H при 50 Гц, м | Запас, м | В рабочей зоне | КПД, % | P2 при 50 Гц, кВт | Мотор, кВт | Вывод |",
+      "|---|---|---|---|---|---|---|---|"]
+for k in sorted(kand, key=lambda k: (k["seriya"], k["H"])):
+    if abs(k["zapas"]) > 25:
+        continue
+    vyvod = "**принят**" if k is vybor else ("подходит" if k in podhodit else
+                                              ("мал напор" if k["zapas"] < DH_UST else "вне зоны"))
+    md.append("| %s | %s | %s | %s | %s | %s | %s | %s |" % (
+        k["nasos"], f(k["H"]), f(k["zapas"]), "да" if k["v_zone"] else "нет", f(k["eta"]), f(k["p2"], 2),
+        f(k["motor"], 2), vyvod))
+md += ["", "## Принято", "",
+       "**Установка повышения давления Wilo %s** с частотным преобразователем: 2 насоса %s "
+       "(1 рабочий, 1 резервный), мотор %s кВт каждый, 400 В. При Q = %s м³/ч насос на 50 Гц развивает %s м; "
+       "КПД в рабочей точке %s %%; потребляемая на валу мощность ≈ N/η = %s кВт."
+       % (tip, vybor["nasos"], f(vybor["motor"], 1), f(Q_TR, 2), f(vybor["H"]), f(vybor["eta"]),
+          f(N_GIDR / (vybor["eta"] / 100), 2)), ""]
+other = [k for k in luchshie.values() if k is not vybor]
+for k in other:
+    md.append("Альтернатива %s: напор %s м, но КПД %s %% и мотор %s кВт — хуже по энергопотреблению."
+              % (k["nasos"], f(k["H"]), f(k["eta"]), f(k["motor"], 1)))
+md.append("")
+
+with open(os.path.join(HERE, "..", "PODBOR_NASOSA.md"), "w", encoding="utf-8") as fo:
+    fo.write("\n".join(md))
+with open(os.path.join(HERE, "nasos_v3.json"), "w", encoding="utf-8") as fo:
+    json.dump(dict(tip=tip, nasos=vybor["nasos"], Q=round(Q_TR, 2), H=round(H_TR, 2), H50=round(vybor["H"], 1),
+                   eta=vybor["eta"], motor=vybor["motor"], n_rab=1, n_rez=1), fo, ensure_ascii=False, indent=1)
+print(tip, round(vybor["H"], 1), round(Q_TR, 2), round(H_TR, 2))
