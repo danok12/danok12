@@ -61,6 +61,67 @@ class Log(object):
         self.f.close()
 
 
+def xyz(x, y, z=0.0):
+    """Точка из метров."""
+    from Autodesk.Revit.DB import XYZ
+    return XYZ(x * M, y * M, z * M)
+
+
+def po_imeni(doc, cls, nm):
+    from Autodesk.Revit.DB import FilteredElementCollector, Element
+    for e in FilteredElementCollector(doc).OfClass(cls):
+        if Element.Name.GetValue(e) == nm:
+            return e
+    return None
+
+
+def simvol(doc, fam, tip=None):
+    from Autodesk.Revit.DB import FilteredElementCollector, FamilySymbol, Element
+    for s in FilteredElementCollector(doc).OfClass(FamilySymbol):
+        if s.FamilyName == fam and (tip is None or Element.Name.GetValue(s) == tip):
+            if not s.IsActive:
+                s.Activate()
+            return s
+    return None
+
+
+def urovni(doc):
+    from Autodesk.Revit.DB import FilteredElementCollector, Level
+    return dict((l.Name, l) for l in FilteredElementCollector(doc).OfClass(Level))
+
+
+class Tranzakciya(object):
+    """with Tranzakciya(doc, 'имя'): ... — предупреждения Revit удаляются, чтобы не всплывали окна."""
+
+    def __init__(self, doc, name):
+        from Autodesk.Revit import DB
+        self.t = DB.Transaction(doc, name)
+
+    def __enter__(self):
+        from Autodesk.Revit import DB
+
+        class Glush(DB.IFailuresPreprocessor):
+            def PreprocessFailures(self, fa):
+                for f in fa.GetFailureMessages():
+                    if f.GetSeverity() == DB.FailureSeverity.Warning:
+                        fa.DeleteWarning(f)
+                return DB.FailureProcessingResult.Continue
+
+        self.t.Start()
+        opt = self.t.GetFailureHandlingOptions()
+        opt.SetFailuresPreprocessor(Glush())
+        opt.SetClearAfterRollback(True)
+        self.t.SetFailureHandlingOptions(opt)
+        return self.t
+
+    def __exit__(self, et, ev, tb):
+        if et is None:
+            self.t.Commit()
+        else:
+            self.t.RollBack()
+        return False
+
+
 def run(name, fun):
     """Выполнить fun(log) с журналом и перехватом ошибок."""
     log = Log(name)
