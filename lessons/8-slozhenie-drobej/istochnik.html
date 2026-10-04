@@ -1,0 +1,290 @@
+<title>Дроби с разными знаменателями</title>
+<!--FONTS-->
+<style>
+/*CSS*/
+</style>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Алгебра · 8 класс · рациональные дроби</p>
+  <h1>Дроби с разными знаменателями</h1>
+  <!--T--><p class="standfirst">Теория к домашнему заданию от 02.10, решение № 86 и № 96 по шагам, пять типовых ошибок и тринадцать аналогов. Ответы спрятаны под «Ответ».</p><!--/T-->
+  <!--S<p class="standfirst">Теория, задания «найди ошибку» и тринадцать примеров для самостоятельной работы. Каждый ответ проверяйте подстановкой числа.</p>S-->
+  <ul class="facts">
+    <li>5 шагов алгоритма</li>
+    <li>3 формулы</li>
+    <!--T--><li>№ 86, № 96</li><!--/T-->
+    <li>5 ошибок</li>
+    <li>13 аналогов</li>
+  </ul>
+</header>
+
+<ol class="toc">
+  <li><span class="n">1</span><a href="#teoriya">Теория: алгоритм, формулы, знаки</a></li>
+  <!--T--><li><span class="n">2</span><a href="#n86">Решение № 86</a></li><!--/T-->
+  <!--T--><li><span class="n">3</span><a href="#n96">Решение № 96</a></li><!--/T-->
+  <li><span class="n">4</span><a href="#oshibki">Найди ошибку</a></li>
+  <li><span class="n">5</span><a href="#analogi">Аналоги для самостоятельной работы</a></li>
+  <!--T--><li><span class="n">6</span><a href="#zametki">Заметки преподавателю</a></li><!--/T-->
+</ol>
+
+<!-- ============================ ТЕОРИЯ ============================ -->
+<section class="block" id="teoriya">
+  <div class="blockhead"><h2>Теория</h2></div>
+
+  <div class="callout theorem">
+    <span class="tag">Основное свойство дроби</span>
+    <p class="body">Числитель и знаменатель можно умножить или разделить на одно и то же выражение, не равное нулю: <span class="calc" style="display:inline-flex;box-shadow:none;border:none;padding:0;margin:0;background:none;vertical-align:middle"><span class="ln" style="min-height:0">[[a||b]] = [[a·c||b·c]]</span></span></p>
+    <p>На этом держится всё: приведение к общему знаменателю — это умножение, сокращение — деление.</p>
+  </div>
+
+  <p>С одинаковыми знаменателями всё просто: числители складываем (вычитаем), знаменатель оставляем. Значит, дроби с <strong>разными</strong> знаменателями сначала надо привести к одному.</p>
+
+  <div class="card">
+    <span class="tag">Алгоритм · пять шагов</span>
+    <ol>
+      <li><strong>Разложить знаменатели на множители:</strong> вынести общий множитель за скобки, применить формулы.</li>
+      <li><strong>Найти общий знаменатель:</strong> взять каждый множитель, который встречается, по одному разу (в наибольшей степени). Общие множители не дублировать.</li>
+      <li><strong>Найти дополнительные множители:</strong> чего не хватает знаменателю каждой дроби до общего. Пишут «уголком» над дробью: <span class="calc" style="display:inline-flex;box-shadow:none;border:none;padding:0;margin:0;background:none;vertical-align:middle"><span class="ln" style="min-height:0">{{a+2}}[[a+4||a(a−2)]]</span></span></li>
+      <li><strong>Записать одну дробь:</strong> числители, умноженные на дополнительные множители, в <strong>скобках</strong>.</li>
+      <li><strong>Упростить числитель</strong> и проверить, не сокращается ли дробь. Для сокращения числитель тоже раскладывают на множители.</li>
+    </ol>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <span class="tag">Формулы для разложения</span>
+      <div class="eq" style="margin:0 0 10px">a² − b² = (a − b)(a + b)
+a² + 2ab + b² = (a + b)²
+a² − 2ab + b² = (a − b)²</div>
+      <p>Примеры из ДЗ: <span class="m">a² − 4 = (a − 2)(a + 2)</span>, <span class="m">16 − x² = (4 − x)(4 + x)</span>, <span class="m">x² + 4x + 4 = (x + 2)²</span>, <span class="m">4a² − 1 = (2a − 1)(2a + 1)</span>.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Вынести общий множитель</span>
+      <div class="eq" style="margin:0 0 10px">a² − 2a  = a(a − 2)
+a² + ab  = a(a + b)
+5x − 10  = 5(x − 2)</div>
+      <p>Это всегда первое, что пробуем. Формулы — второе.</p>
+    </div>
+  </div>
+
+  <div class="callout trap">
+    <span class="tag">Знаки: два места, где теряют баллы</span>
+    <p><strong>1. Минус перед дробью относится ко всему числителю.</strong> Поэтому числитель вычитаемой дроби пишем в скобках и раскрываем, меняя знак <em>каждого</em> слагаемого:</p>
+    <div class="eq">x(x + 1) − (x + 3)(x − 2) = x² + x − (x² + x − 6)
+                         = x² + x − x² − x + 6 = 6</div>
+    <p><strong>2. <span class="m">b − a = −(a − b)</span>.</strong> Если знаменатели отличаются только порядком вычитания, меняем знак у знаменателя и одновременно знак перед дробью:</p>
+    <div class="calc" style="margin-bottom:10px"><div class="ln">[[k||1 − 2k]] = [[k||−(2k − 1)]] = −[[k||2k − 1]]</div></div>
+    <p>А вот <span class="m">1 + 3p</span> и <span class="m">3p + 1</span> — одно и то же выражение, от перестановки слагаемых знак не меняется. Это встречается в № 86 е.</p>
+  </div>
+
+  <div class="callout check">
+    <span class="tag">Проверка подстановкой · 30 секунд</span>
+    <p>Подставьте удобное число (не обращающее знаменатели в ноль) в условие и в ответ. Должно получиться одно и то же. Пример, № 96 а при <span class="m">a = 3</span>:</p>
+    <div class="calc" style="margin-bottom:0;box-shadow:none"><div class="ln">условие: [[7||3]] − [[3||5]] = [[26||15]]<span class="c">ответ: [[2(3·3 + 4)||3·(9 − 4)]] = [[26||15]] ✓</span></div></div>
+  </div>
+
+  <p><strong>Допустимые значения.</strong> Выражение имеет смысл, только когда знаменатели не равны нулю. Ответ «2» в № 96 в верен при <span class="m">a ≠ 0</span>, <span class="m">a ≠ ±b</span>: при этих значениях исходное выражение просто не существует.</p>
+</section>
+
+<!-- ============================ № 86 ============================ -->
+<!--T-->
+<section class="block" id="n86">
+  <div class="blockhead"><span class="badge">ДЗ 02.10</span><h2>№ 86. Представьте выражение в виде дроби</h2></div>
+  <p>Здесь знаменатели раскладывать не нужно: они уже «простые» и общих множителей не имеют. Поэтому общий знаменатель — их произведение, а дополнительный множитель каждой дроби — знаменатель другой.</p>
+
+  <h4>а)</h4>
+  <div class="calc">
+    <div class="ln">{{b+c}}[[b − c||b]] + {{b}}[[b||b + c]] = [[(b − c)(b + c) + b·b||b(b + c)]] = [[b² − c² + b²||b(b + c)]] = <span class="res">[[2b² − c²||b(b + c)]]</span></div>
+  </div>
+  <p>В числителе — разность квадратов: <span class="m">(b − c)(b + c) = b² − c²</span>.</p>
+
+  <h4>б)</h4>
+  <div class="calc">
+    <div class="ln">{{x}}[[x + 1||x − 2]] − {{x−2}}[[x + 3||x]] = [[x(x + 1) − (x + 3)(x − 2)||x(x − 2)]]</div>
+    <div class="ln">= [[x² + x − (x² + x − 6)||x(x − 2)]] = [[x² + x − x² − x + 6||x(x − 2)]] = <span class="res">[[6||x(x − 2)]]</span></div>
+  </div>
+  <p>Классическое место для ошибки со знаком: без скобок вокруг <span class="m">x² + x − 6</span> вместо 6 получится что-то громоздкое.</p>
+
+  <h4>в)</h4>
+  <div class="calc">
+    <div class="ln">{{m+n}}[[m||m − n]] − {{m−n}}[[n||m + n]] = [[m(m + n) − n(m − n)||(m − n)(m + n)]] = [[m² + mn − mn + n²||m² − n²]] = <span class="res">[[m² + n²||m² − n²]]</span></div>
+  </div>
+
+  <h4>г)</h4>
+  <div class="calc">
+    <div class="ln">{{2a+1}}[[2a||2a − 1]] − {{2a−1}}[[1||2a + 1]] = [[2a(2a + 1) − (2a − 1)||(2a − 1)(2a + 1)]] = [[4a² + 2a − 2a + 1||4a² − 1]] = <span class="res">[[4a² + 1||4a² − 1]]</span></div>
+  </div>
+
+  <h4>д)</h4>
+  <div class="calc">
+    <div class="ln">{{a−2}}[[a||a + 2]] − {{a+2}}[[a||a − 2]] = [[a(a − 2) − a(a + 2)||(a + 2)(a − 2)]] = [[a² − 2a − a² − 2a||a² − 4]] = <span class="res">[[−4a||a² − 4]]</span></div>
+  </div>
+  <p>Тот же ответ можно записать как <span class="m">4a/(4 − a²)</span>: минус перенесли в знаменатель.</p>
+
+  <h4>е)</h4>
+  <div class="calc">
+    <div class="ln">{{3p+1}}[[p||3p − 1]] − {{3p−1}}[[p||3p + 1]] = [[p(3p + 1) − p(3p − 1)||9p² − 1]] = [[3p² + p − 3p² + p||9p² − 1]] = <span class="res">[[2p||9p² − 1]]</span></div>
+  </div>
+  <p>Сначала переписали <span class="m">1 + 3p</span> как <span class="m">3p + 1</span> — это то же самое, знак не меняется.</p>
+
+  <p class="ans"><b>Ответы № 86:</b> а) (2b² − c²)/(b(b + c)); б) 6/(x(x − 2)); в) (m² + n²)/(m² − n²); г) (4a² + 1)/(4a² − 1); д) −4a/(a² − 4); е) 2p/(9p² − 1).</p>
+</section>
+
+<!-- ============================ № 96 ============================ -->
+<section class="block" id="n96">
+  <div class="blockhead"><span class="badge">ДЗ 02.10</span><h2>№ 96. Выполните действие</h2></div>
+  <p>Отличие от № 86: знаменатели надо <strong>сначала разложить</strong>. Без этого общий знаменатель выйдет огромным, а в в) и г) не будет видно, что дроби сокращаются.</p>
+
+  <h4>а)</h4>
+  <p>Раскладываем: <span class="m">a² − 2a = a(a − 2)</span>, <span class="m">a² − 4 = (a − 2)(a + 2)</span>. Множитель <span class="m">(a − 2)</span> общий, берём его один раз: общий знаменатель <span class="m">a(a − 2)(a + 2)</span>.</p>
+  <div class="calc">
+    <div class="ln">{{a+2}}[[a + 4||a(a − 2)]] − {{a}}[[a||(a − 2)(a + 2)]] = [[(a + 4)(a + 2) − a·a||a(a − 2)(a + 2)]] = [[a² + 6a + 8 − a²||a(a − 2)(a + 2)]]</div>
+    <div class="ln">= [[6a + 8||a(a − 2)(a + 2)]] = <span class="res">[[2(3a + 4)||a(a² − 4)]]</span></div>
+  </div>
+  <p>Сократить нечего: в числителе множителей <span class="m">a</span>, <span class="m">a − 2</span>, <span class="m">a + 2</span> нет.</p>
+
+  <h4>б)</h4>
+  <p><span class="m">16 − x² = (4 − x)(4 + x)</span>, и <span class="m">x + 4 = 4 + x</span>. Числитель первой дроби <span class="m">4 − x²</span> раскладывать незачем — с знаменателем он не сократится (<span class="m">4 ≠ 16</span>).</p>
+  <div class="calc">
+    <div class="ln">[[4 − x²||(4 − x)(4 + x)]] − {{4−x}}[[x + 1||4 + x]] = [[4 − x² − (x + 1)(4 − x)||16 − x²]] = [[4 − x² − (3x + 4 − x²)||16 − x²]]</div>
+    <div class="ln">= [[4 − x² − 3x − 4 + x²||16 − x²]] = [[−3x||16 − x²]] = <span class="res">[[3x||x² − 16]]</span></div>
+  </div>
+  <p>Отдельно: <span class="m">(x + 1)(4 − x) = 4x − x² + 4 − x = 3x + 4 − x²</span>. Последний шаг — минус из числителя «спрятали» в знаменатель: <span class="m">−(16 − x²) = x² − 16</span>.</p>
+
+  <h4>в)</h4>
+  <p>Здесь главный приём — <strong>сначала сократить каждую дробь</strong>, а потом складывать.</p>
+  <div class="calc">
+    <div class="ln">[[(a + b)²||a(a + b)]] + [[(a − b)²||a(a − b)]] = [[a + b||a]] + [[a − b||a]] = [[a + b + a − b||a]] = [[2a||a]] = <span class="res">2</span></div>
+  </div>
+  <p>Знаменатели после сокращения одинаковые, и общий знаменатель искать вообще не пришлось.</p>
+
+  <h4>г)</h4>
+  <div class="calc">
+    <div class="ln">[[(x − 2)(x + 2)||5(x − 2)]] − [[(x + 2)²||5(x + 2)]] = [[x + 2||5]] − [[x + 2||5]] = <span class="res">0</span></div>
+  </div>
+  <p>Тот же приём, что в в). Ответ 0 — не ошибка: при всех допустимых <span class="m">x</span> (кроме <span class="m">±2</span>) дроби равны.</p>
+
+  <p class="ans"><b>Ответы № 96:</b> а) 2(3a + 4)/(a(a² − 4)); б) 3x/(x² − 16); в) 2; г) 0.</p>
+</section>
+<!--/T-->
+
+<!-- ============================ ОШИБКИ ============================ -->
+<section class="block" id="oshibki">
+  <div class="blockhead"><h2>Найди ошибку</h2></div>
+  <p>В каждом решении есть ошибка. Найдите, в каком переходе она сделана, объясните её и решите правильно. Подсказка: проверка подстановкой ловит все пять.</p>
+
+  <div class="wrong">
+    <span class="tag">Ошибка 1 <span class="stamp">неверно</span></span>
+    <div class="calc">
+      <div class="ln">[[y − 1||y + 3]] − [[y − 4||y]] = [[y(y − 1) − (y − 4)(y + 3)||y(y + 3)]] = [[y² − y − y² − y − 12||y(y + 3)]] = [[−2y − 12||y(y + 3)]]</div>
+    </div>
+    <details><summary>Где ошибка</summary>
+      <p>При раскрытии <span class="m">−(y² − y − 12)</span> знак поменяли только у первого слагаемого. Правильно: <span class="m">−y² + y + 12</span>, и числитель равен <span class="m">y² − y − y² + y + 12 = 12</span>. Ответ: <span class="m">12/(y(y + 3))</span>. Противоядие — сначала записать произведение в скобках, раскрыть, и только потом убирать скобки с минусом.</p>
+    </details>
+  </div>
+
+  <div class="wrong">
+    <span class="tag">Ошибка 2 <span class="stamp">неверно</span></span>
+    <div class="calc">
+      <div class="ln">[[b||b − 5]] − [[b||b + 5]] = [[b − b||(b − 5)(b + 5)]] = 0</div>
+    </div>
+    <details><summary>Где ошибка</summary>
+      <p>Знаменатели домножили, а числители — нет. Дополнительные множители: <span class="m">(b + 5)</span> к первой дроби и <span class="m">(b − 5)</span> ко второй. Числитель <span class="m">b(b + 5) − b(b − 5) = 10b</span>. Ответ: <span class="m">10b/(b² − 25)</span>. Подстановка <span class="m">b = 0</span> не поймает ошибку (обе части 0), а <span class="m">b = 1</span> поймает: <span class="m">−1/4 − 1/6 ≠ 0</span>.</p>
+    </details>
+  </div>
+
+  <div class="wrong">
+    <span class="tag">Ошибка 3 <span class="stamp">неверно</span></span>
+    <div class="calc">
+      <div class="ln">[[k||2k − 1]] + [[k||1 − 2k]] = [[k||2k − 1]] + [[k||2k − 1]] = [[2k||2k − 1]]</div>
+    </div>
+    <details><summary>Где ошибка</summary>
+      <p>Знаменатель <span class="m">1 − 2k</span> заменили на <span class="m">2k − 1</span>, то есть умножили на <span class="m">−1</span>, а знак перед дробью не поменяли. Правильно: <span class="m">k/(1 − 2k) = −k/(2k − 1)</span>, и сумма равна <span class="m">0</span>.</p>
+    </details>
+  </div>
+
+  <div class="wrong">
+    <span class="tag">Ошибка 4 <span class="stamp">неверно</span></span>
+    <div class="calc">
+      <div class="ln">[[a + 2||a]] − [[a||a + 3]] = [[(a + 2)(a + 3) − a²||a(a + 3)]] = [[5a + 6||a(a + 3)]] = [[5<span class="bad">a</span> + 6||<span class="bad">a</span>(a + 3)]] = [[11||a + 3]]</div>
+    </div>
+    <details><summary>Где ошибка</summary>
+      <p>Сократили <span class="m">a</span> в сумме <span class="m">5a + 6</span>. Сокращать можно только <strong>множители</strong> всего числителя, а <span class="m">a</span> — множитель лишь одного слагаемого. Дробь <span class="m">(5a + 6)/(a(a + 3))</span> уже окончательная. Проверка: при <span class="m">a = 1</span> условие даёт <span class="m">3 − 1/4 = 11/4</span>, а «ответ» <span class="m">11/4</span>… совпало случайно! При <span class="m">a = 2</span>: <span class="m">2 − 2/5 = 8/5</span>, а <span class="m">11/5</span> — уже нет. Проверять лучше двумя числами или «некруглым» числом.</p>
+    </details>
+  </div>
+
+  <div class="wrong">
+    <span class="tag">Ошибка 5 <span class="stamp">неверно</span></span>
+    <div class="calc">
+      <div class="ln">[[(x + y)²||x² + xy]] − [[(x − y)²||x² − xy]] = [[x² + y²||x(x + y)]] − [[x² + y²||x(x − y)]] = …</div>
+    </div>
+    <p>Дальше получилось длинное выражение, которое не упрощается.</p>
+    <details><summary>Где ошибка</summary>
+      <p><span class="m">(x + y)² ≠ x² + y²</span>: пропущено <span class="m">2xy</span>. Квадрат лучше вообще не раскрывать, а сократить: <span class="m">(x + y)²/(x(x + y)) = (x + y)/x</span>, аналогично вторая дробь <span class="m">(x − y)/x</span>. Ответ: <span class="m">2y/x</span>.</p>
+    </details>
+  </div>
+</section>
+
+<!-- ============================ АНАЛОГИ ============================ -->
+<section class="block" id="analogi">
+  <div class="blockhead"><h2>Аналоги</h2></div>
+  <p>Каждый ответ проверьте подстановкой. Ответ должен быть несократимой дробью (или числом).</p>
+
+  <h3>Тип 1. Как № 86: знаменатели уже простые</h3>
+  <ol class="drill">
+    <li><span class="no">1.</span>[[a + 2||a]] − [[a||a + 3]]</li>
+    <li><span class="no">2.</span>[[y − 1||y + 3]] − [[y − 4||y]]</li>
+    <li><span class="no">3.</span>[[3c||3c − 2]] − [[2||3c + 2]]</li>
+    <li><span class="no">4.</span>[[b||b − 5]] − [[b||b + 5]]</li>
+    <li><span class="no">5.</span>[[q||2q − 3]] − [[q||3 + 2q]]</li>
+    <li><span class="no">6.</span>[[k||2k − 1]] + [[k||1 − 2k]]</li>
+  </ol>
+  <details><summary>Ответ · тип 1</summary>
+    <div class="calc" style="box-shadow:none;border-left-color:var(--moss)">
+      <div class="ln"><span class="no">1.</span>[[5a + 6||a(a + 3)]]<span class="no" style="margin-left:24px">2.</span>[[12||y(y + 3)]]<span class="no" style="margin-left:24px">3.</span>[[9c² + 4||9c² − 4]]</div>
+      <div class="ln"><span class="no">4.</span>[[10b||b² − 25]]<span class="no" style="margin-left:24px">5.</span>[[6q||4q² − 9]]<span class="no" style="margin-left:24px">6.</span>0</div>
+    </div>
+    <p>№ 6: <span class="m">1 − 2k = −(2k − 1)</span>, вторая дробь равна <span class="m">−k/(2k − 1)</span>. В № 5 наоборот: <span class="m">3 + 2q = 2q + 3</span>, знак не меняется.</p>
+  </details>
+
+  <h3>Тип 2. Как № 96: сначала разложить знаменатели</h3>
+  <ol class="drill" start="7">
+    <li><span class="no">7.</span>[[b + 3||b² − 3b]] − [[b||b² − 9]]</li>
+    <li><span class="no">8.</span>[[9 − y²||25 − y²]] − [[y + 2||y + 5]]</li>
+    <li><span class="no">9.</span>[[(x + y)²||x² + xy]] − [[(x − y)²||x² − xy]]</li>
+    <li><span class="no">10.</span>[[c² − 1||3c + 3]] + [[c² − 2c + 1||3c − 3]]</li>
+    <li><span class="no">11.</span>[[2m||m² − 4]] − [[1||m − 2]]</li>
+    <li><span class="no">12.</span>[[x + 5||x² − 5x]] − [[x − 5||x² + 5x]]</li>
+    <li><span class="no">13*.</span>[[1||a² − ab]] + [[1||ab − b²]]</li>
+  </ol>
+  <details><summary>Ответ · тип 2</summary>
+    <div class="calc" style="box-shadow:none;border-left-color:var(--moss)">
+      <div class="ln"><span class="no">7.</span>[[6b + 9||b(b² − 9)]] = [[3(2b + 3)||b(b² − 9)]]<span class="no" style="margin-left:24px">8.</span>[[3y + 1||y² − 25]]</div>
+      <div class="ln"><span class="no">9.</span>[[2y||x]]<span class="no" style="margin-left:24px">10.</span>[[2(c − 1)||3]]<span class="no" style="margin-left:24px">11.</span>[[1||m + 2]]</div>
+      <div class="ln"><span class="no">12.</span>[[20||x² − 25]]<span class="no" style="margin-left:24px">13.</span>[[a + b||ab(a − b)]]</div>
+    </div>
+    <p>№ 11 и 12 в конце сокращаются: в № 11 числитель <span class="m">2m − (m + 2) = m − 2</span>, в № 12 числитель <span class="m">(x + 5)² − (x − 5)² = 20x</span> и <span class="m">x</span> сокращается. № 9 и 10 — приём из № 96 в, г: сначала сократить каждую дробь.</p>
+  </details>
+</section>
+
+<!-- ============================ ЗАМЕТКИ ============================ -->
+<!--T-->
+<section class="block" id="zametki">
+  <div class="blockhead"><h2>Заметки преподавателю</h2></div>
+  <ul>
+    <li><strong>Порядок работы.</strong> Сначала алгоритм на № 86 б (там ловушка со знаком), затем № 96 а — первый пример, где без разложения знаменателя никак. Пункты в) и г) № 96 разбирайте последними: они показывают, что иногда «общий знаменатель» не нужен вовсе.</li>
+    <li><strong>Скобки при вычитании — обязательное правило записи</strong>, а не рекомендация. Пусть ученик пишет числитель вычитаемой дроби в скобках, даже если там одно слагаемое. Ошибка 1 исчезает именно так.</li>
+    <li><strong>«Уголок» с дополнительным множителем</strong> над каждой дробью — привычная школьная запись; без неё ученик чаще забывает домножить числитель (ошибка 2).</li>
+    <li><strong>Проверка подстановкой</strong> — главный навык занятия. Показывайте ошибку 4: при <span class="m">a = 1</span> неверный ответ случайно совпал. Брать 2–3 и «некруглые» числа, не 0 и не 1.</li>
+    <li><strong>Аналоги:</strong> 1–6 — на автоматизм алгоритма, 6 и 5 — пара на знаки (в одной меняем, в другой нет); 7–12 — разложение знаменателей; 13* — для сильного ученика (<span class="m">ab − b² = b(a − b)</span>).</li>
+    <li><strong>Форма ответа.</strong> <span class="m">−4a/(a² − 4)</span> и <span class="m">4a/(4 − a²)</span> — одно и то же, обе записи засчитываются. Раскрывать скобки в знаменателе ответа не обязательно.</li>
+  </ul>
+</section>
+<!--/T-->
+
+<footer>
+  <!--T--><p>Все примеры аналогов составлены для этого занятия. Каждый ответ, включая № 86 и № 96, сверен программой: исходное выражение и ответ сравнивались в ~400 случайных рациональных точках точной арифметикой (скрипт <span class="m">proverka.py</span> в папке занятия).</p><!--/T-->
+  <!--S<p>Каждый ответ проверьте подстановкой числа в условие и в ответ.</p>S-->
+</footer>
+</div>

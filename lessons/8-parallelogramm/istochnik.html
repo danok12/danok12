@@ -1,0 +1,343 @@
+<title>Биссектриса в параллелограмме</title>
+<!--FONTS-->
+<style>
+/*CSS*/
+</style>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Геометрия · 8 класс · параллелограмм</p>
+  <h1>Биссектриса в параллелограмме</h1>
+  <!--T--><p class="standfirst">Теория к домашнему заданию от 02.10, полный разбор обеих задач, пять типовых ошибок и девять аналогов. Ответы спрятаны под «Ответ».</p><!--/T-->
+  <!--S<p class="standfirst">Теория, задания «найди ошибку» и девять задач для самостоятельной работы. Решения записывайте полностью: что дано, что следует и почему.</p>S-->
+  <ul class="facts">
+    <li>4 свойства</li>
+    <li>3 признака</li>
+    <li>1 лемма о биссектрисе</li>
+    <!--T--><li>2 задачи ДЗ</li><!--/T-->
+    <li>5 ошибок</li>
+    <li>9 аналогов</li>
+  </ul>
+</header>
+
+<ol class="toc">
+  <li><span class="n">1</span><a href="#teoriya">Теория: свойства, признаки, лемма о биссектрисе</a></li>
+  <!--T--><li><span class="n">2</span><a href="#dz">Разбор домашнего задания</a></li><!--/T-->
+  <li><span class="n">3</span><a href="#oshibki">Найди ошибку</a></li>
+  <li><span class="n">4</span><a href="#analogi">Аналоги для самостоятельной работы</a></li>
+  <!--T--><li><span class="n">5</span><a href="#zametki">Заметки преподавателю</a></li><!--/T-->
+</ol>
+
+<!-- ============================ ТЕОРИЯ ============================ -->
+<section class="block" id="teoriya">
+  <div class="blockhead"><h2>Теория</h2></div>
+
+  <p><strong>Параллелограмм</strong> — четырёхугольник, у которого противолежащие стороны попарно параллельны: <span class="m">AB ∥ CD</span>, <span class="m">BC ∥ AD</span>. Вершины называют по кругу, поэтому <span class="m">A</span> и <span class="m">C</span> — противолежащие вершины, <span class="m">A</span> и <span class="m">B</span> — соседние.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <span class="tag">Свойства параллелограмма</span>
+      <ol>
+        <li>Противолежащие стороны равны: <span class="m">AB = CD</span>, <span class="m">BC = AD</span>.</li>
+        <li>Противолежащие углы равны: <span class="m">∠A = ∠C</span>, <span class="m">∠B = ∠D</span>.</li>
+        <li>Соседние углы в сумме дают <span class="m">180°</span>. Поэтому если <span class="m">∠A</span> острый, то <span class="m">∠B</span> тупой.</li>
+        <li>Диагонали точкой пересечения делятся пополам.</li>
+      </ol>
+      <p><strong>Периметр:</strong> <span class="m">P = 2(AB + BC)</span>. Сторон четыре, а различных длин только две.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Признаки параллелограмма</span>
+      <p>Четырёхугольник — параллелограмм, если:</p>
+      <ol>
+        <li>две его противолежащие стороны <strong>равны и параллельны</strong> (одна и та же пара!);</li>
+        <li>противолежащие стороны попарно равны;</li>
+        <li>диагонали точкой пересечения делятся пополам.</li>
+      </ol>
+      <p>И, конечно, по определению: обе пары противолежащих сторон параллельны.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag">Что понадобится из 7 класса</span>
+    <p><strong>Параллельные прямые и секущая.</strong> Если <span class="m">a ∥ b</span>, то накрест лежащие углы равны, соответственные углы равны. И обратно: если соответственные (или накрест лежащие) углы равны, то прямые параллельны.</p>
+    <p><strong>Второй признак равенства треугольников:</strong> если сторона и два прилежащих к ней угла одного треугольника соответственно равны стороне и двум прилежащим углам другого, то треугольники равны.</p>
+    <p><strong>Равнобедренный треугольник:</strong> если два угла треугольника равны, то стороны, лежащие против них, тоже равны.</p>
+  </div>
+
+  <div class="callout theorem">
+    <span class="tag">Главный факт темы · лемма о биссектрисе</span>
+    <p class="body">Биссектриса угла параллелограмма отсекает от него <strong>равнобедренный треугольник</strong>. Если <span class="m">AE</span> — биссектриса угла <span class="m">A</span> и <span class="m">E</span> лежит на <span class="m">BC</span>, то <span class="m">AB = BE</span>.</p>
+  </div>
+
+  <figure class="fig">
+    <svg viewBox="0 0 480 206" role="img" aria-label="Параллелограмм ABCD, биссектриса AE угла A пересекает BC в точке E; отмечены три равных угла и равные отрезки AB и BE">
+      <path d="M40,176 L66,176 A26,26 0 0 0 62.5,163 Z" style="fill:var(--coral-soft);stroke:var(--coral);stroke-width:1.2"/>
+      <path d="M40,176 L62.5,163 A26,26 0 0 0 53,153.5 Z" style="fill:var(--coral-soft);stroke:var(--coral);stroke-width:1.2"/>
+      <path d="M229,66.9 L203,66.9 A26,26 0 0 0 206.5,79.9 Z" style="fill:var(--coral-soft);stroke:var(--coral);stroke-width:1.2"/>
+      <polygon class="s" points="40,176 103,66.9 439,66.9 376,176"/>
+      <line class="b" x1="40" y1="176" x2="229" y2="66.9"/>
+      <line class="mk" x1="66.3" y1="118.5" x2="76.7" y2="124.5"/>
+      <line class="mk" x1="166" y1="60.9" x2="166" y2="72.9"/>
+      <circle cx="229" cy="66.9" r="3.2"/>
+      <text x="22" y="196">A</text><text x="88" y="58">B</text><text x="442" y="58">C</text><text x="378" y="198">D</text><text x="222" y="56">E</text>
+      <text class="lb" x="152" y="54">3x</text><text class="lb" x="326" y="54">5x</text>
+    </svg>
+    <figcaption>Три отмеченных угла равны, поэтому <span class="m">AB = BE</span></figcaption>
+  </figure>
+
+  <div class="tablewrap">
+    <table class="proof">
+      <thead><tr><th>Утверждение</th><th>Обоснование</th></tr></thead>
+      <tbody>
+        <tr><td>∠BAE = ∠EAD</td><td><span class="m">AE</span> — биссектриса угла <span class="m">A</span></td></tr>
+        <tr><td>∠EAD = ∠AEB</td><td>накрест лежащие при <span class="m">BC ∥ AD</span> и секущей <span class="m">AE</span></td></tr>
+        <tr><td>∠BAE = ∠AEB</td><td>оба равны углу <span class="m">EAD</span></td></tr>
+        <tr class="fin"><td>AB = BE</td><td>в треугольнике <span class="m">ABE</span> против равных углов лежат равные стороны</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout check">
+    <span class="tag">Как пользоваться</span>
+    <p>Равнобедренный треугольник «сидит» у той вершины стороны, <strong>с которой начинается сторона угла</strong>. Биссектриса из <span class="m">A</span> пересекла <span class="m">BC</span> — значит, равны <span class="m">AB</span> и <span class="m">BE</span>, кусок у вершины <span class="m">B</span>. Отрезок <span class="m">EC</span> у противоположной вершины ни с чем не равен.</p>
+    <p>Вершина <span class="m">B</span> — соседняя с острым углом <span class="m">A</span>, значит, это вершина <strong>тупого</strong> угла. Отсюда правило: биссектриса острого угла отсекает равнобедренный треугольник у вершины тупого угла, и наоборот.</p>
+  </div>
+</section>
+
+<!-- ============================ ДЗ ============================ -->
+<!--T-->
+<section class="block" id="dz">
+  <div class="blockhead"><span class="badge">ДЗ 02.10</span><h2>Разбор домашнего задания</h2></div>
+
+  <h3>Задача 1. Стороны по отношению и периметру</h3>
+  <p class="cond">Биссектриса острого угла параллелограмма делит его сторону в отношении 3 : 5, считая от вершины тупого угла. Периметр параллелограмма 66 см. Найти его стороны.</p>
+
+  <p><strong>Чертёж.</strong> Параллелограмм <span class="m">ABCD</span>, <span class="m">∠A</span> острый, <span class="m">AE</span> — биссектриса, <span class="m">E</span> на стороне <span class="m">BC</span>. Вершина <span class="m">B</span> — тупой угол, от неё и считаем: <span class="m">BE : EC = 3 : 5</span>. Это ровно чертёж из теории.</p>
+
+  <div class="tablewrap">
+    <table class="proof">
+      <thead><tr><th>Шаг</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>BE = 3x, EC = 5x</td><td>одна часть — <span class="m">x</span> см; от вершины тупого угла <span class="m">B</span> три части</td></tr>
+        <tr><td>BC = 3x + 5x = 8x</td><td>точка <span class="m">E</span> лежит на стороне <span class="m">BC</span></td></tr>
+        <tr><td>AB = BE = 3x</td><td>лемма: треугольник <span class="m">ABE</span> равнобедренный</td></tr>
+        <tr><td>2(3x + 8x) = 66</td><td><span class="m">P = 2(AB + BC)</span></td></tr>
+        <tr><td>22x = 66,&nbsp; x = 3</td><td></td></tr>
+        <tr class="fin"><td>AB = 9 см, BC = 24 см</td><td>противолежащие стороны равны: <span class="m">CD = 9</span>, <span class="m">AD = 24</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout check">
+    <span class="tag">Проверка</span>
+    <p><span class="m">2·(9 + 24) = 66</span> ✓. <span class="m">BE = 9</span>, <span class="m">EC = 24 − 9 = 15</span>, <span class="m">9 : 15 = 3 : 5</span> ✓.</p>
+  </div>
+  <p class="ans"><b>Ответ:</b> 9 см и 24 см (две стороны по 9 см и две по 24 см).</p>
+
+  <div class="callout say">
+    <span class="tag">Почему важно «считая от вершины тупого угла»</span>
+    Если бы отношение считали от вершины <span class="m">C</span>, было бы <span class="m">BE = 5x</span>, <span class="m">AB = 5x</span>, <span class="m">BC = 8x</span>, <span class="m">26x = 66</span> и <span class="m">x = 33/13</span>. Задача решается, но числа некрасивые. Попросите ученика поставить на чертеже стрелку «отсюда считаем» до того, как писать <span class="m">x</span>.
+  </div>
+
+  <h3>Задача 2. Доказать, что AMCK — параллелограмм</h3>
+  <p class="cond">В параллелограмме ABCD из вершин A и C проведены лучи AM и CK (точка M принадлежит стороне BC, точка K — стороне AD), так что угол BAM равен углу DCK. Доказать, что AMCK — параллелограмм.</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 480 206" role="img" aria-label="Параллелограмм ABCD, точка M на BC, точка K на AD, закрашен четырёхугольник AMCK; отмечены равные углы BAM и DCK, равные стороны AB и CD, равные отрезки BM и DK">
+      <polygon class="fillp" points="40,176 213,66.9 439,66.9 266,176"/>
+      <path d="M40,176 L62,162.1 A26,26 0 0 0 53,153.5 Z" style="fill:var(--coral-soft);stroke:var(--coral);stroke-width:1.2"/>
+      <path d="M439,66.9 L426,89.4 A26,26 0 0 1 417,80.8 Z" style="fill:var(--coral-soft);stroke:var(--coral);stroke-width:1.2"/>
+      <polygon class="s" points="40,176 103,66.9 439,66.9 376,176"/>
+      <line class="b" x1="40" y1="176" x2="213" y2="66.9"/>
+      <line class="b" x1="439" y1="66.9" x2="266" y2="176"/>
+      <line class="mk" x1="66.3" y1="118.5" x2="76.7" y2="124.5"/>
+      <line class="mk" x1="402.3" y1="118.5" x2="412.7" y2="124.5"/>
+      <line class="mk" x1="155" y1="60.9" x2="155" y2="72.9"/><line class="mk" x1="161" y1="60.9" x2="161" y2="72.9"/>
+      <line class="mk" x1="318" y1="170" x2="318" y2="182"/><line class="mk" x1="324" y1="170" x2="324" y2="182"/>
+      <circle cx="213" cy="66.9" r="3.2"/><circle cx="266" cy="176" r="3.2"/>
+      <text x="22" y="196">A</text><text x="88" y="58">B</text><text x="442" y="58">C</text><text x="378" y="198">D</text>
+      <text x="206" y="56">M</text><text x="258" y="200">K</text>
+    </svg>
+    <figcaption>Отмечено данное (углы) и то, что докажем первым шагом (<span class="m">BM = DK</span>)</figcaption>
+  </figure>
+
+  <p><strong>Идея.</strong> Найти два равных треугольника, чтобы получить равные отрезки, а потом применить первый признак параллелограмма.</p>
+  <div class="tablewrap">
+    <table class="proof">
+      <thead><tr><th>Утверждение</th><th>Обоснование</th></tr></thead>
+      <tbody>
+        <tr><td>AB = CD</td><td>противолежащие стороны параллелограмма</td></tr>
+        <tr><td>∠B = ∠D</td><td>противолежащие углы параллелограмма</td></tr>
+        <tr><td>∠BAM = ∠DCK</td><td>по условию</td></tr>
+        <tr><td>△ABM = △CDK</td><td>второй признак: сторона <span class="m">AB = CD</span> и два прилежащих к ней угла</td></tr>
+        <tr><td>BM = DK</td><td>соответственные элементы равных треугольников</td></tr>
+        <tr><td>MC = BC − BM = AD − DK = AK</td><td><span class="m">BC = AD</span>, а <span class="m">BM = DK</span></td></tr>
+        <tr><td>MC ∥ AK</td><td>лежат на параллельных прямых <span class="m">BC</span> и <span class="m">AD</span></td></tr>
+        <tr class="fin"><td>AMCK — параллелограмм</td><td>стороны <span class="m">MC</span> и <span class="m">AK</span> равны и параллельны (признак 1)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout say">
+    <span class="tag">Второй способ, через параллельность</span>
+    <span class="m">∠BMA = ∠MAD</span> (накрест лежащие при <span class="m">BC ∥ AD</span>). При этом <span class="m">∠MAD = ∠A − ∠BAM = ∠C − ∠DCK = ∠BCK</span>. Значит, <span class="m">∠BMA = ∠BCK</span> — это соответственные углы при прямых <span class="m">AM</span>, <span class="m">CK</span> и секущей <span class="m">BC</span>, поэтому <span class="m">AM ∥ CK</span>. Вместе с <span class="m">MC ∥ AK</span> получаем параллелограмм по определению. Способ короче, но требует увидеть соответственные углы; первый надёжнее для ученика.
+  </div>
+</section>
+<!--/T-->
+
+<!-- ============================ ОШИБКИ ============================ -->
+<section class="block" id="oshibki">
+  <div class="blockhead"><h2>Найди ошибку</h2></div>
+  <p>Ниже пять решений, в каждом есть ошибка. Найдите строчку, где она сделана, объясните, почему так нельзя, и исправьте.</p>
+
+  <div class="wrong">
+    <span class="tag">Ошибка 1 <span class="stamp">неверно</span></span>
+    <p>Биссектриса острого угла делит сторону в отношении 3 : 5 от вершины тупого угла, <span class="m">P = 66</span>.</p>
+    <div class="eq">AB = BE = 3x,   BC = 5x
+2(3x + 5x) = 66
+16x = 66,   x = 4,125
+Стороны 12,375 и 20,625</div>
+    <details><summary>Где ошибка</summary>
+      <p><span class="m">BC = 5x</span> — неверно: <span class="m">5x</span> это только кусок <span class="m">EC</span>, вся сторона <span class="m">BC = BE + EC = 8x</span>. Подсказкой служил и сам ответ: в задачах такого типа <span class="m">x</span> почти всегда целый, дробь <span class="m">4,125</span> — повод перепроверить. Верный ответ: 9 и 24.</p>
+    </details>
+  </div>
+
+  <div class="wrong">
+    <span class="tag">Ошибка 2 <span class="stamp">неверно</span></span>
+    <div class="eq">AB = 3x,   BC = 8x
+3x + 8x = 66
+x = 6
+Стороны 18 и 48</div>
+    <details><summary>Где ошибка</summary>
+      <p>Периметр — сумма <strong>четырёх</strong> сторон: <span class="m">2(3x + 8x) = 66</span>. Проверка поймала бы ошибку сразу: <span class="m">2·(18 + 48) = 132 ≠ 66</span>. Верный ответ: 9 и 24.</p>
+    </details>
+  </div>
+
+  <div class="wrong">
+    <span class="tag">Ошибка 3 <span class="stamp">неверно</span></span>
+    <div class="eq">BE = 3x,   EC = 5x
+Треугольник ECD равнобедренный, поэтому CD = EC = 5x
+AB = CD = 5x,   BC = 8x
+2(5x + 8x) = 66,   x = 33/13</div>
+    <details><summary>Где ошибка</summary>
+      <p>Треугольник <span class="m">ECD</span> вообще не связан с биссектрисой из <span class="m">A</span>: про его углы ничего не известно. Равнобедренный — треугольник <span class="m">ABE</span>, у вершины <span class="m">B</span>, где начинается сторона <span class="m">AB</span>. Поэтому <span class="m">AB = BE = 3x</span>. Некрасивое <span class="m">x = 33/13</span> снова подсказывает, что что-то не так.</p>
+    </details>
+  </div>
+
+  <div class="wrong">
+    <span class="tag">Ошибка 4 <span class="stamp">неверно</span></span>
+    <p>Доказательство к задаче «лучи <span class="m">AM</span> и <span class="m">CK</span>, <span class="m">∠BAM = ∠DCK</span>»:</p>
+    <div class="eq">△ABM = △CDK по второму признаку, значит AM = CK.
+MC ∥ AK, потому что лежат на параллельных прямых.
+У AMCK две стороны равны, а две другие параллельны,
+значит, это параллелограмм.</div>
+    <details><summary>Где ошибка</summary>
+      <p>Последняя строчка. Признак требует, чтобы <strong>одна и та же пара</strong> сторон была равна и параллельна. «Одна пара равна, другая параллельна» — так выглядит и равнобедренная трапеция: основания параллельны, боковые стороны равны, а параллелограммом она не является. Нужно доказать <span class="m">MC = AK</span> (через <span class="m">BM = DK</span>) — тогда пара <span class="m">MC</span>, <span class="m">AK</span> и равна, и параллельна.</p>
+    </details>
+  </div>
+
+  <div class="wrong">
+    <span class="tag">Ошибка 5 <span class="stamp">неверно</span></span>
+    <div class="eq">△ABM = △CDK по первому признаку:
+AB = CD, BM = DK, ∠B = ∠D.</div>
+    <details><summary>Где ошибка</summary>
+      <p>Равенство <span class="m">BM = DK</span> в условии не дано, его как раз нужно получить из равенства треугольников. Получился круг: треугольники равны, потому что <span class="m">BM = DK</span>, а <span class="m">BM = DK</span>, потому что треугольники равны. Из условия известны сторона <span class="m">AB = CD</span> и два угла при ней — это второй признак.</p>
+    </details>
+  </div>
+</section>
+
+<!-- ============================ АНАЛОГИ ============================ -->
+<section class="block" id="analogi">
+  <div class="blockhead"><h2>Аналоги</h2></div>
+
+  <h3>Тип 1. Биссектриса и стороны</h3>
+  <p>Сначала чертёж и стрелка «откуда считаем», потом лемма, потом уравнение.</p>
+
+  <div class="task">
+    <p class="q"><span class="no">1.</span>Биссектриса острого угла параллелограмма делит его сторону в отношении 2 : 7, считая от вершины тупого угла. Периметр параллелограмма 88 см. Найдите его стороны.</p>
+    <details><summary>Ответ</summary>
+      <p class="ans"><b>8 см и 36 см.</b> <span class="m">AB = BE = 2x</span>, <span class="m">BC = 9x</span>, <span class="m">2·11x = 88</span>, <span class="m">x = 4</span>.</p>
+    </details>
+  </div>
+
+  <div class="task">
+    <p class="q"><span class="no">2.</span>Биссектриса <strong>тупого</strong> угла параллелограмма делит его сторону в отношении 4 : 3, считая от вершины острого угла. Периметр 110 см. Найдите стороны.</p>
+    <details><summary>Ответ</summary>
+      <p class="ans"><b>20 см и 35 см.</b> Биссектриса угла <span class="m">B</span> пересекает <span class="m">AD</span> в точке <span class="m">F</span>, равнобедренный — <span class="m">△ABF</span>, у острой вершины <span class="m">A</span>: <span class="m">AB = AF = 4x</span>, <span class="m">AD = 7x</span>, <span class="m">22x = 110</span>, <span class="m">x = 5</span>.</p>
+    </details>
+  </div>
+
+  <div class="task">
+    <p class="q"><span class="no">3.</span>Биссектриса угла <span class="m">A</span> параллелограмма <span class="m">ABCD</span> (угол <span class="m">A</span> острый) делит сторону <span class="m">BC</span> в отношении 1 : 2, считая от вершины <span class="m">C</span>. Периметр 60 см. Найдите стороны.</p>
+    <details><summary>Ответ</summary>
+      <p class="ans"><b>12 см и 18 см.</b> От <span class="m">C</span>: <span class="m">EC = x</span>, <span class="m">BE = 2x</span>. <span class="m">AB = BE = 2x</span>, <span class="m">BC = 3x</span>, <span class="m">10x = 60</span>, <span class="m">x = 6</span>. Ловушка: «считая от C» переворачивает отношение.</p>
+    </details>
+  </div>
+
+  <div class="task">
+    <p class="q"><span class="no">4.</span>Стороны параллелограмма 10 см и 16 см. На какие отрезки биссектриса острого угла делит большую сторону?</p>
+    <details><summary>Ответ</summary>
+      <p class="ans"><b>10 см и 6 см</b> (10 см — от вершины тупого угла). <span class="m">BE = AB = 10</span>, <span class="m">EC = 16 − 10 = 6</span>.</p>
+    </details>
+  </div>
+
+  <div class="task">
+    <p class="q"><span class="no">5*.</span>Биссектрисы углов <span class="m">A</span> и <span class="m">D</span> параллелограмма <span class="m">ABCD</span> делят сторону <span class="m">BC</span> на три равные части. Периметр 40 см. Найдите стороны. <em>(Ответов два.)</em></p>
+    <details><summary>Ответ</summary>
+      <p class="ans"><b>5 и 15 см или 8 и 12 см.</b></p>
+      <p>Биссектриса из <span class="m">A</span> даёт <span class="m">BE = AB</span>, биссектриса из <span class="m">D</span> даёт <span class="m">CF = CD = AB</span>. Если точки идут в порядке <span class="m">B, E, F, C</span>, то <span class="m">AB = BE = </span>одна треть <span class="m">BC</span>: <span class="m">BC = 3AB</span>, <span class="m">8AB = 40</span>. Если биссектрисы пересеклись раньше и порядок <span class="m">B, F, E, C</span>, то <span class="m">BE</span> — это две трети: <span class="m">AB = 2t</span>, <span class="m">BC = 3t</span>, <span class="m">10t = 40</span>.</p>
+    </details>
+  </div>
+
+  <h3>Тип 2. Доказать, что четырёхугольник — параллелограмм</h3>
+  <p>Схема та же, что в задаче 2 из ДЗ: равные треугольники → равные отрезки → признак «одна пара сторон равна и параллельна». Записывайте доказательство в две колонки: утверждение и обоснование.</p>
+
+  <div class="task">
+    <p class="q"><span class="no">6.</span>На сторонах <span class="m">BC</span> и <span class="m">AD</span> параллелограмма <span class="m">ABCD</span> отмечены точки <span class="m">M</span> и <span class="m">K</span> так, что <span class="m">BM = DK</span>. Докажите, что <span class="m">AMCK</span> — параллелограмм.</p>
+    <details><summary>Решение</summary>
+      <p><span class="m">MC = BC − BM = AD − DK = AK</span> и <span class="m">MC ∥ AK</span> (лежат на <span class="m">BC ∥ AD</span>). Одна пара сторон равна и параллельна. Здесь треугольники даже не нужны: это вторая половина задачи из ДЗ.</p>
+    </details>
+  </div>
+
+  <div class="task">
+    <p class="q"><span class="no">7.</span>В параллелограмме <span class="m">ABCD</span> из вершин <span class="m">B</span> и <span class="m">D</span> проведены лучи, пересекающие стороны <span class="m">AD</span> и <span class="m">BC</span> в точках <span class="m">E</span> и <span class="m">F</span>, причём <span class="m">∠ABE = ∠CDF</span>. Докажите, что <span class="m">BEDF</span> — параллелограмм.</p>
+    <details><summary>Решение</summary>
+      <p><span class="m">△ABE = △CDF</span> по второму признаку: <span class="m">AB = CD</span>, <span class="m">∠A = ∠C</span>, <span class="m">∠ABE = ∠CDF</span>. Отсюда <span class="m">AE = CF</span>, значит <span class="m">ED = AD − AE = BC − CF = BF</span>. <span class="m">ED ∥ BF</span> — признак 1.</p>
+    </details>
+  </div>
+
+  <div class="task">
+    <p class="q"><span class="no">8.</span>Биссектрисы углов <span class="m">B</span> и <span class="m">D</span> параллелограмма <span class="m">ABCD</span> пересекают стороны <span class="m">AD</span> и <span class="m">BC</span> в точках <span class="m">K</span> и <span class="m">M</span>. Докажите, что <span class="m">BMDK</span> — параллелограмм.</p>
+    <details><summary>Решение</summary>
+      <p><span class="m">∠ABK = ½∠B = ½∠D = ∠CDM</span>. Дальше как в задаче 7: <span class="m">△ABK = △CDM</span> (<span class="m">AB = CD</span>, <span class="m">∠A = ∠C</span>, углы при <span class="m">B</span> и <span class="m">D</span> равны), <span class="m">AK = CM</span>, <span class="m">KD = BM</span>, <span class="m">KD ∥ BM</span>.</p>
+    </details>
+  </div>
+
+  <div class="task">
+    <p class="q"><span class="no">9*.</span>В условиях задачи 8 известно: <span class="m">AB = 6</span> см, <span class="m">BC = 10</span> см, <span class="m">∠A = 60°</span>. Найдите периметр <span class="m">BMDK</span>.</p>
+    <details><summary>Ответ</summary>
+      <p class="ans"><b>20 см.</b></p>
+      <p><span class="m">∠B = 120°</span>, <span class="m">∠ABK = 60°</span>, в <span class="m">△ABK</span> два угла по <span class="m">60°</span> — он равносторонний: <span class="m">BK = AK = 6</span>. <span class="m">KD = 10 − 6 = 4</span>. <span class="m">P = 2(6 + 4) = 20</span>. Здесь лемма о биссектрисе встречается с задачей на доказательство.</p>
+    </details>
+  </div>
+</section>
+
+<!-- ============================ ЗАМЕТКИ ============================ -->
+<!--T-->
+<section class="block" id="zametki">
+  <div class="blockhead"><h2>Заметки преподавателю</h2></div>
+  <ul>
+    <li><strong>Начинайте с леммы, а не с задачи.</strong> Пусть ученик сам докажет на чертеже, что <span class="m">AB = BE</span>, в три строки. После этого задача 1 и аналоги 1–4 решаются за минуту каждая.</li>
+    <li><strong>Чертёж должен быть «похожим».</strong> Если нарисовать ромб или почти квадрат, биссектриса уйдёт в угол <span class="m">C</span> и ученик запутается. Биссектриса из <span class="m">A</span> попадает на сторону <span class="m">BC</span>, только когда <span class="m">AB ≤ BC</span>.</li>
+    <li><strong>Две колонки «утверждение — обоснование»</strong> для задачи 2 полезнее, чем связный текст: сразу видно, где обоснования нет. Именно так ловятся ошибки 4 и 5.</li>
+    <li><strong>Ошибка 4 — главная в теме признаков.</strong> Нарисуйте равнобедренную трапецию и спросите: «две стороны равны, две параллельны — это параллелограмм?». Контрпример запоминается лучше правила.</li>
+    <li><strong>Порядок аналогов.</strong> 1 → 3 → 2 → 4 (растёт трудность чтения условия), затем 6 → 7 → 8. Задачи 5* и 9* — для сильного ученика или на следующее занятие.</li>
+    <li><strong>Проверка ответа.</strong> Приучите подставлять найденные стороны обратно: периметр и отношение. Это 15 секунд, и ошибки 1–3 ловятся ими все.</li>
+  </ul>
+</section>
+<!--/T-->
+
+<footer>
+  <!--T--><p>Все задачи аналогов составлены для этого занятия. Ответы пересчитаны программой: точной арифметикой и построением каждой конфигурации в координатах (скрипт <span class="m">proverka.py</span> в папке занятия).</p><!--/T-->
+  <!--S<p>Решения записывайте полностью: что дано, что из этого следует и почему.</p>S-->
+</footer>
+</div>
