@@ -111,12 +111,12 @@ class Stroitel(object):
                 t = math.radians(p['th'])
                 c, s_ = math.cos(t), math.sin(t)
                 if p['mir']['os'] == u'x':
-                    lo, n = (p['mir']['c'], 0.0), (1.0, 0.0)
+                    lo, nv = (p['mir']['c'], 0.0), (1.0, 0.0)
                 else:
-                    lo, n = (0.0, p['mir']['c']), (0.0, 1.0)
+                    lo, nv = (0.0, p['mir']['c']), (0.0, 1.0)
                 ox_ = p['x'] + lo[0] * c - lo[1] * s_
                 oy_ = p['y'] + lo[0] * s_ + lo[1] * c
-                nrm = DB.XYZ(n[0] * c - n[1] * s_, n[0] * s_ + n[1] * c, 0)
+                nrm = DB.XYZ(nv[0] * c - nv[1] * s_, nv[0] * s_ + nv[1] * c, 0)
                 pl = DB.Plane.CreateByNormalAndOrigin(nrm, kvv.xyz(ox_, oy_, lv.Elevation / M))
                 DB.ElementTransformUtils.MirrorElements(self.doc, List[DB.ElementId]([e.Id]), pl, False)
             komment(e, u'КВВ-П%d' % p['id'])
