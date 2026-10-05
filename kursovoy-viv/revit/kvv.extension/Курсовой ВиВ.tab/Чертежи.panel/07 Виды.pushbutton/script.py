@@ -43,6 +43,61 @@ def tip_vida(nm, semeystvo):
     return None
 
 
+VIDNO_NA_SHEME = (DB.BuiltInCategory.OST_PipeCurves, DB.BuiltInCategory.OST_PipeFitting,
+                  DB.BuiltInCategory.OST_PipeAccessory, DB.BuiltInCategory.OST_MechanicalEquipment)
+
+
+def tolko_sistema(v, metka_svoya, log):
+    """Аксонометрия: видны только трубы, фитинги, арматура и оборудование; трубы другой системы скрыты."""
+    v.ViewTemplateId = DB.ElementId.InvalidElementId
+    vidno = set(int(c) for c in VIDNO_NA_SHEME)
+    n = 0
+    for c in doc.Settings.Categories:
+        if c.CategoryType != DB.CategoryType.Model:
+            continue
+        if c.Id.IntegerValue in vidno:
+            continue
+        try:
+            if v.CanCategoryBeHidden(c.Id):
+                v.SetCategoryHidden(c.Id, True)
+                n += 1
+        except Exception:
+            pass
+    chuzhie = []
+    for e in DB.FilteredElementCollector(doc).WhereElementIsNotElementType():
+        try:
+            p = e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+        except Exception:
+            continue
+        if p is None or not p.HasValue:
+            continue
+        s_ = p.AsString() or u''
+        chuzhoe = (s_.startswith(u'КВВ-В1') or s_.startswith(u'КВВ-К1')) and not s_.startswith(metka_svoya)
+        if metka_svoya == u'КВВ-К1' and s_.startswith(u'КВВ-О'):       # насосная установка — только на схеме В1
+            chuzhoe = True
+        if chuzhoe and e.CanBeHidden(v):
+            chuzhie.append(e.Id)
+    if chuzhie:
+        v.HideElements(List[DB.ElementId](chuzhie))
+    for bic in (DB.BuiltInCategory.OST_Levels, DB.BuiltInCategory.OST_Grids):
+        c = doc.Settings.Categories.get_Item(bic)
+        if v.CanCategoryBeHidden(c.Id):
+            v.SetCategoryHidden(c.Id, True)
+    log(u'   скрыто категорий', n, u'| элементов другой системы', len(chuzhie))
+
+
+def gruppirovka_kak_u(v, obrazec, log):
+    """Параметры группировки диспетчера проекта («Назначение вида», «Раздел» и т. п.) — как у плана той же системы."""
+    for p in obrazec.Parameters:
+        nm = p.Definition.Name
+        if p.StorageType != DB.StorageType.String or not (u'Назначение' in nm or u'Раздел' in nm):
+            continue
+        q = v.LookupParameter(nm)
+        if q is not None and not q.IsReadOnly and p.AsString():
+            q.Set(p.AsString())
+            log(u'   ', nm, u'=', p.AsString())
+
+
 def obrezka(v, x0, y0, x1, y1):
     bb = DB.BoundingBoxXYZ()
     bb.Min = DB.XYZ(x0 * M, y0 * M, -100)
@@ -58,18 +113,13 @@ def main(log):
     xs = [x for w in g['steny'] for x in (w['p1'][0], w['p2'][0])]
     X0, X1 = min(xs), max(xs)
     with kvv.Tranzakciya(doc, u'КВВ: виды', log):
-        for nm, _, _, _ in PLANY:
-            v = vid_po_imeni(nm)
-            if v:
-                doc.Delete(v.Id)
-        for nm, _, _ in SHEMY:
-            v = vid_po_imeni(nm)
-            if v:
-                doc.Delete(v.Id)
+        # существующие виды переиспользуются (открытый вид удалить нельзя)
         for nm, ur, shab, tip in PLANY:
             vft = tip_vida(tip, DB.ViewFamily.FloorPlan) or tip_vida(None, DB.ViewFamily.FloorPlan)
-            v = DB.ViewPlan.Create(doc, vft.Id, lv[ur].Id)
-            v.Name = nm
+            v = vid_po_imeni(nm)
+            if v is None:
+                v = DB.ViewPlan.Create(doc, vft.Id, lv[ur].Id)
+                v.Name = nm
             t = shablon(shab)
             if t:
                 v.ViewTemplateId = t.Id
@@ -84,13 +134,16 @@ def main(log):
             log(u'план', nm, u'| шаблон', shab if t else u'-', u'| тип', DB.Element.Name.GetValue(vft))
         vft3 = tip_vida(None, DB.ViewFamily.ThreeDimensional)
         for nm, shab, sist in SHEMY:
-            v = DB.View3D.CreateIsometric(doc, vft3.Id)
-            v.Name = nm
-            t = shablon(shab)
-            if t:
-                v.ViewTemplateId = t.Id
-            else:
-                log(u'НЕТ шаблона', shab)
+            v = vid_po_imeni(nm)
+            if v is None:
+                v = DB.View3D.CreateIsometric(doc, vft3.Id)
+                v.Name = nm
+            elif v.IsLocked:
+                v.Unlock()
+            tolko_sistema(v, u'КВВ-В1' if nm.startswith(u'В1') else u'КВВ-К1', log)
+            plan = vid_po_imeni(u'В1_План типового этажа' if nm.startswith(u'В1') else u'К1_План типового этажа')
+            if plan is not None:
+                gruppirovka_kak_u(v, plan, log)
             # фронтальная изометрия по образцу: взгляд с юго-запада сверху (ось X вправо-вверх, Y — вглубь)
             eye = DB.XYZ(-60 * M, -80 * M, 70 * M)
             fwd = DB.XYZ(1, 1.35, -0.9).Normalize()
@@ -102,7 +155,7 @@ def main(log):
             except Exception:
                 pass
             v.SaveOrientationAndLock()
-            log(u'схема', nm, u'| шаблон', shab if t else u'-')
+            log(u'схема', nm, u'| только трубы, фитинги, арматура и оборудование своей системы')
 
 
 kvv.run('07_vidy', main)

@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 """Уровни, оси, стены, двери, окна, перекрытия с отверстиями, покрытие и лестницы по revit/geometriya_v3.json.
 
+Перед перестройкой удаляются сети и приборы (метки КВВ-П/О/М/В1/К1) — после 03 запускать 04, 05, 06.
+
 Повторный запуск удаляет построенное этим скриптом (метка «КВВ-здание» в «Комментариях») и строит заново.
 """
 from pyrevit import HOST_APP
 from Autodesk.Revit import DB
 from Autodesk.Revit.DB import Architecture as A
+import System
 from System.Collections.Generic import List
 import kvv
 reload(kvv)
@@ -20,6 +23,24 @@ def pometit(e):
     p = e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
     if p and not p.IsReadOnly:
         p.Set(METKA)
+
+
+def udalit_seti(log):
+    """Перед перестройкой здания убрать сети и приборы (кнопки 04–06 строят их заново): иначе Revit не может
+    сохранить присоединение приборов к трубам при удалении перекрытий."""
+    ids = []
+    for e in DB.FilteredElementCollector(doc).WhereElementIsNotElementType():
+        try:
+            p = e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+        except Exception:
+            continue
+        if p is not None and p.HasValue:
+            s_ = p.AsString() or u''
+            if s_.startswith(u'КВВ-') and s_ != METKA:
+                ids.append(e.Id)
+    if ids:
+        doc.Delete(List[DB.ElementId](ids))
+    log(u'удалено сетей и приборов (перестроить кнопками 04–06)', len(ids))
 
 
 def udalit_staroe(log):
@@ -118,6 +139,7 @@ def najti_stenu(sozd, u, x, y):
 def proemy(g, lv, sozd, log):
     etazhi = [u['imya'] for u in g['urovni'] if u['imya'].startswith(u'Этаж')]
     n, net = 0, 0
+    razvorot = []                 # (дверь, куда открывается)
     for o, is_okno in [(o, True) for o in g['okna']] + [(d, False) for d in g['dveri']]:
         fam, tip = o['tip']
         sym = kvv.simvol(doc, fam, tip)
@@ -136,15 +158,20 @@ def proemy(g, lv, sozd, log):
                 net += 1
                 continue
             pod = o.get('podokonnik', 0.0) if is_okno else 0.0
-            p = DB.XYZ(o['x'] * M, o['y'] * M, lv[u].Elevation + pod * M)
+            ot = o.get('otkr') if (not is_okno and fam.startswith(u'AC_')) else None
+            sdv = (ot[0] * 0.03, ot[1] * 0.03) if ot else (0.0, 0.0)   # точка со стороны открывания — дверь лицом туда
+            p = DB.XYZ((o['x'] + sdv[0]) * M, (o['y'] + sdv[1]) * M, lv[u].Elevation + pod * M)
             e = doc.Create.NewFamilyInstance(p, sym, w, lv[u], DB.Structure.StructuralType.NonStructural)
             if is_okno:
                 par = e.get_Parameter(DB.BuiltInParameter.INSTANCE_SILL_HEIGHT_PARAM)
                 if par and not par.IsReadOnly:
                     par.Set(pod * M)
             pometit(e)
+            if o.get('otkr') and fam.startswith(u'AC_'):     # балконные B2B ориентируются по наружной грани сами
+                razvorot.append((e, o['otkr']))
             n += 1
     log(u'окон и дверей', n, u'| без стены-основы:', net)
+
 
 
 def kontur(pts):
@@ -235,17 +262,134 @@ def lestnicy(g, lv, log):
         log(u'  ошибка лестницы:', o)
 
 
+def obyom(w):
+    p = w.get_Parameter(DB.BuiltInParameter.HOST_VOLUME_COMPUTED)
+    return p.AsDouble() if p else 0.0
+
+
+class ZagruzkaSemeystva(DB.IFamilyLoadOptions):
+    def OnFamilyFound(self, familyInUse, overwriteParameterValues):
+        overwriteParameterValues.Value = True
+        return True
+
+    def OnSharedFamilyFound(self, sharedFamily, familyInUse, source, overwriteParameterValues):
+        overwriteParameterValues.Value = True
+        return True
+
+
+def strelki_razvorota(g, log):
+    """В семействах дверей AC нет стрелки разворота (CanFlipFacing = False) — добавить двойную вертикальную стрелку
+    в плане семейства (как вручную в редакторе) и перезагрузить семейство. Вне транзакции."""
+    imena = set(o['tip'][0] for o in g['dveri'] if o['tip'][0].startswith(u'AC_'))
+    log(u'формы стрелок:', u', '.join(System.Enum.GetNames(DB.ControlShape)))
+    semeystva = [(f.Name, f.Id) for f in DB.FilteredElementCollector(doc).OfClass(DB.Family) if f.Name in imena]
+    for imya, fid in semeystva:
+        fam = doc.GetElement(fid)
+        fd = doc.EditFamily(fam)
+        try:
+            est = [c for c in DB.FilteredElementCollector(fd).OfClass(DB.Control)]
+            formy = [c.Shape for c in est]
+            if DB.ControlShape.DoubleVerticalArrow in formy:
+                log(u'стрелка разворота уже есть:', imya)
+                continue
+            vid = [v for v in DB.FilteredElementCollector(fd).OfClass(DB.ViewPlan) if not v.IsTemplate][0]
+            t = DB.Transaction(fd, u'стрелка разворота')
+            t.Start()
+            try:
+                fd.FamilyCreate.NewControl(DB.ControlShape.DoubleVerticalArrow, vid, DB.XYZ(0, 0.6 / 0.3048, 0))
+                t.Commit()
+            except Exception:
+                t.RollBack()
+                raise
+            fd.LoadFamily(doc, ZagruzkaSemeystva())
+            log(u'добавлена стрелка разворота и семейство перезагружено:', imya)
+        finally:
+            try:
+                fd.Close(False)
+            except Exception:
+                pass
+
+
+def razvernut_dveri(g, log):
+    """Полотно открывается в сторону FacingOrientation (проверено по габариту семейств AC_Дверь). Отдельной
+    транзакцией после фиксации проёмов."""
+    nado = [(o['x'], o['y'], o['otkr']) for o in g['dveri'] if o.get('otkr') and o['tip'][0].startswith(u'AC_')]
+    n, nf, nelzya = 0, 0, 0
+    for e in DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Doors).WhereElementIsNotElementType():
+        p = e.Location.Point
+        ot = None
+        for x, y, o in nado:
+            if abs(p.X / M - x) < 0.05 and abs(p.Y / M - y) < 0.05:
+                ot = o
+                break
+        if ot is None:
+            continue
+        n += 1
+        f = e.FacingOrientation
+        if f.X * ot[0] + f.Y * ot[1] >= 0:
+            continue
+        if e.CanFlipFacing:
+            e.flipFacing()
+            nf += 1
+        else:
+            nelzya += 1
+    log(u'открывание дверей: всего', n, u'| развёрнуто', nf, u'| нельзя развернуть', nelzya)
+
+
+def proverka_proemov(log, n_prob=30):
+    """Выборочно (откат): удалить проём — объём стены должен вырасти, значит проём был вырезан."""
+    vse = []
+    for bic in (DB.BuiltInCategory.OST_Doors, DB.BuiltInCategory.OST_Windows):
+        for e in DB.FilteredElementCollector(doc).OfCategory(bic).WhereElementIsNotElementType():
+            p = e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+            if p and p.AsString() == METKA and isinstance(e.Host, DB.Wall):
+                vse.append(e)
+    shag = max(1, len(vse) // n_prob)
+    proba = vse[::shag]
+    t = DB.Transaction(doc, u'проверка проёмов')
+    t.Start()
+    ne_vyrezany = []
+    try:
+        for e in proba:
+            w = e.Host
+            v0 = obyom(w)
+            opis = u'%s %s (%.2f, %.2f) %s' % (e.Symbol.FamilyName, e.Name, e.Location.Point.X / M,
+                                               e.Location.Point.Y / M, doc.GetElement(e.LevelId).Name)
+            doc.Delete(e.Id)
+            doc.Regenerate()
+            if obyom(w) - v0 < 1e-6:
+                ne_vyrezany.append(opis)
+    finally:
+        t.RollBack()
+    log(u'проверка проёмов: из', len(proba), u'проверенных не вырезано', len(ne_vyrezany))
+    for o in ne_vyrezany:
+        log(u'  проём НЕ вырезан:', o)
+
+
 def main(log):
     g = kvv.load_json('revit', 'geometriya_v3.json')
+    try:
+        strelki_razvorota(g, log)
+    except Exception as ex:
+        log(u'стрелки разворота не добавлены:', ex)
+    # стены и перекрытия фиксируются отдельно: проёмы, созданные в той же транзакции, Revit не врезает
+    with kvv.Tranzakciya(doc, u'КВВ: удаление сетей', log):
+        udalit_seti(log)
     with kvv.Tranzakciya(doc, u'КВВ: здание', log):
         udalit_staroe(log)
         lv = urovni_osi(g, log)
         doc.Regenerate()
         sozd = steny(g, lv, log)
-        doc.Regenerate()
-        proemy(g, lv, sozd, log)
         perekrytiya(g, lv, log)
     lv = kvv.urovni(doc)
+    sozd = [(u, doc.GetElement(w.Id), p1, p2, t) for (u, w, p1, p2, t) in sozd]
+    with kvv.Tranzakciya(doc, u'КВВ: проёмы', log):
+        proemy(g, lv, sozd, log)
+    with kvv.Tranzakciya(doc, u'КВВ: открывание дверей', log):
+        razvernut_dveri(g, log)
+    with kvv.Tranzakciya(doc, u'КВВ: проверка открывания', log):
+        razvernut_dveri(g, log)          # повторно: должно быть «исправлено 0, не исправлено 0»
+    proverka_proemov(log)
     lestnicy(g, lv, log)
 
 

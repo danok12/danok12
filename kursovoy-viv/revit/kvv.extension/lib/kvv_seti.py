@@ -5,6 +5,7 @@
 КВВ-В1 / КВВ-К1 — трубы, фитинги и арматура системы. По меткам повторный запуск удаляет старое.
 """
 import math
+import os
 from Autodesk.Revit import DB
 from Autodesk.Revit.DB import Plumbing
 from System.Collections.Generic import List
@@ -549,3 +550,59 @@ def proba_troynikov(doc, log, imya_tipa, sys_imya, dn):
                         u'-> НЕТ:', ex)
     finally:
         t.RollBack()
+
+
+SML_KOSOY = u'КВВ_Чугун SML_Тройник косой'
+
+
+def sml_kosoy_troynik(doc, log, imya_tipa_sml):
+    """Косой тройник SML 45° (СП 30, п. 18.4): в библиотеке ADSK только прямой SML-тройник.
+
+    Семейство делается из тройника ADSK_ППР_Тройник канализационный (есть параметр «Угол»), наименование для
+    спецификации задаётся формулой. Ставится первым правилом соединений типа трубы SML. Вне транзакции."""
+    est = [f for f in DB.FilteredElementCollector(doc).OfClass(DB.Family) if f.Name == SML_KOSOY]
+    if not est:
+        baza = [f for f in DB.FilteredElementCollector(doc).OfClass(DB.Family)
+                if f.Name == u'ADSK_ППР_Тройник канализационный']
+        if not baza:
+            log(u'нет базового семейства тройника — косой SML не создан')
+            return
+        fd = doc.EditFamily(baza[0])
+        try:
+            fm = fd.FamilyManager
+            t = DB.Transaction(fd, u'SML косой')
+            t.Start()
+            for p in fm.GetParameters():
+                if p.Definition.Name == u'ADSK_Наименование':
+                    fm.SetFormula(p, u'"Тройник чугунный безраструбный SML 100х100, 45°"')
+                elif p.Definition.Name == u'ADSK_Марка':
+                    fm.SetFormula(p, u'"DIN EN 877"')
+            t.Commit()
+            put = os.path.join(kvv.REVIT, u'semeystva')
+            if not os.path.isdir(put):
+                os.makedirs(put)
+            put = os.path.join(put, SML_KOSOY + u'.rfa')
+            so = DB.SaveAsOptions()
+            so.OverwriteExistingFile = True
+            fd.SaveAs(put, so)
+        finally:
+            fd.Close(False)
+        t = DB.Transaction(doc, u'Загрузка: SML косой')
+        t.Start()
+        ok = doc.LoadFamily(put)
+        t.Commit()
+        log(u'создано и загружено семейство', SML_KOSOY, ok)
+    fam = [f for f in DB.FilteredElementCollector(doc).OfClass(DB.Family) if f.Name == SML_KOSOY][0]
+    sym = doc.GetElement(list(fam.GetFamilySymbolIds())[0])
+    pt = kvv.po_imeni(doc, Plumbing.PipeType, imya_tipa_sml)
+    rpm = pt.RoutingPreferenceManager
+    gr = DB.RoutingPreferenceRuleGroupType.Junctions
+    pervoe = doc.GetElement(rpm.GetRule(gr, 0).MEPPartId) if rpm.GetNumberOfRules(gr) else None
+    if pervoe is None or pervoe.Id != sym.Id:
+        t = DB.Transaction(doc, u'Правило: SML косой')
+        t.Start()
+        if not sym.IsActive:
+            sym.Activate()
+        rpm.AddRule(gr, DB.RoutingPreferenceRule(sym.Id, u'Косой тройник SML'), 0)
+        t.Commit()
+        log(u'правило соединения', SML_KOSOY, u'— первым для', imya_tipa_sml)

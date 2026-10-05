@@ -151,8 +151,11 @@ class Tranzakciya(object):
         from Autodesk.Revit import DB
         if et is None:
             st = self.t.Commit()
-            if st != DB.TransactionStatus.Committed and self.log is not None:
-                self.log(u'транзакция НЕ зафиксирована (%s), ошибок Revit: %d' % (st, self.oshibki))
+            if st != DB.TransactionStatus.Committed:
+                msg = u'транзакция «%s» НЕ зафиксирована (%s), ошибок Revit: %d' % (self.t.GetName(), st, self.oshibki)
+                if self.log is not None:
+                    self.log(msg)
+                raise Exception(msg)
         else:
             self.t.RollBack()
         return False

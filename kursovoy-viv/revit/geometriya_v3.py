@@ -115,19 +115,23 @@ D_VH = ["AC_Дверь_Двупольная_Стальная", "1360х2080h Н"]
 OK_2 = ["B2B_Окно_2створки", "1470(870)х1320h"]
 OK_1 = ["B2B_Окно_1створка", "870х1460h"]
 BDV = ["B2B_БДверь_1створка", "870х2060h Л"]
-# двери: (x, y, тип, где); хост — стена, на оси которой лежит точка
+# двери: (x, y, тип, где, (dx, dy) — куда открывается полотно); хост — стена, на оси которой лежит точка.
+# Открывание: комнатные и балконные — в комнату, ванная и уборная — наружу (в прихожую), входные в квартиры —
+# внутрь квартиры, двери лифтового холла — к лестнице (путь эвакуации), входы в подъезд — наружу.
 DVERI_SEK = [
-    (3.5, 6.22, D760, "etazhi"), (4.985, 5.575, D760, "etazhi"), (7.255, 5.575, D760, "etazhi"),
-    (6.5, 7.605, D760, "etazhi"), (8.015, 8.055, D760, "etazhi"), (11.155, 8.055, D760, "etazhi"),
-    (15.84, 5.575, D760, "etazhi"), (17.055, 5.575, D760, "etazhi"),
-    (19.0, 6.115, D760, "etazhi"), (19.0, 7.605, D760, "etazhi"),
-    (2.695, YV, D760, "etazhi"), (8.78, YV, D760, "etazhi"),                     # в комнату и вход в кв. Б
-    (9.2, 6.11, D860, "etazhi"), (13.7, 6.11, D860, "etazhi"),                   # входы в кв. А и В
-    (2.27, 4.60, D760, "etazhi"), (2.27, 6.20, D760, "etazhi"),                  # ванная и уборная кв. А
-    (13.62, 7.40, D760, "etazhi"), (13.62, 9.05, D760, "etazhi"),
-    (17.78, 7.40, D760, "etazhi"), (17.78, 9.05, D760, "etazhi"),
-    (12.34, -E, D_VH, "Этаж 01"), (9.92, -E, D860, "Этаж 01"),                    # вход в подъезд, выход у лифта
-    (1.27, 11.35, BDV, "etazhi"), (21.14, 11.35, BDV, "etazhi"),                 # балконные двери на лоджии
+    (3.5, 6.22, D760, "etazhi", (-1, 0)), (4.985, 5.575, D760, "etazhi", (0, -1)),
+    (7.255, 5.575, D760, "etazhi", (0, -1)),
+    (6.5, 7.605, D760, "etazhi", (-1, 0)), (8.015, 8.055, D760, "etazhi", (0, 1)),
+    (11.155, 8.055, D760, "etazhi", (0, 1)),
+    (15.84, 5.575, D760, "etazhi", (0, -1)), (17.055, 5.575, D760, "etazhi", (0, -1)),
+    (19.0, 6.115, D760, "etazhi", (1, 0)), (19.0, 7.605, D760, "etazhi", (1, 0)),
+    (2.695, YV, D760, "etazhi", (0, 1)), (8.78, YV, D760, "etazhi", (0, 1)),          # в комнату и вход в кв. Б
+    (9.2, 6.11, D860, "etazhi", (1, 0)), (13.7, 6.11, D860, "etazhi", (-1, 0)),       # двери лифтового холла
+    (2.27, 4.60, D760, "etazhi", (1, 0)), (2.27, 6.20, D760, "etazhi", (1, 0)),       # ванная и уборная кв. А
+    (13.62, 7.40, D760, "etazhi", (-1, 0)), (13.62, 9.05, D760, "etazhi", (-1, 0)),
+    (17.78, 7.40, D760, "etazhi", (1, 0)), (17.78, 9.05, D760, "etazhi", (1, 0)),
+    (12.34, -E, D_VH, "Этаж 01", (0, -1)), (9.92, -E, D860, "Этаж 01", (0, -1)),      # вход в подъезд, выход у лифта
+    (1.27, 11.35, BDV, "etazhi", (0, -1)), (21.14, 11.35, BDV, "etazhi", (0, -1)),    # балконные двери на лоджии
 ]
 # окна: (x, y, тип, где, подоконник)
 OKNA_SEK = []
@@ -158,8 +162,8 @@ for i in range(4):
 for M in SEKCII:
     for p1, p2, tip, gde in STENY_SEK + ([STENA_OS11] if M.s == 0 else []):
         stena(M.p(*p1), M.p(*p2), tip, gde)
-    for x, y, tip, gde in DVERI_SEK:
-        dveri.append(dict(x=round(M.x(x), 3), y=y, tip=tip, gde=gde))
+    for x, y, tip, gde, (ox, oy) in DVERI_SEK:
+        dveri.append(dict(x=round(M.x(x), 3), y=y, tip=tip, gde=gde, otkr=list(M.d(ox, oy))))
     for x, y, tip, gde, pod in OKNA_SEK:
         okna.append(dict(x=round(M.x(x), 3), y=y, tip=tip, gde=gde, podokonnik=pod))
     m = {}
@@ -405,16 +409,18 @@ def nogi(xh, y0, z, ftaps, ur):
     return ids[0]
 
 
-def kv_v1(k, zf, ur, rs_v, stoyak_xy, napr, y_op, nogi_):
-    """Квартирный ввод: тройник на стояке на высоте Z_UZEL, узел учёта вдоль короба, опуск к разводке на y_op,
-    одна или две ветки разводки (nogi_ — список списков приборов)."""
+def kv_v1(k, zf, ur, rs_v, stoyak_xy, napr, y_op, nogi_, xh=None):
+    """Квартирный ввод: тройник на стояке на высоте Z_UZEL, узел учёта вдоль шахты, опуск к разводке на y_op,
+    одна или две ветки разводки (nogi_ — список списков приборов) по линии x = xh (по умолчанию — ось стояка)."""
     xr, yr = stoyak_xy
+    xh = xr if xh is None else xh
     z1 = zf + Z_UZEL
     items = ["kran15", "filtr15", "sch15"] + (["reg15"] if k in ET_REG else [])
     r0, (ra, _), p = vetka("V1", "stal", 15, [(xr, yr, z1)], napr, items, ur, first=0.15)
     rs_v.append((z1, (r0, 0)))
-    seti[ra]["pts"] = seti[ra]["pts"][:1] + [R((xr, y_op, z1)), R((xr, y_op, zf + Z_RAZV))]
-    starty = [nogi(xr, y_op, zf + Z_RAZV, f, ur) for f in nogi_]
+    hvost = [R((xr, y_op, z1))] + ([R((xh, y_op, z1))] if abs(xh - xr) > 1e-6 else []) + [R((xh, y_op, zf + Z_RAZV))]
+    seti[ra]["pts"] = seti[ra]["pts"][:1] + hvost
+    starty = [nogi(xh, y_op, zf + Z_RAZV, f, ur) for f in nogi_]
     if len(starty) == 1:
         svyaz((ra, 1), (starty[0], 0))
     else:
@@ -453,21 +459,25 @@ def unitaz_k1(ct, pt_, xk, yk, ur):
 # стояки квартир в локальных координатах секции: (В1, К1)
 # В1 — у стены (разводка вдоль стены и в коробе, и на кухне); К1 — на одной линии со сливом мойки, чтобы отвод
 # от мойки шёл прямо, без коротких косых вставок
-ST_V = {"A": (0.265, 6.55), "B": (15.425, 7.07), "C": (15.975, 7.07)}
+# В1 — у стены шахты, на 0,32 м от стояка К1 в сторону ванны: разводка В1 не проходит мимо стояка К1
+# (как в образце преподавателя), подводка к бачку обрывается в 0,2 м от стояка К1
+ST_V = {"A": (0.425, 5.90), "B": (15.265, 7.74), "C": (16.135, 7.75)}
 ST_K = {"A": (0.365, 6.22), "B": (15.325, 7.42), "C": (16.075, 7.43)}
+# линия поквартирной разводки — у стены шахты, на оси патрубка мойки (подъём к мойке прямой); отводы К1 идут
+# по оси стояка К1 ближе к коробу, стояк В1 — у короба
+X_RAZV = {"A": 0.265, "B": 15.425, "C": 15.975}
 
 
 def kv_A(M, zf, ur, k, st):
-    pt_, ct = pribor2("unitaz", M, "-x", 0.50, 6.22, zf, ur)
+    pt_, ct = pribor2("unitaz", M, "-x", 0.55, 6.22, zf, ur)     # 50 мм от короба — место под подводку
     pv, cv = pribor2("vanna", M, "-x", 0.50, 5.00, zf, ur)
     pu, cu = pribor2("umyv", M, "-x", 0.50, 4.625, zf, ur)
     pm, cm = pribor2("moyka", M, "-x", 0.20, 3.25, zf, ur)
     utoplen.add(tuple(round(v, 4) for v in cv["cold"]))
     xr, yr = M.x(ST_V["A"][0]), ST_V["A"][1]
-    y_op = 5.90                               # опуск у перегородки уборной: узел учёта (0,44 м) помещается выше
-    vniz = [(cv["cold"], pv, None), (cu["cold"], pu, None), (cm["cold"], pm, None)]
-    nog = [vniz, [(ct["cold"], pt_, None)]]
-    kv_v1(k, zf, ur, st["vA"], (xr, yr), (0, -1), y_op, nog)
+    y_op = 5.15                               # опуск ниже подвода к ванне: узел учёта (0,75 м) — от стояка до опуска
+    nog = [[(cv["cold"], pv, None), (ct["cold"], pt_, None)], [(cu["cold"], pu, None), (cm["cold"], pm, None)]]
+    kv_v1(k, zf, ur, st["vA"], (xr, yr), (0, -1), y_op, nog, xh=M.x(X_RAZV["A"]))
     xk, yk = M.x(ST_K["A"][0]), ST_K["A"][1]
     zt, r_un = unitaz_k1(ct, pt_, xk, yk, ur)
     st["kA"].append((zt, [(r_un, 1)]))
@@ -477,23 +487,19 @@ def kv_A(M, zf, ur, k, st):
 
 def kv_BC(M, zf, ur, k, st, kv):
     if kv == "B":
-        w, face, face_k, y_un = "+x", 15.19, 15.49, 7.42
+        w, face, face_k, y_un, y_op = "+x", 15.19, 15.49, 7.42, 8.49
     else:
-        w, face, face_k, y_un = "-x", 16.21, 15.91, 7.43
-    pt_, ct = pribor2("unitaz", M, w, face, y_un, zf, ur)
+        w, face, face_k, y_un, y_op = "-x", 16.21, 15.91, 7.43, 8.50
+    otstup = -0.05 if w == "+x" else 0.05      # унитаз в 50 мм от короба — место под подводку к бачку
+    pt_, ct = pribor2("unitaz", M, w, face + otstup, y_un, zf, ur)
     pv, cv = pribor2("vanna", M, w, face, 7.94, zf, ur)
     pu, cu = pribor2("umyv", M, w, face, 9.00, zf, ur)
     pm, cm = pribor2("moyka", M, w, face_k, 9.60, zf, ur)
     utoplen.add(tuple(round(v, 4) for v in cv["cold"]))
     xr, yr = M.x(ST_V[kv][0]), ST_V[kv][1]
-    y_op = 7.70                               # опуск у перегородки уборной, выше узла учёта
-    kuhnya = [(cm["cold"], pm, None)]
-    vverh = [(cv["cold"], pv, None), (cu["cold"], pu, None)] + kuhnya
-    if ct["cold"][1] > y_op:
-        nog = [[(ct["cold"], pt_, None)] + vverh]
-    else:
-        nog = [vverh, [(ct["cold"], pt_, None)]]
-    kv_v1(k, zf, ur, st["v" + kv], (xr, yr), (0, 1), y_op, nog)
+    # опуск выше подвода к ванне: узел учёта от стояка до опуска; вниз — ванна и унитаз, вверх — умывальник и мойка
+    nog = [[(cv["cold"], pv, None), (ct["cold"], pt_, None)], [(cu["cold"], pu, None), (cm["cold"], pm, None)]]
+    kv_v1(k, zf, ur, st["v" + kv], (xr, yr), (0, 1), y_op, nog, xh=M.x(X_RAZV[kv]))
     xk, yk = M.x(ST_K[kv][0]), ST_K[kv][1]
     zt, r_un = unitaz_k1(ct, pt_, xk, yk, ur)
     st["k" + kv].append((zt, [(r_un, 1)]))
@@ -552,10 +558,11 @@ NOM = nomera()
 
 # ---------------- подвал: стояки В1, магистраль, ввод, насосная ----------------
 Z_MAG = -0.6
-Y_MAG = 7.60
+Y_MAG = 7.20
 UR_P = "Подвал"
 VYTYAZHKA = 0.2                        # вытяжная часть над неэксплуатируемой кровлей (п. 18.18 СП 30)
 
+OTSTUP_PODV = {"A": 0.15, "B": -0.15, "C": 0.15}
 podvod = {}
 for M in SEKCII:
     for kv in "ABC":
@@ -566,10 +573,13 @@ for M in SEKCII:
             return dn_po_n(N_PR * (n_uzl - i) if i > 0 else N_PR * n_uzl, 25)
         imya = "Ст.В1-%d" % NOM[(M.s, kv)]
         runs = stoyak(imya, "V1", x, y, uzly, Z_MAG, max(z for z, _ in uzly), ur_po_z, d_fun, "stal")
-        podvod[imya] = (x, y, runs[0], d_fun(0, len(uzly)), N_PR * N_ET)
+        # подводка от магистрали — в 0,15 м от оси стояка в сторону санузла (под ним в подвале свободно),
+        # чтобы не задеть низ стояка К1; у стояка — перегиб
+        x_b = x + OTSTUP_PODV[kv] * M.sx()
+        podvod[imya] = (x, y, runs[0], d_fun(0, len(uzly)), N_PR * N_ET, x_b)
 
 X_TR = 4.0
-x_st = {nm: podvod[nm][0] for nm in podvod}
+x_st = {nm: podvod[nm][5] for nm in podvod}
 vostok = sorted([nm for nm in podvod if x_st[nm] > X_TR], key=lambda nm: x_st[nm])
 zapad = [nm for nm in podvod if x_st[nm] < X_TR]
 
@@ -580,11 +590,11 @@ def dn_mag(n):
 
 def otvetvlenie(nm):
     """Ответвление от магистрали к стояку с краном у основания стояка."""
-    x, y, r_st, d, n = podvod[nm]
+    x, y, r_st, d, n, x_b = podvod[nm]
     napr = (0, 1) if y > Y_MAG else (0, -1)
     kran = {25: "kran25", 32: "kran32", 40: "kran40"}[d]
-    r0, (ra, _), p = vetka("V1", "stal", d, [(x, Y_MAG, Z_MAG)], napr, [kran], UR_P, first=0.15)
-    seti[ra]["pts"] = seti[ra]["pts"][:1] + [R((x, y, Z_MAG))]
+    r0, (ra, _), p = vetka("V1", "stal", d, [(x_b, Y_MAG, Z_MAG)], napr, [kran], UR_P, first=0.15)
+    seti[ra]["pts"] = seti[ra]["pts"][:1] + [R((x_b, y, Z_MAG)), R((x, y, Z_MAG))]
     svyaz((ra, 1), (r_st, 0))
     return r0
 
@@ -958,7 +968,8 @@ print("стояки В1:", {nm: (round(v[0], 3), v[1]) for nm, v in sorted(podvo
 print("магистраль (от, до, L, N, DN):", uchastki_mag)
 print("приборов", len(pribory), "труб", len(seti), "тройников", len(troyniki), "арматуры", len(armatura),
       "муфт", len(mufty), "стен", len(steny), "дверей", len(dveri), "окон", len(okna))
-trassa_v3 = dict(stoyaki_v1={nm: [round(v[0], 3), v[1]] for nm, v in podvod.items()}, magistral=uchastki_mag,
+trassa_v3 = dict(stoyaki_v1={nm: [round(v[0], 3), v[1], round(v[5], 3)] for nm, v in podvod.items()},
+                 magistral=uchastki_mag,
                  x_troynik=X_TR, y_mag=Y_MAG, z_mag=Z_MAG, vypuski=vypuski, l_nap=L_NAP, n_vse=N_VSE,
                  stoyaki_k1={s["imya"]: [s["x"], s["y"]] for s in stoyaki if s["sys"] == "K1"})
 json.dump(trassa_v3, open(os.path.join(HERE, "..", "calc", "trassa_v3.json"), "w", encoding="utf-8"),

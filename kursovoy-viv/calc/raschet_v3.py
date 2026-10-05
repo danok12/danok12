@@ -138,7 +138,7 @@ def F_(v):
 
 def put_k_stoyaku(nm):
     """Участки магистрали от тройника у насосной до ответвления на стояк nm (от стояка к тройнику)."""
-    x, y = ST_V1[nm]
+    x, y = ST_V1[nm][2], ST_V1[nm][1]        # точка ответвления на магистрали
     out = []
     if x < X_NASOS:            # стояк западнее тройника — отдельная ветка
         out.append(("магистраль: тройник - " + nm, n_st, r(X_NASOS - x, 2)))
@@ -156,7 +156,8 @@ def raschet_v1(l_kv, nm):
         uchastki.append(("кв. разводка", n_, l_))
     for k in range(N_ET, 1, -1):
         uchastki.append((f"стояк {nm}, эт. {k}-{k - 1}", n_et_pr * (N_ET - k + 1), H_ET))
-    uchastki.append((f"стояк {nm}, эт. 1 - магистраль", n_st, r(Z_UZEL - Z_MAG + abs(ST_V1[nm][1] - Y_MAG), 2)))
+    uchastki.append((f"стояк {nm}, эт. 1 - магистраль", n_st,
+                     r(Z_UZEL - Z_MAG + abs(ST_V1[nm][1] - Y_MAG) + abs(ST_V1[nm][0] - ST_V1[nm][2]), 2)))
     uchastki += put_k_stoyaku(nm)
     uchastki.append(("напорная линия: установка - тройник магистрали", N, L_NAP))
     res = []
