@@ -44,18 +44,25 @@ def tip_vida(nm, semeystvo):
 
 
 VIDNO_NA_SHEME = (DB.BuiltInCategory.OST_PipeCurves, DB.BuiltInCategory.OST_PipeFitting,
-                  DB.BuiltInCategory.OST_PipeAccessory, DB.BuiltInCategory.OST_MechanicalEquipment)
+                  DB.BuiltInCategory.OST_PipeAccessory, DB.BuiltInCategory.OST_MechanicalEquipment,
+                  DB.BuiltInCategory.OST_PlumbingFixtures)
 
 
 def tolko_sistema(v, metka_svoya, log):
-    """Аксонометрия: видны только трубы, фитинги, арматура и оборудование; трубы другой системы скрыты."""
+    """Аксонометрия: видны трубы, фитинги, арматура, оборудование и сантехприборы (полутоном, как в образце
+    преподавателя); трубы другой системы скрыты."""
     v.ViewTemplateId = DB.ElementId.InvalidElementId
+    pol = DB.OverrideGraphicSettings()
+    pol.SetHalftone(True)
+    v.SetCategoryOverrides(DB.ElementId(DB.BuiltInCategory.OST_PlumbingFixtures), pol)
     vidno = set(int(c) for c in VIDNO_NA_SHEME)
     n = 0
     for c in doc.Settings.Categories:
         if c.CategoryType != DB.CategoryType.Model:
             continue
         if c.Id.IntegerValue in vidno:
+            if v.CanCategoryBeHidden(c.Id) and v.GetCategoryHidden(c.Id):
+                v.SetCategoryHidden(c.Id, False)          # могла остаться скрытой с прошлого запуска
             continue
         try:
             if v.CanCategoryBeHidden(c.Id):
@@ -155,7 +162,7 @@ def main(log):
             except Exception:
                 pass
             v.SaveOrientationAndLock()
-            log(u'схема', nm, u'| только трубы, фитинги, арматура и оборудование своей системы')
+            log(u'схема', nm, u'| трубы, фитинги, арматура своей системы и сантехприборы (полутон)')
 
 
 kvv.run('07_vidy', main)
