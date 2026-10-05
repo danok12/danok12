@@ -110,6 +110,8 @@ def steny(g, lv, log):
             gde += etazhi
         if s['gde'] in (u'podval', u'vse'):
             gde.append(u'Подвал')
+        if s['gde'] in imena:                 # стена только на одном уровне (например, «Этаж 01»)
+            gde.append(s['gde'])
         line = DB.Line.CreateBound(kvv.xyz(*s['p1']), kvv.xyz(*s['p2']))
         for u in gde:
             niz, verh = lv[u], lv[imena[imena.index(u) + 1]]
