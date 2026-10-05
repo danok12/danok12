@@ -377,6 +377,9 @@ for k, (t, v, fmt, kind) in enumerate(items):
     put(ws, f"A{18 + k}", t, "head", align=LEFT); put(ws, f"C{18 + k}", v, kind, fmt)
 for ref in ("C27", "C29", "C30"):
     ws[ref].fill = FILL_RES
+put(ws, "A31", "Принятая установка (1 рабочий + 1 резервный)", "head", align=LEFT)
+put(ws, "C31", "Grundfos CR 10-7: Q_ном = 10 м³/ч, H_ном = 57,2 м, 7 ступеней, 3 кВт", "in", align=LEFT)
+ws.merge_cells("C31:D31")
 put(ws, "A32", "Гидростатический напор у нижнего прибора этажа (смеситель ванны, 0,8 м) — п. 8.22: более 45 м → регулятор давления", "head", align=LEFT)
 put(ws, "B33", "Этаж", "head"); put(ws, "C33", "H, м", "head"); put(ws, "D33", "Регулятор давления", "head")
 for k in range(int(I["N_ET"])):
