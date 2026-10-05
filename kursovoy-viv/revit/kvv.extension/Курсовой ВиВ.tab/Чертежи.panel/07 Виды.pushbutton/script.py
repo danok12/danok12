@@ -57,7 +57,7 @@ def main(log):
     lv = kvv.urovni(doc)
     xs = [x for w in g['steny'] for x in (w['p1'][0], w['p2'][0])]
     X0, X1 = min(xs), max(xs)
-    with kvv.Tranzakciya(doc, u'КВВ: виды'):
+    with kvv.Tranzakciya(doc, u'КВВ: виды', log):
         for nm, _, _, _ in PLANY:
             v = vid_po_imeni(nm)
             if v:

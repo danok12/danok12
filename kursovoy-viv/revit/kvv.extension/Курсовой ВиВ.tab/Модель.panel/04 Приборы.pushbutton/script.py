@@ -11,7 +11,7 @@ doc = HOST_APP.doc
 
 def main(log):
     g = kvv.load_json('revit', 'geometriya_v3.json')
-    with kvv.Tranzakciya(doc, u'КВВ: приборы'):
+    with kvv.Tranzakciya(doc, u'КВВ: приборы', log):
         for pref in (u'КВВ-П', u'КВВ-О', u'КВВ-М'):
             kvv_seti.udalit(doc, pref, log)
         s = kvv_seti.Stroitel(doc, g, log)

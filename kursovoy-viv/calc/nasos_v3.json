@@ -1,11 +1,11 @@
 {
- "tip": "COR-2 MVL 808/SKw-EB-R",
- "nasos": "MVL 808",
- "Q": 9.09,
- "H": 56.24,
- "H50": 68.3,
- "eta": 62.4,
- "motor": 3.0,
+ "tip": "COR-2 MVL 408/SKw-EB-R",
+ "nasos": "MVL 408",
+ "Q": 4.78,
+ "H": 56.82,
+ "H50": 58.6,
+ "eta": 56.0,
+ "motor": 1.5,
  "n_rab": 1,
  "n_rez": 1
 }

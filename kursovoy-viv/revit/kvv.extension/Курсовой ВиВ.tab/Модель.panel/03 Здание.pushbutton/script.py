@@ -237,7 +237,7 @@ def lestnicy(g, lv, log):
 
 def main(log):
     g = kvv.load_json('revit', 'geometriya_v3.json')
-    with kvv.Tranzakciya(doc, u'КВВ: здание'):
+    with kvv.Tranzakciya(doc, u'КВВ: здание', log):
         udalit_staroe(log)
         lv = urovni_osi(g, log)
         doc.Regenerate()

@@ -93,18 +93,30 @@ def urovni(doc):
 class Tranzakciya(object):
     """with Tranzakciya(doc, 'имя'): ... — предупреждения Revit удаляются, чтобы не всплывали окна."""
 
-    def __init__(self, doc, name):
+    def __init__(self, doc, name, log=None):
         from Autodesk.Revit import DB
         self.t = DB.Transaction(doc, name)
+        self.doc, self.log = doc, log
+        self.oshibki = 0
 
     def __enter__(self):
         from Autodesk.Revit import DB
+        tr = self
 
         class Glush(DB.IFailuresPreprocessor):
             def PreprocessFailures(self, fa):
+                est_oshibki = False
                 for f in fa.GetFailureMessages():
                     if f.GetSeverity() == DB.FailureSeverity.Warning:
                         fa.DeleteWarning(f)
+                        continue
+                    est_oshibki = True
+                    tr.oshibki += 1
+                    if tr.log is not None:
+                        tr.opisat(f)
+                if est_oshibki and tr.log is not None:
+                    # ошибки — в журнал, транзакция откатывается без диалога
+                    return DB.FailureProcessingResult.ProceedWithRollBack
                 return DB.FailureProcessingResult.Continue
 
         self.t.Start()
@@ -114,9 +126,33 @@ class Tranzakciya(object):
         self.t.SetFailureHandlingOptions(opt)
         return self.t
 
+    def opisat(self, f):
+        """Ошибка Revit в журнал: текст, элементы, их положение и комментарий."""
+        from Autodesk.Revit import DB
+        chasti = [f.GetDescriptionText()]
+        for eid in list(f.GetFailingElementIds()) + list(f.GetAdditionalElementIds()):
+            e = self.doc.GetElement(eid)
+            if e is None:
+                chasti.append(u'id %d (нет)' % eid.IntegerValue)
+                continue
+            loc = getattr(e, 'Location', None)
+            gde = u''
+            if isinstance(loc, DB.LocationCurve):
+                a, b = loc.Curve.GetEndPoint(0), loc.Curve.GetEndPoint(1)
+                gde = u'(%.3f, %.3f, %.3f)-(%.3f, %.3f, %.3f) L=%.1f мм' % (
+                    a.X / M, a.Y / M, a.Z / M, b.X / M, b.Y / M, b.Z / M, a.DistanceTo(b) / MM)
+            elif isinstance(loc, DB.LocationPoint):
+                a = loc.Point
+                gde = u'(%.3f, %.3f, %.3f)' % (a.X / M, a.Y / M, a.Z / M)
+            chasti.append(u'id %d %s %s' % (eid.IntegerValue, e.Name, gde))
+        self.log(u'  ОШИБКА REVIT: ' + u' | '.join(chasti))
+
     def __exit__(self, et, ev, tb):
+        from Autodesk.Revit import DB
         if et is None:
-            self.t.Commit()
+            st = self.t.Commit()
+            if st != DB.TransactionStatus.Committed and self.log is not None:
+                self.log(u'транзакция НЕ зафиксирована (%s), ошибок Revit: %d' % (st, self.oshibki))
         else:
             self.t.RollBack()
         return False

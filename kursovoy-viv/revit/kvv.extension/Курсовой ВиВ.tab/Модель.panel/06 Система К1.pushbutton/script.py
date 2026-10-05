@@ -11,7 +11,9 @@ doc = HOST_APP.doc
 
 def main(log):
     g = kvv.load_json('revit', 'geometriya_v3.json')
-    with kvv.Tranzakciya(doc, u'КВВ: система К1'):
+    kvv_seti.diag_troynik(doc, log, [g['tipy_trub'][k] for k in (u'sml',)], vse=True)
+    return
+    with kvv.Tranzakciya(doc, u'КВВ: система К1', log):
         kvv_seti.udalit(doc, u'КВВ-К1', log)
         kvv_seti.Stroitel(doc, g, log).sistema_celikom(u'K1')
 

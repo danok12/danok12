@@ -11,7 +11,7 @@ doc = HOST_APP.doc
 
 def main(log):
     g = kvv.load_json('revit', 'geometriya_v3.json')
-    with kvv.Tranzakciya(doc, u'КВВ: система В1'):
+    with kvv.Tranzakciya(doc, u'КВВ: система В1', log):
         kvv_seti.udalit(doc, u'КВВ-В1', log)
         kvv_seti.Stroitel(doc, g, log).sistema_celikom(u'V1')
 

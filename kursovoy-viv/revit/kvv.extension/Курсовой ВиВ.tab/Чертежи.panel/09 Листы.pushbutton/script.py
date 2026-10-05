@@ -78,7 +78,7 @@ def main(log):
         log(u'НЕТ основной надписи ADSK_ОсновнаяНадпись : Форма 3')
         return
     tnt = kvv.po_imeni(doc, DB.TextNoteType, u'ADSK_Основной текст_2.5')
-    with kvv.Tranzakciya(doc, u'КВВ: листы'):
+    with kvv.Tranzakciya(doc, u'КВВ: листы', log):
         nomera = set(n for n, _, _, _ in LISTY)
         for s in DB.FilteredElementCollector(doc).OfClass(DB.ViewSheet):
             if s.SheetNumber in nomera:

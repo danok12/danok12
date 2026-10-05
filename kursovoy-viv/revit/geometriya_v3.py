@@ -368,8 +368,10 @@ utoplen = set()         # соединители, лежащие в плоско
 
 def k_priboru(p, conn, xh, z):
     if tuple(round(v, 4) for v in conn) in utoplen:
-        # подъём внутри короба: на линии разводки, если соединитель близко, иначе в 70 мм от соединителя
-        xv = xh if abs(conn[0] - xh) < 0.12 else conn[0] - math.copysign(0.07, conn[0] - xh)
+        # подъём внутри короба в 110 мм от соединителя: патрубок смесителя ванны DN20, подводка DN15 —
+        # на горизонтальном участке помещаются отвод и переход 15х20 (иначе Revit оставляет обрезок трубы)
+        dx = abs(conn[0] - xh)
+        xv = xh if 0.11 <= dx < 0.16 else conn[0] - math.copysign(0.11, conn[0] - xh)
         pts = [p] + ([(xv, conn[1], z)] if abs(xv - p[0]) > 1e-6 else [])
         return pts + [(xv, conn[1], conn[2]), conn]
     if abs(conn[0] - p[0]) < 0.005:            # соединитель над линией разводки — прямой подъём
@@ -409,7 +411,7 @@ def kv_v1(k, zf, ur, rs_v, stoyak_xy, napr, y_op, nogi_):
     xr, yr = stoyak_xy
     z1 = zf + Z_UZEL
     items = ["kran15", "filtr15", "sch15"] + (["reg15"] if k in ET_REG else [])
-    r0, (ra, _), p = vetka("V1", "stal", 15, [(xr, yr, z1)], napr, items, ur)
+    r0, (ra, _), p = vetka("V1", "stal", 15, [(xr, yr, z1)], napr, items, ur, first=0.15)
     rs_v.append((z1, (r0, 0)))
     seti[ra]["pts"] = seti[ra]["pts"][:1] + [R((xr, y_op, z1)), R((xr, y_op, zf + Z_RAZV))]
     starty = [nogi(xr, y_op, zf + Z_RAZV, f, ur) for f in nogi_]
@@ -462,12 +464,9 @@ def kv_A(M, zf, ur, k, st):
     pm, cm = pribor2("moyka", M, "-x", 0.20, 3.25, zf, ur)
     utoplen.add(tuple(round(v, 4) for v in cv["cold"]))
     xr, yr = M.x(ST_V["A"][0]), ST_V["A"][1]
-    y_op = 6.12
+    y_op = 5.90                               # опуск у перегородки уборной: узел учёта (0,44 м) помещается выше
     vniz = [(cv["cold"], pv, None), (cu["cold"], pu, None), (cm["cold"], pm, None)]
-    if ct["cold"][1] < y_op:
-        nog = [[(ct["cold"], pt_, None)] + vniz]
-    else:                                     # в зеркальной секции подвод к унитазу — по другую сторону опуска
-        nog = [vniz, [(ct["cold"], pt_, None)]]
+    nog = [vniz, [(ct["cold"], pt_, None)]]
     kv_v1(k, zf, ur, st["vA"], (xr, yr), (0, -1), y_op, nog)
     xk, yk = M.x(ST_K["A"][0]), ST_K["A"][1]
     zt, r_un = unitaz_k1(ct, pt_, xk, yk, ur)
@@ -487,7 +486,7 @@ def kv_BC(M, zf, ur, k, st, kv):
     pm, cm = pribor2("moyka", M, w, face_k, 9.60, zf, ur)
     utoplen.add(tuple(round(v, 4) for v in cv["cold"]))
     xr, yr = M.x(ST_V[kv][0]), ST_V[kv][1]
-    y_op = 7.50
+    y_op = 7.70                               # опуск у перегородки уборной, выше узла учёта
     kuhnya = [(cm["cold"], pm, None)]
     vverh = [(cv["cold"], pv, None), (cu["cold"], pu, None)] + kuhnya
     if ct["cold"][1] > y_op:
@@ -615,15 +614,13 @@ p_vs = (XP, YP - 0.361, Z_P + 0.168)
 p_nap = (XP, YP + 0.480, Z_P + 0.168)
 oborud = [dict(fam="COR-MVL_2_32_Revit2019(08.25)", tip=nas["tip"], x=XP, y=YP, th=0, ur=UR_P,
                vs=R(p_vs), nap=R(p_nap))]
-Y_GVS = 5.5
-r_n1 = truba("V1", "stal", 50, [p_nap, (X_TR, p_nap[1], p_nap[2]), (X_TR, p_nap[1], Z_MAG), (X_TR, Y_GVS, Z_MAG)],
-             UR_P)
-svyaz((r_n1, 0), dict(obor=0, kind="nap"))
+# напорная линия установки до тройника магистрали (проектируется только В1: ГВС вне объёма проекта)
 N_VSE = sum(podvod[nm][4] for nm in podvod)
-r_n2 = truba("V1", "stal", dn_mag(N_VSE), [(X_TR, Y_GVS, Z_MAG), (X_TR, Y_MAG, Z_MAG)], UR_P)
-r_gvs = truba("V1", "stal", 40, [(X_TR, Y_GVS, Z_MAG), (X_TR - 0.6, Y_GVS, Z_MAG)], UR_P)
-troynik((r_n1, 1), (r_n2, 0), (r_gvs, 0))
-troynik((r_zap, 0), (mag_vost[0], 0), (r_n2, 1))
+r_nap = truba("V1", "stal", 50, [p_nap, (X_TR, p_nap[1], p_nap[2]), (X_TR, p_nap[1], Z_MAG), (X_TR, Y_MAG, Z_MAG)],
+              UR_P)
+svyaz((r_nap, 0), dict(obor=0, kind="nap"))
+troynik((r_zap, 0), (mag_vost[0], 0), (r_nap, 1))
+L_NAP = round(sum(math.dist(a, b) for a, b in zip(seti[r_nap]["pts"][:-1], seti[r_nap]["pts"][1:])), 2)
 
 Z_VV = -2.5
 Y_ST_A = -E - 0.26                      # наружная грань стены по оси А
@@ -632,17 +629,18 @@ Z_VU = -2.0
 r_v1 = truba("V1", "stal", 50, [(X_TR, Y_IN0, Z_VV), (X_TR, 1.5, Z_VV), (X_TR, 1.5, Z_VU), (X_TR, 1.8, Z_VU)], UR_P)
 svyaz((r_vv, 1), (r_v1, 0))
 r_a, (r_b, _), p = vetka("V1", "stal", 50, [(X_TR, 1.8, Z_VU)], (0, 1), ["kran50"], UR_P, first=0.15)
-seti[r_b]["pts"] = seti[r_b]["pts"][:1] + [R((X_TR, 2.12, Z_VU))]
-r_sch = truba("V1", "stal", 40, [(X_TR, 2.12, Z_VU), (X_TR, 2.62, Z_VU)], UR_P)      # место счётчика DN40
+seti[r_b]["pts"] = seti[r_b]["pts"][:1] + [R((X_TR, 2.35, Z_VU))]
+DN_SCH = REZ["schetchik_dom"][0]        # общедомовой счётчик — по расчёту (холодный расход)
+r_sch = truba("V1", "stal", DN_SCH, [(X_TR, 2.35, Z_VU), (X_TR, 2.85, Z_VU)], UR_P)  # место счётчика
 svyaz((r_b, 1), (r_sch, 0))
-r_c, (r_d, _), p = vetka("V1", "stal", 50, [(X_TR, 2.62, Z_VU)], (0, 1), ["kran50"], UR_P, first=0.08)
+r_c, (r_d, _), p = vetka("V1", "stal", 50, [(X_TR, 2.85, Z_VU)], (0, 1), ["kran50"], UR_P, first=0.12)
 svyaz((r_sch, 1), (r_c, 0))
-seti[r_d]["pts"] = seti[r_d]["pts"][:1] + [R((X_TR, 3.0, Z_VU))]
-r_vs = truba("V1", "stal", 50, [(X_TR, 3.0, Z_VU), (X_TR, p_vs[1], Z_VU), (X_TR, p_vs[1], p_vs[2]), p_vs], UR_P)
+seti[r_d]["pts"] = seti[r_d]["pts"][:1] + [R((X_TR, 3.25, Z_VU))]
+r_vs = truba("V1", "stal", 50, [(X_TR, 3.25, Z_VU), (X_TR, p_vs[1], Z_VU), (X_TR, p_vs[1], p_vs[2]), p_vs], UR_P)
 svyaz((r_vs, 1), dict(obor=0, kind="vs"))
-r_o1, (r_o2, _), p = vetka("V1", "stal", 50, [(X_TR, 1.8, Z_VU), (X_TR - 0.4, 1.8, Z_VU)], (0, 1), ["kran50"],
+r_o1, (r_o2, _), p = vetka("V1", "stal", 50, [(X_TR, 1.8, Z_VU), (X_TR - 0.2, 1.8, Z_VU)], (0, 1), ["kran50"],
                            UR_P, first=0.4)
-seti[r_o2]["pts"] = seti[r_o2]["pts"][:1] + [R((X_TR - 0.4, 3.0, Z_VU)), R((X_TR, 3.0, Z_VU))]
+seti[r_o2]["pts"] = seti[r_o2]["pts"][:1] + [R((X_TR - 0.2, 3.25, Z_VU)), R((X_TR, 3.25, Z_VU))]
 troynik((r_v1, 1), (r_a, 0), (r_o1, 0))
 troynik((r_d, 1), (r_vs, 0), (r_o2, 1))
 
@@ -896,26 +894,33 @@ def proverka_fitingov(kol):
     """Отрезок не короче суммы вылетов фитингов на его концах; тройник: магистраль на одной прямой."""
     def zap(vid, opis):
         kol.setdefault(vid, []).append(opis)
-    fit_konec = {}                       # (run, end) -> есть фитинг
+    fit_konec = {}                       # (run, end) -> требуемый вылет фитинга на этом конце
     for t in troyniki:
-        for k in ("m1", "m2", "b"):
-            fit_konec[tuple(t[k])] = True
+        dm = seti[t["m1"][0]]
+        v_m = VYLET[(dm["pt"], dm["d"])]
+        for k in ("m1", "m2"):
+            fit_konec[tuple(t[k])] = v_m
+        rb = seti[t["b"][0]]
+        fit_konec[tuple(t["b"])] = v_m + (0.06 if rb["d"] < dm["d"] else 0.0)
     for t in kresty:
         for k in ("m1", "m2", "b1", "b2"):
-            fit_konec[tuple(t[k])] = True
+            fit_konec[tuple(t[k])] = 0.12
     for sv in svyazi:
+        if isinstance(sv["b"], dict) and sv["b"].get("kind") == "cold" and pribory[sv["b"]["fix"]]["key"] == "vanna":
+            fit_konec[tuple(sv["a"])] = 0.06          # переход 15х20 на патрубок смесителя ванны
         if isinstance(sv["b"], list):
-            fit_konec[tuple(sv["a"])] = True
-            fit_konec[tuple(sv["b"])] = True
+            ra_, rb_ = seti[sv["a"][0]], seti[sv["b"][0]]
+            dop = 0.06 if (ra_["d"], ra_["pt"]) != (rb_["d"], rb_["pt"]) else 0.0
+            fit_konec[tuple(sv["a"])] = VYLET[(ra_["pt"], ra_["d"])] + dop
+            fit_konec[tuple(sv["b"])] = VYLET[(rb_["pt"], rb_["d"])] + dop
     for r in seti:
         pts = r["pts"]
         v = VYLET[(r["pt"], r["d"])]
         n = len(pts) - 1
         for i in range(n):
             L_ = math.dist(pts[i], pts[i + 1])
-            nado = 0.0
-            nado += v if (i > 0 or fit_konec.get((r["id"], 0))) else 0.0
-            nado += v if (i < n - 1 or fit_konec.get((r["id"], 1))) else 0.0
+            nado = (v if i > 0 else fit_konec.get((r["id"], 0), 0.0)) + \
+                (v if i < n - 1 else fit_konec.get((r["id"], 1), 0.0))
             if L_ < nado + 0.01:
                 zap("отрезок короче фитингов", (r["id"], r["sys"], r["d"], round(L_, 3), round(nado, 3), pts[i]))
 
@@ -954,7 +959,7 @@ print("магистраль (от, до, L, N, DN):", uchastki_mag)
 print("приборов", len(pribory), "труб", len(seti), "тройников", len(troyniki), "арматуры", len(armatura),
       "муфт", len(mufty), "стен", len(steny), "дверей", len(dveri), "окон", len(okna))
 trassa_v3 = dict(stoyaki_v1={nm: [round(v[0], 3), v[1]] for nm, v in podvod.items()}, magistral=uchastki_mag,
-                 x_troynik=X_TR, y_mag=Y_MAG, z_mag=Z_MAG, vypuski=vypuski,
+                 x_troynik=X_TR, y_mag=Y_MAG, z_mag=Z_MAG, vypuski=vypuski, l_nap=L_NAP, n_vse=N_VSE,
                  stoyaki_k1={s["imya"]: [s["x"], s["y"]] for s in stoyaki if s["sys"] == "K1"})
 json.dump(trassa_v3, open(os.path.join(HERE, "..", "calc", "trassa_v3.json"), "w", encoding="utf-8"),
           ensure_ascii=False, indent=1)
