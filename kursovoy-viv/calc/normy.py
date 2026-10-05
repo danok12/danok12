@@ -96,10 +96,32 @@ def alpha_b2(np_, mode="interp"):
     return B2[x0] + (B2[x1] - B2[x0]) * (np_ - x0) / (x1 - x0)
 
 
+def alpha_b1(n, p):
+    """α по табл. Б.1 (P > 0,1 и N <= 200): линейная интерполяция по P, затем по N."""
+    def po_p(row):
+        vals = B1[row]
+        if p <= B1_P[0]:
+            return vals[0]
+        if p >= B1_P[-1]:
+            return vals[-1]
+        j = max(k for k in range(len(B1_P)) if B1_P[k] <= p)
+        return vals[j] + (vals[j + 1] - vals[j]) * (p - B1_P[j]) / (B1_P[j + 1] - B1_P[j])
+    rows = sorted(B1)
+    if n <= rows[0]:
+        return po_p(rows[0])
+    if n >= rows[-1]:
+        return po_p(rows[-1])
+    j = max(k for k in range(len(rows)) if rows[k] <= n)
+    a0, a1 = po_p(rows[j]), po_p(rows[j + 1])
+    return a0 + (a1 - a0) * (n - rows[j]) / (rows[j + 1] - rows[j])
+
+
 def alpha(n, p, mode="interp"):
-    """α = f(NP): табл. Б.1 при P > 0,1 и N <= 200, иначе Б.2 (п. 5.3 СП)."""
+    """α = f(NP) по п. 5.3 СП 30: табл. Б.1 при P > 0,1 и N <= 200, иначе табл. Б.2.
+    mode='interp' — линейная интерполяция между строками таблицы (как в расчётной таблице Excel на занятиях);
+    mode='floor' — ближайшее меньшее табличное значение (так сделано в примерах методички МГСУ 2024)."""
     if p > 0.1 and n <= 200:
-        raise NotImplementedError("Случай табл. Б.1 — добавить двойную интерполяцию по N и P")
+        return alpha_b1(n, p)
     return alpha_b2(n * p, mode)
 
 

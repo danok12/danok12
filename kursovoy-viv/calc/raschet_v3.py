@@ -7,7 +7,7 @@ import json
 import math
 import os
 
-from normy import A1, A2_ZHILYE, K_STOYAKI, T51, T51_L, T121, alpha_b2
+from normy import A1, A2_ZHILYE, K_STOYAKI, T51, T51_L, T121, alpha
 from pavlovsky import flow
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -25,7 +25,7 @@ D_GOR_V, D_GOR_K = 250, 400
 N_KV = 3                      # квартир на этаже в секции (по плану: 3 санузла)
 PRIBORY = ["мойка со смесителем", "умывальник со смесителем", "ванна со смесителем", "унитаз со смывным бачком"]
 NORMA = A2_ZHILYE["ванны от 1500 мм с душами"]   # ЦГВ, ванны 1500-1700 мм
-ALPHA_MODE = "floor"          # как в примерах методички
+ALPHA_MODE = "interp"         # линейная интерполяция по табл. Б.1/Б.2 (п. 5.3 СП 30; так на занятиях кафедры)
 K_MS = 0.3                    # хоз-питьевой водопровод жилого здания
 H_SV = 20.0                   # п. 8.21
 Z0_ABS = 101.00               # абс. отметка 0,000 (как в образце)
@@ -70,13 +70,11 @@ def shevelev_steel(q_ls, dn):
     return v, i
 
 
-def colebrook_pe(q_ls, dn):
+def tr_pe(q_ls, dn):
     d = PE[dn] / 1000
     v = q_ls / 1000 / (math.pi * d * d / 4)
-    re = v * d / 1.31e-6
-    lam = 0.02
-    for _ in range(50):
-        lam = (-2 * math.log10(0.01e-3 / (3.7 * d) + 2.51 / (re * math.sqrt(lam)))) ** -2
+    re = v * d / 1.31e-6                                   # ν = 1,31·10⁻⁶ м²/с при 10 °C
+    lam = 0.25 / math.log10(0.01e-3 / (3.7 * d) + 5.74 / re ** 0.9) ** 2   # Свами–Джейн, Δ = 0,01 мм
     return v, lam / d * v * v / (2 * 9.81)
 
 
@@ -104,7 +102,7 @@ P_hr_c = P_c * 3600 * NORMA["q0_c"] / NORMA["q0hr_c"]
 
 
 def q_sec(n, p, q0):
-    a = alpha_b2(n * p, ALPHA_MODE)
+    a = alpha(n, p, ALPHA_MODE)
     return a, 5 * a * q0
 
 
@@ -114,9 +112,9 @@ rasx["Q_sut_c"] = q_u_c * U / 1000
 rasx["q_T_tot"] = rasx["Q_sut_tot"] / NORMA["T"]
 rasx["a_tot"], rasx["q_tot"] = q_sec(N, P_tot, NORMA["q0_tot"])
 rasx["a_c"], rasx["q_c"] = q_sec(N, P_c, NORMA["q0_c"])
-rasx["a_hr_tot"] = alpha_b2(N * P_hr_tot, ALPHA_MODE)
+rasx["a_hr_tot"] = alpha(N, P_hr_tot, ALPHA_MODE)
 rasx["q_hr_tot"] = 0.005 * rasx["a_hr_tot"] * NORMA["q0hr_tot"]
-rasx["a_hr_c"] = alpha_b2(N * P_hr_c, ALPHA_MODE)
+rasx["a_hr_c"] = alpha(N, P_hr_c, ALPHA_MODE)
 rasx["q_hr_c"] = 0.005 * rasx["a_hr_c"] * NORMA["q0hr_c"]
 
 # ---------------- 2. ГИДРАВЛИЧЕСКИЙ РАСЧЁТ В1 ----------------
@@ -161,7 +159,7 @@ sum_h_v1 = varianty[DIKT]["sum_h"]
 Z_DIKT = varianty[DIKT]["z_pr"]
 
 # Ввод (общий расход: ГВС готовится в ИТП здания из этой же воды)
-dn_vv, v_vv, i_vv = podbor(rasx["q_tot"], colebrook_pe, PE)
+dn_vv, v_vv, i_vv = podbor(rasx["q_tot"], tr_pe, PE)
 h_vvod = i_vv * L_VVOD * (1 + K_MS)
 
 # ---------------- 3. СЧЁТЧИКИ ----------------
@@ -253,7 +251,7 @@ def podbor_k1(q, d, K, d_nar):
 
 
 def k1_uch(imya, n_, l_, d, K, d_nar):
-    a = alpha_b2(n_ * P_hr_tot, ALPHA_MODE)
+    a = alpha(n_, P_hr_tot, ALPHA_MODE)
     qhr = 0.005 * a * NORMA["q0hr_tot"]
     ks = ks_tab(n_, l_)
     qs = qhr / 3.6 + ks * Q0S2
@@ -314,9 +312,9 @@ w(f"- Квартир на этаже в секции: **{N_KV}** (по план�
 w(f"- Приборы в квартире: {', '.join(PRIBORY)} — {N_PR} шт.")
 w("- Здание с ЦГВ от ИТП в подвале (как в образце): ввод, счётчик и насос — на общий расход q_tot, сеть В1 — на холодный q_c.")
 w("- Норма: табл. А.2, жилые дома с ваннами от 1500 мм с душами.")
-w(f"- α по табл. Б.2 — режим «{ALPHA_MODE}» (ближайшее меньшее табличное NP, как в примерах методички).")
+w("- α по табл. Б.2 (при P > 0,1 и N ≤ 200 — по Б.1) с линейной интерполяцией между строками, п. 5.3 СП 30.")
 w("- Трубы В1: сталь ВГП оцинкованная ГОСТ 3262-75; потери по формулам Шевелёва, расчётный диаметр d_вн − 1 мм (сверено с табл. 1 Шевелёва: 1000i совпадает до 0,3 %, `proverka_shevelev.py`).")
-w("- Ввод: ПЭ100 SDR17, потери по Колбруку–Уайту (Δ = 0,01 мм) — **сверить по программе Шевелёва**.")
+w("- Ввод: ПЭ100 SDR17, потери по Дарси–Вейсбаху, λ по формуле Свами–Джейна (явная форма Колбрука–Уайта), Δ = 0,01 мм.")
 w("- К1: стояки ПВХ Ø110, поэтажные отводы 45°; выпуски — чугун SML DN100; дворовая сеть — ПЭ гофрированная Ø160 (у Лукиных d = 150), n = 0,014.")
 w(f"- Генплан (произвольно, как в образце): городские В1 Ø{D_GOR_V} и К1 Ø{D_GOR_K} у торца здания со стороны оси 1, "
   f"красная линия в {-X_KRASN:.0f} м от торца; 0,000 = {F(Z0_ABS, 2)}; земля 100,70 → 100,30 к городской сети.\n")
