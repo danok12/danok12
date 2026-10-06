@@ -196,11 +196,12 @@ def perekrytiya(g, lv, log):
         pometit(f)
         n += 1
     log(u'перекрытий', n)
-    k = g['krovlya']
     ft = kvv.po_imeni(doc, DB.FloorType, tipy['perekr'])
-    f = DB.Floor.Create(doc, List[DB.CurveLoop]([kontur(k['kontur'])]), ft.Id, lv[k['uroven']].Id)
-    pometit(f)
-    log(u'плита покрытия на уровне', k['uroven'])
+    kr = g['krovlya'] if isinstance(g['krovlya'], list) else [g['krovlya']]     # по секциям (деформационный шов)
+    for k in kr:
+        f = DB.Floor.Create(doc, List[DB.CurveLoop]([kontur(k['kontur'])]), ft.Id, lv[k['uroven']].Id)
+        pometit(f)
+    log(u'плит покрытия на уровне', kr[0]['uroven'], len(kr))
 
 
 class Glush(DB.IFailuresPreprocessor):

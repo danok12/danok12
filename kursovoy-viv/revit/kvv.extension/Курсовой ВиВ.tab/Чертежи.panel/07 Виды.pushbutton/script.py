@@ -12,6 +12,7 @@ reload(kvv)
 doc = HOST_APP.doc
 M = kvv.M
 
+MASSHTAB = 200      # листы А3, каждый вид на своём листе: здание целиком (46 м) помещается только в 1:200
 PLANY = [  # имя вида, уровень, шаблон, тип вида
     (u'В1_План типового этажа', u'Этаж 02', u'О_ПЭ_Водопровод', u'О_ПЭ_Водопровод'),
     (u'В1_План подвала', u'Подвал', u'О_ПЭ_Водопровод', u'О_ПЭ_Водопровод'),
@@ -105,6 +106,97 @@ def gruppirovka_kak_u(v, obrazec, log):
             log(u'   ', nm, u'=', p.AsString())
 
 
+def marki_osey(v, log):
+    """Марки осей не налезают: у близких пар (< 1,2 м) марка второй оси — сверху; у остальных — снизу (буквенные
+    оси — слева)."""
+    osi = [gr for gr in DB.FilteredElementCollector(doc).OfClass(DB.Grid)]
+    ver = sorted([gr for gr in osi if abs(gr.Curve.Direction.Y) > 0.9], key=lambda gr: gr.Curve.GetEndPoint(0).X)
+    verh = set()
+    for a, b in zip(ver[:-1], ver[1:]):
+        if b.Curve.GetEndPoint(0).X - a.Curve.GetEndPoint(0).X < 1.3 * M and a.Id not in verh:
+            verh.add(b.Id)
+    for gr in osi:
+        niz = gr.Curve.GetEndPoint(0).Y < gr.Curve.GetEndPoint(1).Y          # End0 — нижний (левый) конец
+        # по проверке на листе: DatumEnds.End1 — нижний конец цифровых осей и левый — буквенных
+        k0, k1 = (DB.DatumEnds.End1, DB.DatumEnds.End0) if niz or abs(gr.Curve.Direction.Y) < 0.9 else             (DB.DatumEnds.End0, DB.DatumEnds.End1)
+        if gr.Id in verh:
+            k0, k1 = k1, k0
+        try:
+            gr.ShowBubbleInView(k0, v)
+            gr.HideBubbleInView(k1, v)
+        except Exception as ex:
+            log(u'  марка оси', gr.Name, ex)
+
+
+def marka_osi_8mm(log):
+    """Марки осей — кружок Ø8 мм (Ø10 на А3 в 1:200 налезают)."""
+    sym = None
+    for s_ in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol).OfCategory(DB.BuiltInCategory.OST_GridHeads):
+        if u'Ø8' in DB.Element.Name.GetValue(s_):
+            sym = s_
+    if sym is None:
+        log(u'нет марки оси Ø8')
+        return
+    tipy = set(gr.GetTypeId() for gr in DB.FilteredElementCollector(doc).OfClass(DB.Grid))
+    for tid in tipy:
+        t = doc.GetElement(tid)
+        p = t.get_Parameter(DB.BuiltInParameter.GRID_HEAD_TAG)
+        if p and not p.IsReadOnly:
+            p.Set(sym.Id)
+    log(u'марка осей:', sym.FamilyName, DB.Element.Name.GetValue(sym))
+
+
+def obrezka_3d(v, pref, log, zx=5.0, zy=2.5):
+    """Схема: подрезка по габариту своей системы (+ приборы, + насосная установка у В1) с запасом под отметки и
+    выноски; аннотации за подрезкой не раздувают вид на листе."""
+    tr = v.CropBox.Transform
+    inv = tr.Inverse
+    mn, mx = [1e18] * 3, [-1e18] * 3
+    n = 0
+    for e in DB.FilteredElementCollector(doc).WhereElementIsNotElementType():
+        try:
+            p = e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+        except Exception:
+            continue
+        s_ = (p.AsString() or u'') if p is not None and p.HasValue else u''
+        if not (s_.startswith(pref) or s_.startswith(u'КВВ-П') or (pref == u'КВВ-В1' and s_.startswith(u'КВВ-О'))):
+            continue
+        bb = e.get_BoundingBox(None)
+        if bb is None:
+            continue
+        n += 1
+        for x in (bb.Min.X, bb.Max.X):
+            for y in (bb.Min.Y, bb.Max.Y):
+                for z in (bb.Min.Z, bb.Max.Z):
+                    q = inv.OfPoint(DB.XYZ(x, y, z))
+                    for i, c in enumerate((q.X, q.Y, q.Z)):
+                        mn[i] = min(mn[i], c)
+                        mx[i] = max(mx[i], c)
+    if n == 0:
+        log(u'   подрезка схемы: нет элементов', pref)
+        return
+    # запас: по горизонтали — под полки отметок у крайних стояков, по вертикали — под верхние отметки
+    nb = DB.BoundingBoxXYZ()
+    nb.Transform = tr
+    nb.Min = DB.XYZ(mn[0] - zx * M, mn[1] - zy * M, mn[2] - 1 * M)
+    nb.Max = DB.XYZ(mx[0] + zx * M, mx[1] + zy * M, mx[2] + 1 * M)
+    v.CropBox = nb
+    v.CropBoxActive = True
+    v.CropBoxVisible = False
+    p = v.get_Parameter(DB.BuiltInParameter.VIEWER_ANNOTATION_CROP_ACTIVE)
+    if p is not None and not p.IsReadOnly:
+        p.Set(1)
+    try:
+        crsm = v.GetCropRegionShapeManager()
+        for a in ('LeftAnnotationCropOffset', 'RightAnnotationCropOffset', 'TopAnnotationCropOffset',
+                  'BottomAnnotationCropOffset'):
+            setattr(crsm, a, 3 * kvv.MM)
+    except Exception as ex:
+        log(u'   отступы подрезки аннотаций не заданы:', ex)
+    log(u'   подрезка схемы: элементов', n, u'| %.1f x %.1f м' % ((mx[0] - mn[0]) / M + 2 * zx,
+                                                             (mx[1] - mn[1]) / M + 2 * zy))
+
+
 def obrezka(v, x0, y0, x1, y1):
     bb = DB.BoundingBoxXYZ()
     bb.Min = DB.XYZ(x0 * M, y0 * M, -100)
@@ -120,6 +212,7 @@ def main(log):
     xs = [x for w in g['steny'] for x in (w['p1'][0], w['p2'][0])]
     X0, X1 = min(xs), max(xs)
     with kvv.Tranzakciya(doc, u'КВВ: виды', log):
+        marka_osi_8mm(log)
         # существующие виды переиспользуются (открытый вид удалить нельзя)
         for nm, ur, shab, tip in PLANY:
             vft = tip_vida(tip, DB.ViewFamily.FloorPlan) or tip_vida(None, DB.ViewFamily.FloorPlan)
@@ -134,10 +227,13 @@ def main(log):
                 log(u'НЕТ шаблона', shab)
             # масштаб и обрезка: шаблон может задавать масштаб — снимаем это свойство с шаблона на виде
             try:
-                v.Scale = 100
+                v.Scale = MASSHTAB
             except Exception as ex:
                 log(u'масштаб задаёт шаблон:', ex)
-            obrezka(v, X0 - 4.0, -4.5, X1 + 4.0, 12.8 + 5.0)
+            # подвал — ниже концов осей место под выноски «Водомерный узел», «Насосная установка» и марку ввода
+            obrezka(v, X0 - 4.0, -6.0 if ur == u'Подвал' else -4.5, X1 + 4.0, 12.8 + 5.0)
+            doc.Regenerate()
+            marki_osey(v, log)
             log(u'план', nm, u'| шаблон', shab if t else u'-', u'| тип', DB.Element.Name.GetValue(vft))
         vft3 = tip_vida(None, DB.ViewFamily.ThreeDimensional)
         for nm, shab, sist in SHEMY:
@@ -158,10 +254,18 @@ def main(log):
             up = right.CrossProduct(fwd).Normalize()
             v.SetOrientation(DB.ViewOrientation3D(eye, up, fwd))
             try:
-                v.Scale = 100
+                v.Scale = MASSHTAB
             except Exception:
                 pass
+            doc.Regenerate()
+            obrezka_3d(v, u'КВВ-В1' if nm.startswith(u'В1') else u'КВВ-К1', log)
             v.SaveOrientationAndLock()
+            doc.Regenerate()
+            cb = v.CropBox
+            pa = v.get_Parameter(DB.BuiltInParameter.VIEWER_ANNOTATION_CROP_ACTIVE)
+            log(u'   после блокировки: подрезка', v.CropBoxActive, u'| %.1f x %.1f м' % (
+                (cb.Max.X - cb.Min.X) / M, (cb.Max.Y - cb.Min.Y) / M), u'| подрезка аннотаций',
+                pa.AsInteger() if pa else u'-')
             log(u'схема', nm, u'| трубы, фитинги, арматура своей системы и сантехприборы (полутон)')
 
 

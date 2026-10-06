@@ -14,6 +14,9 @@ def main(log):
     with kvv.Tranzakciya(doc, u'КВВ: система В1', log):
         kvv_seti.udalit(doc, u'КВВ-В1', log)
         kvv_seti.Stroitel(doc, g, log).sistema_celikom(u'V1')
+        tr = kvv.load_json('calc', 'trassa_v3.json')
+        if 'x_shov' in tr:
+            kvv_seti.gibkaya_vstavka(doc, log, tr['x_shov'], u'КВВ-В1')
 
 
 kvv.run('05_v1', main)

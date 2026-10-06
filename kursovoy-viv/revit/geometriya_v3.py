@@ -21,11 +21,16 @@ sys.path.insert(0, os.path.join(HERE, "..", "calc"))
 from normy import alpha_b2          # noqa: E402
 
 L_SEK = 22.5
+# деформационный шов между секциями: у каждой секции своя торцевая стена 420 мм по своей оси (11 и 12),
+# зазор 30 мм; секция 2 — зеркало секции 1 относительно середины шва
+T_TORC, SHOV = 0.42, 0.03
+DSH = T_TORC + SHOV                 # расстояние между осями 11 и 12
+ZERK = 2 * L_SEK + DSH              # x' = ZERK - x для секции 2
 N_SEK, N_ET, H_ET = IZ["N_SEK"], IZ["N_ET"], IZ["H_ET"]
 OSI_X = [0.0, 3.5, 6.5, 9.2, 10.0, 12.5, 13.7, 15.7, 16.5, 19.0, 22.5]      # оси 1-11 секции 1
 OSI_Y = [("А", 0.0), ("Б", 1.3), ("В", 6.8), ("Г", 11.3), ("Д", 12.8)]
 B = 12.8
-L = L_SEK * N_SEK
+L = ZERK                      # между крайними осями (1 и 22)
 E = 0.06                      # ось наружной стены 520 мм смещена наружу от координационной оси
 Y_IN0, Y_IN1 = 0.2, B - 0.2   # внутренние грани наружных стен по осям А и Д
 Z_P = -IZ["H_PODVAL"]
@@ -33,14 +38,14 @@ Z_KR = N_ET * H_ET            # верх перекрытия последнег
 
 
 class Sek(object):
-    """Перевод локальных координат секции в координаты здания (секция 2 — зеркало относительно оси 11)."""
+    """Перевод локальных координат секции в координаты здания (секция 2 — зеркало относительно середины шва)."""
 
     def __init__(self, s):
         self.s = s
         self.mir = s == 1
 
     def x(self, v):
-        return 2 * L_SEK - v if self.mir else v
+        return ZERK - v if self.mir else v
 
     def sx(self):
         return -1 if self.mir else 1
@@ -61,7 +66,7 @@ urovni.append(dict(imya="Кровля", z=round(Z_KR, 3)))
 ETAZHI = [u["imya"] for u in urovni if u["imya"].startswith("Этаж")]
 
 # ---------------- оси ----------------
-osi_x = sorted(set([round(x, 3) for x in OSI_X] + [round(2 * L_SEK - x, 3) for x in OSI_X]))
+osi_x = sorted(set([round(x, 3) for x in OSI_X] + [round(ZERK - x, 3) for x in OSI_X]))     # 1-11 и 12-22
 osi = [dict(imya=str(i + 1), p1=[x, -2.5], p2=[x, B + 2.5]) for i, x in enumerate(osi_x)]
 osi += [dict(imya=nm, p1=[-2.5, y], p2=[L + 2.5, y]) for nm, y in OSI_Y]
 
@@ -85,7 +90,7 @@ STENY_SEK = [
     ((15.7, VV), (15.7, Y_IN1), "nes", "vse"),
     ((16.5, Y_IN0), (16.5, 5.53), "nes", "vse"),
     ((19.0, Y_IN0), (19.0, Y_IN1), "nes", "vse"),
-    ((0.2, YV), (17.65, YV), "nes", "vse"), ((19.21, YV), (22.29, YV), "nes", "vse"),
+    ((0.2, YV), (17.83, YV), "nes", "vse"), ((19.21, YV), (22.29, YV), "nes", "vse"),
     # коридоры (перегородки 100 мм)
     ((3.71, 5.575), (8.99, 5.575), "per", "etazhi"),
     ((13.91, 5.575), (18.79, 5.575), "per", "etazhi"),
@@ -109,10 +114,29 @@ STENY_SEK = [
     # санузел кв. В (оси 8-9 / В-Г) — зеркально санузлу Б относительно оси 8
     ((17.78, VV), (17.78, 9.54), "per", "etazhi"), ((15.91, 9.49), (17.73, 9.49), "per", "etazhi"),
     ((16.21, 7.855), (17.73, 7.855), "per", "etazhi"), ((16.185, VV), (16.185, 9.44), "korob", "etazhi"),
-    # подвал: насосная и водомерный узел в осях 2-4 / Б-В
-    ((3.71, 1.3), (8.99, 1.3), "per", "podval"),
+    # подвал (техподполье): насосная с водомерным узлом — отсек в осях 2-3 / А-В, перегородка с дверью в коридор
+    ((3.71, 5.575), (6.29, 5.575), "per", "podval"),
 ]
-STENA_OS11 = ((22.5, Y_IN0), (22.5, Y_IN1), "nes", "vse")        # стык секций — одна стена на обе секции
+STENA_OS11 = ((22.5, Y_IN0), (22.5, Y_IN1), "nes", "vse")        # торцевая стена секции у деформационного шва
+
+# помещения (точка внутри, наименование, группа: 0 — общие, 1/2/3 — кв. А/Б/В); нумерация «этаж.группа.номер»
+POMESCH_ETAZH = [
+    (11.9, 3.0, "Лестнично-лифтовой холл", 0),
+    (5.0, 6.1, "Прихожая", 1), (1.5, 2.8, "Кухня", 1), (1.7, 9.0, "Жилая комната", 1),
+    (5.0, 3.0, "Жилая комната", 1), (7.8, 3.0, "Жилая комната", 1), (1.2, 5.0, "Ванная", 1), (1.2, 6.2, "Уборная", 1),
+    (1.7, 12.1, "Лоджия", 1), (1.7, 0.6, "Лоджия", 1),
+    (9.5, 7.5, "Прихожая", 2), (14.0, 11.0, "Кухня", 2), (5.0, 9.8, "Жилая комната", 2),
+    (8.2, 10.3, "Жилая комната", 2), (11.2, 10.3, "Жилая комната", 2), (14.4, 8.6, "Ванная", 2), (14.4, 7.4, "Уборная", 2),
+    (16.0, 6.1, "Прихожая", 3), (17.3, 11.0, "Кухня", 3), (15.1, 3.0, "Жилая комната", 3),
+    (17.7, 3.0, "Жилая комната", 3), (20.7, 4.0, "Жилая комната", 3), (20.7, 9.0, "Жилая комната", 3),
+    (16.9, 8.6, "Ванная", 3), (16.9, 7.4, "Уборная", 3), (20.7, 12.1, "Лоджия", 3), (20.7, 0.6, "Лоджия", 3),
+]
+POMESCH_PODVAL = [
+    (5.0, 3.0, "Насосная"), (12.0, 3.0, "Техподполье"), (1.6, 3.0, "Техподполье"), (1.6, 11.0, "Техподполье"),
+    (5.0, 11.0, "Техподполье"), (8.2, 11.0, "Техподполье"), (20.7, 3.0, "Техподполье"), (20.7, 11.0, "Техподполье"),
+]
+# границы помещений в открытых проёмах (кухня — прихожая), типовой этаж
+RAZDEL_ETAZH = [((2.51, 4.165), (3.29, 4.165)), ((12.71, 9.54), (13.57, 9.54)), ((17.83, 9.54), (18.79, 9.54))]
 
 D760 = ["AC_Дверь_Однопольная_Деревянная", "760х2080h М Л"]
 D860 = ["AC_Дверь_Однопольная_Деревянная", "860х2080h М Л"]
@@ -130,7 +154,8 @@ DVERI_SEK = [
     (11.155, 8.055, D760, "etazhi", (0, 1)),
     (15.84, 5.575, D760, "etazhi", (0, -1)), (17.055, 5.575, D760, "etazhi", (0, -1)),
     (19.0, 6.115, D760, "etazhi", (1, 0)), (19.0, 7.605, D760, "etazhi", (1, 0)),
-    (2.695, YV, D760, "etazhi", (0, 1)), (8.85, YV, D860, "etazhi", (0, 1)),          # в комнату и вход в кв. Б
+    # в комнату кв. А (с отступом 0,1 м от стены уборной — не в одном углу с её дверью) и вход в кв. Б
+    (2.82, YV, D760, "etazhi", (0, 1)), (8.85, YV, D860, "etazhi", (0, 1)),
     (8.39, 6.11, D860, "etazhi", (-1, 0)), (14.62, 6.11, D860, "etazhi", (1, 0)),     # входы в кв. А и В
     (2.27, 4.60, D760, "etazhi", (1, 0)), (2.27, 6.20, D760, "etazhi", (1, 0)),       # ванная и уборная кв. А
     (13.62, 7.40, D760, "etazhi", (-1, 0)), (13.62, 9.05, D760, "etazhi", (-1, 0)),
@@ -138,6 +163,11 @@ DVERI_SEK = [
     (12.34, -E, D_VH, "Этаж 01", (0, -1)), (9.92, -E, D860, "Этаж 01", (0, -1)),      # вход в подъезд, выход у лифта
     (1.20, 11.35, BDV, "etazhi", (0, -1)), (21.29, 11.35, BDV, "etazhi", (0, -1)),    # балконные двери на лоджии
     (1.20, 1.26, BDV, "etazhi", (0, 1)), (21.29, 1.26, BDV, "etazhi", (0, 1)),        # по осям Г и Б
+    # подвал (техподполье): вход с улицы через приямок по фасаду А, насосная, двери во все отсеки
+    (15.1, -E, D860, "Подвал", (0, -1)), (5.0, 5.575, D860, "Подвал", (0, 1)),
+    (3.5, 6.1, D860, "Подвал", (-1, 0)), (1.6, YV, D860, "Подвал", (0, 1)),
+    (5.0, YV, D860, "Подвал", (0, 1)), (8.0, YV, D860, "Подвал", (0, 1)),
+    (19.0, 6.1, D860, "Подвал", (1, 0)), (19.0, 7.6, D860, "Подвал", (1, 0)),
 ]
 # окна: (x, y, тип, где, подоконник)
 OKNA_SEK = []
@@ -155,7 +185,10 @@ LESTNICA_SEK = dict(m1=((11.435, 5.62), (11.435, 3.30), 1.11), m2=((12.79, 3.30)
 OTVERSTIYA_SEK = [[(9.41, 3.32), (9.41, 5.525), (13.49, 5.525), (13.49, 1.52), (10.78, 1.52), (10.78, 3.32)]]
 
 # ---------------- архитектура здания ----------------
-kontur = [(-E, -E), (-E, B + E), (L + E, B + E), (L + E, -E)]    # по часовой: наружу — внешняя сторона стен
+X_SHOV = L_SEK + T_TORC / 2         # наружная грань торцевой стены секции 1 у шва
+# контур секции 1 по часовой (наружу — внешняя сторона стен); сторону у шва закрывает торцевая стена по оси 11
+KONTUR_SEK = [(-E, -E), (-E, B + E), (X_SHOV, B + E), (X_SHOV, -E)]
+NAR_SEK = [((-E, -E), (-E, B + E)), ((-E, B + E), (X_SHOV, B + E)), ((X_SHOV, -E), (-E, -E))]
 steny, dveri, okna, lestnicy, otverstiya = [], [], [], [], []
 
 
@@ -163,11 +196,50 @@ def stena(p1, p2, tip, gde):
     steny.append(dict(p1=[round(p1[0], 3), round(p1[1], 3)], p2=[round(p2[0], 3), round(p2[1], 3)], tip=tip, gde=gde))
 
 
-for i in range(4):
-    stena(kontur[i], kontur[(i + 1) % 4], "nar", "etazhi")
-    stena(kontur[i], kontur[(i + 1) % 4], "fund", "podval")
+FUND_IN0, FUND_IN1 = -E + 0.158, B + E - 0.158    # внутренние грани фундаментных стен подвала
+
+
+def v_podvale(p1, p2):
+    """Стена в подвале доходит до фундаментной: торцы на внутренних гранях наружных стен этажа (0,2 / 12,6)
+    переносятся на грани фундаментных стен (иначе между стенами подвала и фундаментом остаётся щель)."""
+    def ok(p):
+        x, y = p
+        y = FUND_IN0 if abs(y - Y_IN0) < 1e-6 else (FUND_IN1 if abs(y - Y_IN1) < 1e-6 else y)
+        x = FUND_IN0 if abs(x - Y_IN0) < 1e-6 else x
+        return (x, y)
+    return ok(p1), ok(p2)
+
+
+def steny_sek():
+    out = [(a, b, "nar", "etazhi") for a, b in NAR_SEK] + [(a, b, "fund", "podval") for a, b in NAR_SEK]
+    for p1, p2, tip, gde in STENY_SEK + [STENA_OS11]:
+        if gde == "vse":
+            out.append((p1, p2, tip, "etazhi"))
+            q1, q2 = v_podvale(p1, p2)
+            out.append((q1, q2, tip, "podval"))
+        elif gde == "podval":
+            q1, q2 = v_podvale(p1, p2)
+            out.append((q1, q2, tip, gde))
+        else:
+            out.append((p1, p2, tip, gde))
+    return out
+
+
+otv_sek = {}
+pomescheniya, razdeliteli = [], []
 for M in SEKCII:
-    for p1, p2, tip, gde in STENY_SEK + ([STENA_OS11] if M.s == 0 else []):
+    sch = {}
+    for x, y, imya, gr in POMESCH_ETAZH:
+        grp = 1 + gr + 4 * M.s
+        sch[grp] = sch.get(grp, 0) + 1
+        pomescheniya.append(dict(uroven="Этаж 02", x=round(M.x(x), 3), y=y, imya=imya,
+                                 nomer="02.%02d.%02d" % (grp, sch[grp])))
+    for k, (x, y, imya) in enumerate(POMESCH_PODVAL, 1):
+        pomescheniya.append(dict(uroven="Подвал", x=round(M.x(x), 3), y=y, imya=imya,
+                                 nomer="00.%02d.%02d" % (1 + M.s, k)))
+    for p1, p2 in RAZDEL_ETAZH:
+        razdeliteli.append(dict(uroven="Этаж 02", p1=list(M.p(*p1)), p2=list(M.p(*p2))))
+    for p1, p2, tip, gde in steny_sek():
         if M.mir:          # отражение меняет обход: концы местами, чтобы наружная сторона стен осталась снаружи
             p1, p2 = p2, p1
         stena(M.p(*p1), M.p(*p2), tip, gde)
@@ -179,12 +251,19 @@ for M in SEKCII:
     for k, ((a, b), (c, d), w) in LESTNICA_SEK.items():
         m[k] = dict(p1=list(M.p(a, b)), p2=list(M.p(c, d)), shir=w)
     lestnicy.append(m)
-    for poly in OTVERSTIYA_SEK:
-        otverstiya.append([[round(M.x(x), 3), y] for x, y in poly])
+    otv_sek[M.s] = [[[round(M.x(x), 3), y] for x, y in poly] for poly in OTVERSTIYA_SEK]
+    otverstiya += otv_sek[M.s]
 
-perekr = [dict(uroven=u, kontur=kontur, tip="perekr", otverstiya=otverstiya) for u in ETAZHI]
-perekr.append(dict(uroven="Подвал", kontur=kontur, tip="pol_podv", otverstiya=[]))
-krovlya = dict(uroven="Кровля", kontur=kontur, tip="krovlya")
+
+def kontur_sek(M):
+    pts = [list(M.p(x, y)) for x, y in KONTUR_SEK]
+    return pts[::-1] if M.mir else pts
+
+
+# перекрытия и покрытие — отдельно по секциям (шов проходит через все конструкции)
+perekr = [dict(uroven=u, kontur=kontur_sek(M), tip="perekr", otverstiya=otv_sek[M.s]) for u in ETAZHI for M in SEKCII]
+perekr += [dict(uroven="Подвал", kontur=kontur_sek(M), tip="pol_podv", otverstiya=[]) for M in SEKCII]
+krovlya = [dict(uroven="Кровля", kontur=kontur_sek(M), tip="krovlya") for M in SEKCII]
 
 # ================= ПРИБОРЫ И СЕТИ =================
 P_C = REZ["P"]["c"]
@@ -965,7 +1044,7 @@ def proverka_svyaznosti(kol, uroven="etazhi", shag=0.05):
     Помещения, куда не попасть через двери (без выхода), — замечание. Узкие пространства (шахты за коробами,
     < 0,6 м) и шахта лифта не считаются."""
     from collections import deque
-    x0, y0, x1, y1 = -E - 1.0, -E - 1.0, 2 * L_SEK + E + 1.0, B + E + 1.0       # улица обходит здание
+    x0, y0, x1, y1 = -E - 1.0, -E - 1.0, ZERK + E + 1.0, B + E + 1.0       # улица обходит здание
     nx, ny = int((x1 - x0) / shag) + 1, int((y1 - y0) / shag) + 1
     zan = bytearray(nx * ny)
     T = {"nar": 0.52, "nes": 0.42, "per": 0.10, "beton": 0.20, "korob": 0.05}
@@ -983,13 +1062,17 @@ def proverka_svyaznosti(kol, uroven="etazhi", shag=0.05):
         if abs(ya - yb) < 1e-6:
             return xa, ya - t, xb, ya + t
         return xa - t, ya, xa + t, yb
-    st_et = [w for w in steny if w["gde"] in ("etazhi", "vse", uroven) and w["tip"] in T]
+    if uroven == "Подвал":
+        T["fund"] = 0.316
+        st_et = [w for w in steny if w["gde"] in ("podval", "vse") and w["tip"] in T]
+    else:
+        st_et = [w for w in steny if w["gde"] in ("etazhi", "vse", uroven) and w["tip"] in T]
     for w in st_et:
         for k in kletki(*pryamoug(w)):
             zan[k] = 1
     shir = {"760": 0.80, "860": 0.90, "1360": 1.40, "870": 0.91}
     for d in dveri:
-        if d["gde"] not in ("etazhi", uroven):
+        if d["gde"] not in (("Подвал",) if uroven == "Подвал" else ("etazhi", uroven)):
             continue
         w_ = shir[d["tip"][1][:4].rstrip("х")]
         for w in st_et:
@@ -1030,6 +1113,8 @@ def proverka_svyaznosti(kol, uroven="etazhi", shag=0.05):
             k = int((py - y0) / shag) * nx + int((px - x0) / shag)
             print("ОТЛАДКА", px, py, "занято" if zan[k] else "свободно", "метка", metka[k])
     for M in SEKCII:
+        if uroven == "Подвал":
+            break                               # подвал — только с улицы (вход через приямок)
         xs_, ys_ = M.x(11.45), 6.1
         k = int((ys_ - y0) / shag) * nx + int((xs_ - x0) / shag)
         if uroven == "Этаж 01" and metka[k] != 1:
@@ -1053,8 +1138,53 @@ def proverka_svyaznosti(kol, uroven="etazhi", shag=0.05):
 
 kol = proverka()
 proverka_fitingov(kol)
+def proverka_proemov_dverey(kol):
+    """Трубы не должны проходить через проёмы дверей (ширина двери × толщина стены × высота 2,1 м)."""
+    T = {"nar": 0.52, "nes": 0.42, "per": 0.10, "beton": 0.20, "korob": 0.05, "fund": 0.316}
+    shir = {"760": 0.80, "860": 0.90, "1360": 1.40, "870": 0.91}
+    korobki = []
+    for d in dveri:
+        w_ = shir[d["tip"][1][:4].rstrip("х")]
+        if d["gde"] == "etazhi":
+            urovni_z = [(k - 1) * H_ET for k in range(1, N_ET + 1)]
+        elif d["gde"] == "Подвал":
+            urovni_z = [Z_P]
+        else:
+            urovni_z = [0.0]
+        for w in steny:
+            if w["tip"] not in T:
+                continue
+            (xa, ya), (xb, yb) = w["p1"], w["p2"]
+            t = T[w["tip"]] / 2 + 0.002
+            if abs(ya - yb) < 1e-6 and abs(d["y"] - ya) <= t and min(xa, xb) <= d["x"] <= max(xa, xb):
+                box = (d["x"] - w_ / 2, ya - t, d["x"] + w_ / 2, ya + t)
+                break
+            if abs(xa - xb) < 1e-6 and abs(d["x"] - xa) <= t and min(ya, yb) <= d["y"] <= max(ya, yb):
+                box = (xa - t, d["y"] - w_ / 2, xa + t, d["y"] + w_ / 2)
+                break
+        else:
+            continue
+        for z0 in urovni_z:
+            korobki.append((box, z0, z0 + 2.1, d))
+    for r in seti:
+        for a, b in zip(r["pts"][:-1], r["pts"][1:]):
+            L_ = math.dist(a, b)
+            n = max(1, int(L_ / 0.03))
+            for (bx0, by0, bx1, by1), z0, z1, d in korobki:
+                if max(a[2], b[2]) < z0 or min(a[2], b[2]) > z1:
+                    continue
+                for i in range(n + 1):
+                    t_ = i / n
+                    x, y, z = (a[0] + (b[0] - a[0]) * t_, a[1] + (b[1] - a[1]) * t_, a[2] + (b[2] - a[2]) * t_)
+                    if bx0 < x < bx1 and by0 < y < by1 and z0 < z < z1:
+                        kol.setdefault("труба в проёме двери", []).append((r["id"], r["sys"], d["x"], d["y"], round(z, 2)))
+                        break
+
+
 proverka_svyaznosti(kol)
 proverka_svyaznosti(kol, "Этаж 01")
+proverka_proemov_dverey(kol)
+proverka_svyaznosti(kol, "Подвал")
 if not kol:
     print("ПРОВЕРКИ ПРОЙДЕНЫ: коллизий нет, холодная вода слева у всех приборов, двери свободны")
 for vid, lst in kol.items():
@@ -1076,11 +1206,12 @@ print("приборов", len(pribory), "труб", len(seti), "тройнико
 trassa_v3 = dict(stoyaki_v1={nm: [round(v[0], 3), v[1], round(v[5], 3)] for nm, v in podvod.items()},
                  magistral=uchastki_mag,
                  x_troynik=X_TR, y_mag=Y_MAG, z_mag=Z_MAG, vypuski=vypuski, l_nap=L_NAP, n_vse=N_VSE,
+                 zerkalo=ZERK, x_shov=round(L_SEK + DSH / 2, 3),
                  stoyaki_k1={s["imya"]: [s["x"], s["y"]] for s in stoyaki if s["sys"] == "K1"})
 json.dump(trassa_v3, open(os.path.join(HERE, "..", "calc", "trassa_v3.json"), "w", encoding="utf-8"),
           ensure_ascii=False, indent=1)
 
-geo = dict(pribory=pribory, seti=seti, troyniki=troyniki, kresty=kresty, armatura=armatura, svyazi=svyazi,
+geo = dict(pomescheniya=pomescheniya, razdeliteli=razdeliteli, pribory=pribory, seti=seti, troyniki=troyniki, kresty=kresty, armatura=armatura, svyazi=svyazi,
            mufty=mufty, stoyaki=stoyaki, oborud=oborud, dveri=dveri, lestnicy=lestnicy,
            sistemy=dict(V1="ADSK_Водопровод_В1", K1="ADSK_Канализация_К1"),
            tipy_trub=dict(stal="ADSK_Сталь водогазопроводная_Оцинкованная_ГОСТ 3262-75",

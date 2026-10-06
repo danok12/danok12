@@ -606,3 +606,90 @@ def sml_kosoy_troynik(doc, log, imya_tipa_sml):
         rpm.AddRule(gr, DB.RoutingPreferenceRule(sym.Id, u'Косой тройник SML'), 0)
         t.Commit()
         log(u'правило соединения', SML_KOSOY, u'— первым для', imya_tipa_sml)
+
+
+VSTAVKA = u'ADL_Вставка гибкая фланцевая_FC10_DN32-500_PN10_Ф-Ф'
+
+
+def gibkaya_vstavka(doc, log, x_shov, metka):
+    """Компенсирующее устройство на трубопроводе В1 при пересечении деформационного шва (СП 30.13330):
+    гибкая фланцевая вставка ADL на участке магистрали, пересекающем шов. Своей подтранзакцией: при неудаче
+    откатывается только вставка."""
+    sym = None
+    for s in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol):
+        if s.FamilyName == VSTAVKA:
+            sym = s
+            break
+    if sym is None:
+        log(u'гибкая вставка: нет семейства', VSTAVKA)
+        return
+    X = x_shov * M
+    truba = None
+    for t in DB.FilteredElementCollector(doc).OfClass(Plumbing.Pipe):
+        p = t.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+        if p is None or p.AsString() != metka:
+            continue
+        c = t.Location.Curve
+        a, b = c.GetEndPoint(0), c.GetEndPoint(1)
+        if abs(a.Y - b.Y) < 1e-6 and abs(a.Z - b.Z) < 1e-6 and min(a.X, b.X) < X - 1.0 * M and max(a.X, b.X) > X + 1.0 * M:
+            truba = t
+            break
+    if truba is None:
+        log(u'гибкая вставка: не найден участок магистрали, пересекающий шов x =', x_shov)
+        return
+    st = DB.SubTransaction(doc)
+    st.Start()
+    try:
+        c = truba.Location.Curve
+        a, b = c.GetEndPoint(0), c.GetEndPoint(1)
+        if a.X > b.X:
+            a, b = b, a
+        o = DB.XYZ(X, a.Y, a.Z)
+        if not sym.IsActive:
+            sym.Activate()
+        lv = doc.GetElement(truba.ReferenceLevel.Id)
+        e = doc.Create.NewFamilyInstance(DB.XYZ(X, a.Y, lv.Elevation), sym, lv, DB.Structure.StructuralType.NonStructural)
+        e.get_Parameter(DB.BuiltInParameter.INSTANCE_ELEVATION_PARAM).Set(a.Z - lv.Elevation)
+        # соединители семейства — вдоль локальной Y: повернуть на 90°, чтобы ось вставки шла вдоль магистрали (X)
+        DB.ElementTransformUtils.RotateElement(doc, e.Id, DB.Line.CreateBound(o, o + DB.XYZ.BasisZ), -math.pi / 2)
+        d = truba.Diameter
+        zadano = []
+        for par in e.Parameters:
+            nm = par.Definition.Name
+            if par.StorageType == DB.StorageType.Double and not par.IsReadOnly and \
+                    (nm in (u'DN', u'Ду', u'Условный диаметр', u'Диаметр', u'ADSK_Диаметр условный') or nm.startswith(u'DN')):
+                par.Set(d)
+                zadano.append(nm)
+        doc.Regenerate()
+        cn = soediniteli(e)
+        if len(cn) != 2:
+            raise Exception(u'у вставки %d соединителей' % len(cn))
+        cn.sort(key=lambda q: q.Origin.X)
+        log(u'гибкая вставка: параметры размера', u', '.join(zadano) or u'-', u'| патрубки DN %.0f, длина %.0f мм' % (
+            cn[0].Radius * 2 / MM, cn[0].Origin.DistanceTo(cn[1].Origin) / MM))
+        if abs(cn[0].Radius - d / 2) > 1e-4:
+            raise Exception(u'размер вставки не совпал с трубой (%.0f / %.0f мм)' % (cn[0].Radius * 2 / MM, d / MM))
+        # разрезать магистраль: левая часть до левого патрубка, правая — новая труба от правого патрубка
+        nov_id = Plumbing.PlumbingUtils.BreakCurve(doc, truba.Id, o)
+        nov = doc.GetElement(nov_id)
+        for t in (truba, nov):
+            cc = t.Location.Curve
+            p0, p1 = cc.GetEndPoint(0), cc.GetEndPoint(1)
+            if max(p0.X, p1.X) <= X + 1e-6:          # левая часть
+                tgt = cn[0].Origin
+            else:
+                tgt = cn[1].Origin
+            if abs(p0.X - X) < abs(p1.X - X):
+                t.Location.Curve = DB.Line.CreateBound(tgt, p1)
+            else:
+                t.Location.Curve = DB.Line.CreateBound(p0, tgt)
+            ct, _ = blizhayshiy(t, tgt)
+            ce, _ = blizhayshiy(e, tgt)
+            ce.ConnectTo(ct)
+            komment(t, metka)
+        komment(e, metka)
+        st.Commit()
+        log(u'гибкая вставка у деформационного шва установлена')
+    except Exception as ex:
+        st.RollBack()
+        log(u'гибкая вставка НЕ установлена:', ex)
