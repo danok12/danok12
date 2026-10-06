@@ -83,10 +83,11 @@ def shrift_v_semeystvah(doc, log, kategorii):
                 fams[f.Id.IntegerValue] = f
     n_f, n_t, nesh = 0, 0, {}
     for f in fams.values():
+        imya = f.Name                       # после LoadFamily объект семейства недействителен
         try:
             fd = doc.EditFamily(f)
         except Exception as ex:
-            log(u'  семейство не открыть:', f.Name, ex)
+            log(u'  семейство не открыть:', imya, ex)
             continue
         try:
             plohie = []
@@ -104,7 +105,7 @@ def shrift_v_semeystvah(doc, log, kategorii):
                 fd.LoadFamily(doc, Zagruzka())
                 n_f += 1
                 n_t += len(plohie)
-                log(u'  шрифт в семействе', f.Name, u':', len(plohie), u'типов текста')
+                log(u'  шрифт в семействе', imya, u':', len(plohie), u'типов текста')
         finally:
             try:
                 fd.Close(False)
@@ -167,6 +168,14 @@ def soedineny(a, b):
         for r in c.AllRefs:
             if r.Owner.Id == b.Id:
                 return True
+    # стык без логической связи: конец трубы у соединителя прибора (заход в патрубок сифона) — не коллизия
+    for ca in cons(a):
+        for cb in cons(b):
+            try:
+                if ca.Origin.DistanceTo(cb.Origin) < 0.03 * M:
+                    return True
+            except Exception:
+                pass
     return False
 
 
@@ -217,6 +226,10 @@ def kollizii(doc, log):
                 DB.BoundingBoxIntersectsFilter(DB.Outline(bb.Min, bb.Max))).WherePasses(
                 DB.ElementIntersectsElementFilter(e)):
             if soedineny(e, p):
+                continue
+            # вложенный сифон прибора (мойки, умывальника, ванны): труба присоединена к самому прибору
+            sup = getattr(p, 'SuperComponent', None)
+            if sup is not None and soedineny(e, sup):
                 continue
             v = obem_peresecheniya(e, p)
             if v > (0.02 * M) ** 3:

@@ -109,9 +109,16 @@ def koncy(t):
     return c.GetEndPoint(0), c.GetEndPoint(1)
 
 
-def marki_diametrov(doc, v, sist, sym, zan, log):
+def marki_diametrov(doc, v, sist, sym, zan, log, iskl=()):
     """Марки «В1-Ø..» / «К1-Ø..» на горизонтальных участках плана: каждый диаметр — не чаще одного раза на
-    участке радиусом 3 м (на этаже — примерно раз на квартиру), длинные участки — первыми."""
+    участке радиусом 3 м (на этаже — примерно раз на квартиру), длинные участки — первыми.
+    iskl — трубы выпусков: их диаметр уже в марке выпуска, а участки на той же линии не марким
+    (марка у наружной стены ложилась на размерную цепочку)."""
+    linii_iskl = []
+    for t in iskl:
+        a, b = koncy(t)
+        if abs(b.Y - a.Y) > abs(b.X - a.X):
+            linii_iskl.append(a.X)
     k = v.Scale / 100.0
     zl = v.GenLevel.Elevation
     podval = zl < -1e-6
@@ -128,6 +135,8 @@ def marki_diametrov(doc, v, sist, sym, zan, log):
         if L < lmin or abs(b.Z - a.Z) > 0.1 * L:
             continue
         if min(a.Z, b.Z) < z0 - 0.01 or max(a.Z, b.Z) > z1:
+            continue
+        if abs(b.Y - a.Y) > abs(b.X - a.X) and any(abs((a.X + b.X) / 2 - x) < 0.05 * M for x in linii_iskl):
             continue
         kand.append((L, t, a, b))
     kand.sort(key=lambda q: -q[0])
@@ -430,10 +439,20 @@ def razmery_osey(doc, v, log):
             else:
                 ln = DB.Line.CreateBound(DB.XYZ(-otstup * M, 0, zl), DB.XYZ(-otstup * M, 1 * M, zl))
             try:
-                doc.Create.NewDimension(v, ln, ra)
+                d = doc.Create.NewDimension(v, ln, ra)
                 n += 1
             except Exception as ex:
                 log(u'  размер не встал:', v.Name, ex)
+                continue
+            if obsh and not vdol_x:
+                # общий размер слева: текст по середине ложится на кружок оси В — сдвиг между осями Б и В
+                try:
+                    doc.Regenerate()
+                    tp = d.TextPosition
+                    y_b, y_v = [gr.Curve.GetEndPoint(0).Y for gr in spisok[1:3]]
+                    d.TextPosition = DB.XYZ(tp.X, (y_b + y_v) / 2, tp.Z)
+                except Exception as ex:
+                    log(u'  текст общего размера не сдвинут:', v.Name, ex)
     log(u'  размерных цепочек на', v.Name, n)
 
 
@@ -509,18 +528,19 @@ def oformit_plan(doc, g, v, sist, tipy, tnt, zan, vvody, vypuski, tr, log):
         for e in DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_MechanicalEquipment) \
                 .WhereElementIsNotElementType():
             if metka(e).startswith(u'КВВ-О'):
-                vynoska(doc, v, tnt, NASOS + u'\r' + u'Wilo ' + DB.Element.Name.GetValue(e.Symbol),
-                        e.Location.Point, 0, 0, log, gol=DB.XYZ(8.6 * M, -4.75 * M, 0))
+                # фундамент — третьей строкой той же выноски: отдельная выноска ложилась на ось Б и стены
+                fund = podpis_fundamenta(doc)
+                vynoska(doc, v, tnt, NASOS + u'\r' + u'Wilo ' + DB.Element.Name.GetValue(e.Symbol) +
+                        (u'\r' + u'на фундаменте ' + fund if fund else u''),
+                        e.Location.Point, 0, 0, log, gol=DB.XYZ(8.6 * M, -4.4 * M, 0))     # три строки — выше
         krany_podpisi(doc, v, tnt, g, tr, None, log)
-        podpis_fundamenta(doc, v, tnt, log)
-    if podval:
-        privyazki_stoyakov(doc, v, g, sist, log)
+    # привязки стояков к осям (365…435 мм) при 1:200 не читаются и ложатся на марки стояков — не ставятся
     if podval and sist == u'К1':
         prochistki_revizii_podpisi(doc, v, tnt, tr, True, log)
         for t in vypuski:
             p = tochka_na_y(t, 13.12 + 0.6)
             marka_s_vynoskoy(doc, v, tipy['vypusk'], t, p, 1.2 if p.X < 23 * M else -1.2, 0.9, log, zan)
-    marki_diametrov(doc, v, sist, tipy['truba'], zan, log)
+    marki_diametrov(doc, v, sist, tipy['truba'], zan, log, iskl=list(vypuski) if sist == u'К1' else [])
 
 
 def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
@@ -532,7 +552,8 @@ def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
     otmetki_stoyakov(doc, g, ot, u'V1' if sist == u'В1' else u'K1', log)
     if sist == u'В1':
         x_tr, y_mag, z_mag = tr.get('x_troynik', 4.0), tr.get('y_mag', 7.2), tr.get('z_mag', -0.6)
-        for x in (x_tr + 1.5, tr.get('zerkalo', 45.45) - x_tr - 1.5):
+        # у восточного стояка — дальше от него: у тройника и так отметки этажа и номера расчётных точек
+        for x in (x_tr + 1.5, tr.get('zerkalo', 45.45) - x_tr - 5.0):
             t, p = truba_v_tochke(doc, u'КВВ-В1', (x, y_mag, z_mag), gor=True)
             if t is not None:
                 ot.postavit(t, p, 1.2, 0.5)
@@ -554,7 +575,7 @@ def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
         prochistki_revizii_podpisi(doc, v, tnt, tr, False, log)
         for t in vypuski:
             p = tochka_na_y(t, 13.12)
-            ot.postavit(t, p, 1.2, 0.5, lotok=True)
+            ot.postavit(t, p, -1.4, -0.8, lotok=True)          # влево-вниз: вверху подписи «2 этаж»
             marka_s_vynoskoy(doc, v, tipy['vypusk'], t, tochka_na_y(t, 13.12 + 0.6), 1.6, -1.2, log)
     log(u'  отметок на', v.Name, ot.n, u'| способ:', ot.sposob, u'| не встало', ot.oshibki)
 
@@ -637,7 +658,10 @@ def prochistki_revizii_podpisi(doc, v, tnt, tr, plan, log):
     for e in elementy_s_metkoy(doc, DB.BuiltInCategory.OST_PipeFitting, u'КВВ-К1-Пр'):
         p = tochka_elementa(e)
         s_ = storona_stoyaka(p.X / M, zerk)
-        if vynoska(doc, v, tnt, u'Пр.', p, 1.0 * s_, -0.8, log) is not None:
+        dy = -0.8
+        if plan and (p.X / M < 1.0 or p.X / M > zerk - 1.0):
+            s_, dy = -s_, -0.3                   # у крайних стояков на плане — внутрь: снаружи размерная цепочка
+        if vynoska(doc, v, tnt, u'Пр.', p, 1.2 * s_ if plan else 1.0 * s_, dy, log) is not None:
             n += 1
     if not plan:
         for e in elementy_s_metkoy(doc, DB.BuiltInCategory.OST_PipeFitting, u'КВВ-К1-R'):
@@ -822,10 +846,15 @@ def raschetnye_tochki(doc, g, rez, tr, v, tnt, log):
         P = DB.XYZ(p[0] * M, p[1] * M, p[2] * M)
         if 4 <= n <= 3 + len(zs):
             sm = - r.Multiply(0.25 * k * M) - u.Multiply(0.15 * k * M)          # у тройника стояка — слева снизу
-        elif n >= n15:
+        elif n == n15:
+            sm = - u.Multiply(0.3 * k * M) - r.Multiply(0.2 * k * M)             # под магистралью: над ней отметки
+        elif n > n15:
             sm = u.Multiply(0.55 * k * M) - r.Multiply(0.1 * k * M)              # над магистралью
         else:
-            sm = u.Multiply(0.5 * k * M) - r.Multiply(0.1 * k * M)
+            # точки 1…3 разводки — в разные стороны: разводка короткая, номера слипались
+            sm = {1: r.Multiply(0.3 * k * M) - u.Multiply(0.6 * k * M),          # вниз: справа — «11 этаж»
+                  2: u.Multiply(0.6 * k * M) + r.Multiply(0.15 * k * M),
+                  3: u.Multiply(0.45 * k * M) - r.Multiply(0.45 * k * M)}[n]
         try:
             DB.TextNote.Create(doc, v.Id, P + sm, unicode(n), opt)
             n_ += 1
@@ -841,8 +870,8 @@ def raschetnye_tochki(doc, g, rez, tr, v, tnt, log):
     log(u'  расчётных точек на', v.Name, n_, u'(стояк', rez['st_dikt'], u')')
 
 
-def podpis_fundamenta(doc, v, tnt, log, zan=None):
-    """«Фундамент ВК / …х…х270(h)» с выноской — как в образце (на плане подвала В1)."""
+def podpis_fundamenta(doc):
+    """Размеры фундамента установки «…х…х270(h)» (мм) — для выноски насосной установки; None, если фундамента нет."""
     for f in DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_GenericModel) \
             .WhereElementIsNotElementType():
         if metka(f) != u'КВВ-Ф':
@@ -850,45 +879,5 @@ def podpis_fundamenta(doc, v, tnt, log, zan=None):
         bb = f.get_BoundingBox(None)
         dx, dy = round((bb.Max.X - bb.Min.X) / MM), round((bb.Max.Y - bb.Min.Y) / MM)
         dz = round((bb.Max.Z - bb.Min.Z) / MM)
-        ugol = DB.XYZ(bb.Max.X, bb.Min.Y, bb.Max.Z)
-        tekst = u'Фундамент ВК\r%dх%dх%d(h)' % (dx, dy, dz)
-        if isinstance(v, DB.View3D):
-            vynoska(doc, v, tnt, tekst, ugol, 2.5, -2.4, log)
-        else:
-            vynoska(doc, v, tnt, tekst, ugol, 0, 0, log, gol=DB.XYZ(7.0 * M, 1.7 * M, 0))     # в соседнем помещении
-        return
-
-
-def privyazki_stoyakov(doc, v, g, sist, log):
-    """Привязки стояков к ближайшим осям на плане подвала (как в образце — размеры от осей до стояков): по X у каждого
-    стояка — от ближайшей оси; по Y — одна привязка ряда стояков к оси В. Опорные линии — невидимые линии детализации
-    в центрах стояков."""
-    osi = list(DB.FilteredElementCollector(doc).OfClass(DB.Grid))
-    ver = [gr for gr in osi if abs(gr.Curve.Direction.Y) > 0.9]
-    gor = [gr for gr in osi if abs(gr.Curve.Direction.X) > 0.9]
-    nevid = None
-    for gs in DB.FilteredElementCollector(doc).OfClass(DB.GraphicsStyle):
-        if gs.GraphicsStyleCategory is not None and gs.GraphicsStyleCategory.Name in (u'<Невидимые линии>',
-                                                                                         u'<Invisible lines>'):
-            nevid = gs
-    zl = v.GenLevel.Elevation
-    k = v.Scale / 100.0
-    n = 0
-    stoyaki = [s_ for s_ in g['stoyaki'] if s_['sys'] == (u'V1' if sist == u'В1' else u'K1')]
-    for s_ in stoyaki:
-        x, y = s_['x'] * M, s_['y'] * M
-        gx = min(ver, key=lambda gr: abs(gr.Curve.GetEndPoint(0).X - x))
-        try:
-            ln = doc.Create.NewDetailCurve(v, DB.Line.CreateBound(DB.XYZ(x, y - 0.3 * M, zl), DB.XYZ(x, y + 0.3 * M, zl)))
-            if nevid is not None:
-                ln.LineStyle = nevid
-            ra = DB.ReferenceArray()
-            ra.Append(DB.Reference(gx))
-            ra.Append(ln.GeometryCurve.Reference)
-            # размерная линия — между стояком и осью, ниже стояка на 1,0·k м (вне санузлов и марок)
-            yd = y - 1.0 * k * M if y < 6.8 * M else y + 1.0 * k * M
-            d = doc.Create.NewDimension(v, DB.Line.CreateBound(DB.XYZ(0, yd, zl), DB.XYZ(M, yd, zl)), ra)
-            n += 1
-        except Exception as ex:
-            log(u'  привязка стояка не встала:', s_['imya'], ex)
-    log(u'  привязок стояков на', v.Name, n)
+        return u'%dх%dх%d(h)' % (dx, dy, dz)
+    return None

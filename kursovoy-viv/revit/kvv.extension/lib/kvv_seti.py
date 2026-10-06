@@ -840,6 +840,60 @@ Z_FUND = 0.27                       # высота фундамента под �
 ZAPAS_FUND = 0.10                   # фундамент шире установки на 100 мм с каждой стороны
 
 
+def _opora_ustanovki(doc, e, z_osn, log):
+    """Габарит в плане (xmin, ymin, xmax, ymax) того, чем установка стоит на фундаменте: тела, нижняя грань которых
+    у основания (до 60 мм выше). Габарит семейства COR включает зоны обслуживания и коллекторы (около 2,8 х 2,8 м),
+    фундамент по нему вышел бы на всю насосную. Для сверки в журнал — габарит видимого на плане подвала."""
+    def tela(opt):
+        out = []
+
+        def obhod(geo):
+            for g in geo:
+                if isinstance(g, DB.GeometryInstance):
+                    obhod(g.GetInstanceGeometry())
+                elif isinstance(g, DB.Solid) and g.Volume > 1e-9:
+                    out.append(g)
+        try:
+            obhod(e.get_Geometry(opt))
+        except Exception:
+            pass
+        return out
+
+    def gabarit(solids):
+        xs, ys, zs = [], [], []
+        for s in solids:
+            for ed in s.Edges:
+                for p in ed.Tessellate():
+                    xs.append(p.X)
+                    ys.append(p.Y)
+                    zs.append(p.Z)
+        if not xs:
+            return None
+        return min(xs), min(ys), max(xs), max(ys), min(zs), max(zs)
+
+    def mm(g):
+        return u'%dх%d мм' % (round((g[2] - g[0]) / MM), round((g[3] - g[1]) / MM)) if g else u'—'
+    opt = DB.Options()
+    opt.DetailLevel = DB.ViewDetailLevel.Fine
+    vse = tela(opt)
+    niz = [s for s in vse if (gabarit([s]) or (0, 0, 0, 0, 1e9, 0))[4] < z_osn + 0.06 * M]
+    g_niz = gabarit(niz)
+    g_plan = None
+    for v in DB.FilteredElementCollector(doc).OfClass(DB.ViewPlan):
+        if not v.IsTemplate and v.Name == u'В1_План подвала':
+            o = DB.Options()
+            o.View = v
+            g_plan = gabarit(tela(o))
+    g_vse = gabarit(vse)
+    log(u'фундамент: тел установки', len(vse), u'| опорных', len(niz), u'— в плане', mm(g_niz),
+        u'| видимое на плане подвала', mm(g_plan), u'| все тела', mm(g_vse))
+    # фундамент — под всей установкой (рама, насосы, коллекторы): габарит её тел, а не семейства
+    for g in (g_vse, g_plan, g_niz):
+        if g is not None and (g[2] - g[0]) < 2.0 * M and (g[3] - g[1]) < 2.0 * M:
+            return g[:4]
+    return None
+
+
 def fundament_nasosa(doc, log):
     """Насосная установка — на бетонном фундаменте (как в образце: «Фундамент ВК …х…х270(h)»): установка
     поднимается на 270 мм, под ней — блок фундамента (DirectShape, «Обобщённые модели», метка КВВ-Ф) по габариту
@@ -858,12 +912,16 @@ def fundament_nasosa(doc, log):
     bb = e.get_BoundingBox(None)
     lv = doc.GetElement(e.LevelId)
     z0 = lv.Elevation
+    gab = _opora_ustanovki(doc, e, z0 + Z_FUND * M, log)
+    if gab is None:
+        gab = (bb.Min.X, bb.Min.Y, bb.Max.X, bb.Max.Y)
+        log(u'фундамент: опора установки не найдена — по габариту семейства')
 
     def kr50(v):
         return math.ceil(v / (0.05 * M) - 1e-9) * 0.05 * M
-    dx = kr50(bb.Max.X - bb.Min.X + 2 * ZAPAS_FUND * M)
-    dy = kr50(bb.Max.Y - bb.Min.Y + 2 * ZAPAS_FUND * M)
-    cx, cy = (bb.Min.X + bb.Max.X) / 2, (bb.Min.Y + bb.Max.Y) / 2
+    dx = kr50(gab[2] - gab[0] + 2 * ZAPAS_FUND * M)
+    dy = kr50(gab[3] - gab[1] + 2 * ZAPAS_FUND * M)
+    cx, cy = (gab[0] + gab[2]) / 2, (gab[1] + gab[3]) / 2
     pts = [DB.XYZ(cx - dx / 2, cy - dy / 2, z0), DB.XYZ(cx + dx / 2, cy - dy / 2, z0),
            DB.XYZ(cx + dx / 2, cy + dy / 2, z0), DB.XYZ(cx - dx / 2, cy + dy / 2, z0)]
     loop = DB.CurveLoop()

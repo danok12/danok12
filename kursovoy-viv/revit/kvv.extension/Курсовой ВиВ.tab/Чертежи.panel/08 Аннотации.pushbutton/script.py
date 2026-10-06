@@ -66,6 +66,50 @@ def storona(x, g):
     return -s_ if sek2 else s_
 
 
+# отметка выноски марки на схеме, м: К1 — пол 6-го этажа; В1 — на 1,6 м выше, между отметками ответвлений
+# крайних стояков (на 16,0 текст марки ложился на отметку +13.800)
+Z_MARKI_SHEMY = {u'В1': 17.6, u'К1': 16.0}
+
+
+def t_po_z(truby, z):
+    """(участок стояка, отметка, м) — на отметке z или рядом (на z у стояков К1 бывает фитинг)."""
+    for dz in (0.0, 0.4, -0.4, 0.8, -0.8, 1.2):
+        for t in truby:
+            c = t.Location.Curve
+            z0, z1 = sorted((c.GetEndPoint(0).Z, c.GetEndPoint(1).Z))
+            if z0 + 0.05 * M <= (z + dz) * M <= z1 - 0.05 * M:
+                return t, z + dz
+    return None, z
+
+
+def marka_na_sheme(v, t_z, imya, g, log):
+    """Марка стояка на аксонометрии: текст сбоку (по стороне марок плана), выноска — в ось стояка на отметке
+    Z_MARKI_SHEMY. Голова марки — левый конец полки (полка ≈ 1,35 доли масштаба): ближний к стояку край полки —
+    в 0,6 доли от оси, за полками отметок ответвлений."""
+    t, z = t_z
+    if t is None:
+        log(u'  марка не встала:', v.Name, imya, u'— нет участка около отметки', z)
+        return False
+    sym = tip_marki(*MARKA_STOYAKA)
+    c = t.Location.Curve
+    a = c.GetEndPoint(0)
+    p = DB.XYZ(a.X, a.Y, z * M)
+    k = v.Scale / 100.0
+    golova = p + v.RightDirection.Multiply((0.6 if storona(p.X / M, g) > 0 else -1.95) * k * M)
+    try:
+        m = DB.IndependentTag.Create(doc, sym.Id, v.Id, DB.Reference(t), True, DB.TagOrientation.Horizontal, golova)
+        m.TagHeadPosition = golova
+        try:
+            m.LeaderEndCondition = DB.LeaderEndCondition.Free
+            m.SetLeaderEnd(DB.Reference(t), p)
+        except Exception as ex:
+            log(u'  конец выноски марки не задан:', imya, ex)
+        return True
+    except Exception as ex:
+        log(u'  марка не встала:', v.Name, imya, ex)
+        return False
+
+
 METKA_POM = u'КВВ-помещение'
 PLANY_UR = {u'Этаж 02': [u'В1_План типового этажа', u'К1_План типового этажа'],
             u'Подвал': [u'В1_План подвала', u'К1_План подвала']}
@@ -141,6 +185,55 @@ def pomescheniya(g, log):
 
 
 R_OKR_POM = 2.6          # радиус окружности номера помещения, мм (номер «02.03.06» шрифтом 1,25 мм — около 4,5 мм)
+
+
+def razvesti_pomescheniya(log):
+    """Номер помещения, попавший под текст марки стояка, — сдвинуть внутри своего помещения на свободное место
+    (ближайшее из вариантов со смещением до 2 м), не ближе 1,1 окружности к другим номерам."""
+    sym = tip_marki(*MARKA_STOYAKA)
+    n_sdv, n_net = 0, 0
+    for nm in PLANY:
+        v = vid(nm)
+        if v is None:
+            continue
+        k = v.Scale / 100.0
+        r_ = R_OKR_POM * kvv.MM * v.Scale
+        # текст марки стояка (две строки над и под полкой); голова марки — левый конец полки длиной ≈ 1,35 доли
+        pr = []
+        for m in DB.FilteredElementCollector(doc, v.Id).OfClass(DB.IndependentTag):
+            if m.GetTypeId() == sym.Id:
+                h = m.TagHeadPosition
+                pr.append((h.X + 0.67 * k * M, h.Y, 0.7 * k * M + r_, 0.32 * k * M + r_))
+        marki = [t for t in DB.FilteredElementCollector(doc, v.Id).OfCategory(DB.BuiltInCategory.OST_RoomTags)
+                 .WhereElementIsNotElementType()]
+
+        def pod_markoy(x, y):
+            return any(abs(x - cx) < hx and abs(y - cy) < hy for cx, cy, hx, hy in pr)
+        for t in marki:
+            p = t.Location.Point
+            if not pod_markoy(p.X, p.Y):
+                continue
+            rm = t.Room
+            z = rm.Level.Elevation + 1.0 * M if rm is not None else p.Z
+            drugie = [q.Location.Point for q in marki if q.Id != t.Id]
+            varianty = []
+            for dx in (0.0, -0.8, 0.8, -1.6, 1.6):
+                for dy in (0.0, -0.8, 0.8, -1.6, 1.6, -2.0, 2.0):
+                    if dx == 0.0 and dy == 0.0:
+                        continue
+                    x, y = p.X + dx * M, p.Y + dy * M
+                    if rm is None or not rm.IsPointInRoom(DB.XYZ(x, y, z)):
+                        continue
+                    if pod_markoy(x, y) or any(math.hypot(x - q.X, y - q.Y) < 2.2 * r_ for q in drugie):
+                        continue
+                    varianty.append((math.hypot(dx, dy), x, y))
+            if not varianty:
+                n_net += 1
+                continue
+            _, x, y = min(varianty)
+            DB.ElementTransformUtils.MoveElement(doc, t.Id, DB.XYZ(x - p.X, y - p.Y, 0))
+            n_sdv += 1
+    log(u'номеров помещений сдвинуто из-под марок стояков', n_sdv, u'| места не нашлось', n_net)
 
 
 class Zagruzka(DB.IFamilyLoadOptions):
@@ -235,7 +328,12 @@ def main(log):
                 if (u'.%s-' % sist) not in imya:
                     continue
                 if isinstance(v, DB.View3D):
-                    t = truby[-2] if len(truby) > 1 else truby[-1]      # верхний этаж (без вытяжной части)
+                    # как в образце — сбоку стояка между отметками: на уровне пола 6-го этажа (отметки ответвлений
+                    # — на 1,0 м выше пола, ревизии К1 — на 1, 4, 7, 10, 11 этажах; вверху — номера точек 1…3)
+                    if marka_na_sheme(v, t_po_z(truby, Z_MARKI_SHEMY[sist]), imya, g, log):
+                        n += 1
+                        po_vidam.setdefault(nm, []).append(imya)
+                    continue
                 else:
                     # середина этажа (не отметка тройника — на ней стык двух участков); в подвале — под перекрытием
                     z = v.GenLevel.Elevation + 1.6 * M if v.GenLevel.Elevation >= -1e-6 else -0.2 * M
@@ -256,7 +354,9 @@ def main(log):
                 c = t.Location.Curve
                 p = c.Evaluate(0.5, True)
                 k = v.Scale / 100.0                    # вынос полки — в размерах листа, не модели
-                golova = p + DB.XYZ(storona(p.X / M, g) * 1.4 * k * M, 0.9 * k * M, 0)
+                # на типовом этаже — выше: при 0,9 нижняя строка «Ø25» ложилась на номер санузла
+                vverh = 0.9 if v.GenLevel.Elevation < -1e-6 else 1.3
+                golova = p + DB.XYZ(storona(p.X / M, g) * 1.4 * k * M, vverh * k * M, 0)
                 try:
                     m = DB.IndependentTag.Create(doc, sym.Id, v.Id, DB.Reference(t), True,
                                                  DB.TagOrientation.Horizontal, golova)
@@ -279,6 +379,8 @@ def main(log):
                 break
     with kvv.Tranzakciya(doc, u'КВВ: помещения', log):
         pomescheniya(g, log)
+        doc.Regenerate()
+        razvesti_pomescheniya(log)
     tr = kvv.load_json('calc', 'trassa_v3.json')
     with kvv.Tranzakciya(doc, u'КВВ: оформление планов и схем', log):
         kvv_oform.oformit_vse(doc, g, tr, dict((nm, vid(nm)) for nm in PLANY),
