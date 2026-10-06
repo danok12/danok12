@@ -540,12 +540,12 @@ def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
             p = nar + (vn - nar).Normalize().Multiply(0.4 * M)
             ot.postavit(t, p, -1.2, 0.5)
             marka_s_vynoskoy(doc, v, tipy['vvod'], t, p, -2.4, -1.4, log)
-        vynoska(doc, v, tnt, u'Водомерный узел', DB.XYZ(x_tr * M, 2.6 * M, -2.0 * M), -4.0, 1.2, log)
+        vynoska(doc, v, tnt, u'Водомерный узел', DB.XYZ(x_tr * M, 2.6 * M, -2.0 * M), 2.5, -0.9, log)      # вправо-вниз: там свободно (левее — край вида)
         for e in DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_MechanicalEquipment) \
                 .WhereElementIsNotElementType():
             if metka(e).startswith(u'КВВ-О'):
                 vynoska(doc, v, tnt, NASOS + u'\r' + u'Wilo ' + DB.Element.Name.GetValue(e.Symbol),
-                        e.Location.Point, -4.0, -1.6, log)
+                        e.Location.Point, 2.5, 0.6, log)
         krany_podpisi(doc, v, tnt, g, tr, ot, log)
     else:
         prochistki_revizii_podpisi(doc, v, tnt, tr, False, log)
@@ -647,6 +647,18 @@ def prochistki_revizii_podpisi(doc, v, tnt, tr, plan, log):
     log(u'  подписей «Пр.» и «R» на', v.Name, n)
 
 
+def g_dn_pol(g):
+    """Диаметр подводки к поливочному крану (из трассы: труба, кончающаяся у крана)."""
+    k_ = g.get('krany_pol', [])
+    if not k_:
+        return 25
+    for r in g['seti']:
+        q = r['pts'][-1]
+        if abs(q[0] - k_[0]['x']) < 0.01 and abs(q[1] - k_[0]['y']) < 0.01 and abs(q[2] - k_[0]['z']) < 0.01:
+            return r['d']
+    return 25
+
+
 def krany_podpisi(doc, v, tnt, g, tr, ot, log):
     """«Кран водоразборный со штуцером 1"» у поливочных кранов: на плане подвала В1 — выноской над планом,
     на схеме — выноской и отметкой +0.500."""
@@ -655,12 +667,20 @@ def krany_podpisi(doc, v, tnt, g, tr, ot, log):
         p = DB.XYZ(k_['x'] * M, k_['y'] * M, k_['z'] * M)
         lev = k_['x'] < zerk / 2
         if ot is None:
-            # план подвала: подъём к крану у внутренней грани торцевой стены
-            p_pod = DB.XYZ((0.25 if lev else zerk - 0.25) * M, k_['y'] * M, -0.6 * M)
-            gol = DB.XYZ((-3.6 if lev else zerk + 3.6) * M, 14.9 * M, 0)
-            vynoska(doc, v, tnt, KRAN_POL, p_pod, -1.0 if not lev else 1.0, 0, log, gol=gol)
+            # план подвала (как у преподавателя): «Подъем В1 Ø25» — у подъёма у внутренней грани торцевой стены,
+            # «Кран водоразборный…» — к наружной грани стены, где кран выходит на фасад
+            s_ = 1.0 if lev else -1.0
+            x_pod = 0.25 if lev else zerk - 0.25
+            p_pod = DB.XYZ(x_pod * M, k_['y'] * M, -0.6 * M)
+            vynoska(doc, v, tnt, u'Подъем В1\rØ%d' % g_dn_pol(g), p_pod, s_, 0, log,
+                    gol=DB.XYZ((x_pod + s_ * 0.35) * M, (k_['y'] + 2.5) * M, 0))
+            vynoska(doc, v, tnt, KRAN_POL.replace(u'\r', u' '), p, s_, 0, log,
+                    gol=DB.XYZ((-3.9 if lev else zerk + 3.9) * M, 15.6 * M, 0))
         else:
-            vynoska(doc, v, tnt, KRAN_POL, p, -3.0 if lev else 3.0, 1.2, log)
+            vynoska(doc, v, tnt, KRAN_POL, p, 0.3 if lev else 0.6, -2.4 if lev else -3.2, log)
+            x_pod = 0.25 if lev else zerk - 0.25
+            vynoska(doc, v, tnt, u'Подъем В1\rØ%d' % g_dn_pol(g),
+                    DB.XYZ(x_pod * M, k_['y'] * M, -0.05 * M), -1.6 if lev else 2.2, -1.0, log)
             t = None
             for tt in truby_sistemy(doc, u'КВВ-В1'):
                 a, b = koncy(tt)

@@ -37,6 +37,7 @@ LISTY = [
     (u'6', u'Аксонометрическая схема. Система К1', u'К1_Аксонометрическая схема', PRIM_K1),
     (u'7', u'Экспликация помещений', None, None),
 ]
+LISTOV_VSEGO = len(LISTY) + 1          # лист 8 — генплан (AutoCAD, kursovoy-viv/genplan)
 EKSPL = [  # имя таблицы, фильтр номера (от, до) — секция 1; секция 2 зеркальная, номера групп 05-08 / 00.02
     (u'Экспликация помещений типового этажа (секция 1)', u'02.01', u'02.05'),
     (u'Экспликация помещений подвала (секция 1)', u'00.01', u'00.02'),
@@ -126,17 +127,17 @@ TIP_VE = u'КВВ_Заголовок вида с масштабом'
 TIP_VE_STARYY = u'КВВ_Заголовок с масштабом'      # испорчен прошлой версией скрипта
 
 
-def tip_vidovogo_ekrana(vp, log):
+def tip_vidovogo_ekrana(vp, log, tip_zag=u'Заголовок на листе_Масштаб'):
     """Тип видового экрана с заголовком «ADSK_НаименованиеВида : Заголовок на листе_Масштаб» (как в образце:
     «План типового этажа. Система В1 (1:200)» над видом): готовый тип шаблона с этим заголовком или копия типа,
     в которой задан параметр «Название»."""
     nazv = None
     for s_ in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol).OfCategory(
             DB.BuiltInCategory.OST_ViewportLabel):
-        if s_.FamilyName == u'ADSK_НаименованиеВида' and DB.Element.Name.GetValue(s_) == u'Заголовок на листе_Масштаб':
+        if s_.FamilyName == u'ADSK_НаименованиеВида' and DB.Element.Name.GetValue(s_) == tip_zag:
             nazv = s_
     if nazv is None:
-        log(u'нет семейства заголовка вида ADSK_НаименованиеВида : Заголовок на листе_Масштаб')
+        log(u'нет семейства заголовка вида ADSK_НаименованиеВида :', tip_zag)
         return None
     baza = doc.GetElement(vp.GetTypeId())
     tipy = [e for e in DB.FilteredElementCollector(doc).OfClass(DB.ElementType) if e.FamilyName == baza.FamilyName]
@@ -149,12 +150,12 @@ def tip_vidovogo_ekrana(vp, log):
             nid = p.AsElementId() if p is not None else DB.ElementId.InvalidElementId
         except Exception:
             continue
-        opis.append(u'%s -> %s' % (DB.Element.Name.GetValue(e), doc.GetElement(nid).Name if nid.IntegerValue > 0 else u'-'))
+        opis.append(u'%s -> %s' % (DB.Element.Name.GetValue(e), DB.Element.Name.GetValue(doc.GetElement(nid)) if nid.IntegerValue > 0 else u'-'))
         if nid == nazv.Id:
-            log(u'тип видового экрана с заголовком «Заголовок на листе_Масштаб»:', DB.Element.Name.GetValue(e))
+            log(u'тип видового экрана с заголовком', tip_zag, u':', DB.Element.Name.GetValue(e))
             return e
     log(u'типы видовых экранов:', u'; '.join(opis))
-    t = baza.Duplicate(TIP_VE)
+    t = baza.Duplicate(TIP_VE + (u'' if tip_zag.endswith(u'Масштаб') else u' (без масштаба)'))
     p = t.LookupParameter(u'Название')
     try:
         p.Set(nazv.Id)
@@ -171,7 +172,8 @@ def zagolovok(vp, v, imya, log):
     p = v.get_Parameter(DB.BuiltInParameter.VIEW_DESCRIPTION)
     if p is not None and not p.IsReadOnly:
         p.Set(imya)
-    t = tip_vidovogo_ekrana(vp, log)
+    # у 3D-вида масштаб в заголовке пустой «( )» — схемам заголовок без масштаба (как в образце)
+    t = tip_vidovogo_ekrana(vp, log, u'Заголовок на листе' if isinstance(v, DB.View3D) else u'Заголовок на листе_Масштаб')
     if t is None:
         return
     vp.ChangeTypeId(t.Id)
@@ -274,8 +276,8 @@ def main(log):
             ustanovit(sh, u'ADSK_Штамп_Наименование объекта', u'Жилой дом. Вариант 3', log)
             ustanovit(sh, u'ADSK_Штамп Раздел проекта', u'ВК', log)
             ustanovit(rama, u'Организация Заказчик', 0, log)
-            ustanovit(sh, u'ADSK_Штамп_Количество листов', len(LISTY), log)
-            ustanovit(rama, u'Количество листов', len(LISTY), log)
+            ustanovit(sh, u'ADSK_Штамп_Количество листов', LISTOV_VSEGO, log)
+            ustanovit(rama, u'Количество листов', LISTOV_VSEGO, log)
             ustanovit(sh, u'ADSK_Штамп_1 должность', u'Разраб.', log)
             ustanovit(sh, u'ADSK_Штамп_2 должность', u'Пров.', log)
             doc.Regenerate()
@@ -313,8 +315,21 @@ def main(log):
                 o = vp.GetBoxOutline()
                 vw, vh = o.MaximumPoint.X - o.MinimumPoint.X, o.MaximumPoint.Y - o.MinimumPoint.Y
                 if shema:
-                    cx = bb.Min.X + 25 * MM + vw / 2
-                    cy = bb.Max.Y - 16 * MM - vh / 2
+                    # габарит 3D-вида на листе Revit берёт больше рамки подрезки (глубина рамки ~200 м после
+                    # блокировки вида), лишнее поле — поровну сверху и снизу. Ставим по самой рамке подрезки:
+                    # её верх — под заголовком, левый край — в 25 мм от края листа
+                    cb = v.CropBox
+                    cw = (cb.Max.X - cb.Min.X) / v.Scale + 6 * MM
+                    ch = (cb.Max.Y - cb.Min.Y) / v.Scale + 6 * MM
+                    cx = bb.Min.X + 25 * MM + cw / 2
+                    cy = bb.Max.Y - 24 * MM - ch / 2
+                    try:
+                        dl = 120 * MM
+                        vp.LabelOffset = DB.XYZ(max(0.0, (vw - dl) / 2), (vh + ch) / 2 + 4 * MM, 0)
+                    except Exception as ex:
+                        log(u'  заголовок схемы не сдвинут:', ex)
+                    log(u'  схема: рамка подрезки на листе %.0f x %.0f мм, видовой экран %.0f x %.0f мм' % (
+                        cw / MM, ch / MM, vw / MM, vh / MM))
                 else:
                     cx = bb.Min.X + (20 + (w / MM - 25) / 2) * MM
                     cy = bb.Min.Y + (60 + (h / MM - 75) / 2) * MM

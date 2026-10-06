@@ -146,7 +146,7 @@ def marka_osi_8mm(log):
     log(u'марка осей:', sym.FamilyName, DB.Element.Name.GetValue(sym))
 
 
-def obrezka_3d(v, pref, log, zx=5.0, zy=2.5):
+def obrezka_3d(v, pref, log, zx=5.0, zy=2.5, zx_lev=7.0):
     """Схема: подрезка по габариту своей системы (+ приборы, + насосная установка у В1) с запасом под отметки и
     выноски; аннотации за подрезкой не раздувают вид на листе."""
     tr = v.CropBox.Transform
@@ -178,7 +178,7 @@ def obrezka_3d(v, pref, log, zx=5.0, zy=2.5):
     # запас: по горизонтали — под полки отметок у крайних стояков, по вертикали — под верхние отметки
     nb = DB.BoundingBoxXYZ()
     nb.Transform = tr
-    nb.Min = DB.XYZ(mn[0] - zx * M, mn[1] - zy * M, mn[2] - 1 * M)
+    nb.Min = DB.XYZ(mn[0] - zx_lev * M, mn[1] - zy * M, mn[2] - 1 * M)       # слева — выноски у ввода и крана
     nb.Max = DB.XYZ(mx[0] + zx * M, mx[1] + zy * M, mx[2] + 1 * M)
     v.CropBox = nb
     v.CropBoxActive = True
@@ -193,7 +193,7 @@ def obrezka_3d(v, pref, log, zx=5.0, zy=2.5):
             setattr(crsm, a, 3 * kvv.MM)
     except Exception as ex:
         log(u'   отступы подрезки аннотаций не заданы:', ex)
-    log(u'   подрезка схемы: элементов', n, u'| %.1f x %.1f м' % ((mx[0] - mn[0]) / M + 2 * zx,
+    log(u'   подрезка схемы: элементов', n, u'| %.1f x %.1f м' % ((mx[0] - mn[0]) / M + zx + zx_lev,
                                                              (mx[1] - mn[1]) / M + 2 * zy))
 
 
@@ -261,11 +261,42 @@ def main(log):
             obrezka_3d(v, u'КВВ-В1' if nm.startswith(u'В1') else u'КВВ-К1', log)
             v.SaveOrientationAndLock()
             doc.Regenerate()
+            # блокировка растягивает глубину рамки подрезки (~200 м) — на листе вид становится выше; задать снова
+            try:
+                obrezka_3d(v, u'КВВ-В1' if nm.startswith(u'В1') else u'КВВ-К1', log)
+                doc.Regenerate()
+            except Exception as ex:
+                log(u'   подрезка после блокировки не задана:', ex)
+            try:
+                pf = v.get_Parameter(DB.BuiltInParameter.VIEWER_BOUND_ACTIVE_FAR)
+                if pf is not None and not pf.IsReadOnly:
+                    pf.Set(0)
+            except Exception:
+                pass
             cb = v.CropBox
             pa = v.get_Parameter(DB.BuiltInParameter.VIEWER_ANNOTATION_CROP_ACTIVE)
-            log(u'   после блокировки: подрезка', v.CropBoxActive, u'| %.1f x %.1f м' % (
-                (cb.Max.X - cb.Min.X) / M, (cb.Max.Y - cb.Min.Y) / M), u'| подрезка аннотаций',
-                pa.AsInteger() if pa else u'-')
+            log(u'   после блокировки: подрезка', v.CropBoxActive, u'| %.1f x %.1f x %.1f м' % (
+                (cb.Max.X - cb.Min.X) / M, (cb.Max.Y - cb.Min.Y) / M, (cb.Max.Z - cb.Min.Z) / M),
+                u'| подрезка аннотаций', pa.AsInteger() if pa else u'-')
+            try:
+                crsm = v.GetCropRegionShapeManager()
+                log(u'   отступы подрезки аннотаций, мм: л %.0f п %.0f в %.0f н %.0f' % tuple(
+                    getattr(crsm, a) / kvv.MM for a in ('LeftAnnotationCropOffset', 'RightAnnotationCropOffset',
+                                                         'TopAnnotationCropOffset', 'BottomAnnotationCropOffset')))
+                log(u'   контур подрезки:', [u'(%.1f, %.1f, %.1f)' % (c.GetEndPoint(0).X / M, c.GetEndPoint(0).Y / M,
+                                                                   c.GetEndPoint(0).Z / M)
+                                            for c in crsm.GetCropShape()[0]])
+            except Exception as ex:
+                log(u'   отступы подрезки: нет', ex)
+            tr_ = cb.Transform
+            log(u'   оси подрезки: X', tr_.BasisX, u'Y', tr_.BasisY, u'Z', tr_.BasisZ, u'| вид: вправо', v.RightDirection,
+                u'вверх', v.UpDirection, u'взгляд', v.ViewDirection)
+            try:
+                ol = v.Outline
+                log(u'   вид на листе (Outline), мм: %.0f x %.0f' % ((ol.Max.U - ol.Min.U) / kvv.MM,
+                                                                  (ol.Max.V - ol.Min.V) / kvv.MM))
+            except Exception as ex:
+                log(u'   Outline:', ex)
             log(u'схема', nm, u'| трубы, фитинги, арматура своей системы и сантехприборы (полутон)')
 
 

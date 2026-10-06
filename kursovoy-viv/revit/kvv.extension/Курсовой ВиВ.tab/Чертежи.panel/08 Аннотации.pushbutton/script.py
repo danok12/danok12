@@ -90,19 +90,14 @@ def pomescheniya(g, log):
             marka_pom = s_
     log(u'марка помещения:', u'только номер' if marka_pom else u'по умолчанию (нет «Номер» — запустить 02)')
     if marka_pom is not None:
-        # номер без окружности (окружность Ø8 на 1:200 закрывает приборы и трубы в санузлах)
-        nm_ = u'КВВ_Номер без окружности'
-        svoy = None
-        for s_ in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol).OfCategory(DB.BuiltInCategory.OST_RoomTags):
-            if s_.FamilyName == marka_pom.FamilyName and DB.Element.Name.GetValue(s_) == nm_:
-                svoy = s_
-        if svoy is None:
-            svoy = marka_pom.Duplicate(nm_)
-        p = svoy.LookupParameter(u'Окружность')
+        # номер в окружности (как просил пользователь): тип «Номер» с параметром «Окружность» = Да; шрифт в семействе
+        # уменьшен вдвое (umenshit_shrift_marki), окружность — под него
+        p = marka_pom.LookupParameter(u'Окружность')
         if p is not None and not p.IsReadOnly:
-            p.Set(0)
-        marka_pom = svoy
-        log(u'марка помещения:', nm_)
+            p.Set(1)
+        p = marka_pom.LookupParameter(u'Радиус окружности')
+        if p is not None and not p.IsReadOnly:
+            p.Set(R_OKR_POM * kvv.MM)
     for r in g.get('razdeliteli', []):
         u = lv[r['uroven']]
         v = vid(PLANY_UR[r['uroven']][0])
@@ -145,8 +140,64 @@ def pomescheniya(g, log):
     log(u'помещений', n, u'| не замкнуто', nz, u'| марок помещений', nt)
 
 
+R_OKR_POM = 2.6          # радиус окружности номера помещения, мм (номер «02.03.06» шрифтом 1,25 мм — около 4,5 мм)
+
+
+class Zagruzka(DB.IFamilyLoadOptions):
+    def OnFamilyFound(self, familyInUse, overwriteParameterValues):
+        overwriteParameterValues.Value = False
+        return True
+
+    def OnSharedFamilyFound(self, sharedFamily, familyInUse, source, overwriteParameterValues):
+        overwriteParameterValues.Value = False
+        return True
+
+
+def umenshit_shrift_marki(log):
+    """Шрифт номеров помещений — вдвое меньше (по просьбе пользователя: марки занимали слишком много места).
+    Размер текста задан в семействе марки, поэтому семейство правится и перезагружается; повторный запуск не
+    уменьшает ещё раз (уменьшаются только тексты не мельче 2 мм)."""
+    fam = None
+    for s_ in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol).OfCategory(DB.BuiltInCategory.OST_RoomTags):
+        if s_.FamilyName == u'ADSK_Марка_Помещение_ОдноЗначение':
+            fam = s_.Family
+            break
+    if fam is None:
+        log(u'шрифт марок помещений: нет семейства')
+        return
+    fd = doc.EditFamily(fam)
+    try:
+        bylo, stalo = [], []
+        t = DB.Transaction(fd, u'КВВ: шрифт марки помещения')
+        t.Start()
+        for tt in DB.FilteredElementCollector(fd).OfClass(DB.TextElementType):
+            p = tt.get_Parameter(DB.BuiltInParameter.TEXT_SIZE)
+            if p is None or p.IsReadOnly:
+                continue
+            h = p.AsDouble() / kvv.MM
+            bylo.append(round(h, 2))
+            if h >= 2.0 - 1e-6:
+                p.Set(h / 2.0 * kvv.MM)
+                stalo.append(round(h / 2.0, 2))
+        t.Commit()
+        if stalo:
+            fd.LoadFamily(doc, Zagruzka())
+            log(u'шрифт марок помещений уменьшен вдвое:', bylo, u'->', stalo)
+        else:
+            log(u'шрифт марок помещений уже уменьшен:', bylo)
+    finally:
+        try:
+            fd.Close(False)
+        except Exception:
+            pass
+
+
 def main(log):
     g = kvv.load_json('revit', 'geometriya_v3.json')
+    try:
+        umenshit_shrift_marki(log)
+    except Exception as ex:
+        log(u'шрифт марок помещений не изменён:', ex)
     sym = tip_marki(*MARKA_STOYAKA)
     if sym is None:
         log(u'НЕТ типа марки', MARKA_STOYAKA)
