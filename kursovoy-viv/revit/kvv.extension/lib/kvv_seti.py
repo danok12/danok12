@@ -693,3 +693,144 @@ def gibkaya_vstavka(doc, log, x_shov, metka):
     except Exception as ex:
         st.RollBack()
         log(u'гибкая вставка НЕ установлена:', ex)
+
+
+ZAGLUSHKA = (u'ADSK_ППР_Заглушка канализационная', u'Заглушка канализационная')
+REVIZIYA = (u'ADSK_ППР_Ревизия канализационная', u'Ревизия')
+ET_REVIZIY = (1, 4, 7, 10, 11)      # п. 18.28 СП 30: в нижнем и верхнем этажах и не реже чем через три этажа
+Z_REVIZII = 1.0                     # над полом
+
+
+def _metka_trub(t):
+    pr = t.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+    return (pr.AsString() or u'') if pr is not None and pr.HasValue else u''
+
+
+def truba_s_koncom(doc, metka, p, dop=0.005):
+    """Труба системы, у которой конец в точке p (XYZ)."""
+    for t in DB.FilteredElementCollector(doc).OfClass(Plumbing.Pipe):
+        if not _metka_trub(t).startswith(metka):
+            continue
+        c = t.Location.Curve
+        for i in (0, 1):
+            if c.GetEndPoint(i).DistanceTo(p) < dop * M:
+                return t
+    return None
+
+
+def truba_cherez(doc, metka, p, dop=0.005):
+    """Вертикальная труба системы, ось которой проходит через p (XYZ) не ближе 0,15 м к концам."""
+    for t in DB.FilteredElementCollector(doc).OfClass(Plumbing.Pipe):
+        if not _metka_trub(t).startswith(metka):
+            continue
+        c = t.Location.Curve
+        a, b = c.GetEndPoint(0), c.GetEndPoint(1)
+        if abs(a.X - b.X) > 1e-4 or abs(a.Y - b.Y) > 1e-4:
+            continue
+        if math.hypot(a.X - p.X, a.Y - p.Y) > dop * M:
+            continue
+        if min(a.Z, b.Z) + 0.15 * M < p.Z < max(a.Z, b.Z) - 0.15 * M:
+            return t
+    return None
+
+
+def zaglushka(doc, t, log):
+    """Заглушка на свободный конец трубы: сначала семейство ADSK_ППР_Заглушка, иначе — заглушка из правил типа."""
+    sym = kvv.simvol(doc, *ZAGLUSHKA)
+    oshibki = []
+    do = set()
+    for c in t.ConnectorManager.Connectors:
+        for r in c.AllRefs:
+            do.add(r.Owner.Id.IntegerValue)
+    for tid in ([sym.Id] if sym is not None else []) + [DB.ElementId.InvalidElementId]:
+        st = DB.SubTransaction(doc)
+        st.Start()
+        try:
+            Plumbing.PlumbingUtils.PlaceCapOnOpenEnds(doc, t.Id, tid)
+            doc.Regenerate()
+            nov = None
+            for c in t.ConnectorManager.Connectors:
+                for r in c.AllRefs:
+                    o = r.Owner
+                    if o.Id != t.Id and o.Id.IntegerValue not in do and isinstance(o, DB.FamilyInstance):
+                        nov = o
+            if nov is None:
+                raise Exception(u'заглушка не появилась')
+            st.Commit()
+            return nov
+        except Exception as ex:
+            st.RollBack()
+            oshibki.append(unicode(ex))
+    raise Exception(u'; '.join(oshibki))
+
+
+def revizia(doc, t, P, sym, log):
+    """Ревизия в разрыв трубы в точке P: правило муфт типа трубы временно — ревизия, разрыв, муфта."""
+    pt = doc.GetElement(t.GetTypeId())
+    rpm = pt.RoutingPreferenceManager
+    gr = DB.RoutingPreferenceRuleGroupType.Unions
+    if not sym.IsActive:
+        sym.Activate()
+    rpm.AddRule(gr, DB.RoutingPreferenceRule(sym.Id, u'КВВ: ревизия'), 0)
+    try:
+        nid = Plumbing.PlumbingUtils.BreakCurve(doc, t.Id, P)
+        t2 = doc.GetElement(nid)
+        c1, _ = blizhayshiy(t, P)
+        c2, _ = blizhayshiy(t2, P)
+        f = doc.Create.NewUnionFitting(c1, c2)
+    finally:
+        rpm.RemoveRule(gr, 0)
+    if f is None or u'евизи' not in f.Symbol.FamilyName:
+        raise Exception(u'встала не ревизия: %s' % (f.Symbol.FamilyName if f is not None else u'-'))
+    return f
+
+
+def prochistki_revizii(doc, g, log, metka=u'КВВ-К1'):
+    """Прочистки (заглушки в начале горизонтальных участков у оснований стояков) и ревизии на стояках К1."""
+    n_z, n_r, osh = 0, 0, 0
+    for z in g.get('zaglushki', []):
+        p = kvv.xyz(z['x'], z['y'], z['z'])
+        t = truba_s_koncom(doc, metka, p)
+        if t is None:
+            log(u'  прочистка: нет трубы с концом в (%.3f, %.3f, %.3f)' % (z['x'], z['y'], z['z']))
+            continue
+        try:
+            f = zaglushka(doc, t, log)
+            komment(f, metka + u'-Пр')
+            n_z += 1
+            if n_z == 1:
+                log(u'  заглушка:', f.Symbol.FamilyName, u':', DB.Element.Name.GetValue(f.Symbol))
+        except Exception as ex:
+            osh += 1
+            if osh <= 3:
+                log(u'  прочистка не встала (%.3f, %.3f):' % (z['x'], z['y']), ex)
+    sym = kvv.simvol(doc, *REVIZIYA)
+    if sym is None:
+        log(u'нет семейства ревизии', REVIZIYA)
+    else:
+        pt_ = sym.Family.get_Parameter(DB.BuiltInParameter.FAMILY_CONTENT_PART_TYPE)
+        log(u'ревизия: тип детали семейства', pt_.AsValueString() if pt_ else u'?')
+        urovni = dict((int(u['imya'].split()[-1]), u['z']) for u in g['urovni'] if u['imya'].startswith(u'Этаж'))
+        for s_ in g['stoyaki']:
+            if s_['sys'] != u'K1':
+                continue
+            for et in ET_REVIZIY:
+                P = kvv.xyz(s_['x'], s_['y'], urovni[et] + Z_REVIZII)
+                t = truba_cherez(doc, metka, P)
+                if t is None:
+                    osh += 1
+                    log(u'  ревизия: нет трубы стояка', s_['imya'], u'этаж', et)
+                    continue
+                st = DB.SubTransaction(doc)
+                st.Start()
+                try:
+                    f = revizia(doc, t, P, sym, log)
+                    komment(f, metka + u'-R')
+                    st.Commit()
+                    n_r += 1
+                except Exception as ex:
+                    st.RollBack()
+                    osh += 1
+                    if osh <= 5:
+                        log(u'  ревизия не встала:', s_['imya'], u'этаж', et, ex)
+    log(u'прочисток', n_z, u'из', len(g.get('zaglushki', [])), u'| ревизий', n_r, u'| не встало', osh)

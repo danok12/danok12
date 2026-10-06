@@ -701,10 +701,42 @@ for i, nm in enumerate(vostok):
         troynik(prev_end, (r, 0), (otvetvlenie(vostok[i - 1]), 0))
     prev_end = (r, 1)
     x_prev = x
-svyaz(prev_end, (otvetvlenie(vostok[-1]), 0))
+# поливочные краны (СП 30.13330.2020, п. 5.4.4: в нишах наружных стен, по одному на 60–70 м периметра; периметр
+# здания ~117 м — два крана, по одному на торце каждой секции): врезка в магистраль у торца, подводка к торцевой
+# стене, подъём до +0,500 и выход через стену — кран водоразборный на фасаде
+X_POL = 1.0                             # врезка — в 1 м от оси торцевой стены (до ответвления к крайнему стояку)
+Z_POL = 0.5
+DN_POL = 25                             # кран VALTEC VT.051 — патрубок 1"
+krany_pol = []
+
+
+def polivochnyy(M_, x_t):
+    sx = M_.sx()
+    x_in = M_.x(0.25)                    # у внутренней грани торцевой стены (0,20)
+    x_nar = M_.x(-E - 0.26)              # наружная грань
+    y_k = Y_MAG + 0.5
+    r = truba("V1", "stal", DN_POL, [(x_t, Y_MAG, Z_MAG), (x_t, y_k, Z_MAG), (x_in, y_k, Z_MAG), (x_in, y_k, Z_POL),
+                                     (x_nar, y_k, Z_POL)], UR_P)
+    aid = len(armatura)
+    armatura.append(dict(id=aid, key="kran_pol", fam="VALTEC_VT.051.N_Кран поливочный", tip="VT.051",
+                         x=round(x_nar, 4), y=round(y_k, 4), z=Z_POL, th=0.0 if sx > 0 else 180.0, ur=UR_P))
+    svyaz((r, 1), dict(arm=aid, side="in"))
+    krany_pol.append(dict(sek=M_.s, x=round(x_nar, 3), y=round(y_k, 3), z=Z_POL))
+    return r
+
+
+# восточный конец магистрали (секция 2): последний участок — до врезки, после врезки — к стояку
+r_last = prev_end[0]
+x_pol2 = SEKCII[-1].x(X_POL)
+seti[r_last]["pts"][-1] = R((x_pol2, Y_MAG, Z_MAG))
+r_e2 = truba("V1", "stal", seti[r_last]["d"], [(x_pol2, Y_MAG, Z_MAG), (x_st[vostok[-1]], Y_MAG, Z_MAG)], UR_P)
+troynik((r_last, 1), (r_e2, 0), (polivochnyy(SEKCII[-1], x_pol2), 0))
+svyaz((r_e2, 1), (otvetvlenie(vostok[-1]), 0))
 nm_z = zapad[0]
-r_zap = truba("V1", "stal", dn_mag(podvod[nm_z][4]), [(X_TR, Y_MAG, Z_MAG), (x_st[nm_z], Y_MAG, Z_MAG)], UR_P)
-svyaz((r_zap, 1), (otvetvlenie(nm_z), 0))
+r_zap = truba("V1", "stal", dn_mag(podvod[nm_z][4]), [(X_TR, Y_MAG, Z_MAG), (X_POL, Y_MAG, Z_MAG)], UR_P)
+r_zap2 = truba("V1", "stal", dn_mag(podvod[nm_z][4]), [(X_POL, Y_MAG, Z_MAG), (x_st[nm_z], Y_MAG, Z_MAG)], UR_P)
+troynik((r_zap, 1), (r_zap2, 0), (polivochnyy(SEKCII[0], X_POL), 0))
+svyaz((r_zap2, 1), (otvetvlenie(nm_z), 0))
 
 nas = json.load(open(os.path.join(HERE, "..", "calc", "nasos_v3.json"), encoding="utf-8"))
 XP, YP = 5.0, 4.0                       # установка COR-2 (соединители коллекторов на локальной -X)
@@ -761,9 +793,25 @@ def put_z(tochki, z_konec):
     return [(x, y, z_konec + I_VN * (L_[-1] - l)) for (x, y), l in zip(tochki, L_)]
 
 
+L_PR = 0.45                             # отрезок за косым тройником против течения — к заглушке-прочистке
+zaglushki = []
+
+
 def niz_stoyaka(x, y, plan):
+    """Низ стояка К1: вертикаль, отвод 45° и косой тройник 45° на горизонтальном участке (п. 18.4–18.5 СП 30);
+    за тройником против течения — короткий отрезок с заглушкой: прочистка «Пр.» в начале горизонтального участка
+    (п. 18.28 СП 30, как в образце). Возвращает (труба от стояка до тройника, горизонтальный участок от тройника)."""
     (x1, y1, z1) = plan[0]
-    return [(x, y, Z_PP), (x, y, z1 + D45)] + plan
+    ux, uy = plan[1][0] - x1, plan[1][1] - y1
+    L_ = math.hypot(ux, uy)
+    ux, uy = ux / L_, uy / L_
+    r_v = truba("K1", "sml", 100, [(x, y, Z_PP), (x, y, z1 + D45), (x1, y1, z1)], UR_P)
+    p_pr = (x1 - ux * L_PR, y1 - uy * L_PR, z1 + I_VN * L_PR)
+    r_pr = truba("K1", "sml", 100, [p_pr, (x1, y1, z1)], UR_P)
+    r_g = truba("K1", "sml", 100, plan, UR_P)
+    troynik((r_pr, 1), (r_g, 0), (r_v, 1))
+    zaglushki.append(dict(r=r_pr, end=0, x=round(p_pr[0], 3), y=round(p_pr[1], 3), z=round(p_pr[2], 3)))
+    return r_v, r_g
 
 
 vypuski = []
@@ -772,20 +820,19 @@ for M in SEKCII:
     (xA, yA), (xB, yB), (xC, yC) = [(M.x(ST_K[kv][0]), ST_K[kv][1]) for kv in "ABC"]
     z_vyp = lambda y: LOT_ST + R110 + I_VN * (Y_ST_D - y)          # noqa: E731
     y_tr = Y_SB + 0.3
-    r_vy1 = truba("K1", "sml", 100, niz_stoyaka(xA, yA, [(xA, yA + D45, z_vyp(yA + D45)), (xA, y_tr, z_vyp(y_tr))]),
-                  UR_P)
+    r_vA, r_vy1 = niz_stoyaka(xA, yA, [(xA, yA + D45, z_vyp(yA + D45)), (xA, y_tr, z_vyp(y_tr))])
     r_vy2 = truba("K1", "sml", 100, [(xA, y_tr, z_vyp(y_tr)), (xA, Y_ST_D + 1.0, z_vyp(Y_ST_D + 1.0))], UR_P)
     vypuski.append(dict(sek=M.s, x=round(xA, 3), y_stena=round(Y_ST_D, 3), lotok=round(LOT_ST, 3)))
     trassa = [(xC, yC + D45), (xC, Y_SB - 0.15), (xC - 0.15 * sx, Y_SB), (xB - 0.3 * sx, Y_SB),
               (xA + 0.3 * sx, Y_SB), (xA, y_tr)]
     pz = put_z(trassa, z_vyp(y_tr))
-    r_sb1 = truba("K1", "sml", 100, niz_stoyaka(xC, yC, pz[:4]), UR_P)
+    r_vC, r_sb1 = niz_stoyaka(xC, yC, pz[:4])
     r_sb2 = truba("K1", "sml", 100, pz[3:], UR_P)
     troynik((r_vy1, 1), (r_vy2, 0), (r_sb2, 1))
     t2 = put_z([(xB, yB + D45), (xB, Y_SB - 0.3), (xB - 0.3 * sx, Y_SB)], pz[3][2])
-    r_st2 = truba("K1", "sml", 100, niz_stoyaka(xB, yB, t2), UR_P)
+    r_vB, r_st2 = niz_stoyaka(xB, yB, t2)
     troynik((r_sb1, 1), (r_sb2, 0), (r_st2, 1))
-    for kv, (x, y), r_niz in (("A", (xA, yA), r_vy1), ("B", (xB, yB), r_st2), ("C", (xC, yC), r_sb1)):
+    for kv, (x, y), r_niz in (("A", (xA, yA), r_vA), ("B", (xB, yB), r_vB), ("C", (xC, yC), r_vC)):
         imya = "Ст.К1-%d" % NOM[(M.s, kv)]
         runs = stoyak(imya, "K1", x, y, st[M.s]["k" + kv], Z_PP, Z_KR + VYTYAZHKA, ur_po_z,
                       lambda i, n: 110, "pp")
@@ -1207,12 +1254,14 @@ trassa_v3 = dict(stoyaki_v1={nm: [round(v[0], 3), v[1], round(v[5], 3)] for nm, 
                  magistral=uchastki_mag,
                  x_troynik=X_TR, y_mag=Y_MAG, z_mag=Z_MAG, vypuski=vypuski, l_nap=L_NAP, n_vse=N_VSE,
                  zerkalo=ZERK, x_shov=round(L_SEK + DSH / 2, 3),
-                 stoyaki_k1={s["imya"]: [s["x"], s["y"]] for s in stoyaki if s["sys"] == "K1"})
+                 stoyaki_k1={s["imya"]: [s["x"], s["y"]] for s in stoyaki if s["sys"] == "K1"},
+                 krany_pol=krany_pol, zaglushki=zaglushki)
 json.dump(trassa_v3, open(os.path.join(HERE, "..", "calc", "trassa_v3.json"), "w", encoding="utf-8"),
           ensure_ascii=False, indent=1)
 
 geo = dict(pomescheniya=pomescheniya, razdeliteli=razdeliteli, pribory=pribory, seti=seti, troyniki=troyniki, kresty=kresty, armatura=armatura, svyazi=svyazi,
            mufty=mufty, stoyaki=stoyaki, oborud=oborud, dveri=dveri, lestnicy=lestnicy,
+           zaglushki=zaglushki, krany_pol=krany_pol,
            sistemy=dict(V1="ADSK_Водопровод_В1", K1="ADSK_Канализация_К1"),
            tipy_trub=dict(stal="ADSK_Сталь водогазопроводная_Оцинкованная_ГОСТ 3262-75",
                           pp="ADSK_Полипропилен раструбный_ГОСТ 32414-2013",

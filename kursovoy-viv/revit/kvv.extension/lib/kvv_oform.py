@@ -478,7 +478,7 @@ def otmetki_stoyakov(doc, g, ot, sist, log):
                 ot.postavit(t, DB.XYZ(x * M, y * M, verh * M), storona * 1.6, 0.35)
 
 
-def oformit_plan(doc, v, sist, tipy, tnt, zan, vvody, vypuski, tr, log):
+def oformit_plan(doc, g, v, sist, tipy, tnt, zan, vvody, vypuski, tr, log):
     """План: размеры по осям, марки ввода/выпусков и выноски (подвал), марки диаметров."""
     podval = v.GenLevel.Elevation < -1e-6
     razmery_osey(doc, v, log)
@@ -500,7 +500,9 @@ def oformit_plan(doc, v, sist, tipy, tnt, zan, vvody, vypuski, tr, log):
             if metka(e).startswith(u'КВВ-О'):
                 vynoska(doc, v, tnt, NASOS + u'\r' + u'Wilo ' + DB.Element.Name.GetValue(e.Symbol),
                         e.Location.Point, 0, 0, log, gol=DB.XYZ(8.6 * M, -4.75 * M, 0))
+        krany_podpisi(doc, v, tnt, g, tr, None, log)
     if podval and sist == u'К1':
+        prochistki_revizii_podpisi(doc, v, tnt, tr, True, log)
         for t in vypuski:
             p = tochka_na_y(t, 13.12 + 0.6)
             marka_s_vynoskoy(doc, v, tipy['vypusk'], t, p, 1.2 if p.X < 23 * M else -1.2, 0.9, log, zan)
@@ -532,7 +534,9 @@ def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
             if metka(e).startswith(u'КВВ-О'):
                 vynoska(doc, v, tnt, NASOS + u'\r' + u'Wilo ' + DB.Element.Name.GetValue(e.Symbol),
                         e.Location.Point, -4.0, -1.6, log)
+        krany_podpisi(doc, v, tnt, g, tr, ot, log)
     else:
+        prochistki_revizii_podpisi(doc, v, tnt, tr, False, log)
         for t in vypuski:
             p = tochka_na_y(t, 13.12)
             ot.postavit(t, p, 1.2, 0.5, lotok=True)
@@ -572,7 +576,7 @@ def oformit_vse(doc, g, tr, plany, shemy, tip_marki_stoyaka, log):
             zan.dobavit(p.X, p.Y, 0.4 * k * M, 0.12 * k * M)
         sist = u'В1' if nm.startswith(u'В1') else u'К1'
         try:
-            oformit_plan(doc, v, sist, tipy, tnt, zan, vvody, vypuski, tr, log)
+            oformit_plan(doc, g, v, sist, tipy, tnt, zan, vvody, vypuski, tr, log)
         except Exception:
             import traceback
             log(u'  ОШИБКА оформления плана', nm, traceback.format_exc())
@@ -585,3 +589,74 @@ def oformit_vse(doc, g, tr, plany, shemy, tip_marki_stoyaka, log):
         except Exception:
             import traceback
             log(u'  ОШИБКА оформления схемы', nm, traceback.format_exc())
+
+
+KRAN_POL = u'Кран водоразборный\rсо штуцером 1"'
+
+
+def elementy_s_metkoy(doc, kat, tochno):
+    return [e for e in DB.FilteredElementCollector(doc).OfCategory(kat).WhereElementIsNotElementType()
+            if metka(e) == tochno]
+
+
+def tochka_elementa(e):
+    loc = e.Location
+    if isinstance(loc, DB.LocationPoint):
+        return loc.Point
+    bb = e.get_BoundingBox(None)
+    return (bb.Min + bb.Max).Multiply(0.5)
+
+
+def storona_stoyaka(x, zerk):
+    """В сторону от соседнего стояка: кв. А и Б — к торцу (влево в секции 1), кв. В — вправо; секция 2 зеркально."""
+    sek2 = x > zerk / 2
+    xl = zerk - x if sek2 else x
+    s_ = -1 if xl < 15.7 else 1
+    return -s_ if sek2 else s_
+
+
+def prochistki_revizii_podpisi(doc, v, tnt, tr, plan, log):
+    """«Пр.» у заглушек-прочисток (план подвала К1 и схема К1), «R» у ревизий (схема К1)."""
+    zerk = tr.get('zerkalo', 45.45)
+    n = 0
+    for e in elementy_s_metkoy(doc, DB.BuiltInCategory.OST_PipeFitting, u'КВВ-К1-Пр'):
+        p = tochka_elementa(e)
+        s_ = storona_stoyaka(p.X / M, zerk)
+        if vynoska(doc, v, tnt, u'Пр.', p, 1.0 * s_, -0.8, log) is not None:
+            n += 1
+    if not plan:
+        for e in elementy_s_metkoy(doc, DB.BuiltInCategory.OST_PipeFitting, u'КВВ-К1-R'):
+            p = tochka_elementa(e)
+            s_ = storona_stoyaka(p.X / M, zerk)
+            if p.X / M < 1.0 or p.X / M > zerk - 1.0:
+                s_ = -s_                     # у крайних стояков снаружи — отметки этажей
+            if vynoska(doc, v, tnt, u'R', p, 0.8 * s_, 0.35, log) is not None:
+                n += 1
+    log(u'  подписей «Пр.» и «R» на', v.Name, n)
+
+
+def krany_podpisi(doc, v, tnt, g, tr, ot, log):
+    """«Кран водоразборный со штуцером 1"» у поливочных кранов: на плане подвала В1 — выноской над планом,
+    на схеме — выноской и отметкой +0.500."""
+    zerk = tr.get('zerkalo', 45.45)
+    for k_ in g.get('krany_pol', []):
+        p = DB.XYZ(k_['x'] * M, k_['y'] * M, k_['z'] * M)
+        lev = k_['x'] < zerk / 2
+        if ot is None:
+            # план подвала: подъём к крану у внутренней грани торцевой стены
+            p_pod = DB.XYZ((0.25 if lev else zerk - 0.25) * M, k_['y'] * M, -0.6 * M)
+            gol = DB.XYZ((-3.6 if lev else zerk + 3.6) * M, 14.9 * M, 0)
+            vynoska(doc, v, tnt, KRAN_POL, p_pod, -1.0 if not lev else 1.0, 0, log, gol=gol)
+        else:
+            vynoska(doc, v, tnt, KRAN_POL, p, -3.0 if lev else 3.0, 1.2, log)
+            t = None
+            for tt in truby_sistemy(doc, u'КВВ-В1'):
+                a, b = koncy(tt)
+                if min(a.DistanceTo(p), b.DistanceTo(p)) < 0.005 * M:
+                    t = tt
+                    break
+            if t is not None:
+                a, b = koncy(t)
+                kon, dr = (a, b) if a.DistanceTo(p) < b.DistanceTo(p) else (b, a)
+                q = kon + (dr - kon).Normalize().Multiply(0.15 * M)
+                ot.postavit(t, q, -1.2 if lev else 1.2, -0.6)
