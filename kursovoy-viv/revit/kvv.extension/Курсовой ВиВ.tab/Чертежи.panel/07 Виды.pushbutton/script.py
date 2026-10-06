@@ -46,7 +46,7 @@ def tip_vida(nm, semeystvo):
 
 VIDNO_NA_SHEME = (DB.BuiltInCategory.OST_PipeCurves, DB.BuiltInCategory.OST_PipeFitting,
                   DB.BuiltInCategory.OST_PipeAccessory, DB.BuiltInCategory.OST_MechanicalEquipment,
-                  DB.BuiltInCategory.OST_PlumbingFixtures)
+                  DB.BuiltInCategory.OST_PlumbingFixtures, DB.BuiltInCategory.OST_GenericModel)   # + фундамент установки
 
 
 def tolko_sistema(v, metka_svoya, log):
@@ -81,7 +81,7 @@ def tolko_sistema(v, metka_svoya, log):
             continue
         s_ = p.AsString() or u''
         chuzhoe = (s_.startswith(u'КВВ-В1') or s_.startswith(u'КВВ-К1')) and not s_.startswith(metka_svoya)
-        if metka_svoya == u'КВВ-К1' and s_.startswith(u'КВВ-О'):       # насосная установка — только на схеме В1
+        if metka_svoya == u'КВВ-К1' and (s_.startswith(u'КВВ-О') or s_.startswith(u'КВВ-Ф')):   # установка — только на В1
             chuzhoe = True
         if chuzhoe and e.CanBeHidden(v):
             chuzhie.append(e.Id)

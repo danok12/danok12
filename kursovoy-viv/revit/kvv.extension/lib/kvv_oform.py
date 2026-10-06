@@ -61,14 +61,18 @@ def ochistit(doc, vidy, tipy_marok, log):
     for m in DB.FilteredElementCollector(doc).OfClass(DB.IndependentTag):
         if m.GetTypeId().IntegerValue in tipy:
             ud.add(m.Id.IntegerValue)
-    if tt is not None:
-        for tn in DB.FilteredElementCollector(doc).OfClass(DB.TextNote):
-            if tn.GetTypeId() == tt.Id:
-                ud.add(tn.Id.IntegerValue)
+    tipy_teksta = set(t.Id.IntegerValue for t in (tt, kvv.po_imeni(doc, DB.TextNoteType, u'КВВ_Расчётная точка'))
+                      if t is not None)
+    for tn in DB.FilteredElementCollector(doc).OfClass(DB.TextNote):
+        if tn.GetTypeId().IntegerValue in tipy_teksta:
+            ud.add(tn.Id.IntegerValue)
     for v in vidy:
         for e in DB.FilteredElementCollector(doc, v.Id).OfClass(DB.Dimension):
             if e.OwnerViewId == v.Id:
                 ud.add(e.Id.IntegerValue)
+        for e in DB.FilteredElementCollector(doc, v.Id).OfClass(DB.CurveElement):
+            if isinstance(e, DB.DetailCurve) and e.OwnerViewId == v.Id:
+                ud.add(e.Id.IntegerValue)                  # опорные линии привязок стояков
         for e in DB.FilteredElementCollector(doc, v.Id).OfCategory(DB.BuiltInCategory.OST_SpotElevations)                 .WhereElementIsNotElementType():
             if e.OwnerViewId == v.Id:
                 ud.add(e.Id.IntegerValue)
@@ -326,14 +330,8 @@ class Otmetki(object):
         self.tnt, self.posl, self.tip_lotka = None, None, None
 
     def podpis(self, sd, tekst):
-        """Подпись под полкой отметки («2 этаж»): сначала свойством Below, иначе текстом под полкой."""
-        try:
-            sd.Below = tekst
-            self.sposob[u'below'] = self.sposob.get(u'below', 0) + 1
-            return
-        except Exception as ex:
-            if u'below_err' not in self.sposob:
-                self.sposob[u'below_err'] = unicode(ex)[:60]
+        """Подпись под полкой отметки («2 этаж», как в образце) — текстом под полкой: свойство Below отметки
+        задаётся, но на листе типом отметки ADSK не выводится."""
         if self.tnt is None or self.posl is None:
             return
         bend, end = self.posl
@@ -345,6 +343,7 @@ class Otmetki(object):
         opt.HorizontalAlignment = DB.HorizontalTextAlignment.Left
         try:
             DB.TextNote.Create(self.doc, v.Id, x0 - u.Multiply(0.12 * k * M), tekst, opt)
+            self.sposob[u'этаж'] = self.sposob.get(u'этаж', 0) + 1
         except Exception as ex:
             self.log(u'  подпись этажа не встала:', ex)
 
@@ -513,6 +512,9 @@ def oformit_plan(doc, g, v, sist, tipy, tnt, zan, vvody, vypuski, tr, log):
                 vynoska(doc, v, tnt, NASOS + u'\r' + u'Wilo ' + DB.Element.Name.GetValue(e.Symbol),
                         e.Location.Point, 0, 0, log, gol=DB.XYZ(8.6 * M, -4.75 * M, 0))
         krany_podpisi(doc, v, tnt, g, tr, None, log)
+        podpis_fundamenta(doc, v, tnt, log)
+    if podval:
+        privyazki_stoyakov(doc, v, g, sist, log)
     if podval and sist == u'К1':
         prochistki_revizii_podpisi(doc, v, tnt, tr, True, log)
         for t in vypuski:
@@ -547,6 +549,7 @@ def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
                 vynoska(doc, v, tnt, NASOS + u'\r' + u'Wilo ' + DB.Element.Name.GetValue(e.Symbol),
                         e.Location.Point, 2.5, 0.6, log)
         krany_podpisi(doc, v, tnt, g, tr, ot, log)
+        raschetnye_tochki(doc, g, kvv.load_json('calc', 'rezultaty_v3.json'), tr, v, tnt, log)
     else:
         prochistki_revizii_podpisi(doc, v, tnt, tr, False, log)
         for t in vypuski:
@@ -692,3 +695,200 @@ def krany_podpisi(doc, v, tnt, g, tr, ot, log):
                 kon, dr = (a, b) if a.DistanceTo(p) < b.DistanceTo(p) else (b, a)
                 q = kon + (dr - kon).Normalize().Multiply(0.15 * M)
                 ot.postavit(t, q, -1.2 if lev else 1.2, -0.6)
+
+
+TEKST_TOCHKI = u'КВВ_Расчётная точка'
+
+
+def tip_teksta_tochek(doc, tnt, log):
+    """Красный текст номеров расчётных точек (как в образце)."""
+    t = kvv.po_imeni(doc, DB.TextNoteType, TEKST_TOCHKI)
+    if t is None:
+        t = tnt.Duplicate(TEKST_TOCHKI)
+        t.get_Parameter(DB.BuiltInParameter.LINE_COLOR).Set(255)          # красный: R + 256·G + 65536·B
+        log(u'создан тип текста', TEKST_TOCHKI)
+    return t
+
+
+def _put_razvodki(g, x, y, zt, priemnik):
+    """Путь по трубам В1 (из geometriya_v3.json) от тройника стояка (x, y, zt) до соединителя прибора: список точек."""
+    import heapq
+    uzly, rebra = {}, {}
+
+    def uz(p):
+        k = (round(p[0], 3), round(p[1], 3), round(p[2], 3))
+        uzly[k] = p
+        return k
+
+    def reb(a, b):
+        d = math.sqrt(sum((a[i] - b[i]) ** 2 for i in range(3)))
+        rebra.setdefault(a, []).append((b, d))
+        rebra.setdefault(b, []).append((a, d))
+    koncy_ = []
+    for r in g['seti']:
+        if r['sys'] != u'V1':
+            continue
+        ks = [uz(p) for p in r['pts']]
+        for a, b in zip(ks[:-1], ks[1:]):
+            reb(a, b)
+        koncy_ += [ks[0], ks[-1]]
+    # концы, разделённые арматурой или тройником (до 0,15 м), — связаны
+    for i in range(len(koncy_)):
+        for j in range(i + 1, len(koncy_)):
+            a, b = koncy_[i], koncy_[j]
+            if a != b and abs(a[2] - b[2]) < 0.2 and abs(a[0] - b[0]) < 0.16 and abs(a[1] - b[1]) < 0.16:
+                d = math.sqrt(sum((a[k] - b[k]) ** 2 for k in range(3)))
+                if d < 0.16:
+                    reb(a, b)
+
+    def blizh(p):
+        return min(uzly.keys(), key=lambda k: sum((k[i] - p[i]) ** 2 for i in range(3)))
+    s0, s1 = blizh((x, y, zt)), blizh(priemnik)
+    dist, prev, och = {s0: 0.0}, {}, [(0.0, s0)]
+    while och:
+        d, u_ = heapq.heappop(och)
+        if u_ == s1:
+            break
+        if d > dist.get(u_, 1e9):
+            continue
+        for w, dw in rebra.get(u_, []):
+            if d + dw < dist.get(w, 1e9):
+                dist[w], prev[w] = d + dw, u_
+                heapq.heappush(och, (d + dw, w))
+    if s1 not in dist:
+        return None
+    put = [s1]
+    while put[-1] != s0:
+        put.append(prev[put[-1]])
+    return put                                       # от прибора к стояку
+
+
+def _tochka_na_puti(put, l_):
+    """Точка на ломаной на расстоянии l_ от её начала."""
+    acc = 0.0
+    for a, b in zip(put[:-1], put[1:]):
+        d = math.sqrt(sum((a[i] - b[i]) ** 2 for i in range(3)))
+        if acc + d >= l_ and d > 0:
+            t = (l_ - acc) / d
+            return tuple(a[i] + (b[i] - a[i]) * t for i in range(3))
+        acc += d
+    return put[-1]
+
+
+def raschetnye_tochki(doc, g, rez, tr, v, tnt, log):
+    """Номера расчётных точек диктующего направления на схеме В1 (красным, как в образце): 1…3 — квартирная разводка
+    верхнего этажа от диктующего прибора, 4…14 — тройники стояка, 15…20 — магистраль, «НС» — насосная установка.
+    Номера совпадают с участками таблицы гидравлического расчёта (RASCHET_V3.md)."""
+    tt = tip_teksta_tochek(doc, tnt, log)
+    st = [s_ for s_ in g['stoyaki'] if s_['imya'] == rez['st_dikt'] and s_['sys'] == u'V1']
+    if not st:
+        log(u'  расчётные точки: нет стояка', rez['st_dikt'])
+        return
+    st = st[0]
+    x, y = st['x'], st['y']
+    zs = [g['seti'][rid]['pts'][-1][2] for rid in st['runs']]
+    k = v.Scale / 100.0
+    r, u = napravleniya(v)
+    tochki = {}
+    # 4…14 — тройники ответвлений стояка сверху вниз
+    for n in range(4, 4 + len(zs)):
+        tochki[n] = (x, y, zs[-(n - 3)])
+    # 15 — тройник магистрали у стояка, 16…20 — узлы магистрали к насосной (из названий участков расчёта)
+    x_b = tr['stoyaki_v1'][rez['st_dikt']][2]
+    n15 = 4 + len(zs)
+    tochki[n15] = (x_b, tr['y_mag'], tr['z_mag'])
+    for u_ in rez['v1']:
+        im = u_['imya']
+        if im.startswith(u'магистраль x ='):
+            a, b = [float(c.replace(u',', u'.')) for c in im.split(u'=')[1].replace(u'…', u' ').split()]
+            tochki[u_['n'] + 1] = (min(a, b), tr['y_mag'], tr['z_mag'])
+    # 1…3 — квартирная разводка верхнего этажа: от диктующего прибора (ванна, смеситель — холодная) к стояку
+    zt = zs[-1]
+    vanny = [p for p in g['pribory'] if p['key'] == u'vanna' and p['soed'].get('cold')
+             and abs(p['soed']['cold'][2] - zt) < 3.0]
+    if vanny:
+        pr = min(vanny, key=lambda p: (p['soed']['cold'][0] - x) ** 2 + (p['soed']['cold'][1] - y) ** 2)
+        put = _put_razvodki(g, x, y, zt, tuple(pr['soed']['cold']))
+        if put:
+            dl = [u_['L'] for u_ in rez['v1'] if u_['imya'] == u'кв. разводка']
+            tochki[1] = put[0]
+            if len(dl) >= 2:
+                tochki[2] = _tochka_na_puti(put, dl[0])
+                tochki[3] = _tochka_na_puti(put, dl[0] + dl[1])
+    opt = DB.TextNoteOptions(tt.Id)
+    opt.HorizontalAlignment = DB.HorizontalTextAlignment.Right
+    n_ = 0
+    for n, p in sorted(tochki.items()):
+        P = DB.XYZ(p[0] * M, p[1] * M, p[2] * M)
+        if 4 <= n <= 3 + len(zs):
+            sm = - r.Multiply(0.25 * k * M) - u.Multiply(0.15 * k * M)          # у тройника стояка — слева снизу
+        elif n >= n15:
+            sm = u.Multiply(0.55 * k * M) - r.Multiply(0.1 * k * M)              # над магистралью
+        else:
+            sm = u.Multiply(0.5 * k * M) - r.Multiply(0.1 * k * M)
+        try:
+            DB.TextNote.Create(doc, v.Id, P + sm, unicode(n), opt)
+            n_ += 1
+        except Exception as ex:
+            log(u'  точка', n, u'не встала:', ex)
+    # «НС» — насосная установка
+    for e in DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_MechanicalEquipment) \
+            .WhereElementIsNotElementType():
+        if metka(e).startswith(u'КВВ-О'):
+            DB.TextNote.Create(doc, v.Id, e.Location.Point + u.Multiply(0.9 * k * M) - r.Multiply(0.3 * k * M),
+                               u'НС', opt)
+            n_ += 1
+    log(u'  расчётных точек на', v.Name, n_, u'(стояк', rez['st_dikt'], u')')
+
+
+def podpis_fundamenta(doc, v, tnt, log, zan=None):
+    """«Фундамент ВК / …х…х270(h)» с выноской — как в образце (на плане подвала В1)."""
+    for f in DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_GenericModel) \
+            .WhereElementIsNotElementType():
+        if metka(f) != u'КВВ-Ф':
+            continue
+        bb = f.get_BoundingBox(None)
+        dx, dy = round((bb.Max.X - bb.Min.X) / MM), round((bb.Max.Y - bb.Min.Y) / MM)
+        dz = round((bb.Max.Z - bb.Min.Z) / MM)
+        ugol = DB.XYZ(bb.Max.X, bb.Min.Y, bb.Max.Z)
+        tekst = u'Фундамент ВК\r%dх%dх%d(h)' % (dx, dy, dz)
+        if isinstance(v, DB.View3D):
+            vynoska(doc, v, tnt, tekst, ugol, 2.5, -2.4, log)
+        else:
+            vynoska(doc, v, tnt, tekst, ugol, 0, 0, log, gol=DB.XYZ(7.0 * M, 1.7 * M, 0))     # в соседнем помещении
+        return
+
+
+def privyazki_stoyakov(doc, v, g, sist, log):
+    """Привязки стояков к ближайшим осям на плане подвала (как в образце — размеры от осей до стояков): по X у каждого
+    стояка — от ближайшей оси; по Y — одна привязка ряда стояков к оси В. Опорные линии — невидимые линии детализации
+    в центрах стояков."""
+    osi = list(DB.FilteredElementCollector(doc).OfClass(DB.Grid))
+    ver = [gr for gr in osi if abs(gr.Curve.Direction.Y) > 0.9]
+    gor = [gr for gr in osi if abs(gr.Curve.Direction.X) > 0.9]
+    nevid = None
+    for gs in DB.FilteredElementCollector(doc).OfClass(DB.GraphicsStyle):
+        if gs.GraphicsStyleCategory is not None and gs.GraphicsStyleCategory.Name in (u'<Невидимые линии>',
+                                                                                         u'<Invisible lines>'):
+            nevid = gs
+    zl = v.GenLevel.Elevation
+    k = v.Scale / 100.0
+    n = 0
+    stoyaki = [s_ for s_ in g['stoyaki'] if s_['sys'] == (u'V1' if sist == u'В1' else u'K1')]
+    for s_ in stoyaki:
+        x, y = s_['x'] * M, s_['y'] * M
+        gx = min(ver, key=lambda gr: abs(gr.Curve.GetEndPoint(0).X - x))
+        try:
+            ln = doc.Create.NewDetailCurve(v, DB.Line.CreateBound(DB.XYZ(x, y - 0.3 * M, zl), DB.XYZ(x, y + 0.3 * M, zl)))
+            if nevid is not None:
+                ln.LineStyle = nevid
+            ra = DB.ReferenceArray()
+            ra.Append(DB.Reference(gx))
+            ra.Append(ln.GeometryCurve.Reference)
+            # размерная линия — между стояком и осью, ниже стояка на 1,0·k м (вне санузлов и марок)
+            yd = y - 1.0 * k * M if y < 6.8 * M else y + 1.0 * k * M
+            d = doc.Create.NewDimension(v, DB.Line.CreateBound(DB.XYZ(0, yd, zl), DB.XYZ(M, yd, zl)), ra)
+            n += 1
+        except Exception as ex:
+            log(u'  привязка стояка не встала:', s_['imya'], ex)
+    log(u'  привязок стояков на', v.Name, n)

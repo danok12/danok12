@@ -834,3 +834,47 @@ def prochistki_revizii(doc, g, log, metka=u'КВВ-К1'):
                     if osh <= 5:
                         log(u'  ревизия не встала:', s_['imya'], u'этаж', et, ex)
     log(u'прочисток', n_z, u'из', len(g.get('zaglushki', [])), u'| ревизий', n_r, u'| не встало', osh)
+
+
+Z_FUND = 0.27                       # высота фундамента под насосной установкой (как в образце: 1000х1500х270(h))
+ZAPAS_FUND = 0.10                   # фундамент шире установки на 100 мм с каждой стороны
+
+
+def fundament_nasosa(doc, log):
+    """Насосная установка — на бетонном фундаменте (как в образце: «Фундамент ВК …х…х270(h)»): установка
+    поднимается на 270 мм, под ней — блок фундамента (DirectShape, «Обобщённые модели», метка КВВ-Ф) по габариту
+    установки с запасом 100 мм, размеры кратны 50 мм. Возвращает (длина, ширина) фундамента, мм."""
+    nas = po_metke(doc, u'КВВ-О')
+    if not nas:
+        log(u'фундамент: нет насосной установки')
+        return None
+    e = nas[0]
+    p = e.get_Parameter(DB.BuiltInParameter.INSTANCE_ELEVATION_PARAM)
+    if p is not None and not p.IsReadOnly and abs(p.AsDouble() - Z_FUND * M) > 1e-6:
+        p.Set(Z_FUND * M)
+    doc.Regenerate()
+    for f in po_metke(doc, u'КВВ-Ф'):
+        doc.Delete(f.Id)
+    bb = e.get_BoundingBox(None)
+    lv = doc.GetElement(e.LevelId)
+    z0 = lv.Elevation
+
+    def kr50(v):
+        return math.ceil(v / (0.05 * M) - 1e-9) * 0.05 * M
+    dx = kr50(bb.Max.X - bb.Min.X + 2 * ZAPAS_FUND * M)
+    dy = kr50(bb.Max.Y - bb.Min.Y + 2 * ZAPAS_FUND * M)
+    cx, cy = (bb.Min.X + bb.Max.X) / 2, (bb.Min.Y + bb.Max.Y) / 2
+    pts = [DB.XYZ(cx - dx / 2, cy - dy / 2, z0), DB.XYZ(cx + dx / 2, cy - dy / 2, z0),
+           DB.XYZ(cx + dx / 2, cy + dy / 2, z0), DB.XYZ(cx - dx / 2, cy + dy / 2, z0)]
+    loop = DB.CurveLoop()
+    for a, b in zip(pts, pts[1:] + pts[:1]):
+        loop.Append(DB.Line.CreateBound(a, b))
+    solid = DB.GeometryCreationUtilities.CreateExtrusionGeometry(List[DB.CurveLoop]([loop]), DB.XYZ.BasisZ,
+                                                                 Z_FUND * M)
+    ds = DB.DirectShape.CreateElement(doc, DB.ElementId(DB.BuiltInCategory.OST_GenericModel))
+    ds.SetShape(List[DB.GeometryObject]([solid]))
+    ds.SetName(u'Фундамент ВК')
+    komment(ds, u'КВВ-Ф')
+    razm = (int(round(dx / MM)), int(round(dy / MM)))
+    log(u'насосная установка на фундаменте %dх%dх%d(h) мм' % (razm[0], razm[1], int(round(Z_FUND * 1000))))
+    return razm

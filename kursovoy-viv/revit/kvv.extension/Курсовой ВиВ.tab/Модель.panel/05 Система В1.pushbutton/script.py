@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Водопровод В1: ввод, водомерный узел, насосная установка, магистраль, стояки, квартирные узлы и разводка."""
+"""Водопровод В1: ввод, водомерный узел, насосная установка на фундаменте, магистраль, стояки, квартирные узлы
+и разводка."""
 from pyrevit import HOST_APP
 import kvv
 import kvv_seti
@@ -13,6 +14,8 @@ def main(log):
     g = kvv.load_json('revit', 'geometriya_v3.json')
     with kvv.Tranzakciya(doc, u'КВВ: система В1', log):
         kvv_seti.udalit(doc, u'КВВ-В1', log)
+        # установка на фундамент до трубопроводов: патрубки берутся из модели (поднятые на 270 мм)
+        kvv_seti.fundament_nasosa(doc, log)
         kvv_seti.Stroitel(doc, g, log).sistema_celikom(u'V1')
         tr = kvv.load_json('calc', 'trassa_v3.json')
         if 'x_shov' in tr:

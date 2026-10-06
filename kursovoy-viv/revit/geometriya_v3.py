@@ -740,8 +740,9 @@ svyaz((r_zap2, 1), (otvetvlenie(nm_z), 0))
 
 nas = json.load(open(os.path.join(HERE, "..", "calc", "nasos_v3.json"), encoding="utf-8"))
 XP, YP = 5.0, 4.0                       # установка COR-2 (соединители коллекторов на локальной -X)
-p_vs = (XP, YP - 0.361, Z_P + 0.168)
-p_nap = (XP, YP + 0.480, Z_P + 0.168)
+Z_FUND = 0.27                           # установка на фундаменте 270 мм (как в образце), Revit: kvv_seti.fundament_nasosa
+p_vs = (XP, YP - 0.361, Z_P + Z_FUND + 0.168)
+p_nap = (XP, YP + 0.480, Z_P + Z_FUND + 0.168)
 oborud = [dict(fam="COR-MVL_2_32_Revit2019(08.25)", tip=nas["tip"], x=XP, y=YP, th=0, ur=UR_P,
                vs=R(p_vs), nap=R(p_nap))]
 # напорная линия установки до тройника магистрали (проектируется только В1: ГВС вне объёма проекта)
