@@ -65,6 +65,21 @@ bad = {ch for L in layouts for e in L if e.dxftype() == "MTEXT"
 if bad: ok = False; print("символы, которых может не быть в шрифте ГОСТ:", bad)
 print("DXF: ЛНР через", len(zp), "точек нуля; фигур", len(R.FIGS), "; стили текста ок" if not bad_styles else "")
 
+# 4а. Оформление для AutoCAD (ошибки, найденные при печати из AutoCAD 2026)
+if doc.styles.get("ГОСТ тип Б").dxf.font.lower() != "gost_common.ttf":
+    ok = False; print("стиль ГОСТ тип Б не на шрифте GOST Common (тип Б по ГОСТ 2.304)")
+for psp in psps:
+    d = psp.dxf_layout.dxf
+    if (d.plot_configuration_file, d.paper_size) != ("DWG To PDF.pc3", "ISO_full_bleed_A3_(420.00_x_297.00_MM)"):
+        ok = False; print("параметры печати не A3 DWG To PDF:", psp.name, d.plot_configuration_file, d.paper_size)
+    if any(v.dxf.id == 1 and v.dxf.layer != "0" for v in psp.query("VIEWPORT")):
+        ok = False; print("главный видовой экран не на слое 0 (AUDIT AutoCAD):", psp.name)
+lts = {e.dxf.linetype for e in msp if e.dxf.hasattr("linetype")} - {"ByLayer", "BYLAYER", "Continuous"}
+if not lts <= {"ГОСТ_штрихпунктирная", "ГОСТ_штриховая"} or doc.header.get("$PSLTSCALE") != 1:
+    ok = False; print("типы линий не по ГОСТ 2.303 в мм листа:", lts, doc.header.get("$PSLTSCALE"))
+if any(e.dxf.get("ltscale", 1) != 1 for e in msp):
+    ok = False; print("у объектов свой масштаб типа линии - штрихи на листе будут не той длины")
+
 # 5. Котлован: Excel (формулы после пересчёта) = kotlovan.py; контуры в DXF = расчёту
 w4 = wb["Котлован"]
 got = {w4[f"B{r}"].value: w4[f"C{r}"].value for r in range(5, w4.max_row + 1) if w4[f"B{r}"].value}
