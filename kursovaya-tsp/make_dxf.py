@@ -40,9 +40,9 @@ LAYERS = {  # имя: (цвет ACI, вес линии в сотых мм, пе�
     "Штамп": (7, 25, True),
     "Надписи": (7, 25, True),
     "Видовой_экран": (8, 13, False),
-    "Котлован": (6, 50, True),
-    "Котлован_низ": (6, 25, True),
-    "Бергштрихи": (6, 18, True),
+    "Котлован": (7, 50, True),
+    "Котлован_низ": (7, 25, True),
+    "Бергштрихи": (7, 18, True),
     "Оси": (7, 18, True),
     "Конструкции": (7, 50, True),
     "Штриховка": (8, 13, True),
@@ -55,12 +55,14 @@ ds = doc.dimstyles.new("М1-2000")
 for k, v in dict(dimtxsty=TXT, dimtxt=2.5, dimscale=SC, dimtsz=1.3, dimasz=2.5,
                  dimexe=1.5, dimexo=0.0, dimgap=0.8, dimdec=2, dimzin=8,
                  dimdsep=ord(","), dimtad=1, dimtih=0, dimtoh=0, dimlfac=1.0,
-                 dimclrd=3, dimclre=3, dimclrt=3, dimtix=1, dimtmove=0, dimtfill=1).items():
+                 dimclrd=3, dimclre=3, dimclrt=3, dimtix=1, dimtmove=0, dimtfill=1,
+                 dimdle=1.5).items():          # ГОСТ 2.307: размерная линия выходит за выносные на 1-3 мм
     ds.dxf.set(k, v)
-for name, sc in (("М1-500", 0.5), ("М1-50", 0.05)):   # для листа 2
+for name, sc in (("М1-500", 0.5), ("М1-50", 0.05)):   # лист 2: размеры в мм (модель в м)
     d2 = doc.dimstyles.duplicate_entry("М1-2000", name)
     d2.dxf.dimscale = sc
-    d2.dxf.dimdec = 3 if sc < 0.1 else 2
+    d2.dxf.dimlfac = 1000
+    d2.dxf.dimdec = 0
 
 msp = doc.modelspace()
 f = float
@@ -230,7 +232,6 @@ def draw_pit(dx=0.0, dy=0.0, berg=False):
 
 
 draw_pit()
-mtext("Котлован", tuple(map(f, K.CENTER)), 2.5, "Котлован", mask=True)
 
 # ================= лист A3 =================
 psp = doc.layouts.get("Layout1")
@@ -321,8 +322,8 @@ def frame_and_stamp(sheet, sheets, name, title):
         txt(title, (217.5, 283), 5, layer="Надписи", width=0.8)
 
 
-frame_and_stamp(1, 2, "План строительной площадки\\Pс рабочими отметками,\\PЛНР и котлованом М 1:2000",
-                "План строительной площадки с рабочими отметками, линией нулевых работ и котлованом  М 1:2000")
+frame_and_stamp(1, 2, "План строительной площадки\\Pс рабочими отметками и ЛНР\\PМ 1:2000",
+                "План строительной площадки с рабочими отметками и линией нулевых работ  М 1:2000")
 
 # видовой экран: модель x -34..524, y -44..326 м
 VX0, VY0, VX1, VY1 = -34.0, -44.0, 524.0, 326.0
@@ -343,7 +344,7 @@ items = [
     ("mark", "рабочая отметка, м (+ насыпь, - выемка)"),
     ("fig", "номер фигуры; со штрихом - насыпная часть квадрата"),
     ("dim", "расстояние до точки нулевых работ, м"),
-    ("pit", "котлован: бровка и подошва (с пандусом)"),
+    ("pit", "контур котлована"),
 ]
 for k, (kind, label) in enumerate(items):
     y = LY - 7 - 7.5 * k
@@ -379,7 +380,7 @@ Vf = sum(g["V"] for g in R.FIGS if g["sign"] > 0)
 Fc = sum(g["F"] for g in R.FIGS if g["sign"] < 0)
 Ff = sum(g["F"] for g in R.FIGS if g["sign"] > 0)
 TX, TY = 128, 64
-txt("Объёмы планировочных работ", (TX, TY), 3.0, TA.BOTTOM_LEFT, "Надписи", 0.8)
+txt("Объемы планировочных работ", (TX, TY), 3.0, TA.BOTTOM_LEFT, "Надписи", 0.8)
 def num(v):
     return f"{v:,.2f}".replace(",", " ").replace(".", ",")
 
@@ -400,16 +401,16 @@ for r, row in enumerate(tab):
         x += cw[c]
 
 # ================= лист 2: котлован =================
+# Оформление по СПДС: ГОСТ Р 21.101 (отметки, оси, выноски), ГОСТ 2.303 (линии),
+# ГОСТ 2.304 (шрифт тип Б), ГОСТ 2.305 (обозначение разреза), ГОСТ 2.306 (штриховки),
+# ГОСТ 2.307 (размеры: в мм, засечки). Отметки - в метрах от 0,000 = проектная отметка планировки.
 S5, S50 = 0.5, 0.05                    # м модели в 1 мм листа: М 1:500 и М 1:50
 DX2 = 800.0                            # план котлована 1:500 - копия, сдвинутая по x
-NDX, NDY = 2000.0, 0.0                 # узел 1:50 - в своих координатах (ось стены x=0, земля y=0)
+NDX, NDY = 2000.0, 0.0                 # разрез 1:50: ось стены x = 0, естественная поверхность y = 0
 X0, Y0 = f(K.X0) + DX2, f(K.Y0)
 DT = f(K.D_NIZ + K.L_OTK)              # ось -> бровка
 DNZ = f(K.D_NIZ)
-
-
-def m2(x, y):
-    return (x, y)
+HR_ = f(K.HR)
 
 
 def line(p1, p2, layer, **kw):
@@ -418,134 +419,187 @@ def line(p1, p2, layer, **kw):
     return msp.add_line(p1, p2, dxfattribs=at)
 
 
-def circle_label(c, r, s, sc):
+def axis_bubble(c, r, s_, sc):
     msp.add_circle(c, r, dxfattribs={"layer": "Оси"})
-    mtext(s, c, 3.5, "Оси", mask=False, sc=sc)
+    mtext(s_, c, 3.5, "Оси", mask=False, sc=sc)
 
 
-# --- план котлована М 1:500 ---
+def dot(c, sc):
+    """Точка на конце выноски (ГОСТ 2.316), диаметр 1 мм."""
+    h = msp.add_hatch(color=7, dxfattribs={"layer": "Надписи"})
+    h.paths.add_edge_path().add_arc(c, 0.5 * sc, 0, 360)
+
+
+def level(p, value, sc, side=1, ext_from=None, down=False):
+    """Знак отметки уровня (ГОСТ Р 21.101): стрелка 90° вершиной на уровень,
+    полка со значением в метрах. side: 1 - полка вправо, -1 - влево; down - знак под уровнем."""
+    x, y = p
+    a = 2.0 * sc
+    v = -a if down else a
+    if ext_from is not None:                    # выносная линия уровня от изображения
+        line((ext_from, y), (x + side * 1.0 * sc, y), "Размеры")
+    line((x - a, y + v), (x, y), "Размеры")
+    line((x, y), (x + a, y + v), "Размеры")
+    shelf = 11.0 * sc
+    line((x - side * a, y + v), (x + side * shelf, y + v), "Размеры")
+    tx = x + 0.6 * sc if side > 0 else x - shelf + 0.4 * sc
+    if down:
+        mtext(value, (tx, y + v - 0.5 * sc), 2.5, "Размеры", MA.TOP_LEFT, mask=False, sc=sc)
+    else:
+        mtext(value, (tx, y + v + 0.5 * sc), 2.5, "Размеры", MA.BOTTOM_LEFT, mask=False, sc=sc)
+
+
+def soil(points, sc, step=6.0, n=3, gap=0.9, ln_=2.2):
+    """Грунт естественный (ГОСТ 2.306): группы по n штрихов под 45° вдоль контура,
+    со стороны грунта - справа по ходу обхода."""
+    for (x1, y1), (x2, y2) in zip(points, points[1:]):
+        L = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+        ux, uy = (x2 - x1) / L, (y2 - y1) / L
+        nx, ny = uy, -ux                         # нормаль в сторону грунта
+        dx, dy = (nx - ux) / 2 ** 0.5, (ny - uy) / 2 ** 0.5
+        t = 1.5 * sc
+        while t + (n - 1) * gap * sc <= L - 0.5 * sc:
+            for k in range(n):
+                px, py = x1 + ux * (t + k * gap * sc), y1 + uy * (t + k * gap * sc)
+                line((px, py), (px + dx * ln_ * sc, py + dy * ln_ * sc), "Штриховка")
+            t += step * sc
+
+
+def section_mark(x, y0, y1, sc, label, look=-1):
+    """Штрих линии разреза (ГОСТ 2.305): от y0 к y1, стрелка у внешнего конца - по взгляду."""
+    msp.add_lwpolyline([(x, y0), (x, y1)], dxfattribs={"layer": "Конструкции", "const_width": 0.8 * sc})
+    ya = y1 - (y1 - y0) / abs(y1 - y0) * 1.5 * sc
+    line((x, ya), (x + look * 5.0 * sc, ya), "Конструкции", lineweight=25)
+    msp.add_lwpolyline([(x + look * 2.5 * sc, ya, 1.2 * sc, 0.0), (x + look * 5.0 * sc, ya)], format="xyse",
+                       dxfattribs={"layer": "Конструкции"})
+    mtext(label, (x + look * 7.5 * sc, ya), 5, "Надписи", mask=False, sc=sc)
+
+
+# ---------- план котлована М 1:500 ----------
 draw_pit(dx=DX2, berg=True)
-st = [(f(x) + DX2, f(y)) for x, y in K.ST]
-msp.add_lwpolyline(st, close=True, dxfattribs={"layer": "Конструкции", "linetype": "DASHED",
-                                               "ltscale": 2.0, "lineweight": 25})
-AX_V = [("1", X0), ("2", X0 + 18), ("3", X0 + 60)]
-AX_H = [("А", Y0), ("Б", Y0 + 12), ("В", Y0 + 30)]
-R1, R2 = 3.5, 6.5                      # ряды размеров от бровки, м (7 и 13 мм на листе)
-yb = Y0 - DT                           # бровка снизу
-yt = Y0 + 30 + DT                      # бровка сверху
-xl = X0 - DT                           # бровка слева
-BUB = 2.0                              # радиус кружка оси, м (8 мм на листе)
-for s_, x in AX_V:
+R1, R2 = 3.0, 6.0                      # ряды размеров от бровки, м (6 и 12 мм на листе)
+yb, yt, xl = Y0 - DT, Y0 + 30 + DT, X0 - DT
+BUB = 2.0                              # кружок оси диаметром 8 мм
+for s_, x in (("1", X0), ("2", X0 + 18), ("3", X0 + 60)):
     line((x, yt + 1.0), (x, yb - R2 - 3.0), "Оси", linetype="CENTER", ltscale=2.4)
-    circle_label((x, yb - R2 - 3.0 - BUB), BUB, s_, S5)
-for s_, y in AX_H:
-    line((X0 + 60 + DT + 1.0, y), (xl - 14.5 - 3.0, y), "Оси", linetype="CENTER", ltscale=2.4)
-    circle_label((xl - 14.5 - 3.0 - BUB, y), BUB, s_, S5)
-# размеры: снизу - оси; сверху - котлован по низу и по верху; слева - оси и котлован
-dim((X0, yb - 1), (X0 + 18, yb - 1), (0, yb - R1), 0, style="М1-500")
-dim((X0 + 18, yb - 1), (X0 + 60, yb - 1), (0, yb - R1), 0, style="М1-500")
-dim((X0, yb - 1), (X0 + 60, yb - 1), (0, yb - R2), 0, style="М1-500")
-dim((X0 - DNZ, Y0 + 30 + DNZ), (X0 + 60 + DNZ, Y0 + 30 + DNZ), (0, yt + R1), 0, style="М1-500")
-dim((X0 - DT, yt), (X0 + 60 + DT, yt), (0, yt + R2), 0, style="М1-500")
-dim((xl - 1, Y0), (xl - 1, Y0 + 12), (xl - R1, 0), 90, style="М1-500")
-dim((xl - 1, Y0 + 12), (xl - 1, Y0 + 30), (xl - R1, 0), 90, style="М1-500")
-dim((xl - 1, Y0), (xl - 1, Y0 + 30), (xl - R2, 0), 90, style="М1-500")
-dim((X0 - DNZ, Y0 - DNZ), (X0 - DNZ, Y0 + 30 + DNZ), (xl - 11.0, 0), 90, style="М1-500")
-dim((xl, Y0 - DT), (xl, yt), (xl - 14.5, 0), 90, style="М1-500")
-# пандус
+    axis_bubble((x, yb - R2 - 3.0 - BUB), BUB, s_, S5)
+for s_, y in (("А", Y0), ("Б", Y0 + 12), ("В", Y0 + 30)):
+    line((X0 + 60 + DT + 1.0, y), (xl - 12.0 - 3.0, y), "Оси", linetype="CENTER", ltscale=2.4)
+    axis_bubble((xl - 12.0 - 3.0 - BUB, y), BUB, s_, S5)
+st5 = "М1-500"
+dim((X0, yb - 1), (X0 + 18, yb - 1), (0, yb - R1), 0, style=st5)
+dim((X0 + 18, yb - 1), (X0 + 60, yb - 1), (0, yb - R1), 0, style=st5)
+dim((X0, yb - 1), (X0 + 60, yb - 1), (0, yb - R2), 0, style=st5)
+dim((X0 - DNZ, Y0 + 30 + DNZ), (X0 + 60 + DNZ, Y0 + 30 + DNZ), (0, yt + R1), 0, style=st5)
+dim((X0 - DT, yt), (X0 + 60 + DT, yt), (0, yt + R2), 0, style=st5)
+dim((xl - 1, Y0), (xl - 1, Y0 + 12), (xl - R1, 0), 90, style=st5)
+dim((xl - 1, Y0 + 12), (xl - 1, Y0 + 30), (xl - R1, 0), 90, style=st5)
+dim((xl - 1, Y0), (xl - 1, Y0 + 30), (xl - R2, 0), 90, style=st5)
+dim((X0 - DNZ, Y0 - DNZ), (X0 - DNZ, Y0 + 30 + DNZ), (xl - 9.0, 0), 90, style=st5)
+dim((xl, Y0 - DT), (xl, yt), (xl - 12.0, 0), 90, style=st5)
+# пандус: длина, ширина, уклон
 (xe, y1), (_, y2) = [(f(a) + DX2, f(b)) for a, b in RG["end"]]
 xb = f(K.PAN_X) + DX2
-g2 = f(RG["gap"][1])
-dim((xb, y2), (xe, y2), (0, g2 + 3.5), 0, style="М1-500")
-dim((xe, y1), (xe, y2), (xe + 3.0, 0), 90, style="М1-500")
-mtext("Пандус, i = " + K.f(K.I_PAN), ((xb + xe) / 2 + 2, f(RG["gap"][0]) - 3.0), 2.5, "Надписи", sc=S5)
-mtext("Котлован", (X0 + 30, Y0 + 21), 3.5, "Надписи", sc=S5)
-mtext(f"подошва: hк = {K.f(K.HK)} м от естественной поверхности", (X0 + 30, Y0 + 16.5), 2.5,
-      "Надписи", sc=S5)
-mtext("контур здания\\P(наружная\\Pгрань стен)", (X0 + 9, Y0 + 6.0), 2.0, "Надписи", sc=S5, mask=True)
-# разрез 1-1 через ось А у оси 1+9 м, взгляд на запад (влево)
-xs = X0 + 5
-for yy0, yy1 in ((yb - 0.4, yb - 2.4), (yt + 0.4, yt + 2.4)):
-    msp.add_lwpolyline([(xs, yy0), (xs, yy1)], dxfattribs={"layer": "Конструкции", "const_width": 0.35})
-    msp.add_lwpolyline([(xs, yy1), (xs - 1.8, yy1), (xs - 3.0, yy1)], dxfattribs={"layer": "Конструкции"})
-    pl_ = msp.add_lwpolyline([(xs - 1.8, yy1, 0.9, 0.0), (xs - 3.0, yy1)], format="xyse",
-                             dxfattribs={"layer": "Конструкции"})
-    mtext("1", (xs - 4.4, yy1), 3.5, "Надписи", mask=False, sc=S5)
+g1, g2 = f(RG["gap"][0]), f(RG["gap"][1])
+dim((xb, y2), (xe, y2), (0, g2 + 3.0), 0, style=st5)
+dim((xe, y1), (xe, y2), (xe + 3.0, 0), 90, style=st5)
+ya = g1 - 2.5
+line((xe - 1.0, ya), (xb + 4.0, ya), "Размеры")
+msp.add_lwpolyline([(xb + 6.0, ya, 0.7, 0.0), (xb + 4.0, ya)], format="xyse", dxfattribs={"layer": "Размеры"})
+mtext("i=" + K.f(K.I_PAN), ((xb + xe) / 2 + 1.0, ya - 0.6), 2.5, "Размеры", MA.TOP_CENTER, mask=False, sc=S5)
+# отметка дна на плане - в прямоугольнике
+bx, by = X0 + 30, Y0 + 21
+mtext(f"-{float(K.NK):.3f}".replace(".", ","), (bx, by), 2.5, "Размеры", mask=False, sc=S5)
+msp.add_lwpolyline([(bx - 3.6, by - 1.4), (bx + 3.6, by - 1.4), (bx + 3.6, by + 1.4), (bx - 3.6, by + 1.4)],
+                   close=True, dxfattribs={"layer": "Размеры"})
+# разрез 1-1: по левому крылу (между осями 1 и 2), взгляд на запад
+xs = X0 + 9
+section_mark(xs, yb - R2 - 1.0, yb - R2 - 5.0, S5, "1")
+section_mark(xs, yt + R2 + 1.0, yt + R2 + 5.0, S5, "1")
 
-# --- узел: разрез 1-1 (фрагмент) М 1:50 ---
+
+# ---------- разрез 1-1 (фрагмент) М 1:50 ----------
 def N(x, y):
     return (NDX + x, NDY + y)
 
 
 HK_, L_ = f(K.HK), f(K.L_OTK)
 XB, XT = -(DNZ + L_), -DNZ                     # бровка и низ откоса
-YP, YBP, YFP, YW = -HK_ + f(K.H_PODS), -HK_ + f(K.H_PODS + K.H_BP), -HK_ + f(K.H_PODS + K.H_BP + K.H_FP), 0.35
-XR = 1.0                                       # обрыв справа
+YP = -HK_ + f(K.H_PODS)
+YBP = YP + f(K.H_BP)
+YFP = YBP + f(K.H_FP)
+YW, XR, GL = 0.3, 1.0, -5.2                   # верх стены (обрыв), обрыв справа, начало земли
 D_FP, D_BP, D_ST = f(K.D_FP), f(K.D_BP), f(K.D_ST)
-GL = -5.2                                      # начало линии земли слева
-HR_ = f(K.HR)
-# грунт: полоса штриховки вдоль поверхности, откоса и дна
 ground = [N(GL, 0), N(XB, 0), N(XT, -HK_), N(XR, -HK_)]
-msp.add_lwpolyline(ground, dxfattribs={"layer": "Котлован", "lineweight": 50})
-band = ground + [N(XR, -HK_ - 0.15), N(XT - 0.1, -HK_ - 0.15), N(XB - 0.12, -0.15), N(GL, -0.15)]
-hat = msp.add_hatch(color=8, dxfattribs={"layer": "Штриховка"})
-hat.set_pattern_fill("ANSI31", scale=0.03, angle=90, color=8)
-hat.paths.add_polyline_path(band, is_closed=True)
+msp.add_lwpolyline(ground, dxfattribs={"layer": "Котлован"})
+soil(ground, S50)
 
 
-def rect(x0, y0, x1, y1, pattern=None, angle=0, scale=0.025, lw=50):
-    pts = [N(x0, y0), N(x1, y0), N(x1, y1), N(x0, y1)]
-    msp.add_lwpolyline(pts, close=True, dxfattribs={"layer": "Конструкции", "lineweight": lw})
-    if pattern:
+def layer3(x0, y0, x1, y1, pattern, scale, angle=0.0):
+    """Слой до обрыва справа: левая, верхняя и нижняя грани - основной линией, штриховка."""
+    msp.add_lwpolyline([N(x1, y1), N(x0, y1), N(x0, y0), N(x1, y0)], dxfattribs={"layer": "Конструкции"})
+    for pat, sc_, ang in pattern:
         h = msp.add_hatch(color=8, dxfattribs={"layer": "Штриховка"})
-        h.set_pattern_fill(pattern, scale=scale, angle=angle, color=8)
-        h.paths.add_polyline_path(pts, is_closed=True)
+        h.set_pattern_fill(pat, scale=sc_, angle=ang, color=8)
+        h.paths.add_polyline_path([N(x0, y0), N(x1, y0), N(x1, y1), N(x0, y1)], is_closed=True)
 
 
-rect(XT, -HK_, XR, YP, "ANSI37", 0, 0.02, 25)           # подсыпка (щебень)
-rect(-D_BP, YP, XR, YBP, "ANSI31", 90, 0.02, 25)        # бетонная подготовка
-rect(-D_FP, YBP, XR, YFP, "ANSI31", 0, 0.025)           # фундаментная плита
-rect(-D_ST, YFP, D_ST, YW, "ANSI31", 0, 0.025)          # стена подвала
-line(N(-D_BP, YBP + 0.012), N(XR, YBP + 0.012), "Конструкции", lineweight=35)   # гидроизоляция
-# обрыв справа
+layer3(XT, -HK_, XR, YP, [("AR-SAND", 0.004, 0)], 0)                      # подсыпка (щебень)
+layer3(-D_BP, YP, XR, YBP, [("AR-CONC", 0.004, 0)], 0)                    # бетон
+layer3(-D_FP, YBP, XR, YFP, [("ANSI31", 0.03, 0), ("AR-CONC", 0.004, 0)], 0)   # железобетон
+wall = [N(D_ST, YFP), N(D_ST, YW), N(-D_ST, YW), N(-D_ST, YFP)]
+msp.add_lwpolyline([N(-D_ST, YW), N(-D_ST, YFP)], dxfattribs={"layer": "Конструкции"})
+msp.add_lwpolyline([N(D_ST, YFP), N(D_ST, YW)], dxfattribs={"layer": "Конструкции"})
+for pat, sc_ in (("ANSI31", 0.03), ("AR-CONC", 0.004)):
+    h = msp.add_hatch(color=8, dxfattribs={"layer": "Штриховка"})
+    h.set_pattern_fill(pat, scale=sc_, color=8)
+    h.paths.add_polyline_path(wall, is_closed=True)
+line(N(-D_BP, YBP), N(XR, YBP), "Конструкции", lineweight=70)            # гидроизоляция
+# линии обрыва (тонкие, с изломом)
 YM = (YBP + YFP) / 2
-msp.add_lwpolyline([N(XR, -HK_ - 0.25), N(XR, YM - 0.06), N(XR + 0.08, YM - 0.02), N(XR - 0.08, YM + 0.02),
-                    N(XR, YM + 0.06), N(XR, YFP + 0.15)], dxfattribs={"layer": "Конструкции", "lineweight": 18})
+msp.add_lwpolyline([N(XR, -HK_ - 0.15), N(XR, YM - 0.06), N(XR + 0.08, YM - 0.02), N(XR - 0.08, YM + 0.02),
+                    N(XR, YM + 0.06), N(XR, YFP + 0.15)], dxfattribs={"layer": "Надписи"})
+msp.add_lwpolyline([N(-D_ST - 0.15, YW), N(-0.06, YW), N(-0.02, YW + 0.08), N(0.02, YW - 0.08),
+                    N(0.06, YW), N(D_ST + 0.15, YW)], dxfattribs={"layer": "Надписи"})
 # ось А
-line(N(0, -HK_ - 0.35), N(0, YW + 0.3), "Оси", linetype="CENTER", ltscale=0.24)
-circle_label(N(0, YW + 0.3 + 0.2), 0.2, "А", S50)
-# проектная поверхность (после планировки - насыпь hр)
-line(N(GL, HR_), N(XR + 0.6, HR_), "Котлован_низ", linetype="DASHED", ltscale=0.2)
-mtext(f"проектная поверхность планировки (насыпь +{K.f(K.HR)})", N(GL + 0.05, HR_ + 0.06), 2.0,
-      "Надписи", MA.BOTTOM_LEFT, sc=S50)
-mtext("естественная поверхность", N(GL + 0.05, -0.06), 2.0, "Надписи", MA.TOP_LEFT, sc=S50)
-mtext(f"1:{K.f(K.M)}", N((XB + XT) / 2 - 0.35, -HK_ / 2), 2.5, "Надписи", rot=-56.2, sc=S50)
-mtext("обратная\\Pзасыпка", N(-1.05, -0.9), 2.5, "Надписи", sc=S50)
-# размеры
-yd1, yd2 = -HK_ - 0.5, -HK_ - 0.85
+line(N(0, -HK_ - 0.3), N(0, YW + 0.25), "Оси", linetype="CENTER", ltscale=0.24)
+axis_bubble(N(0, YW + 0.25 + 0.2), 0.2, "А", S50)
+# проектная поверхность планировки - тонкая штриховая
+line(N(GL, HR_), N(-D_ST, HR_), "Котлован_низ", linetype="DASHED", ltscale=0.4)
+mtext(f"1:{K.f(K.M)}", N((XB + XT) / 2 - 0.3, -HK_ / 2), 2.5, "Надписи", rot=-56.2, mask=False, sc=S50)
+# отметки уровней, м
+mk = lambda y: ("+" if y - HR_ > 1e-9 else "-" if y - HR_ < -1e-9 else "") + f"{abs(y - HR_):.3f}".replace(".", ",")
+level(N(GL + 0.4, HR_), "0,000", S50)
+line(N(XB, 0), N(XB + 0.75, 0), "Размеры")
+level(N(XB + 0.55, 0), mk(0), S50, down=True)
+level(N(XT - 0.9, -HK_), mk(-HK_), S50, ext_from=NDX + XT)
+level(N(-0.45, YFP), mk(YFP), S50, side=-1)
+# размеры, мм
+st50 = "М1-50"
+yd1, yd2 = -HK_ - 0.45, -HK_ - 0.8
 for a, b in ((XB, XT), (XT, -D_BP), (-D_BP, -D_FP), (-D_FP, -D_ST), (-D_ST, 0)):
-    dim(N(a, -HK_ if a != XB else 0), N(b, -HK_), N(0, yd1), 0, {"dimtad": 1}, style="М1-50")
-dim(N(XB, 0), N(0, -HK_), N(0, yd2), 0, style="М1-50")
-dim(N(XT, -HK_), N(XB, 0), N(GL + 0.9, 0), 90, style="М1-50")
-dim(N(XT, -HK_), N(GL, HR_), N(GL + 0.4, 0), 90, style="М1-50")
-mtext("hк", N(GL + 0.72, -HK_ / 2 - 0.45), 2.5, "Надписи", sc=S50)
-mtext("Нк", N(GL + 0.22, -HK_ / 2 - 0.45), 2.5, "Надписи", sc=S50)
-# выноски слоёв
-LBL = [((0.1, YW - 0.3), "Стена подвала 400"),
-       ((0.6, (YBP + YFP) / 2), f"Фундаментная плита {int(K.H_FP * 1000)}"),
-       ((0.75, YBP), "Гидроизоляция, 2 слоя"),
-       ((0.85, (YP + YBP) / 2), f"Бетонная подготовка {int(K.H_BP * 1000)}"),
-       ((0.95, (-HK_ + YP) / 2), f"Подсыпка (щебень) {int(K.H_PODS * 1000)}")]
-for k_, ((px, py), s_) in enumerate(LBL):
-    ty = 0.35 - 0.38 * k_
-    line(N(px, py), N(1.9, ty), "Надписи")
-    line(N(1.9, ty), N(4.6, ty), "Надписи")
-    mtext(s_, N(1.95, ty + 0.03), 2.5, "Надписи", MA.BOTTOM_LEFT, mask=False, sc=S50)
+    dim(N(a, -HK_ if a != XB else 0), N(b, -HK_), N(0, yd1), 0, {"dimtad": 1}, style=st50)
+dim(N(XB, 0), N(0, -HK_), N(0, yd2), 0, style=st50)
+# многослойная выноска (сверху вниз - как слои)
+LAY = [(YM, f"Фундаментная плита - {int(K.H_FP * 1000)}"),
+       (YBP, "Гидроизоляция - 2 слоя"),
+       ((YP + YBP) / 2, f"Бетонная подготовка - {int(K.H_BP * 1000)}"),
+       ((-HK_ + YP) / 2, f"Подсыпка из щебня - {int(K.H_PODS * 1000)}")]
+XL = 0.6
+SH0, SHD, SHL = -0.25, 0.3, 2.6               # верхняя полка, шаг полок, длина полки
+line(N(XL, LAY[-1][0]), N(XL + 0.35, SH0 - SHD * (len(LAY) - 1)), "Надписи")
+line(N(XL + 0.35, SH0 - SHD * (len(LAY) - 1)), N(XL + 0.35, SH0), "Надписи")
+for k_, (yy, s_) in enumerate(LAY):
+    dot(N(XL, yy) if k_ == len(LAY) - 1 else N(XL + 0.35 * (yy - LAY[-1][0]) / (SH0 - SHD * 3 - LAY[-1][0]), yy),
+        S50)
+    ys = SH0 - SHD * k_
+    line(N(XL + 0.35, ys), N(XL + 0.35 + SHL, ys), "Надписи")
+    mtext(s_, N(XL + 0.4, ys + 0.03), 2.5, "Надписи", MA.BOTTOM_LEFT, mask=False, sc=S50)
 
-# --- лист ---
+# ---------- лист ----------
 psp = doc.layouts.new("Лист 2")
 psp.page_setup(size=(420, 297), margins=(0, 0, 0, 0), units="mm")
-frame_and_stamp(2, None, "Котлован. План М 1:500,\\Pразрез 1-1 (фрагмент) М 1:50", None)
+frame_and_stamp(2, None, "План котлована М 1:500.\\PРазрез 1-1 М 1:50", None)
 
 
 def viewport(px0, py0, px1, py1, mx0, my0, sc):
@@ -557,57 +611,33 @@ def viewport(px0, py0, px1, py1, mx0, my0, sc):
     return v
 
 
-viewport(25, 153, 257, 277, xl - 14.5 - 3.0 - 2 * BUB - 2.0, yb - R2 - 3.0 - 2 * BUB - 2.0, S5)
-viewport(25, 60, 228, 148, NDX + GL - 0.3, NDY - HK_ - 1.0, S50)
+viewport(25, 153, 257, 277, xl - 12.0 - 3.0 - 2 * BUB - 2.0, yb - R2 - 3.0 - 2 * BUB - 1.0, S5)
+viewport(25, 62, 228, 147, NDX + GL - 0.3, NDY - HK_ - 0.92, S50)
 txt("План котлована  М 1:500", (141, 281), 5, layer="Надписи", width=0.8)
-txt("1-1 (фрагмент)  М 1:50", (126.5, 151), 3.5, layer="Надписи", width=0.8)
+txt("1-1  М 1:50", (126.5, 151), 5, layer="Надписи", width=0.8)
 
-
-def table(x0, ytop, cols, rows, title, h=6.0):
-    txt(title, (x0, ytop + 1.5), 3.0, TA.BOTTOM_LEFT, "Надписи", 0.8)
-    for r, row in enumerate(rows):
-        y = ytop - h * r
-        x = x0
-        for c, (s_, w_) in enumerate(zip(row, cols)):
-            pl([(x, y), (x + w_, y), (x + w_, y - h), (x, y - h)], "Штамп", True)
-            al = TA.MIDDLE_LEFT if c == 0 else TA.MIDDLE_CENTER
-            txt(s_, (x + 1.2 if c == 0 else x + w_ / 2, y - h / 2), 2.5, al, "Надписи", 0.8)
-            x += w_
-
-
-M2, M3 = "м{\\H0.6x;\\A2;2}", "м{\\H0.6x;\\A2;3}"
-nf = lambda v, n=2: f"{round(float(v), n):,.{n}f}".replace(",", " ").replace(".", ",")
-P = [("Параметр", "Обозн.", "Значение"),
-     ("Глубина по заданию, м", "Нк", K.f(K.NK)),
-     ("Рабочая отметка в центре, м", "hр", "+" + K.f(K.HR)),
-     ("Фактическая глубина, м", "hк", K.f(K.HK)),
-     ("Откос (супесь, hк до 3 м)", "1:m", "1:" + K.f(K.M)),
-     ("Заложение откоса, м", "l", K.f(K.L_OTK)),
-     ("Низ котлована, м", "", f"{K.f(K.BX + 2 * K.D_NIZ)} x {K.f(K.BY + 2 * K.D_NIZ)}"),
-     ("Верх котлована, м", "", f"{K.f(K.BX + 2 * (K.D_NIZ + K.L_OTK), 2)} x {K.f(K.BY + 2 * (K.D_NIZ + K.L_OTK), 2)}"),
-     (f"Площадь по низу, {M2}", "Fк.н", nf(K.F_KN)),
-     (f"Площадь по верху, {M2}", "Fк.в", nf(K.F_KV)),
-     ("Пандус: ширина x длина, м", "bп", f"{K.f(K.B_PAN)} x {K.f(K.L_PAN)}")]
-table(262, 274, (80, 20, 46), P, "Параметры котлована")
-V = [("Объём", "Обозн.", f"V, {M3}"),
-     ("Котлован без пандуса", "", nf(K.V_OSN)),
-     ("Пандус", "Vпан", nf(K.V_PAN)),
-     ("Котлован всего", "Vк", nf(K.V_K)),
-     ("Подсыпка (щебень)", "Vподс", nf(K.V_PODS)),
-     ("Бетонная подготовка", "Vб.п", nf(K.V_BP)),
-     ("Подземная часть здания", "Vп.ч", nf(K.V_PCH)),
-     ("Обратная засыпка", "Vо.з", nf(K.V_OZ))]
-table(262, 196, (80, 20, 46), V, "Объёмы котлована")
-NOTE = ("Примечания\\P"
-        "1. Размеры - в метрах. Грунт - супесь, откос по прил. 3 методички.\\P"
-        "2. Здание - вариант размещения 8: центр здания совпадает с центром квадрата 8.\\P"
-        f"3. Котлован пересечён ЛНР; среднее рабочих отметок по углам +{K.f(sum(K.H_CORNERS_F) / 6, 3)} - "
-        "котлован в зоне насыпи и разрабатывается от естественной поверхности: "
-        f"hк = Нк - hр = {K.f(K.NK)} - {K.f(K.HR)} = {K.f(K.HK)} м.\\P"
-        "4. Низ котлована - 1,4 м от осей: 0,2 до грани стены + 0,5 вылет плиты + "
-        "0,2 выход подготовки + 0,5 рабочая зона.\\P"
-        f"5. Пандус принят однополосный: bп = {K.f(K.B_PAN)} м, i = {K.f(K.I_PAN)}.")
-mt(NOTE, (25, 56), 2.5, 200, MA.TOP_LEFT, "Надписи")
+# ведомость - как таблица объёмов на листе 1
+M3 = "м{\\H0.6x;\\A2;3}"
+nf = lambda v: f"{round(float(v), 2):,.2f}".replace(",", " ").replace(".", ",")
+TX, TY = 262, 274
+txt("Объемы работ по котловану", (TX, TY), 3.0, TA.BOTTOM_LEFT, "Надписи", 0.8)
+tab = [("Наименование работ", f"V, {M3}"),
+       ("Разработка грунта в котловане (с пандусом)", nf(K.V_K)),
+       ("Устройство подсыпки из щебня", nf(K.V_PODS)),
+       ("Устройство бетонной подготовки", nf(K.V_BP)),
+       ("Обратная засыпка пазух", nf(K.V_OZ))]
+cw = [118, 30]
+for r, row in enumerate(tab):
+    y = TY - 3 - 7 * r
+    x = TX
+    for c, s_ in enumerate(row):
+        pl([(x, y), (x + cw[c], y), (x + cw[c], y - 7), (x, y - 7)], "Штамп", True)
+        al = TA.MIDDLE_LEFT if c == 0 else TA.MIDDLE_CENTER
+        txt(s_, (x + 1.5 if c == 0 else x + cw[c] / 2, y - 3.5), 2.5, al, "Надписи", 0.8)
+        x += cw[c]
+mt("1. Размеры даны в миллиметрах, отметки - в метрах.\\P"
+   "2. За отметку 0,000 принята проектная отметка планировки площадки.\\P"
+   "3. Грунт - супесь.", (262, 230), 2.5, 148, MA.TOP_LEFT, "Надписи")
 
 out = "План_ЛНР_вариант2.dxf"
 doc.saveas(out)

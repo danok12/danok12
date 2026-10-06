@@ -18,7 +18,8 @@ doc.layers.get("Видовой_экран").color = 7
 stem = src.rsplit(".", 1)[0]
 cfg = config.Configuration(background_policy=config.BackgroundPolicy.WHITE,
                            color_policy=config.ColorPolicy.COLOR,
-                           lineweight_scaling=1.0)
+                           lineweight_scaling=1.0,
+                           min_dash_length=0.01)
 page = layout.Page(420, 297, layout.Units.mm, margins=layout.Margins.all(0))
 out = pymupdf.open()
 names = [n for n in doc.layouts.names_in_taborder() if n != "Model"]
