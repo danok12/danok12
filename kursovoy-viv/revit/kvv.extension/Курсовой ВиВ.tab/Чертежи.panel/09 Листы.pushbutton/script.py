@@ -343,7 +343,8 @@ def main(log):
                 opt = DB.TextNoteOptions(tnt.Id)
                 opt.HorizontalAlignment = DB.HorizontalTextAlignment.Left
                 if shema:
-                    DB.TextNote.Create(doc, sh.Id, DB.XYZ(bb.Min.X + 255 * MM, bb.Min.Y + 140 * MM, 0), 155 * MM, prim,
+                    # справа от схемы, над основной надписью (схема занимает левые ~265 мм)
+                    DB.TextNote.Create(doc, sh.Id, DB.XYZ(bb.Min.X + 293 * MM, bb.Min.Y + 150 * MM, 0), 117 * MM, prim,
                                        opt)
                 else:
                     DB.TextNote.Create(doc, sh.Id, DB.XYZ(bb.Min.X + 25 * MM, bb.Min.Y + 52 * MM, 0), 200 * MM, prim,

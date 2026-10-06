@@ -264,12 +264,16 @@ def tip_otmetki(doc, log):
     return None
 
 
-def ssylki(t, v):
-    """Ссылки геометрии трубы на виде: ось (линия) и грани."""
+def ssylki(t, v, tochno=False):
+    """Ссылки геометрии трубы на виде: ось (линия) и грани; tochno — геометрия «Высокой» детализации без вида
+    (на схеме в «Низкой» у трубы нет граней, а отметке лотка нужна нижняя образующая)."""
     opt = DB.Options()
     opt.ComputeReferences = True
     opt.IncludeNonVisibleObjects = True
-    opt.View = v
+    if tochno:
+        opt.DetailLevel = DB.ViewDetailLevel.Fine
+    else:
+        opt.View = v
     linii, grani = [], []
 
     def obhod(geo):
@@ -352,12 +356,20 @@ class Otmetki(object):
         r, u = napravleniya(v)
         linii, grani = ssylki(t, v)
         cel = p
+        if lotok:
+            _, grani = ssylki(t, v, tochno=True)
+            cel = p - DB.XYZ(0, 0, t.get_Parameter(DB.BuiltInParameter.RBS_PIPE_OUTER_DIAMETER).AsDouble() / 2.0)
         bend = cel + r.Multiply(dx * 0.5 * k * M) + u.Multiply(dy * k * M)
         end = bend + r.Multiply(dx * 0.5 * k * M)
         varianty = []
+        if lotok:                            # сначала низ трубы (лоток), при неудаче — ось
+            for f in grani:
+                pr = f.Project(cel)
+                if pr is not None and pr.Distance < 0.01 * M:
+                    varianty.append((u'лоток', f.Reference, pr.XYZPoint))
         for ln in linii:
             varianty.append((u'ось', ln.Reference, ln.Project(p).XYZPoint if ln.Project(p) else p))
-        for f in grani:
+        for f in ([] if lotok else grani):
             pr = f.Project(cel)
             if pr is not None and pr.Distance < 0.02 * M:
                 varianty.append((u'грань', f.Reference, pr.XYZPoint))

@@ -188,12 +188,18 @@ def main(log):
                 else:
                     # середина этажа (не отметка тройника — на ней стык двух участков); в подвале — под перекрытием
                     z = v.GenLevel.Elevation + 1.6 * M if v.GenLevel.Elevation >= -1e-6 else -0.2 * M
-                    t = None
+                    t, d_min = None, None
                     for tt in truby:
                         c = tt.Location.Curve
                         z0, z1 = sorted((c.GetEndPoint(0).Z, c.GetEndPoint(1).Z))
                         if z0 <= z <= z1:
-                            t = tt
+                            t, d_min = tt, 0.0
+                            break
+                        # в подвале у стояка К1 на -0,20 может оказаться фитинг — ближайший участок ниже нуля
+                        if v.GenLevel.Elevation < -1e-6 and z1 <= 1e-6:
+                            d = min(abs(z - z0), abs(z - z1))
+                            if d_min is None or d < d_min:
+                                t, d_min = tt, d
                     if t is None:
                         continue
                 c = t.Location.Curve
