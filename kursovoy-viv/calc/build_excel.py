@@ -378,7 +378,7 @@ for k, (t, v, fmt, kind) in enumerate(items):
 for ref in ("C27", "C29", "C30"):
     ws[ref].fill = FILL_RES
 put(ws, "A31", "Принятая установка (1 рабочий + 1 резервный)", "head", align=LEFT)
-put(ws, "C31", "Grundfos CR 10-7: Q_ном = 10 м³/ч, H_ном = 57,2 м, 7 ступеней, 3 кВт", "in", align=LEFT)
+put(ws, "C31", "Grundfos CR 10-7: 7 ступеней, 3 кВт, 3×400 В (характеристика — ниже)", "in", align=LEFT)
 ws.merge_cells("C31:D31")
 put(ws, "A32", "Гидростатический напор у нижнего прибора этажа (смеситель ванны, 0,8 м) — п. 8.22: более 45 м → регулятор давления", "head", align=LEFT)
 put(ws, "B33", "Этаж", "head"); put(ws, "C33", "H, м", "head"); put(ws, "D33", "Регулятор давления", "head")
@@ -387,6 +387,20 @@ for k in range(int(I["N_ET"])):
     put(ws, f"B{row}", k + 1, "calc", "0")
     put(ws, f"C{row}", f"=$C$28+$C$29-((B{row}-1)*Исходные!$B$6+0.8-$C$19)", "calc", "0.0")
     put(ws, f"D{row}", f'=IF(C{row}>45,"нужен","не нужен")', "calc")
+# рабочая точка по характеристике Grundfos (оцифровка pz/nasos_risunok.py → pz/nasos.json)
+NS = json.load(open(os.path.join(HERE, "..", "pz", "nasos.json"), encoding="utf-8"))
+r0 = 34 + int(I["N_ET"]) + 1
+put(ws, f"A{r0}", "Рабочая точка насоса Grundfos CR 10-7 при подаче Q (по характеристике изготовителя, рис. 1.1 ПЗ)", "head", align=LEFT)
+for k, (t, v, fmt, kind) in enumerate([
+    ("Напор насоса при Q по кривой H(Q), м", NS["H_Q"], "0.0", "in"),
+    ("Запас напора над H_нас, %", f"=(C{r0 + 1}/C29-1)*100", "0.0", "calc"),
+    ("КПД насоса, %", NS["eta_nasos"], "0", "in"),
+    ("Мощность на валу P2, кВт", NS["P2"], "0.00", "in"),
+    ("Потребляемая мощность P1, кВт", NS["P1"], "0.00", "in"),
+    ("Требуемый кавитационный запас NPSH, м", NS["NPSH"], "0.0", "in"),
+]):
+    put(ws, f"A{r0 + 1 + k}", t, "head", align=LEFT); put(ws, f"C{r0 + 1 + k}", v, kind, fmt)
+ws[f"C{r0 + 2}"].fill = FILL_RES
 
 # =============== К1 ===============
 ws = sheet("К1", [34, 8, 8, 9, 9, 9, 9, 9, 9, 9, 8, 9, 9, 9, 9, 10, 10])
