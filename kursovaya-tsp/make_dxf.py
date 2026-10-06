@@ -42,9 +42,9 @@ DD_STROKE, DD_GAP, DD_DOT = 20.0, 1.5, 1.0
 doc.linetypes.add(DASHDOT, pattern=[DD_STROKE + 2 * DD_GAP + DD_DOT, DD_STROKE, -DD_GAP, DD_DOT, -DD_GAP],
                   description="Штрихпунктирная тонкая ГОСТ 2.303 ____ - ____ - ____")
 doc.linetypes.add(DASH, pattern=[7.5, 6.0, -1.5], description="Штриховая ГОСТ 2.303 __ __ __ __")
-# GOST Common - шрифт Autodesk по ГОСТ 2.304 тип Б (прописные 6/10 h, строчные 7/10 h,
-# интервал 2/10 h); ставится вместе с AutoCAD и Revit, поэтому есть там, где печатаем
-GOST_FILE, GOST_FAMILY = "GOST_Common.ttf", "GOST Common"
+# GOST type B - шрифт АСКОН по ГОСТ 2.304-81 тип Б (прописные 6/10 h, строчные 7/10 h,
+# интервал 2/10 h), файл GOST_B.TTF, как в КОМПАС-3D; должен быть установлен в Windows
+GOST_FILE, GOST_FAMILY = "GOST_B.TTF", "GOST type B"
 st = doc.styles.add(TXT, font=GOST_FILE)
 st.set_extended_font_data(GOST_FAMILY)
 std = doc.styles.get("Standard")              # и стиль по умолчанию - тоже ГОСТ тип Б
@@ -378,8 +378,8 @@ def frame_and_stamp(sheet, sheets, name, title):
             ("Т. контр.", ""), ("", ""), ("Н. контр.", ""), ("Утв.", "")]
     for k, (role, who) in enumerate(rows):
         y = Y0 + 27.5 - 5 * k
-        txt(role, (X0 + 1, y), H_TEXT, TA.MIDDLE_LEFT, width=NARROW)
-        txt(who, (X0 + 21, y), H_TEXT, TA.MIDDLE_LEFT, width=NARROW)
+        txt(role, (X0 + 1.5, y), H_TEXT, TA.MIDDLE_LEFT, width=NARROW)
+        txt(who, (X0 + 21.5, y), H_TEXT, TA.MIDDLE_LEFT, width=NARROW)
     txt("НИУ МГСУ 08.05.01 - КР - 2026", (X0 + 125, Y0 + 50), H_HEAD)
     mt("Разработка технологической карты на производство\\Pземляных работ. Вариант 2, грунт - супесь",
        (X0 + 125, Y0 + 37.5), H_TEXT, 115)

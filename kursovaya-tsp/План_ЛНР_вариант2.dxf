@@ -489,7 +489,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461320.922037037
+2461320.9398842594
   9
 $TDUCREATE
  40
@@ -497,7 +497,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461320.922037037
+2461320.9398842594
   9
 $TDUUPDATE
  40
@@ -929,11 +929,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{1C495651-3BFE-428D-A692-BC24D78B55E7}
+{7C16153E-0447-4C8F-8A83-A5CAF7765D1F}
   9
 $VERSIONGUID
   2
-{F8135FFA-7CCB-4DC0-B752-BC5C6DDC2D2E}
+{944DFC70-1C9A-4B6A-9FCE-21475DA7CB21}
   9
 $EXTNAMES
 290
@@ -2801,13 +2801,13 @@ Standard
  42
 2.5
   3
-GOST_Common.ttf
+GOST_B.TTF
   4
 
 1001
 ACAD
 1000
-GOST Common
+GOST type B
 1071
 34
   0
@@ -2835,13 +2835,13 @@ AcDbTextStyleTableRecord
  42
 2.5
   3
-GOST_Common.ttf
+GOST_B.TTF
   4
 
 1001
 ACAD
 1000
-GOST Common
+GOST type B
 1071
 34
   0
@@ -17103,7 +17103,7 @@ AcDbEntity
 100
 AcDbMText
  10
-231.0
+231.5
  20
 32.5
  30
@@ -17131,7 +17131,7 @@ AcDbEntity
 100
 AcDbMText
  10
-251.0
+251.5
  20
 32.5
  30
@@ -17159,7 +17159,7 @@ AcDbEntity
 100
 AcDbMText
  10
-231.0
+231.5
  20
 27.5
  30
@@ -17187,7 +17187,7 @@ AcDbEntity
 100
 AcDbMText
  10
-251.0
+251.5
  20
 27.5
  30
@@ -17215,7 +17215,7 @@ AcDbEntity
 100
 AcDbMText
  10
-231.0
+231.5
  20
 22.5
  30
@@ -17243,7 +17243,7 @@ AcDbEntity
 100
 AcDbMText
  10
-251.0
+251.5
  20
 22.5
  30
@@ -17271,7 +17271,7 @@ AcDbEntity
 100
 AcDbMText
  10
-231.0
+231.5
  20
 17.5
  30
@@ -17299,7 +17299,7 @@ AcDbEntity
 100
 AcDbMText
  10
-251.0
+251.5
  20
 17.5
  30
@@ -17327,7 +17327,7 @@ AcDbEntity
 100
 AcDbMText
  10
-231.0
+231.5
  20
 12.5
  30
@@ -17355,7 +17355,7 @@ AcDbEntity
 100
 AcDbMText
  10
-251.0
+251.5
  20
 12.5
  30
@@ -17383,7 +17383,7 @@ AcDbEntity
 100
 AcDbMText
  10
-231.0
+231.5
  20
 7.5
  30
@@ -17411,7 +17411,7 @@ AcDbEntity
 100
 AcDbMText
  10
-251.0
+251.5
  20
 7.5
  30
@@ -36137,7 +36137,7 @@ AcDbEntity
 100
 AcDbMText
  10
-231.0
+231.5
  20
 32.5
  30
@@ -36165,7 +36165,7 @@ AcDbEntity
 100
 AcDbMText
  10
-251.0
+251.5
  20
 32.5
  30
@@ -36193,7 +36193,7 @@ AcDbEntity
 100
 AcDbMText
  10
-231.0
+231.5
  20
 27.5
  30
@@ -36221,7 +36221,7 @@ AcDbEntity
 100
 AcDbMText
  10
-251.0
+251.5
  20
 27.5
  30
@@ -36249,7 +36249,7 @@ AcDbEntity
 100
 AcDbMText
  10
-231.0
+231.5
  20
 22.5
  30
@@ -36277,7 +36277,7 @@ AcDbEntity
 100
 AcDbMText
  10
-251.0
+251.5
  20
 22.5
  30
@@ -36305,7 +36305,7 @@ AcDbEntity
 100
 AcDbMText
  10
-231.0
+231.5
  20
 17.5
  30
@@ -36333,7 +36333,7 @@ AcDbEntity
 100
 AcDbMText
  10
-251.0
+251.5
  20
 17.5
  30
@@ -36361,7 +36361,7 @@ AcDbEntity
 100
 AcDbMText
  10
-231.0
+231.5
  20
 12.5
  30
@@ -36389,7 +36389,7 @@ AcDbEntity
 100
 AcDbMText
  10
-251.0
+251.5
  20
 12.5
  30
@@ -36417,7 +36417,7 @@ AcDbEntity
 100
 AcDbMText
  10
-231.0
+231.5
  20
 7.5
  30
@@ -36445,7 +36445,7 @@ AcDbEntity
 100
 AcDbMText
  10
-251.0
+251.5
  20
 7.5
  30
@@ -39349,7 +39349,7 @@ DictionaryVariables
 280
 0
   1
-1.4.4 @ 2026-10-06T19:07:44.906086+00:00
+1.4.4 @ 2026-10-06T19:33:26.340117+00:00
   0
 LAYOUT
   5
@@ -39489,7 +39489,7 @@ DictionaryVariables
 280
 0
   1
-1.4.4 @ 2026-10-06T19:07:44.994489+00:00
+1.4.4 @ 2026-10-06T19:33:26.466573+00:00
   0
 ENDSEC
   0

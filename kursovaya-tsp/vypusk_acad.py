@@ -61,6 +61,12 @@ if re.search(r"[Шш]рифт.*(не найден|замен)", log):
 out = pymupdf.open()
 for p in pdfs:
     out.insert_pdf(pymupdf.open(p))
+# AutoCAD молча подставляет Arial, если шрифта нет в C:\Windows\Fonts
+# (установленные только для пользователя он не видит) - проверяем сам PDF
+fonts = {fn[3] for page in out for fn in page.get_fonts()}
+if not fonts or any("typeb" not in fn.replace(" ", "").replace("-", "").lower() for fn in fonts):
+    raise SystemExit(f"в PDF не GOST type B, а {sorted(fonts)}: шрифт GOST_B.TTF должен быть "
+                     "установлен для всех пользователей (C:\\Windows\\Fonts)")
 out.save(HERE / f"{STEM}.pdf")
 for k, page in enumerate(pymupdf.open(HERE / f"{STEM}.pdf"), start=1):
     png = HERE / (f"{STEM}_preview.png" if k == 1 else f"{STEM}_list{k}_preview.png")
