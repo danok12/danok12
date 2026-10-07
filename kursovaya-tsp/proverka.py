@@ -84,6 +84,25 @@ marks1 = [wb["Отметки (оконч.)"][f"D{8 + k}"].value for k in range(1
 if any(not near(a, b_, 1e-12) for a, b_ in zip(marks1, B.H1)): bad("Окончательные отметки в Excel не совпадают")
 if not B.B1["OK"]: bad("после поправки Δh баланс больше 5 %:", B.B1["PCT"])
 
+# 2а. Грунт котлована, распределение, средняя дальность (табл. 3-6) = raspredelenie.py
+import raspredelenie as RS
+w7 = wb["Табл. 3 котлован"]
+for ref, w in (("C5", RS.V_K * RS.K_P), ("E5", RS.V_PIT_FILL * RS.K_P), ("F5", RS.V_PIT_FILL * RS.K_OR),
+               ("E7", RS.V_OZ / RS.K_OR * RS.K_P), ("F7", RS.V_OZ), ("F8", RS.V_PODS), ("F9", RS.V_OZ)):
+    if not near(w7[ref].value, w, 1e-6): bad("табл. 3 расходится:", ref, w7[ref].value, float(w))
+if not near(w7["C10"].value, w7["E10"].value, 1e-6): bad("табл. 3: Σ с kр по разработке и укладке не равны")
+w8 = wb["Табл. 4 распределение"]
+nrow = 7 + len(RS.FILL)
+col_chk = chr(ord("C") + len(RS.CUT) + 2)          # столбец «Σ по строке − объём» - за выемками, котлованом, недостачей
+chk = [w8[f"{col_chk}{r}"].value for r in range(7, nrow)] + [c.value for c in w8[nrow + 1][2:2 + len(RS.CUT) + 2]]
+if len(chk) != len(RS.FILL) + len(RS.CUT) + 2: bad("табл. 4: не все проверочные ячейки")
+if any(v is None or abs(v) > 1e-6 for v in chk): bad("табл. 4: суммы по строкам или столбцам не сходятся", chk)
+if RS.crossings(): bad("стрелки землеройно-транспортных машин пересекаются:", RS.crossings())
+for sh, t in (("Табл. 5 скрепер", RS.T5), ("Табл. 6 самосвал", RS.T6)):
+    if not near(wb[sh]["C15"].value, t[4], 1e-6): bad(sh, "Lср расходится:", wb[sh]["C15"].value, t[4])
+print(f"Табл. 3-6: котлован -> насыпь {float(RS.V_PIT_FILL):.2f} м3, недостача {float(sum(RS.SHORT.values())):.2f} м3,"
+      f" Lср ЗТМ {RS.T5[4]:.2f} м, самосвалы {RS.T6[4]:.2f} м")
+
 # 3. DXF: ЛНР проходит ровно через все точки нулевых работ, подписи на месте -
 #    на черновике (лист 1, y как есть) и на окончательном плане (лист 2, сдвиг OY2)
 class MC:                       # как в make_dxf.py: сдвиг окончательного плана в модели, Мв на разрезах
@@ -107,7 +126,7 @@ hk = f"hк = {round(float(B.K1['HK']) * 1000)}"
 if sum(1 for e in msp if e.dxftype() == "DIMENSION" and e.dxf.get("text", "").replace("<>", "") == "hк = "
        and abs(e.get_measurement() * 1000 / MC.VS - float(B.K1["HK"]) * 1000) < 0.5) != 2:
     bad("на разрезах нет двух размеров", hk)
-LAYOUT_NAMES = ("Лист 1", "Лист 2", "Лист 3")
+LAYOUT_NAMES = ("Лист 1", "Лист 2", "Лист 3", "Лист 4")
 bad_styles = {e.dxf.style for L in (msp, *(doc.paperspace(n) for n in LAYOUT_NAMES), *doc.blocks)
               for e in L if e.dxftype() in ("TEXT", "MTEXT")} - {"ГОСТ тип Б"}
 if bad_styles: bad("текст не ГОСТ тип Б:", bad_styles)

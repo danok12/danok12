@@ -58,6 +58,10 @@ cell(ws, "A5", "Грунт", F_CALC, al=LEFT)
 cell(ws, "B5", "супесь", F_IN)
 cell(ws, "A6", "Число квадратов", F_CALC, al=LEFT)
 cell(ws, "B6", R.NX * R.NY, F_IN)
+cell(ws, "A7", "Коэффициент первоначального разрыхления kр", F_CALC, al=LEFT)
+cell(ws, "B7", 1.15, F_IN, "0.00", fill=YEL)
+ws["B7"].comment = Comment("Супесь: kр = 1,12…1,17 (прил. 2 методички). Принято 1,15 — решение пользователя.",
+                           "расчёт")
 ws["D3"] = "Редактировать можно только синие ячейки (жёлтая — принятое допущение)."
 ws["D4"] = "Рабочая отметка h = Hкр − Hчёрн: «−» — выемка (ПВ), «+» — насыпь (ПН)."
 ws["D5"] = "Отметки — вариант 2. Вершины нумеруются построчно слева направо, сверху вниз."
@@ -500,6 +504,144 @@ T1 = sheet_volumes("Объёмы (оконч.)", B.P1, HREF1, Z1, "ЛНР (ок�
 KR1 = sheet_pit("Котлован (оконч.)", HREF1, "Котлован по окончательным отметкам (котлован в насыпи — пересчёт)")
 sheet_balance("Баланс (оконч.)", T1, KR1, "Сводная ведомость объёмов разрабатываемого грунта (табл. 2)",
               "По окончательным отметкам — после поправки Δh")
+
+# ---------- табл. 3: ведомость объёмов грунта в котловане (п. 2.2.4) ----------
+KP = f"'{S1}'!$B$7"
+w7 = wb.create_sheet("Табл. 3 котлован")
+w7["A1"] = "Ведомость объёмов грунта в котловане (табл. 3 методички), по окончательным отметкам"
+w7["A1"].font = F_T
+w7["A2"] = "Баланс отрицательный - лишнего грунта нет (Vлиш.гр = 0), недостача восполняется из карьера."
+w7["A2"].font = F_NOTE
+hdr7 = ["Место разработки / назначение", "V в плотном теле, м³", "V с kр, м³", "Место укладки",
+        "V с kр, м³", "V с kо.р, м³"]
+for c, t in zip("ABCDEF", hdr7):
+    cell(w7, f"{c}4", t, F_B, fill=HEAD)
+VK1, VOZ1, VPODS1 = KR1["VK"], KR1["VOZ"], KR1["VPODS"]
+LISH = "$B$12"                                   # Vлиш.гр - лишний грунт (баланс отрицательный - 0)
+T3ROWS = [  # A место разработки, B плотное, C с kр | D место укладки, E с kр, F с kо.р
+    ("Котлован: разрабатываемый грунт", f"={VK1}", "=B5*" + KP, "Насыпь",
+     f"=({VK1}-{VOZ1}/{KOR}-{LISH})*{KP}", f"=({VK1}-{VOZ1}/{KOR}-{LISH})*{KOR}"),
+    ("", "", "", "Вывоз", f"={LISH}*{KP}", f"={LISH}*{KOR}"),
+    ("", "", "", "Отвал", f"={VOZ1}/{KOR}*{KP}", f"={VOZ1}"),
+    ("Карьер: щебень для подсыпки", f"={VPODS1}/{KOR}", "=B8*" + KP, "Котлован: подсыпка",
+     f"={VPODS1}/{KOR}*{KP}", f"={VPODS1}"),
+    ("Отвал: грунт обратной засыпки", f"={VOZ1}/{KOR}", "=B9*" + KP, "Обратная засыпка",
+     f"={VOZ1}/{KOR}*{KP}", f"={VOZ1}"),
+]
+for k, row in enumerate(T3ROWS):
+    r = 5 + k
+    for c, v in zip("ABCDEF", row):
+        isf = isinstance(v, str) and v.startswith("=")
+        cell(w7, f"{c}{r}", v, F_LINK if v.startswith(f"={VK1}") else F_CALC if isf else F_CALC,
+             "0.00" if isf else None, al=CEN if isf else LEFT)
+cell(w7, "A10", "Σ", F_B); cell(w7, "B10", "")
+cell(w7, "C10", "=SUM(C5:C9)", F_B, "0.00")
+cell(w7, "D10", "Σ", F_B)
+cell(w7, "E10", "=SUM(E5:E9)", F_B, "0.00"); cell(w7, "F10", "")
+cell(w7, "A12", "Vлиш.гр - лишний грунт, м³ (баланс отрицательный)", al=LEFT)
+cell(w7, "B12", 0, F_IN, "0.00")
+for c, wd in zip("ABCDEF", (38, 16, 14, 24, 14, 14)):
+    w7.column_dimensions[c].width = wd
+w7.row_dimensions[4].height = 32
+
+# ---------- табл. 4: баланс распределения земляных масс (п. 2.2.5) ----------
+import raspredelenie as RS
+w8 = wb.create_sheet("Табл. 4 распределение")
+w8["A1"] = "Баланс распределения земляных масс (табл. 4 методички): из выемок и котлована в насыпь, м³"
+w8["A1"].font = F_T
+w8["A2"] = ("Минимум моментов V·l (l - между центрами тяжести фигур): сначала выемки (ЗТМ), затем котлован "
+            "(самосвалы); остаток - недостача, подвоз из карьера. Выемка - плотное тело, насыпь - Vн / kо.р.")
+w8["A2"].font = F_NOTE
+srcs = [g["name"] for g in RS.CUT] + ["Котлован", "Недостача"]
+cols8 = [chr(ord("C") + k) for k in range(len(srcs))]
+cell(w8, "A4", "Выемка", F_B, fill=HEAD); cell(w8, "B4", "№", F_B, fill=HEAD)
+cell(w8, "A5", "", fill=HEAD); cell(w8, "B5", "Объём", F_B, fill=HEAD)
+for c, nm in zip(cols8, srcs):
+    cell(w8, f"{c}4", nm, F_B, fill=HEAD)
+for c, g in zip(cols8, RS.CUT):
+    cell(w8, f"{c}5", float(g["V"]), F_IN, "0.00")
+cell(w8, f"{cols8[-2]}5", float(RS.V_PIT_FILL), F_IN, "0.00")
+cell(w8, f"{cols8[-1]}5", float(sum(RS.SHORT.values())), F_IN, "0.00")
+cell(w8, "A6", "Насыпь №", F_B, fill=HEAD); cell(w8, "B6", "Объём", F_B, fill=HEAD)
+for c in cols8:
+    cell(w8, f"{c}6", "", fill=HEAD)
+for k, g in enumerate(RS.FILL):
+    r = 7 + k
+    cell(w8, f"A{r}", g["name"], F_B)
+    cell(w8, f"B{r}", float(g["V"] / RS.K_OR), F_IN, "0.00")
+    for i, c in enumerate(cols8[:-2]):
+        v = RS.ZTM.get((i, k))
+        cell(w8, f"{c}{r}", float(v) if v else None, F_IN, "0.00")
+    v = RS.PIT.get((0, k))
+    cell(w8, f"{cols8[-2]}{r}", float(v) if v else None, F_IN, "0.00")
+    v = RS.SHORT.get(k)
+    cell(w8, f"{cols8[-1]}{r}", float(v) if v else None, F_IN, "0.00")
+rl = 7 + len(RS.FILL)
+cell(w8, f"A{rl}", "Σ", F_B); cell(w8, f"B{rl}", f"=SUM(B7:B{rl - 1})", F_B, "0.00")
+for c in cols8:
+    cell(w8, f"{c}{rl}", f"=SUM({c}7:{c}{rl - 1})", F_B, "0.00")
+cc = chr(ord(cols8[-1]) + 1)
+cell(w8, f"{cc}6", "Проверка: Σ по строке − объём", F_B, fill=HEAD)
+for r in range(7, rl):
+    cell(w8, f"{cc}{r}", f"=SUM({cols8[0]}{r}:{cols8[-1]}{r})-B{r}", F_CALC, "0.00")
+cell(w8, f"A{rl + 1}", "Проверка: Σ по столбцу − объём", al=LEFT)
+w8.merge_cells(f"A{rl + 1}:B{rl + 1}")
+for c in cols8:
+    cell(w8, f"{c}{rl + 1}", f"={c}{rl}-{c}5", F_CALC, "0.00")
+w8.column_dimensions["A"].width = 12
+w8.column_dimensions["B"].width = 11
+for c in cols8:
+    w8.column_dimensions[c].width = 10
+w8.column_dimensions[cc].width = 18
+w8.row_dimensions[6].height = 32
+
+
+# ---------- табл. 5, 6: средняя дальность (п. 2.2.6), метод статических моментов ----------
+def sheet_mean(name, title, data, labels):
+    """Как в методичке: столбцы - фигуры (выемка, насыпь), строки - V, x, y, Mx = x·V, My = y·V."""
+    rs, rd, *_ = data
+    w9 = wb.create_sheet(name)
+    w9["A1"] = title
+    w9["A1"].font = F_T
+    cols = [chr(ord("B") + k) for k in range(len(rs) + len(rd))]
+    cell(w9, "A3", "№ фигур", F_B, fill=HEAD)
+    for c, (nm, *_), zone in zip(cols, rs + rd, [labels[0]] * len(rs) + [labels[1]] * len(rd)):
+        cell(w9, f"{c}2", zone, F_B, fill=HEAD)
+        cell(w9, f"{c}3", nm, F_B, fill=HEAD)
+    cell(w9, "A2", "", fill=HEAD)
+    for r, t in zip(range(4, 9), ("V, м³", "x, м", "y, м", "Mx = x·V", "My = y·V")):
+        cell(w9, f"A{r}", t, F_B)
+    for c, (nm, v, x, y, *_ ) in zip(cols, rs + rd):
+        cell(w9, f"{c}4", float(v), F_IN, "0.00")
+        cell(w9, f"{c}5", x, F_IN, "0.00")
+        cell(w9, f"{c}6", y, F_IN, "0.00")
+        cell(w9, f"{c}7", f"={c}5*{c}4", F_CALC, "0.0")
+        cell(w9, f"{c}8", f"={c}6*{c}4", F_CALC, "0.0")
+    a1, a2 = cols[0], cols[len(rs) - 1]
+    b1, b2 = cols[len(rs)], cols[-1]
+    res = [
+        (f"Центр тяжести «{labels[0]}»: Lx = ΣMx / ΣV, м", f"=SUM({a1}7:{a2}7)/SUM({a1}4:{a2}4)"),
+        (f"Центр тяжести «{labels[0]}»: Ly = ΣMy / ΣV, м", f"=SUM({a1}8:{a2}8)/SUM({a1}4:{a2}4)"),
+        (f"Центр тяжести «{labels[1]}»: Lx, м", f"=SUM({b1}7:{b2}7)/SUM({b1}4:{b2}4)"),
+        (f"Центр тяжести «{labels[1]}»: Ly, м", f"=SUM({b1}8:{b2}8)/SUM({b1}4:{b2}4)"),
+        ("Средняя дальность Lср = √((Lxв − Lxн)² + (Lyв − Lyн)²), м", "=SQRT((C11-C13)^2+(C12-C14)^2)"),
+    ]
+    for k, (t, fml) in enumerate(res):
+        r = 11 + k
+        w9.merge_cells(f"A{r}:B{r}")
+        cell(w9, f"A{r}", t, al=LEFT)
+        w9[f"B{r}"].border = BOX
+        cell(w9, f"C{r}", fml, F_B, "0.00")
+    w9.column_dimensions["A"].width = 30
+    for c in cols:
+        w9.column_dimensions[c].width = 11
+    return f"'{name}'!$C$15"
+
+
+sheet_mean("Табл. 5 скрепер", "Средняя дальность перемещения грунта скрепером (бульдозером): выемка — насыпь (табл. 5)",
+           RS.T5, ("Выемка", "Насыпь"))
+sheet_mean("Табл. 6 самосвал", "Средняя дальность перемещения грунта автосамосвалом: котлован — насыпь (табл. 6)",
+           RS.T6, ("Котлован", "Насыпь"))
 
 for sh in wb.worksheets:
     sh.sheet_view.zoomScale = 110
