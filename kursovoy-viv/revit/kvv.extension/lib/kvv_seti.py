@@ -986,3 +986,107 @@ def fundament_nasosa(doc, log):
     razm = (int(round(dx / MM)), int(round(dy / MM)))
     log(u'насосная установка на фундаменте %dх%dх%d(h) мм' % (razm[0], razm[1], int(round(Z_FUND * 1000))))
     return razm
+
+
+TVM_RVT = u'C:\\Users\\Даниил\\Downloads\\_проект_Revit_2019.rvt'
+TVM_FAM = u'КрыльчатыеСчетчикиХолоднойВоды_Стандарт_Тепловодомер'
+TVM_TIP = u'DN25_IP54_Металлический_260_Класс_В'       # ВСХН-25, L = 260 мм, метрологический класс В
+
+
+def tvm_schetchik(doc, app, log, tip=TVM_TIP):
+    """Крыльчатый счётчик «Тепловодомер» (TVM) из проекта, присланного пользователем (Revit 2019): семейство
+    сохраняется в revit/semeystva (проект открывается фоном и закрывается без сохранения) и загружается в модель.
+    В журнал — типы семейства и соединители типа tip относительно точки вставки (для geometriya_v3.ARM).
+    Вне транзакции. Возвращает символ или None."""
+    # прежняя самодельная заготовка счётчика — из проекта вон
+    stare = [f for f in DB.FilteredElementCollector(doc).OfClass(DB.Family) if f.Name == u'КВВ_Счетчик воды крыльчатый']
+    if stare:
+        t = DB.Transaction(doc, u'Удаление: заготовка счётчика')
+        t.Start()
+        doc.Delete(stare[0].Id)
+        t.Commit()
+        log(u'удалено семейство-заготовка КВВ_Счетчик воды крыльчатый')
+    papka = os.path.join(kvv.REVIT, u'semeystva', u'tvm')
+    put = os.path.join(papka, TVM_FAM + u'.rfa')
+    if not [f for f in DB.FilteredElementCollector(doc).OfClass(DB.Family) if f.Name == TVM_FAM]:
+        if not (os.path.isdir(papka) and [fn for fn in os.listdir(papka) if fn.lower().endswith(u'.rfa')]):
+            if not os.path.isfile(TVM_RVT):
+                log(u'TVM: нет файла', TVM_RVT)
+                return None
+            # все семейства счётчиков проекта — в revit/semeystva/tvm (проект открывается один раз)
+            if not os.path.isdir(papka):
+                os.makedirs(papka)
+            d2 = app.OpenDocumentFile(TVM_RVT)
+            try:
+                for f in DB.FilteredElementCollector(d2).OfClass(DB.Family):
+                    nm = f.Name
+                    low = nm.lower()
+                    if not (u'tvm' in low or u'четчик' in low or u'чётчик' in low or u'водомер' in low):
+                        continue
+                    tipy = [DB.Element.Name.GetValue(d2.GetElement(i)) for i in f.GetFamilySymbolIds()]
+                    kat = f.FamilyCategory.Name if f.FamilyCategory else u'?'
+                    log(u'TVM: семейство «%s» (%s), типов %d: %s' % (nm, kat, len(tipy), u'; '.join(sorted(tipy))))
+                    if not f.IsEditable:
+                        continue
+                    fd = d2.EditFamily(f)
+                    try:
+                        so = DB.SaveAsOptions()
+                        so.OverwriteExistingFile = True
+                        fn = u''.join(u'_' if ch in u'\\/:*?"<>|' else ch for ch in nm)
+                        fd.SaveAs(os.path.join(papka, fn + u'.rfa'), so)
+                    finally:
+                        fd.Close(False)
+            finally:
+                d2.Close(False)
+        for fn in os.listdir(papka):
+            if fn.lower().endswith(u'.rfa'):
+                log(u'TVM: сохранено', fn)
+        if not os.path.isfile(put):
+            log(u'TVM: нет файла семейства', TVM_FAM)
+            return None
+        t = DB.Transaction(doc, u'Загрузка: счётчик TVM')
+        t.Start()
+        ok = doc.LoadFamily(put)
+        t.Commit()
+        log(u'TVM: загружено', ok)
+    fam = [f for f in DB.FilteredElementCollector(doc).OfClass(DB.Family) if f.Name == TVM_FAM][0]
+    simvoly = [doc.GetElement(i) for i in fam.GetFamilySymbolIds()]
+    log(u'TVM: типов', len(simvoly), u'—', u'; '.join(sorted(DB.Element.Name.GetValue(s) for s in simvoly)))
+    def norm(s):                                  # в именах TVM буквы В, С, Н местами латинские
+        return s.replace(u'H', u'Н').replace(u'B', u'В').replace(u'C', u'С').strip()
+    sym = [s for s in simvoly if norm(DB.Element.Name.GetValue(s)) == norm(tip)]
+    if not sym:
+        log(u'TVM: нет типа', tip)
+        return None
+    sym = sym[0]
+    # соединители типа — пробная вставка с откатом
+    lvl = DB.FilteredElementCollector(doc).OfClass(DB.Level).FirstElement()
+    t = DB.Transaction(doc, u'Проба: счётчик TVM')
+    t.Start()
+    try:
+        if not sym.IsActive:
+            sym.Activate()
+            doc.Regenerate()
+        tp = sym.Family.FamilyPlacementType
+        if tp == DB.FamilyPlacementType.WorkPlaneBased:
+            e = doc.Create.NewFamilyInstance(DB.XYZ(0, 0, 0), sym, DB.XYZ.BasisX, lvl,
+                                             DB.Structure.StructuralType.NonStructural)
+        else:
+            e = doc.Create.NewFamilyInstance(DB.XYZ(0, 0, 0), sym, lvl, DB.Structure.StructuralType.NonStructural)
+        doc.Regenerate()
+        p0 = e.Location.Point
+        for c in soediniteli(e):
+            o, d = c.Origin - p0, c.CoordinateSystem.BasisZ
+            log(u'TVM %s: соединитель DN%.0f o=(%.0f, %.0f, %.0f) мм dir=(%.2f, %.2f, %.2f) | размещение %s' % (
+                tip, c.Radius * 2 / MM, o.X / MM, o.Y / MM, o.Z / MM, d.X, d.Y, d.Z, tp))
+        bb = e.get_BoundingBox(None)
+        log(u'TVM %s: габарит (%.0f…%.0f) x (%.0f…%.0f) x (%.0f…%.0f) мм' % (
+            tip, (bb.Min.X - p0.X) / MM, (bb.Max.X - p0.X) / MM, (bb.Min.Y - p0.Y) / MM, (bb.Max.Y - p0.Y) / MM,
+            (bb.Min.Z - p0.Z) / MM, (bb.Max.Z - p0.Z) / MM))
+        for nm in (u'ADSK_Наименование', u'ADSK_Марка', u'Описание', u'Комментарии к типоразмеру'):
+            pr = sym.LookupParameter(nm)
+            if pr is not None and pr.HasValue:
+                log(u'TVM %s: %s = %s' % (tip, nm, pr.AsString() or pr.AsValueString()))
+    finally:
+        t.RollBack()
+    return sym

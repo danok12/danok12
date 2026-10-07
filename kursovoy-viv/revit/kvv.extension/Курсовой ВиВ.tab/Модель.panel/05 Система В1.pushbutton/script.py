@@ -12,6 +12,9 @@ doc = HOST_APP.doc
 
 def main(log):
     g = kvv.load_json('revit', 'geometriya_v3.json')
+    # общедомовой счётчик ВСХН-25 «Тепловодомер» (вне транзакции: загрузка семейства)
+    if kvv_seti.tvm_schetchik(doc, HOST_APP.app, log) is None:
+        log(u'ВНИМАНИЕ: счётчик TVM не загружен — водомерный узел встанет без счётчика')
     with kvv.Tranzakciya(doc, u'КВВ: система В1', log):
         kvv_seti.udalit(doc, u'КВВ-В1', log)
         # установка на фундамент до трубопроводов: патрубки берутся из модели (поднятые на 270 мм)
