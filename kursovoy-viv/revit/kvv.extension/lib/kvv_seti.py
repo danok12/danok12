@@ -13,6 +13,10 @@ import kvv
 
 M = kvv.M
 MM = kvv.MM
+GR_PEREHODY = DB.RoutingPreferenceRuleGroupType.Transitions
+# запасные семейства переходов (если правило типа трубы не дало переход): оцинкованная сталь на резьбе —
+# муфта переходная из ковкого чугуна, затем сварной концентрический переход
+PEREHODY = (u'ADSK_ЧугунРезьба_МуфтаПереходная_ГОСТ8957-75', u'ADSK_СтальСварка_Переход_ГОСТ17378-2001')
 
 
 def komment(e, txt):
@@ -223,27 +227,73 @@ class Stroitel(object):
         self.log(u'труб', sys_, n)
         return metka
 
-    def soedinit(self, c1, c2, metka):
-        """Соединить два соединителя в одной точке: отвод, переход или муфта в зависимости от направлений."""
+    def _popytka(self, o1, o2, p, metka, sym=None):
+        """Одна попытка соединить o1 и o2 в точке p — в подтранзакции: неудача откатывается целиком (иначе Revit
+        оставлял трубы удлинёнными на длину несостоявшегося перехода — у счётчика они заходили друг в друга).
+        sym — семейство перехода, временно первое в правилах переходов типа трубы."""
+        doc = self.doc
+        st = DB.SubTransaction(doc)
+        st.Start()
         try:
-            z1, z2 = c1.CoordinateSystem.BasisZ, c2.CoordinateSystem.BasisZ
-            dot = z1.DotProduct(z2)
+            tipy = []
+            if sym is not None:
+                if not sym.IsActive:
+                    sym.Activate()
+                for o in (o1, o2):
+                    if isinstance(o, Plumbing.Pipe) and o.PipeType.Id not in [t.Id for t in tipy]:
+                        tipy.append(o.PipeType)
+                for t in tipy:
+                    t.RoutingPreferenceManager.AddRule(GR_PEREHODY, DB.RoutingPreferenceRule(sym.Id, u'КВВ'), 0)
+                doc.Regenerate()
+            c1, _ = blizhayshiy(o1, p)
+            c2, _ = blizhayshiy(o2, p)
+            dot = c1.CoordinateSystem.BasisZ.DotProduct(c2.CoordinateSystem.BasisZ)
             if dot > -0.999:
-                f = self.doc.Create.NewElbowFitting(c1, c2)
+                f = doc.Create.NewElbowFitting(c1, c2)
             elif abs(c1.Radius - c2.Radius) > 1e-6:
-                f = self.doc.Create.NewTransitionFitting(c1, c2)
+                f = doc.Create.NewTransitionFitting(c1, c2)
             else:
-                f = self.doc.Create.NewUnionFitting(c1, c2)
+                f = doc.Create.NewUnionFitting(c1, c2)
             komment(f, metka)
+            for t in tipy:
+                t.RoutingPreferenceManager.RemoveRule(GR_PEREHODY, 0)
+            st.Commit()
+            return f
+        except Exception:
+            st.RollBack()
+            raise
+
+    def soedinit(self, c1, c2, metka):
+        """Соединить два соединителя в одной точке: отвод, переход или муфта в зависимости от направлений.
+        Не встал переход — повтор с муфтой переходной ГОСТ 8957 (оцинкованная сталь на резьбе), затем со сварным
+        переходом ГОСТ 17378."""
+        o1, o2, p = c1.Owner, c2.Owner, c1.Origin
+        dn = (c1.Radius * 2 / MM, c2.Radius * 2 / MM)
+        try:
+            self._popytka(o1, o2, p, metka)
+            return
         except Exception as ex:
-            self.oshibka(u'отвод/переход', ex)
-            o = c1.Origin
-            self.log(u'  отвод/переход не встал в точке (%.3f, %.3f, %.3f): DN %.0f / %.0f' % (
-                o.X / M, o.Y / M, o.Z / M, c1.Radius * 2 / MM, c2.Radius * 2 / MM))
-            try:
-                c1.ConnectTo(c2)
-            except Exception:
-                pass
+            osh = ex
+        if abs(dn[0] - dn[1]) > 0.5:
+            for imya in PEREHODY:
+                for sym in DB.FilteredElementCollector(self.doc).OfClass(DB.FamilySymbol).OfCategory(
+                        DB.BuiltInCategory.OST_PipeFitting):
+                    if sym.FamilyName != imya:
+                        continue
+                    try:
+                        self._popytka(o1, o2, p, metka, sym)
+                        self.log(u'  переход DN %.0f / %.0f в точке (%.3f, %.3f, %.3f): %s' % (
+                            dn[0], dn[1], p.X / M, p.Y / M, p.Z / M, imya))
+                        return
+                    except Exception as ex:
+                        osh = ex
+        self.oshibka(u'отвод/переход', osh)
+        self.log(u'  отвод/переход не встал в точке (%.3f, %.3f, %.3f): DN %.0f / %.0f' % (
+            p.X / M, p.Y / M, p.Z / M, dn[0], dn[1]))
+        try:
+            c1.ConnectTo(c2)
+        except Exception:
+            pass
 
     def kosoy_troynik(self, c):
         """Тройник не под 90° (косой 45° или с уклоном отвода): API ставит тройник только под прямым углом.

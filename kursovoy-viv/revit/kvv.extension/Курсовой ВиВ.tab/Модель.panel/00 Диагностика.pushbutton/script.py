@@ -28,6 +28,7 @@ def main(log):
     with kvv.Tranzakciya(doc, u'КВВ: шрифт ГОСТ', log):
         kvv_proverka.shrift_v_proekte(doc, log)
     kvv_proverka.kollizii(doc, log)
+    kvv_proverka.proba_perehodov(doc, log)
 
 
 kvv.run('00_proverka', main)
