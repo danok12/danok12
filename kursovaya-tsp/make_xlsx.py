@@ -638,10 +638,258 @@ def sheet_mean(name, title, data, labels):
     return f"'{name}'!$C$15"
 
 
-sheet_mean("Табл. 5 скрепер", "Средняя дальность перемещения грунта скрепером (бульдозером): выемка — насыпь (табл. 5)",
-           RS.T5, ("Выемка", "Насыпь"))
+L5 = sheet_mean("Табл. 5 скрепер",
+                "Средняя дальность перемещения грунта скрепером (бульдозером): выемка — насыпь (табл. 5)",
+                RS.T5, ("Выемка", "Насыпь"))
 sheet_mean("Табл. 6 самосвал", "Средняя дальность перемещения грунта автосамосвалом: котлован — насыпь (табл. 6)",
            RS.T6, ("Котлован", "Насыпь"))
+
+# ---------- п. 2.3: назначение комплекта машин (нормы - ЕНиР Е2-1) ----------
+import mashiny as MS
+F_SM = Font(name=FONT, size=10, italic=True)
+SN = "2.3 Грунт и нормы ЕНиР"
+wn = wb.create_sheet(SN)
+wn["A1"] = "Назначение комплекта машин (п. 2.3 методички): грунт и нормы времени ЕНиР Е2-1"
+wn["A1"].font = F_T
+for r, (t, v, fmt) in enumerate((
+        ("Наименование и краткая характеристика грунта", f"{MS.GRUNT} ({MS.GRUNT_SRC})", None),
+        ("Группа грунта в зависимости от трудности разработки",
+         f"одноковшовые экскаваторы — {MS.GR_EXC}; скреперы — {MS.GR_SCR}; бульдозеры — {MS.GR_BUL}", None),
+        ("Средняя плотность в естественном залегании, кг/м³", MS.RHO, "0")), start=3):
+    cell(wn, f"A{r}", t, al=LEFT)
+    wn.merge_cells(f"B{r}:G{r}")
+    cell(wn, f"B{r}", v, F_IN, fmt, al=LEFT)
+    for c in "CDEFG":
+        wn[f"{c}{r}"].border = BOX
+RHO = f"'{SN}'!$B$5"
+for c, t in zip("ABCDEFG", ("Машина", "Марка", "Обоснование (ЕНиР Е2-1)", "Нвр, маш.-ч на 100 м³",
+                            "Добавлять на каждые следующие 10 м", "Нвр дана до, м", "Условия")):
+    cell(wn, f"{c}7", t, F_B, fill=HEAD)
+NORM = {}                                           # машина -> строка
+for r, (key, m) in enumerate((("bul_ved", MS.BUL_VED), ("skr_ved", MS.SKR_VED), ("rykhl", MS.RYKHL),
+                              ("bul_raz", MS.BUL_RAZ), ("katok", MS.KATOK), ("tolkach", MS.TOLKACH)), start=8):
+    role, brand, src, a, b, L0, note = m
+    NORM[key] = r
+    cell(wn, f"A{r}", role + (" (ведущая, вариант 1)" if key == "bul_ved" else " (ведущая, вариант 2)"
+                              if key == "skr_ved" else " (разравнивание)" if key == "bul_raz" else ""), al=LEFT)
+    cell(wn, f"B{r}", brand, al=LEFT)
+    cell(wn, f"C{r}", src, al=LEFT)
+    cell(wn, f"D{r}", float(a) if a is not None else "Нвр скрепера / k", F_IN if a is not None else F_CALC,
+         "0.00" if a is not None else None)
+    cell(wn, f"E{r}", float(b) if b is not None else "—", F_IN if b is not None else F_CALC, "0.00")
+    cell(wn, f"F{r}", L0 if L0 is not None else "—", F_IN if L0 is not None else F_CALC)
+    cell(wn, f"G{r}", note, F_SM, al=LEFT)
+wn["A15"] = ("Добавка на расстояние сверх указанного в норме - пропорционально: Нвр = Нвр.до + добавка · (Lср − L) / 10. "
+             "Толкач: Нвр скрепера, делённая на число обслуживаемых скреперов (Е2-1-21, примеч. 2; прил. 5).")
+wn["A15"].font = F_NOTE
+for c, wd in zip("ABCDEFG", (40, 40, 28, 14, 16, 12, 46)):
+    wn.column_dimensions[c].width = wd
+wn.row_dimensions[7].height = 48
+NR = lambda col, key: f"'{SN}'!${col}${NORM[key]}"
+
+# ---------- табл. 7: варианты с различными ведущими машинами (п. 2.3.1) ----------
+S7 = "Табл. 7 варианты"
+w10 = wb.create_sheet(S7)
+w10["A1"] = "Варианты с различными ведущими машинами (табл. 7 методички), вертикальная планировка"
+w10["A1"].font = F_T
+w10["A2"] = ("Vдн = 100·N·8 / Нвр;  Mсм = Нвр·V / (100·8);  nвед = Mсм / (m·t);  n = nвед·Vдн.вед / Vдн.об "
+             "(с. 25-27; Нвр - на 100 м³). Ведущая машина и толкач - V с kр, рыхлитель - V в плотном теле.")
+w10["A2"].font = F_NOTE
+cut_cols = cols8[:len(RS.CUT)]
+PAR = [("Средняя дальность перемещения грунта Lср (табл. 5), м", f"={L5}", F_LINK, "0.00"),
+       ("Грунт выемок в насыпь (табл. 4), в плотном теле V, м³",
+        f"=SUM('Табл. 4 распределение'!{cut_cols[0]}5:{cut_cols[-1]}5)", F_LINK, "0.00"),
+       ("То же с коэффициентом первоначального разрыхления V·kр, м³", f"=C5*{KP}", F_CALC, "0.00"),
+       ("Объём насыпи - разравнивание и уплотнение Vн, м³", f"='Табл. 4 распределение'!B{rl}*{KOR}", F_LINK, "0.00"),
+       ("Число смен в сутках m (N), по 8 ч", MS.M_SM, F_IN, "0"),
+       ("Срок планировочных работ t, дн. (5-20, для обоих вариантов)", MS.T_DN, F_IN, "0"),
+       ("Скреперов на один трактор-толкач (прил. 5)", MS.SKR_NA_TOLKACH, F_IN, "0")]
+for r, (t, v, fnt, fmt) in enumerate(PAR, start=4):
+    w10.merge_cells(f"A{r}:B{r}")
+    cell(w10, f"A{r}", t, al=LEFT)
+    w10[f"B{r}"].border = BOX
+    cell(w10, f"C{r}", v, fnt, fmt, fill=YEL if r in (8, 9, 10) else None)
+LSR, V7, VKR7, VN7, MSM, TDN, KTOL = (f"$C${r}" for r in range(4, 11))
+
+
+def block7(c0, r0, title, brand, V, H, lead=None):
+    """Блок машины в табл. 7: заголовок, V, Нвр, Mсм, Vдн, n. c0 - столбец подписи; -> адреса."""
+    a, b, c = c0, chr(ord(c0) + 1), chr(ord(c0) + 2)
+    cell(w10, f"{a}{r0}", title, F_B, al=LEFT, fill=HEAD)
+    w10.merge_cells(f"{b}{r0}:{c}{r0}")
+    cell(w10, f"{b}{r0}", brand, F_SM, al=LEFT, fill=HEAD)
+    w10[f"{c}{r0}"].border = BOX
+    sub = "вед" if lead is None else "об"
+    rows = [(f"V, м³", "", V, "0.00"), (f"Нвр {sub}, маш.-ч", "", H, "0.0000"),
+            (f"Mсм {sub}, маш.-см", "", f"={c}{r0 + 2}*{c}{r0 + 1}/800", "0.00"),
+            (f"Vдн {sub}, м³/дн", "", f"=100*{MSM}*8/{c}{r0 + 2}", "0.00")]
+    if lead is None:
+        rows.append(("n, шт.", f"={c}{r0 + 3}/({MSM}*{TDN})", f"=ROUNDUP(ROUND({b}{r0 + 5},6),0)", "0"))
+    else:
+        rows.append(("n, шт.", f"={lead['n']}*{lead['vdn']}/{c}{r0 + 4}", f"=ROUNDUP(ROUND({b}{r0 + 5},6),0)", "0"))
+    for k, (t, note, v, fmt) in enumerate(rows, start=1):
+        r = r0 + k
+        cell(w10, f"{a}{r}", t, al=LEFT)
+        cell(w10, f"{b}{r}", note, F_CALC, "0.000")
+        cell(w10, f"{c}{r}", v, F_LINK if isinstance(v, str) and v.startswith("='") else F_CALC, fmt)
+    return {"V": f"{c}{r0 + 1}", "H": f"{c}{r0 + 2}", "M": f"{c}{r0 + 3}", "vdn": f"{c}{r0 + 4}",
+            "n": f"{c}{r0 + 5}"}
+
+
+for c0, t in (("A", "Вариант 1"), ("E", "Вариант 2")):
+    w10.merge_cells(f"{c0}12:{chr(ord(c0) + 2)}12")
+    cell(w10, f"{c0}12", t, F_B, fill=HEAD)
+    for c in (chr(ord(c0) + 1), chr(ord(c0) + 2)):
+        w10[f"{c}12"].border = BOX
+lead_h = lambda key: f"={NR('D', key)}+{NR('E', key)}*({LSR}-{NR('F', key)})/10"
+B1v = block7("A", 13, "Ведущая машина — бульдозер", MS.BUL_VED[1], f"={VKR7}", lead_h("bul_ved"))
+B2v = block7("E", 13, "Ведущая машина — скрепер", MS.SKR_VED[1], f"={VKR7}", lead_h("skr_ved"))
+w10["B14"] = "объём с коэффициентом первоначального разрыхления"
+w10["B14"].font = F_SM
+w10["B14"].alignment = LEFT
+for c0 in "AE":
+    w10.merge_cells(f"{c0}19:{chr(ord(c0) + 2)}19")
+    cell(w10, f"{c0}19", "Обеспечивающие машины", F_B, al=LEFT)
+    for c in (chr(ord(c0) + 1), chr(ord(c0) + 2)):
+        w10[f"{c}19"].border = BOX
+V1 = [B1v, block7("A", 20, "Трактор-рыхлитель", MS.RYKHL[1], f"={V7}", f"={NR('D', 'rykhl')}", B1v),
+      block7("A", 26, "Каток", MS.KATOK[1], f"={VN7}", f"={NR('D', 'katok')}", B1v)]
+w10["B21"] = "объём в плотном теле"
+w10["B21"].font = F_SM
+w10["B21"].alignment = LEFT
+V2 = [B2v, block7("E", 20, "Трактор-рыхлитель", MS.RYKHL[1], f"={V7}", f"={NR('D', 'rykhl')}", B2v),
+      block7("E", 26, "Бульдозер", MS.BUL_RAZ[1], f"={VN7}", f"={NR('D', 'bul_raz')}", B2v),
+      block7("E", 32, "Каток", MS.KATOK[1], f"={VN7}", f"={NR('D', 'katok')}", B2v),
+      block7("E", 38, "Трактор-толкач", MS.TOLKACH[1], f"={VKR7}", f"={B2v['H']}/{KTOL}", B2v)]
+TOT7 = [("Mсм вед + ΣMсм об, маш.-см", lambda v: "=" + "+".join(b["M"] for b in v), "0.00"),
+        ("V / (Mсм вед + ΣMсм об), м³/маш.-см", None, "0.00"),
+        ("(Mсм вед + ΣMсм об) / V, маш.-см/м³", None, "0.00000"),
+        ("Продолжительность работ ведущими машинами, дн.", None, "0.0")]
+for c0, v in (("A", V1), ("E", V2)):
+    a, b, c = c0, chr(ord(c0) + 1), chr(ord(c0) + 2)
+    for k, (t, fn, fmt) in enumerate(TOT7):
+        r = 45 + k
+        w10.merge_cells(f"{a}{r}:{b}{r}")
+        cell(w10, f"{a}{r}", t, F_B if k < 3 else F_CALC, al=LEFT)
+        w10[f"{b}{r}"].border = BOX
+        fml = (fn(v) if k == 0 else f"={v[0]['V']}/{c}45" if k == 1 else f"={c}45/{v[0]['V']}" if k == 2
+               else f"={v[0]['M']}/({v[0]['n']}*{MSM})")
+        cell(w10, f"{c}{r}", fml, F_B if k < 3 else F_CALC, fmt)
+w10.merge_cells("A50:G50")
+cell(w10, "A50", '=IF(C47<G47,"Принимается вариант 1 - ведущая машина бульдозер: меньше маш.-см на 1 м³",'
+                 '"Принимается вариант 2 - ведущая машина скрепер: меньше маш.-см на 1 м³")', F_B, al=LEFT)
+for c in "BCDEFG":
+    w10[f"{c}50"].border = BOX
+for c, wd in zip("ABCDEFG", (34, 30, 13, 3, 34, 30, 13)):
+    w10.column_dimensions[c].width = wd
+
+# ---------- п. 2.3.2: экскаватор и автосамосвалы ----------
+S8 = "2.3.2 Экскаватор, самосвалы"
+w11 = wb.create_sheet(S8)
+w11["A1"] = "Машины для разработки грунта в котловане (п. 2.3.2): экскаватор и автосамосвалы"
+w11["A1"].font = F_T
+for r, (t, v, fnt, fmt) in enumerate((
+        ("Объём котлована Vк, м³", f"={KR1['VK']}", F_LINK, "0.00"),
+        ("Глубина котлована hк, м", f"={KR1['HK']}", F_LINK, "0.0000"),
+        ("Число смен в сутках m", f"='{S7}'!{MSM}", F_LINK, "0")), start=3):
+    w11.merge_cells(f"A{r}:B{r}")
+    cell(w11, f"A{r}", t, al=LEFT)
+    w11[f"B{r}"].border = BOX
+    cell(w11, f"C{r}", v, fnt, fmt)
+# прил. 6 - справа
+cell(w11, "E11", "Прил. 6: ёмкость ковша по объёму сооружения", F_B, al=LEFT, box=False)
+for c, t in zip("EFGH", ("Ковш, м³", "Vк от, м³", "Vк до, м³", "Подходит")):
+    cell(w11, f"{c}12", t, F_B, fill=HEAD)
+for k, (q, a, b) in enumerate(MS.PRIL6):
+    r = 13 + k
+    cell(w11, f"E{r}", q)
+    cell(w11, f"F{r}", a, F_IN, "0")
+    cell(w11, f"G{r}", b if b < 10 ** 9 else "—", F_IN, "0")
+    cell(w11, f"H{r}", f'=IF(AND($C$3>=F{r},$C$3<=IF(ISNUMBER(G{r}),G{r},1E+99)),"да","")')
+hdr = ("Экскаватор (обратная лопата)", "Привод", "Ковш q, м³", "Обоснование (ЕНиР Е2-1)", "Нвр, маш.-ч на 100 м³ (I гр., с погрузкой)",
+       "Псм = 100·8 / Нвр, м³/смену", "Hк max для котлованов, м", "Rmax, м", "Высота выгрузки, м",
+       "Недобор (прил. 7), см")
+for c, t in zip("ABCDEFGHIJ", hdr):
+    cell(w11, f"{c}7", t, F_B, fill=HEAD)
+for k, e in enumerate(MS.EXC):
+    r = 8 + k
+    nm, pr, q, H, src, hk, R_, hv, nd = e
+    for c, v, fmt in zip("ABCDEFGHIJ", (nm, pr, float(q), src, float(H), f"=100*8/E{r}", float(hk), float(R_),
+                                        float(hv), nd),
+                         (None, None, "0.00", None, "0.0", "0.00", "0.0", "0.0", "0.0", "0")):
+        cell(w11, f"{c}{r}", v, F_CALC if c == "F" else F_IN, fmt, al=LEFT if c in "ABD" else CEN)
+SEL = "MATCH(MAX($F$8:$F$10),$F$8:$F$10,0)"
+EXR = [("Принят экскаватор - наибольшая производительность", f"=INDEX($A$8:$A$10,{SEL})", None),
+       ("Ковш q, м³", f"=INDEX($C$8:$C$10,{SEL})", "0.00"),
+       ("Нвр, маш.-ч на 100 м³", f"=INDEX($E$8:$E$10,{SEL})", "0.0"),
+       ("Недобор, м", f"=INDEX($J$8:$J$10,{SEL})/100", "0.00"),
+       ("Глубина копания экскаватором hк − недобор, м", "=C4-C15", "0.0000"),
+       ("Проверка: Hк max не меньше глубины копания", f'=IF(INDEX($G$8:$G$10,{SEL})>=C16,"выполняется","НЕТ")', None),
+       ("Mсм = Нвр·Vк / (100·8), маш.-см", "=C14*C3/800", "0.00"),
+       ("Продолжительность одним экскаватором Mсм / m, дн.", "=C18/C5", "0.0")]
+for k, (t, fml, fmt) in enumerate(EXR):
+    r = 12 + k
+    w11.merge_cells(f"A{r}:B{r}")
+    cell(w11, f"A{r}", t, F_B if k == 0 else F_CALC, al=LEFT)
+    w11[f"B{r}"].border = BOX
+    cell(w11, f"C{r}", fml, F_B if k == 0 else F_CALC, fmt)
+# автосамосвалы (с. 28-29, прил. 8)
+cell(w11, "A21", "Автосамосвалы (с. 28-29, прил. 8)", F_B, al=LEFT, box=False)
+TRP = [("Коэффициент наполнения ковша kнап (табл. 8: 0,8-1,0)", float(MS.K_NAP), F_IN, "0.00"),
+       ("Коэффициент первоначального разрыхления kр", f"={KP}", F_LINK, "0.00"),
+       ("Плотность грунта γ, т/м³", f"={RHO}/1000", F_LINK, "0.000"),
+       ("Грунт в ковше в плотном теле Vгр.к = q·kнап / kр, м³", "=C13*C22/C23", F_CALC, "0.0000"),
+       ("Масса грунта в ковше Mковша = Vгр.к·γ, т", "=C25*C24", F_CALC, "0.0000"),
+       ("Дальность транспортирования L, км (до карьера, отвала)", float(MS.L_TR), F_IN, "0.0"),
+       ("Установка под погрузку Ту.п, мин", float(MS.T_UP), F_IN, "0.0"),
+       ("Установка под разгрузку Ту.р, мин", float(MS.T_UR), F_IN, "0.0"),
+       ("Разгрузка Тр, мин", float(MS.T_R), F_IN, "0.0"),
+       ("Маневрирование Тм, мин", float(MS.T_M), F_IN, "0.0")]
+for k, (t, v, fnt, fmt) in enumerate(TRP):
+    r = 22 + k
+    w11.merge_cells(f"A{r}:B{r}")
+    cell(w11, f"A{r}", t, al=LEFT)
+    w11[f"B{r}"].border = BOX
+    cell(w11, f"C{r}", v, fnt, fmt, fill=YEL if r == 22 else None)
+hdrt = ("Модель", "Va, м³", "Па, т", "Погрузочная высота, м", "Uгр, км/ч", "Uпор, км/ч", "Па / Mковша",
+        "Va / q", "n (целое меньшее)", "6 ≤ n ≤ 11", "Va пл = n·Vгр.к, м³", "Тп = Va пл·Нвр / 100 · 60, мин",
+        "Тпр гр = L / Uгр · 60, мин", "Тпр пор = L / Uпор · 60, мин", "Тцикла, мин", "Тцикла / Тп",
+        "N, шт.", "Va р = q·kнап·n, м³", "Нвр а = Тцикла / (Va р·60), маш.-ч/м³", "Нвр а подходящих")
+TC = [chr(ord("A") + k) for k in range(len(hdrt))]
+for c, t in zip(TC, hdrt):
+    cell(w11, f"{c}33", t, F_B, fill=HEAD)
+for k, t in enumerate(MS.PRIL8):
+    r = 34 + k
+    nm, Va, Pa, hp, ug, up = t
+    vals = [(nm, F_IN, None), (float(Va), F_IN, "0.0"), (float(Pa), F_IN, "0.00"), (float(hp), F_IN, "0.00"),
+            (ug, F_IN, "0"), (up, F_IN, "0"),
+            (f"=C{r}/$C$26", F_CALC, "0.00"), (f"=B{r}/$C$13", F_CALC, "0.00"),
+            (f"=INT(ROUND(MIN(G{r},H{r}),6))", F_CALC, "0"), (f'=IF(AND(I{r}>=6,I{r}<=11),"да","нет")', F_CALC, None),
+            (f"=I{r}*$C$25", F_CALC, "0.000"), (f"=K{r}*$C$14/100*60", F_CALC, "0.00"),
+            (f"=$C$27/E{r}*60", F_CALC, "0.00"), (f"=$C$27/F{r}*60", F_CALC, "0.00"),
+            (f"=$C$28+L{r}+M{r}+N{r}+$C$29+$C$30+$C$31", F_CALC, "0.00"), (f"=O{r}/L{r}", F_CALC, "0.00"),
+            (f"=ROUNDUP(ROUND(P{r},6),0)", F_CALC, "0"), (f"=$C$13*$C$22*I{r}", F_CALC, "0.00"),
+            (f"=O{r}/(R{r}*60)", F_CALC, "0.0000"), (f'=IF(J{r}="да",S{r},"")', F_CALC, "0.0000")]
+    for c, (v, fnt, fmt) in zip(TC, vals):
+        cell(w11, f"{c}{r}", v, fnt, fmt, al=LEFT if c == "A" else CEN)
+re_ = 34 + len(MS.PRIL8) - 1
+SELT = f"MATCH(MIN($T$34:$T${re_}),$T$34:$T${re_},0)"
+for k, (t, fml, fmt) in enumerate((
+        ("Принят автосамосвал - наименьшая Нвр а из подходящих", f"=INDEX($A$34:$A${re_},{SELT})", None),
+        ("Ковшей в кузове n", f"=INDEX($I$34:$I${re_},{SELT})", "0"),
+        ("Количество автосамосвалов N ≥ Тцикла / Тп, шт.", f"=INDEX($Q$34:$Q${re_},{SELT})", "0"),
+        ("Нвр а, маш.-ч/м³", f"=INDEX($S$34:$S${re_},{SELT})", "0.0000"))):
+    r = re_ + 2 + k
+    w11.merge_cells(f"A{r}:B{r}")
+    cell(w11, f"A{r}", t, F_B if k == 0 else F_CALC, al=LEFT)
+    w11[f"B{r}"].border = BOX
+    cell(w11, f"C{r}", fml, F_B if k == 0 else F_CALC, fmt)
+for c in TC:
+    w11.column_dimensions[c].width = 11
+for c, wd in (("A", 42), ("B", 22), ("C", 14), ("D", 26), ("E", 13)):
+    w11.column_dimensions[c].width = wd
+w11.row_dimensions[7].height = 64
+w11.row_dimensions[33].height = 62
 
 for sh in wb.worksheets:
     sh.sheet_view.zoomScale = 110

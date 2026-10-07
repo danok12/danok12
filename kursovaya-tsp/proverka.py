@@ -103,6 +103,41 @@ for sh, t in (("Табл. 5 скрепер", RS.T5), ("Табл. 6 самосв�
 print(f"Табл. 3-6: котлован -> насыпь {float(RS.V_PIT_FILL):.2f} м3, недостача {float(sum(RS.SHORT.values())):.2f} м3,"
       f" Lср ЗТМ {RS.T5[4]:.2f} м, самосвалы {RS.T6[4]:.2f} м")
 
+# 2б. Комплекты машин (п. 2.3: табл. 7, экскаватор, самосвалы) = mashiny.py
+import mashiny as MS
+w10, n7 = wb["Табл. 7 варианты"], 0
+for col, var, starts in (("C", MS.VAR1, (13, 20, 26)), ("G", MS.VAR2, (13, 20, 26, 32, 38))):
+    if len(var["rows"]) != len(starts): bad("табл. 7: число машин не то", col)
+    for r0, row in zip(starts, var["rows"]):
+        for dr, key in enumerate(("V", "H", "M", "Vdn", "n"), start=1):
+            n7 += 1
+            if not near(w10[f"{col}{r0 + dr}"].value, row[key], 1e-6):
+                bad("табл. 7 расходится:", f"{col}{r0 + dr}", row["mach"][0], key, w10[f"{col}{r0 + dr}"].value,
+                    float(row[key]))
+    for r, key in ((45, "SUM_M"), (46, "V_PER_M"), (47, "M_PER_V"), (48, "DAYS")):
+        n7 += 1
+        if not near(w10[f"{col}{r}"].value, var[key], 1e-6): bad("табл. 7: итог расходится", col, r, key)
+if f"вариант {MS.VAR_OK}" not in (w10["A50"].value or ""): bad("табл. 7: в Excel принят другой вариант")
+w11 = wb["2.3.2 Экскаватор, самосвалы"]
+for ref, w in (("C12", MS.EX_NAME), ("C14", MS.H_EX), ("C16", MS.H_KOP), ("C18", MS.M_EX), ("C25", MS.V_GRK),
+               ("C26", MS.M_KOV)):
+    n7 += 1
+    v = w11[ref].value
+    if (v != w) if isinstance(w, str) else not near(v, w, 1e-9): bad("2.3.2 расходится:", ref, v, w)
+for k, t in enumerate(MS.TRUCKS):
+    r = 34 + k
+    for col, key in (("I", "n"), ("O", "Tc"), ("Q", "N"), ("S", "Ha")):
+        n7 += 1
+        if not near(w11[f"{col}{r}"].value, t[key], 1e-9): bad("самосвалы расходятся:", t["name"], key)
+r_sel = 34 + len(MS.TRUCKS) + 1
+if w11[f"C{r_sel}"].value != MS.TR["name"] or w11[f"C{r_sel + 2}"].value != MS.TR["N"]:
+    bad("принят другой самосвал:", w11[f"C{r_sel}"].value, MS.TR["name"])
+if MS.EX_HK < MS.H_KOP: bad("экскаватор не достаёт до дна котлована")
+if not MS.KOVSH_PRIL6 or f"{float(MS.V_KOV):g}".replace(".", ",") not in MS.KOVSH_PRIL6:
+    bad("ковш экскаватора не по прил. 6:", MS.KOVSH_PRIL6)
+print(f"П. 2.3: сверено {n7} значений; принят вариант {MS.VAR_OK}, экскаватор {MS.EX_NAME},"
+      f" самосвалы {MS.TR['name']} x {MS.TR['N']}")
+
 # 3. DXF: ЛНР проходит ровно через все точки нулевых работ, подписи на месте -
 #    на черновике (лист 1, y как есть) и на окончательном плане (лист 2, сдвиг OY2)
 class MC:                       # как в make_dxf.py: сдвиг окончательного плана в модели, Мв на разрезах
