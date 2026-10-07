@@ -1,0 +1,2 @@
+# собирается в CI из proverka-dz/ (build_site.py), в репозиторий не кладётся
+/site/proverka/

@@ -247,6 +247,13 @@ details.crit-all summary{cursor:pointer;color:var(--petrol);font-weight:600;font
 .pop.wide button{align-items:flex-start;white-space:normal;text-align:left;line-height:1.35}
 .pop.wide .pm{flex:none}
 .exam-inner{display:flex;flex-direction:column;gap:10px}
+.head-side{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#api-card{border-color:var(--petrol)}
+#api-card a{color:var(--petrol)}
+.hist-io{display:inline-flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.btn-like{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);padding:7px 13px}
+.btn-like:hover{background:var(--surface-2)}
+.btn-like:focus-within{outline:2px solid var(--petrol);outline-offset:2px}
 </style>
 
 <div class="wrap">
@@ -256,7 +263,10 @@ details.crit-all summary{cursor:pointer;color:var(--petrol);font-weight:600;font
         <div class="eyebrow">Репетиторство · математика</div>
         <h1>Проверка ДЗ</h1>
       </div>
-      <div class="status" id="status"></div>
+      <div class="head-side">
+        <div class="status" id="status"></div>
+        <button class="ghost" id="api-btn" type="button" hidden>⚙ Ключ API</button>
+      </div>
     </div>
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" id="tab-check" aria-controls="p-check" aria-selected="true">Проверить</button>
@@ -269,6 +279,18 @@ details.crit-all summary{cursor:pointer;color:var(--petrol);font-weight:600;font
   <section id="p-check" role="tabpanel" aria-labelledby="tab-check">
     <div class="grid">
       <div class="col">
+        <div class="card" id="api-card" hidden>
+          <div class="card-h"><h2>Ключ Anthropic API</h2><span class="hint" id="api-state"></span></div>
+          <p class="hint">Сайт обращается к Claude прямо из этого браузера по вашему ключу. Ключ хранится только здесь и уходит только на api.anthropic.com. Оплата — по тарифу API, отдельно от подписки Claude: ориентир $0,3–1 за проверку варианта, с двойной проверкой вдвое больше. Сколько стоила каждая проверка, видно в результате.</p>
+          <label class="f"><span class="lbl">Ключ</span><input type="password" id="api-key" autocomplete="off" spellcheck="false" placeholder="sk-ant-…"></label>
+          <div class="actions">
+            <button class="primary" id="api-save" type="button">Сохранить в этом браузере</button>
+            <button id="api-test" type="button">Проверить ключ</button>
+            <button class="ghost" id="api-del" type="button">Удалить</button>
+            <span class="hint" id="api-hint"></span>
+          </div>
+          <p class="hint">Ключ создаётся в консоли Anthropic: <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com → API Keys</a>, там же пополняется баланс. На чужом компьютере ключ не сохраняйте.</p>
+        </div>
         <div class="card">
           <div class="card-h"><h2>Ученик</h2><button class="ghost" id="clear-all" type="button">Новая проверка</button></div>
           <div class="row">
@@ -384,7 +406,7 @@ details.crit-all summary{cursor:pointer;color:var(--petrol);font-weight:600;font
         </div>
       </div>
     </div>
-    <p class="foot">Фото решений отправляются в Claude под вашим аккаунтом и нигде не сохраняются. В историю попадают только отметки, разбор и текст сообщения. Числовые ответы страница пересчитывает сама точной арифметикой; в режиме экзамена первую часть по ключу оценивает программа, а не Claude. Всё, что вызывает сомнение, помечено «⚠».</p>
+    <p class="foot" id="foot">Фото решений отправляются в Claude под вашим аккаунтом и нигде не сохраняются. В историю попадают только отметки, разбор и текст сообщения. Числовые ответы страница пересчитывает сама точной арифметикой; в режиме экзамена первую часть по ключу оценивает программа, а не Claude. Всё, что вызывает сомнение, помечено «⚠».</p>
   </section>
 
   <!-- ===== Мой стиль ===== -->
@@ -438,6 +460,10 @@ details.crit-all summary{cursor:pointer;color:var(--petrol);font-weight:600;font
     <div class="hist-tools">
       <input type="text" id="hist-q" placeholder="Поиск по ученику или заданию" style="max-width:340px">
       <span class="hint" id="hist-hint"></span>
+      <span class="hist-io" id="hist-io" hidden>
+        <button type="button" id="hist-export">Выгрузить в файл</button>
+        <label class="btn-like"><input type="file" id="hist-import" accept="application/json,.json" hidden>Загрузить из файла</label>
+      </span>
     </div>
     <div class="hist" id="hist"></div>
   </section>
@@ -772,6 +798,102 @@ function plainTasks(tasks){ return tasks.map(function(t){ var o={}; Object.keys(
 function plural(n,a,b,c){ n=Math.abs(n)%100; var m=n%10; if(n>10&&n<20) return c; if(m>1&&m<5) return b; if(m===1) return a; return c; }
 function balls(n){ return n+" "+plural(n,"балл","балла","баллов"); }
 
+/* ================= Где работает страница: артефакт claude.ai или сайт ================= */
+var SITE = !!document.querySelector('meta[name="proverka-site"]');
+var API_BASE = (function(){ var m=document.querySelector('meta[name="proverka-api-base"]'); return (m&&m.content)||"https://api.anthropic.com"; })();
+var MODEL = "claude-opus-5-5";
+var PRICE = {inp:4, out:20, cacheWrite:5, cacheRead:0.2};   // $ за 1 млн токенов, Claude Opus 5.5
+var AI = {kind:null, img:null, cost:0};                        // kind: "artifact" — подписка claude.ai, "api" — ключ на сайте
+var memKey = "";
+function apiKey(){ return lsGet("proverka-api-key")||memKey; }
+function blobToB64(b){ return new Promise(function(res,rej){ var r=new FileReader(); r.onload=function(){ res(String(r.result).split(",")[1]||""); }; r.onerror=function(){ rej(r.error); }; r.readAsDataURL(b); }); }
+function parseLoose(text){
+  var t=String(text||"").trim(); try{ return JSON.parse(t); }catch(e){}
+  var m=t.match(/```(?:json)?\s*([\s\S]*?)```/); if(m){ try{ return JSON.parse(m[1]); }catch(e){} }
+  var a=t.search(/[\[{]/), b=Math.max(t.lastIndexOf("}"),t.lastIndexOf("]")); if(a>=0&&b>a){ try{ return JSON.parse(t.slice(a,b+1)); }catch(e){} }
+  return undefined;
+}
+function apiErr(e,signal){
+  if(signal&&signal.aborted) return {code:"cancelled"};
+  if(e&&e.code&&e.status==null) return e;
+  if(e&&e.name==="APIUserAbortError") return {code:"cancelled"};
+  var st=e&&e.status, msg=(e&&e.error&&e.error.error&&e.error.error.message)||(e&&e.message)||"";
+  if(st===401) return {code:"bad_key"};
+  if(st===403) return {code:"forbidden",message:msg};
+  if(st===413) return {code:"prompt_too_large"};
+  if(st===429) return {code:"rate_limited"};
+  if(st===400) return {code:"api_400",message:msg};
+  if(st>=500) return {code:"upstream_error"};
+  return {code:"network",message:msg};
+}
+function apiCall(prompt,o){
+  var key=apiKey(); if(!key) return Promise.reject({code:"no_key"});
+  if(!window.AnthropicSDK) return Promise.reject({code:"network",message:"не загрузился SDK"});
+  var client=new window.AnthropicSDK.Anthropic({apiKey:key, baseURL:API_BASE, dangerouslyAllowBrowser:true, maxRetries:2});
+  return Promise.all((o.images||[]).map(blobToB64)).then(function(list){
+    var content=list.map(function(d){ return {type:"image",source:{type:"base64",media_type:"image/jpeg",data:d}}; });
+    content.push({type:"text",text:prompt});
+    var stream=client.beta.messages.stream({model:MODEL, max_tokens:o.maxTokens||32000, thinking:{type:"adaptive"}, output_config:{effort:o.effort||"high"},
+      betas:["server-side-fallback-2026-07-01"], fallbacks:"default", messages:[{role:"user",content:content}]},{signal:o.signal});
+    stream.on("text",function(delta,snap){ if(o.onText) o.onText({text:snap,delta:delta}); });
+    return stream.finalMessage();
+  }).then(function(msg){
+    var u=msg.usage||{}, c=((u.input_tokens||0)*PRICE.inp+(u.cache_creation_input_tokens||0)*PRICE.cacheWrite+(u.cache_read_input_tokens||0)*PRICE.cacheRead+(u.output_tokens||0)*PRICE.out)/1e6;
+    AI.cost+=c;
+    if(msg.stop_reason==="refusal") throw {code:"refused"};
+    var text=(msg.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("");
+    if(!text.trim()) throw {code:"empty_completion"};
+    return {text:text, truncated:msg.stop_reason==="max_tokens", cost:c};
+  }).catch(function(e){ throw apiErr(e,o.signal); });
+}
+AI.json=function(prompt,o){
+  if(AI.kind==="artifact"){ var x={modelTier:o.tier, signal:o.signal, cache:false, onText:o.onText}; if(o.images&&o.images.length) x.images=o.images; return P.sample.json(prompt,x); }
+  return apiCall(prompt,{images:o.images, effort:o.tier==="complex"?"high":"low", maxTokens:64000, signal:o.signal, onText:o.onText})
+    .then(function(r){ var v=parseLoose(r.text); if(v===undefined) throw {code:"invalid_json",text:r.text}; return v; });
+};
+AI.text=function(prompt,o){
+  if(AI.kind==="artifact") return P.sample(prompt,{signal:o.signal, cache:false, onText:o.onText}).then(function(r){ return r.text; });
+  return apiCall(prompt,{effort:"low", maxTokens:16000, signal:o.signal, onText:o.onText}).then(function(r){ return r.text; });
+};
+function fmtCost(c){ return "$"+(c<0.01?"0,01":c.toFixed(2).replace(".",",")); }
+
+/* хранилище: база страницы на claude.ai или этот браузер на сайте */
+var Store = {kind:null};
+function localHist(){ try{ var a=JSON.parse(lsGet("proverka-history")||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function setLocalHist(a){
+  a.sort(function(x,y){ return String(y.at).localeCompare(String(x.at)); });
+  try{ localStorage.setItem("proverka-history",JSON.stringify(a.slice(0,150))); }
+  catch(e){ toast("История не поместилась в память браузера. Выгрузите её в файл и удалите старые проверки."); }
+}
+Store.loadStyle=function(){
+  if(Store.kind==="db") return P.styleRef.get().then(function(snap){ return snap.exists?(snap.data()||null):null; });
+  try{ var ls=lsGet("proverka-style"); return Promise.resolve(ls?JSON.parse(ls):null); }catch(e){ return Promise.resolve(null); }
+};
+Store.saveStyle=function(st){
+  var d=Object.assign({},st,{updatedAt:new Date().toISOString()});
+  if(Store.kind==="db") return enqueue(function(){ return P.styleRef.set(d); });
+  lsSet("proverka-style",JSON.stringify(d)); return Promise.resolve();
+};
+Store.list=function(){
+  if(Store.kind==="db") return P.histRef.orderBy("at","desc").limit(100).get().then(function(snap){ return snap.docs.map(function(d){ var o=d.data()||{}; o.id=d.id; return o; }); });
+  return Promise.resolve(Store.kind==="local"?localHist():[]);
+};
+Store.save=function(id,data){
+  if(Store.kind==="db") return enqueue(function(){ return P.histRef.doc(id).set(data); });
+  if(Store.kind==="local"){ var a=localHist().filter(function(x){return x.id!==id;}); a.push(Object.assign({},data,{id:id})); setLocalHist(a); }
+  return Promise.resolve();
+};
+Store.update=function(id,patch){
+  if(Store.kind==="db") return enqueue(function(){ return P.histRef.doc(id).update(patch); });
+  if(Store.kind==="local"){ var a=localHist(); a.forEach(function(x){ if(x.id===id) Object.assign(x,patch); }); setLocalHist(a); }
+  return Promise.resolve();
+};
+Store.remove=function(id){
+  if(Store.kind==="db") return enqueue(function(){ return P.histRef.doc(id).delete(); });
+  if(Store.kind==="local") setLocalHist(localHist().filter(function(x){return x.id!==id;}));
+  return Promise.resolve();
+};
+
 /* ================= Вкладки ================= */
 function showTab(name){
   ["check","style","history"].forEach(function(n){ $("#tab-"+n).setAttribute("aria-selected",String(n===name)); $("#p-"+n).hidden=(n!==name); });
@@ -875,9 +997,9 @@ function updateHw(){
 var seq=0, pdfLib=null;
 function loadPdfJs(){
   if(pdfLib) return pdfLib;
-  var base="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+  var base=SITE?"vendor/":"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
   function load(src){ return new Promise(function(res,rej){ var s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=function(){ rej(new Error("pdf.js не загрузился")); }; document.head.append(s); }); }
-  pdfLib = load(base+"pdf.worker.min.js").then(function(){ return load(base+"pdf.min.js"); }).then(function(){
+  pdfLib = (SITE?Promise.resolve():load(base+"pdf.worker.min.js")).then(function(){ return load(base+"pdf.min.js"); }).then(function(){
     var lib=window.pdfjsLib; if(!lib) throw new Error("pdf.js не загрузился"); lib.GlobalWorkerOptions.workerSrc=base+"pdf.worker.min.js"; return lib; });
   pdfLib.catch(function(){ pdfLib=null; });
   return pdfLib;
@@ -943,12 +1065,13 @@ document.addEventListener("paste",function(e){
   if(!$("#p-check").hidden){ addFiles(files,S.lastZone); toast(files.length+" "+plural(files.length,"снимок","снимка","снимков")+" добавлено"); }
 });
 function partsFor(c){ var a=Math.max(c.width,c.height)/Math.min(c.width,c.height); return a>=2.1?3:(a>=1.15?2:1); }
+function fitCanvas(c,edge){ var L=Math.max(c.width,c.height); if(L<=edge) return c; var k=edge/L, t=document.createElement("canvas"); t.width=Math.round(c.width*k); t.height=Math.round(c.height*k); t.getContext("2d").drawImage(c,0,0,t.width,t.height); return t; }
 function toBlob(c,q){ return new Promise(function(res){ c.toBlob(function(b){ res(b); },"image/jpeg",q); }); }
 var PART_NAMES = {2:{v:["верхняя половина","нижняя половина"],h:["левая половина","правая половина"]},3:{v:["верхняя треть","середина","нижняя треть"],h:["левая треть","середина","правая треть"]}};
 function buildImages(){
-  var max=(P.img&&P.img.maxCount)||20, maxBytes=(P.img&&P.img.maxInputBytes)||5e6;
-  var cond=S.cond.map(function(it){ return drawRotated(it,2600); }), sol=S.sol.map(function(it){ return drawRotated(it,3400); });
-  var parts=sol.map(partsFor), total=cond.length+parts.reduce(function(a,b){return a+b;},0);
+  var IMG=AI.img||{}, max=IMG.maxCount||20, maxBytes=IMG.maxInputBytes||5e6, edge=IMG.longEdge||3400;
+  var cond=S.cond.map(function(it){ return drawRotated(it,Math.min(2600,edge)); }), sol=S.sol.map(function(it){ return drawRotated(it,IMG.tile===false?4100:3400); });
+  var parts=sol.map(function(c){ var n=partsFor(c); return IMG.tile===false&&n<3?1:n; }), total=cond.length+parts.reduce(function(a,b){return a+b;},0);
   if(total>max) parts=parts.map(function(){ return 1; });
   if(cond.length+sol.length>max) return Promise.reject({code:"too_many", message:"Слишком много страниц: за одну проверку можно до "+max+". Разбейте работу на две проверки."});
   var jobs=[], labels=[];
@@ -964,6 +1087,7 @@ function buildImages(){
     }
   });
   return Promise.all(jobs.map(function(c){
+    c=fitCanvas(c,edge);
     return toBlob(c,0.86).then(function(b){ if(b && b.size<=maxBytes) return b; var s=document.createElement("canvas"), k=Math.sqrt(maxBytes/(b?b.size:maxBytes*2))*0.9; s.width=Math.round(c.width*k); s.height=Math.round(c.height*k); s.getContext("2d").drawImage(c,0,0,s.width,s.height); return toBlob(s,0.82); });
   })).then(function(blobs){ return {blobs:blobs, labels:labels, split:parts.some(function(p){return p>1;})}; });
 }
@@ -1118,21 +1242,21 @@ var runCtl=null, runTimer=null;
 function updateRun(){
   var b=$("#run"), hint=$("#run-hint"), ex=currentExam();
   if(S.busy){ b.disabled=true; return; }
-  if(!P.sample){ b.disabled=true; hint.textContent = P.ready ? "Claude недоступен в этом окне — откройте страницу на claude.ai под своим аккаунтом" : "Подключаюсь к Claude…"; return; }
-  if(!P.img){ b.disabled=true; hint.textContent="В этом окне страница не может отправлять фото в Claude"; return; }
+  if(!AI.kind){ b.disabled=true; hint.textContent = SITE ? "Добавьте ключ Anthropic API — кнопка «⚙ Ключ API» вверху" : P.ready ? "Claude недоступен в этом окне — откройте страницу на claude.ai под своим аккаунтом" : "Подключаюсь к Claude…"; return; }
+  if(!AI.img){ b.disabled=true; hint.textContent="В этом окне страница не может отправлять фото в Claude"; return; }
   if(!S.sol.length){ b.disabled=true; hint.textContent="Добавьте фото решения"; return; }
   if(ex && !selTasks(ex).length){ b.disabled=true; hint.textContent="Выберите задания, которые есть в работе"; return; }
   b.disabled=false; hint.textContent = radio("double")==="on" ? "Две проверки параллельно, обычно 1–3 минуты" : "Обычно 1–2 минуты";
 }
 function runCheck(){
-  if(S.busy||!P.sample) return;
+  if(S.busy||!AI.kind) return;
   var ex=currentExam(), sel=ex?selTasks(ex):null;
   var o={ ex:ex, sel:sel, text:$("#hw-text").value.trim(), key:$("#hw-key").value.trim(), req:$("#hw-req").value.trim(), scope:radio("scope"), tier:radio("tier"), expected:expectedCount() };
   var full=!!(ex && sel.length===ex.tasks.length);
   var title=$("#hw-title").value.trim()||(ex? ex.short+(full?" · пробник":" · № "+ranges(sel.map(function(t){return t.n;}))) : (o.text?o.text.split("\n")[0].slice(0,60):"ДЗ"));
   var meta={ student:$("#student").value.trim(), sgender:radio("sgender"), hwTitle:title, scope:o.scope, mode:ex?"exam":"hw" };
   if(ex){ meta.exam={id:ex.id, short:ex.short}; meta.full=full; }
-  var keyMap=parseKey(o.key), prev=S.result, dbl=radio("double")==="on";
+  var keyMap=parseKey(o.key), prev=S.result, dbl=radio("double")==="on"; AI.cost=0;
   S.busy=true; updateRun(); $("#stop").hidden=false;
   runCtl=new AbortController(); var ctl=runCtl, t0=Date.now(), seen=[0,0];
   function tick(){ renderWork(Math.round((Date.now()-t0)/1000),o.expected,seen,dbl); }
@@ -1140,7 +1264,7 @@ function runCheck(){
   buildImages().then(function(im){
     o.labels=im.labels; o.split=im.split;
     var prompt=ex?buildExamPrompt(o):buildCheckPrompt(o);
-    function call(i){ return P.sample.json(prompt,{images:im.blobs, modelTier:o.tier, signal:ctl.signal, cache:false, onText:function(u){ seen[i]=(u.text.match(/"verdict"\s*:/g)||[]).length; }}); }
+    function call(i){ return AI.json(prompt,{images:im.blobs, tier:o.tier, signal:ctl.signal, onText:function(u){ seen[i]=(u.text.match(/"verdict"\s*:/g)||[]).length; }}); }
     var runs = dbl ? [call(0),call(1)] : [call(0)];
     return Promise.all(runs.map(function(p){ return p.then(function(v){ return {ok:v}; },function(e){ return {err:e}; }); })).then(function(rs){
       var good=rs.filter(function(x){ return x.ok; }), parsed=[];
@@ -1148,7 +1272,7 @@ function runCheck(){
       if(!parsed.length){ var e0=rs[0].err||(rs[1]&&rs[1].err)||{code:"invalid_json"}; throw e0; }
       var r=parsed[0]; if(parsed[1]) attachSecond(r,parsed[1]);
       r.tasks.forEach(annotate);
-      S.result=Object.assign({at:new Date().toISOString(), double:parsed.length>1},meta,r); S.resultId=null; S.message=""; S.msgStale=false;
+      S.result=Object.assign({at:new Date().toISOString(), double:parsed.length>1, cost:AI.kind==="api"?AI.cost:null},meta,r); S.resultId=null; S.message=""; S.msgStale=false;
       renderResult(); saveCheck(); generateMessage("new");
       if(dbl && parsed.length<2) toast("Вторая проверка не удалась — показана одна");
     });
@@ -1174,6 +1298,11 @@ function errText(e){
     case "invalid_json": return "Ответ пришёл в неожиданном виде. Нажмите «Проверить» ещё раз.";
     case "empty_completion": return "Claude вернул пустой ответ. Попробуйте ещё раз или уберите часть страниц.";
     case "sampling_disabled": return "Claude недоступен для этого аккаунта.";
+    case "no_key": return "Добавьте ключ Anthropic API: кнопка «⚙ Ключ API» вверху страницы.";
+    case "bad_key": return "Ключ API не подошёл. Проверьте его: кнопка «⚙ Ключ API».";
+    case "forbidden": return "У ключа нет доступа к модели: "+(e.message||"");
+    case "api_400": return "Anthropic API отклонил запрос: "+(e.message||"")+(/credit|balance/i.test(e.message||"")?" — пополните баланс в консоли Anthropic.":"");
+    case "network": return "Нет связи с api.anthropic.com"+(e.message?" ("+e.message+")":"")+". Проверьте интернет и попробуйте ещё раз.";
     default: return "Связь с Claude прервалась. Попробуйте ещё раз.";
   }
 }
@@ -1210,7 +1339,7 @@ function renderHwHead(c,r){
   var cn=counts(r.tasks);
   c.append(h("div",{class:"res-top"},
     h("div",{class:"score","aria-label":"Верно "+cn.solved+" из "+cn.total},cn.solved,h("small",null,"/"+cn.total)),
-    h("div",{class:"res-meta"},h("span",{class:"who"},r.student||"Ученик без имени"),h("span",{class:"what"},r.hwTitle||""),h("span",{class:"hint"},fmtDate(r.at)+(r.scope==="answers"?" · только ответы":"")+(r.double?" · двойная проверка":"")))));
+    h("div",{class:"res-meta"},h("span",{class:"who"},r.student||"Ученик без имени"),h("span",{class:"what"},r.hwTitle||""),h("span",{class:"hint"},fmtDate(r.at)+(r.scope==="answers"?" · только ответы":"")+(r.double?" · двойная проверка":"")+(r.cost?" · ≈ "+fmtCost(r.cost):"")))));
   var cs=h("div",{class:"counts"});
   [["ok","верно"],["minor","с недочётом"],["partial","частично"],["wrong","неверно"],["missing","не решено"],["unreadable","не разобрать"]].forEach(function(p){ if(cn[p[0]]) cs.append(h("span",{class:"cnt","data-tone":V[p[0]].tone},h("b",null,cn[p[0]]),p[1])); });
   c.append(cs);
@@ -1227,7 +1356,7 @@ function renderExamHead(c,r){
   var tt=examTotals(r);
   c.append(h("div",{class:"res-top"},
     h("div",{class:"score","aria-label":tt.sum+" из "+tt.max+" первичных баллов"},tt.sum,h("small",null,"/"+tt.max)),
-    h("div",{class:"res-meta"},h("span",{class:"who"},r.student||"Ученик без имени"),h("span",{class:"what"},r.hwTitle||""),h("span",{class:"hint"},fmtDate(r.at)+" · первичные баллы"+(r.double?" · двойная проверка":"")))));
+    h("div",{class:"res-meta"},h("span",{class:"who"},r.student||"Ученик без имени"),h("span",{class:"what"},r.hwTitle||""),h("span",{class:"hint"},fmtDate(r.at)+" · первичные баллы"+(r.double?" · двойная проверка":"")+(r.cost?" · ≈ "+fmtCost(r.cost):"")))));
   var line=totalLine(r,tt); if(line) c.append(h("p",{class:"tot-line"},line));
   var cs=h("div",{class:"counts"});
   if(tt.p1m) cs.append(h("span",{class:"cnt","data-tone":"petrol"},h("b",null,tt.p1+"/"+tt.p1m),"часть 1"));
@@ -1399,17 +1528,20 @@ function buildMsgPrompt(r,st,extra,variant,prev){
 }
 var msgCtl=null;
 function generateMessage(variant,target){
-  var r=target?target.result:S.result; if(!r||!P.sample) return;
+  var r=target?target.result:S.result; if(!r||!AI.kind) return;
   var st=target?target.style:S.style, out=target?target.out:$("#msg"), prev=target?null:$("#msg").value.trim();
   var prompt=buildMsgPrompt(r,st,target?"":$("#msg-extra").value.trim(),variant,prev);
   if(msgCtl) msgCtl.abort(); msgCtl=new AbortController(); var ctl=msgCtl;
   setMsgBusy(true,target);
   if(target) out.textContent="Пишу…"; else { out.value=""; out.placeholder="Пишу сообщение…"; }
-  P.sample(prompt,{signal:ctl.signal, cache:false, onText:function(u){ if(target) out.textContent=u.text; else out.value=u.text; }}).then(function(res){
-    var text=res.text.trim();
+  var c0=AI.cost;
+  AI.text(prompt,{signal:ctl.signal, onText:function(u){ if(target) out.textContent=u.text; else out.value=u.text; }}).then(function(res){
+    var text=String(res).trim();
     if(target){ out.textContent=text; return; }
     out.value=text; S.message=text; S.msgStale=false; $("#msg-stale").hidden=true;
-    if(S.resultId) enqueue(function(){ return P.histRef.doc(S.resultId).update({message:text}); }).then(refreshHistory);
+    var patch={message:text};
+    if(AI.kind==="api" && S.result===r){ r.cost=(r.cost||0)+(AI.cost-c0); patch.cost=r.cost; renderResult(); }
+    if(S.resultId) Store.update(S.resultId,patch).then(refreshHistory);
   }).catch(function(e){
     var t=errText(e); if(target){ out.textContent=t||"Остановлено."; return; }
     if(e&&e.text) out.value=e.text; if(t) toast(t);
@@ -1418,7 +1550,7 @@ function generateMessage(variant,target){
 function setMsgBusy(on,target){
   if(target){ $("#st-try").disabled=on; return; }
   S.msgBusy=on; $("#msg").readOnly=on; $("#stop-msg").hidden=!on;
-  ["#regen","#shorter","#warmer"].forEach(function(s){ $(s).disabled=on||!P.sample; });
+  ["#regen","#shorter","#warmer"].forEach(function(s){ $(s).disabled=on||!AI.kind; });
 }
 $("#regen").addEventListener("click",function(){ generateMessage("regen"); });
 $("#shorter").addEventListener("click",function(){ generateMessage("shorter"); });
@@ -1426,7 +1558,7 @@ $("#warmer").addEventListener("click",function(){ generateMessage("warmer"); });
 $("#stop-msg").addEventListener("click",function(){ if(msgCtl) msgCtl.abort(); });
 $("#copy").addEventListener("click",function(){
   var ta=$("#msg"), text=ta.value;
-  function done(){ toast("Скопировано"); if(S.resultId&&text!==S.message){ S.message=text; enqueue(function(){ return P.histRef.doc(S.resultId).update({message:text}); }).then(refreshHistory); } }
+  function done(){ toast("Скопировано"); if(S.resultId&&text!==S.message){ S.message=text; Store.update(S.resultId,{message:text}).then(refreshHistory); } }
   try{ navigator.clipboard.writeText(text).then(done,function(){ ta.select(); toast("Выделено — нажмите Ctrl+C"); }); }catch(e){ ta.select(); toast("Выделено — нажмите Ctrl+C"); }
 });
 
@@ -1452,38 +1584,34 @@ function styleStatus(){
 }
 $("#st-save").addEventListener("click",function(){
   S.style=formToStyle(); renderStatus();
-  if(P.styleRef){ var data=Object.assign({},S.style,{updatedAt:new Date().toISOString()});
-    $("#st-hint").textContent="Сохраняю…";
-    enqueue(function(){ return P.styleRef.set(data); }).then(function(){ $("#st-hint").textContent="Сохранено"; });
-  } else { lsSet("proverka-style",JSON.stringify(S.style)); $("#st-hint").textContent="Сохранено в этом браузере"; }
+  $("#st-hint").textContent="Сохраняю…";
+  Store.saveStyle(S.style).then(function(){ $("#st-hint").textContent = Store.kind==="db" ? "Сохранено" : "Сохранено в этом браузере"; });
 });
 $("#st-try").addEventListener("click",function(){
-  if(!P.sample){ $("#st-preview").textContent="Claude недоступен в этом окне."; return; }
+  if(!AI.kind){ $("#st-preview").textContent = SITE ? "Сначала добавьте ключ Anthropic API." : "Claude недоступен в этом окне."; return; }
   var r=exampleResult(); r.tasks.forEach(annotate);
   generateMessage("new",{result:r, style:formToStyle(), out:$("#st-preview")});
 });
 
 /* ================= История ================= */
 function saveCheck(){
-  if(!P.histRef||!S.result||S.result.example) return;
+  if(!Store.kind||!S.result||S.result.example) return;
   var r=S.result, id=S.resultId||("c"+Date.now().toString(36)); S.resultId=id;
   var data={v:2, at:r.at, mode:r.mode||"hw", student:r.student||"", sgender:r.sgender||"none", hwTitle:r.hwTitle||"", scope:r.scope||"full", double:!!r.double,
-    tasks:plainTasks(r.tasks), summary:r.summary||{}, unreadable:r.unreadable||null, message:S.message||""};
+    tasks:plainTasks(r.tasks), summary:r.summary||{}, unreadable:r.unreadable||null, message:S.message||"", cost:r.cost||null};
   if(r.mode==="exam"){ var tt=examTotals(r); data.exam=r.exam; data.full=!!r.full; data.solved=tt.sum; data.total=tt.max; data.test=tt.test; data.grade=tt.grade?tt.grade.mark:null; }
   else { var cn=counts(r.tasks); data.solved=cn.solved; data.total=cn.total; }
-  enqueue(function(){ return P.histRef.doc(id).set(data); }).then(refreshHistory);
+  Store.save(id,data).then(refreshHistory);
 }
 function refreshHistory(){
-  if(!P.histRef) return Promise.resolve();
-  return P.histRef.orderBy("at","desc").limit(100).get().then(function(snap){
-    S.history=snap.docs.map(function(d){ var o=d.data()||{}; o.id=d.id; return o; }); renderHistory();
-  }).catch(function(e){ console.warn(e); });
+  if(!Store.kind) return Promise.resolve();
+  return Store.list().then(function(a){ S.history=a; renderHistory(); }).catch(function(e){ console.warn(e); });
 }
 function renderHistory(){
   var box=$("#hist"), q=$("#hist-q").value.trim().toLowerCase(); box.textContent="";
   $("#hist-n").textContent=S.history.length?String(S.history.length):"";
   var dl=$("#students"); dl.textContent=""; Array.from(new Set(S.history.map(function(x){return x.student;}).filter(Boolean))).forEach(function(n){ dl.append(h("option",{value:n})); });
-  if(!P.histRef){ box.append(h("div",{class:"card empty"},P.ready?"История доступна, когда страница открыта на claude.ai под вашим аккаунтом.":"Загружаю историю…")); return; }
+  if(!Store.kind){ box.append(h("div",{class:"card empty"},P.ready?"История недоступна в этом окне.":"Загружаю историю…")); return; }
   var items=S.history.filter(function(x){ return !q || (x.student+" "+x.hwTitle+" "+(x.exam?x.exam.short:"")).toLowerCase().indexOf(q)>=0; });
   $("#hist-hint").textContent = S.history.length ? "Показано "+items.length+" из "+S.history.length : "";
   if(!items.length){ box.append(h("div",{class:"card empty"},S.history.length?"Ничего не нашлось.":"Пока пусто. Каждая проверка сохраняется сюда сама: ученик, отметки или баллы, разбор и отправленное сообщение.")); return; }
@@ -1492,7 +1620,7 @@ function renderHistory(){
     var del=h("button",{type:"button",class:"ghost"},"Удалить"), armed=false, tm=null;
     del.addEventListener("click",function(){
       if(!armed){ armed=true; del.textContent="Точно удалить?"; del.classList.add("danger"); tm=setTimeout(function(){ armed=false; del.textContent="Удалить"; del.classList.remove("danger"); },3500); return; }
-      clearTimeout(tm); enqueue(function(){ return P.histRef.doc(x.id).delete(); }).then(function(){ if(S.resultId===x.id) S.resultId=null; return refreshHistory(); });
+      clearTimeout(tm); Store.remove(x.id).then(function(){ if(S.resultId===x.id) S.resultId=null; return refreshHistory(); });
     });
     var sc=(x.solved!=null?x.solved:counts(tasks).solved)+"/"+(x.total||tasks.length);
     var extra=x.mode==="exam" ? (x.test!=null?" · "+x.test:(x.grade?" · «"+x.grade+"»":"")) : "";
@@ -1505,7 +1633,7 @@ function renderHistory(){
 }
 $("#hist-q").addEventListener("input",renderHistory);
 function openFromHistory(x){
-  S.result={at:x.at, mode:x.mode||"hw", exam:x.exam||null, full:!!x.full, double:!!x.double, student:x.student, sgender:x.sgender, hwTitle:x.hwTitle, scope:x.scope,
+  S.result={at:x.at, mode:x.mode||"hw", exam:x.exam||null, full:!!x.full, double:!!x.double, cost:x.cost||null, student:x.student, sgender:x.sgender, hwTitle:x.hwTitle, scope:x.scope,
     tasks:(x.tasks||[]).map(function(t){ return annotate(Object.assign({},t)); }), summary:x.summary||{}, unreadable:x.unreadable||null};
   S.resultId=x.id; S.message=x.message||""; $("#msg").value=S.message; S.msgStale=false; $("#msg-stale").hidden=true;
   renderResult(); showTab("check"); window.scrollTo({top:0,behavior:"smooth"});
@@ -1514,18 +1642,20 @@ function openFromHistory(x){
 /* ================= Статус и подключение ================= */
 function renderStatus(){
   var s=$("#status"); s.textContent="";
-  var cl = !P.ready ? ["grey","Claude: подключаюсь"] : P.sample ? (P.img?["green","Claude подключён"]:["amber","Claude: без фото"]) : ["red","Claude недоступен"];
+  var cl = SITE ? (apiKey()?["green","Claude API: ключ есть"]:["red","Claude API: нужен ключ"])
+    : !P.ready ? ["grey","Claude: подключаюсь"] : AI.kind ? (AI.img?["green","Claude подключён"]:["amber","Claude: без фото"]) : ["red","Claude недоступен"];
   s.append(h("span",{"data-tone":cl[0]},h("i"),cl[1]));
   s.append(h("span",{"data-tone":S.style.examples&&S.style.examples.trim()?"green":"amber"},h("i"),styleStatus()));
 }
 function init(){
   S.result=exampleResult(); S.result.tasks.forEach(annotate); $("#msg").value=S.result.message;
   styleToForm(S.style); renderMode(); renderResult(); renderStatus(); renderHistory(); updateRun(); setMsgBusy(false);
+  if(SITE){ initSite(); return; }
   var c=window.claude;
   if(!c||typeof c.use!=="function"){ P.ready=true; afterConnect(); return; }
   Promise.all([c.use("sample"),c.use("db"),c.use("user")].map(function(p){ return Promise.resolve(p).catch(function(){ return null; }); })).then(function(r){
-    P.sample=r[0]; P.db=r[1]; P.user=r[2];
-    var lim = P.sample&&P.sample.limits ? P.sample.limits().then(function(l){ P.img=(l&&l.images)||null; }).catch(function(){}) : null;
+    P.sample=r[0]; P.db=r[1]; P.user=r[2]; AI.kind=P.sample?"artifact":null;
+    var lim = P.sample&&P.sample.limits ? P.sample.limits().then(function(l){ var im=l&&l.images; AI.img=im?{maxCount:im.maxCount, maxInputBytes:im.maxInputBytes, longEdge:3400, tile:true}:null; }).catch(function(){}) : null;
     var id = P.user&&P.user.id ? P.user.id().then(function(v){ P.uid=v||null; }).catch(function(){}) : null;
     return Promise.all([lim,id]);
   }).then(function(){
@@ -1533,15 +1663,68 @@ function init(){
     if(P.db&&P.uid){
       P.styleRef=P.db.doc("data/users/"+P.uid+"/style");
       P.histRef=P.db.doc("data/users/"+P.uid+"/archive").collection("checks");
-      return P.styleRef.get().then(function(snap){ if(snap.exists){ var d=snap.data()||{}; S.style=Object.assign(clone(DEFAULT_STYLE),d); delete S.style.updatedAt; styleToForm(S.style); } })
-        .catch(function(e){ console.warn(e); }).then(refreshHistory);
+      Store.kind="db";
     }
   }).then(afterConnect,afterConnect);
 }
+function applyStyle(d){ if(d){ S.style=Object.assign(clone(DEFAULT_STYLE),d); delete S.style.updatedAt; styleToForm(S.style); } renderStatus(); }
 function afterConnect(){
-  if(!P.styleRef){ var ls=lsGet("proverka-style"); if(ls){ try{ S.style=Object.assign(clone(DEFAULT_STYLE),JSON.parse(ls)); styleToForm(S.style); }catch(e){} } }
+  if(!Store.kind) Store.kind="local";
   P.ready=true; renderStatus(); renderHistory(); updateRun(); setMsgBusy(false);
+  Store.loadStyle().then(applyStyle).catch(function(e){ console.warn(e); });
+  refreshHistory();
 }
+
+/* ================= Сайт: ключ API, хранение в браузере, выгрузка истории ================= */
+function renderApiState(){
+  var k=apiKey();
+  $("#api-state").textContent = k ? "сохранён: …"+k.slice(-4) : "не задан";
+  AI.kind = k ? "api" : null;
+  renderStatus(); updateRun(); setMsgBusy(false);
+}
+function initSite(){
+  Store.kind="local"; P.ready=true;
+  AI.img={maxCount:20, maxInputBytes:3.5e6, longEdge:2576, tile:false};
+  $("#api-btn").hidden=false; $("#api-card").hidden=!!apiKey(); $("#hist-io").hidden=false;
+  $("#foot").textContent="Фото решений уходят из этого браузера напрямую в Anthropic API по вашему ключу. У сайта нет своего сервера: стиль, история проверок и ключ хранятся только в этом браузере. Числовые ответы страница пересчитывает сама точной арифметикой; в режиме экзамена первую часть по ключу оценивает программа, а не Claude. Всё, что вызывает сомнение, помечено «⚠».";
+  renderApiState(); renderHistory();
+  Store.loadStyle().then(applyStyle);
+  refreshHistory();
+}
+$("#api-btn").addEventListener("click",function(){ var c=$("#api-card"); c.hidden=!c.hidden; if(!c.hidden){ showTab("check"); $("#api-key").focus(); } });
+$("#api-save").addEventListener("click",function(){
+  var v=$("#api-key").value.trim();
+  if(!/^sk-ant-/.test(v)){ $("#api-hint").textContent="Ключ начинается с sk-ant-"; return; }
+  memKey=v; lsSet("proverka-api-key",v); $("#api-key").value=""; $("#api-hint").textContent="Сохранено";
+  renderApiState();
+});
+$("#api-del").addEventListener("click",function(){
+  memKey=""; try{ localStorage.removeItem("proverka-api-key"); }catch(e){}
+  $("#api-hint").textContent="Ключ удалён из этого браузера"; renderApiState();
+});
+$("#api-test").addEventListener("click",function(){
+  var v=$("#api-key").value.trim(); if(v){ if(!/^sk-ant-/.test(v)){ $("#api-hint").textContent="Ключ начинается с sk-ant-"; return; } memKey=v; lsSet("proverka-api-key",v); $("#api-key").value=""; renderApiState(); }
+  if(!apiKey()){ $("#api-hint").textContent="Сначала вставьте ключ"; return; }
+  var b=$("#api-test"); b.disabled=true; $("#api-hint").textContent="Проверяю…"; var c0=AI.cost;
+  apiCall("Ответь одним словом: готово.",{effort:"low", maxTokens:2000}).then(function(){ $("#api-hint").textContent="Ключ работает · запрос стоил ≈ "+fmtCost(AI.cost-c0); })
+    .catch(function(e){ $("#api-hint").textContent=errText(e)||"Не получилось"; }).then(function(){ b.disabled=false; });
+});
+$("#hist-export").addEventListener("click",function(){
+  var data={kind:"proverka-dz", exportedAt:new Date().toISOString(), style:S.style, history:localHist()};
+  var url=URL.createObjectURL(new Blob([JSON.stringify(data,null,1)],{type:"application/json"}));
+  var a=h("a",{href:url,download:"proverka-dz-"+new Date().toISOString().slice(0,10)+".json"}); document.body.append(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); },2000);
+});
+$("#hist-import").addEventListener("change",function(){
+  var f=this.files&&this.files[0]; this.value=""; if(!f) return;
+  f.text().then(function(t){
+    var d=JSON.parse(t); if(!d||d.kind!=="proverka-dz"||!Array.isArray(d.history)) throw new Error("bad");
+    var have={}, a=localHist(); a.forEach(function(x){ have[x.id]=1; });
+    var added=d.history.filter(function(x){ return x&&x.id&&!have[x.id]; }); setLocalHist(a.concat(added));
+    if(d.style && !(S.style.examples||"").trim()){ applyStyle(d.style); Store.saveStyle(S.style); }
+    toast("Загружено проверок: "+added.length); refreshHistory();
+  }).catch(function(){ toast("Это не файл выгрузки проверок"); });
+});
 init();
 })();
 </script>
