@@ -1,0 +1,1730 @@
+<title>Проверка ДЗ</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Раскладка: стол преподавателя. Слева — что сдал ученик, справа — что получилось:
+   полоса отметок «+ ± −», как на полях тетради, разбор по номерам и готовое сообщение. */
+:root{
+  --paper:#eff3f2; --surface:#fff; --surface-2:#e6edec; --line:#d4dfdd; --line-2:#b9cac7;
+  --ink:#12262a; --ink-2:#496164; --ink-3:#748c8e;
+  --petrol:#0e5b61; --petrol-2:#0a464b; --petrol-tint:#dbebea;
+  --red:#a32f28; --red-tint:#f8e3e0;
+  --amber:#8f5d09; --amber-tint:#fbeed6;
+  --green:#2b6a46; --green-tint:#dcecdf;
+  --grey:#6a7e81; --grey-tint:#e7eceb;
+  --shadow:0 1px 2px rgba(18,38,42,.06),0 6px 20px -12px rgba(18,38,42,.25);
+  --serif:Spectral,Georgia,'Times New Roman',serif;
+  --sans:'Source Sans 3',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b1517; --surface:#112225; --surface-2:#172e31; --line:#20383c; --line-2:#2e4c50;
+  --ink:#e4edec; --ink-2:#a6bfbf; --ink-3:#7d9899;
+  --petrol:#5cbdc1; --petrol-2:#8ad8d8; --petrol-tint:#123338;
+  --red:#f0998f; --red-tint:#3b1e1b;
+  --amber:#e3b466; --amber-tint:#352810;
+  --green:#8bcfa3; --green-tint:#13301e;
+  --grey:#93a9ab; --grey-tint:#1a2b2d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -14px rgba(0,0,0,.7);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#0b1517; --surface:#112225; --surface-2:#172e31; --line:#20383c; --line-2:#2e4c50;
+  --ink:#e4edec; --ink-2:#a6bfbf; --ink-3:#7d9899;
+  --petrol:#5cbdc1; --petrol-2:#8ad8d8; --petrol-tint:#123338;
+  --red:#f0998f; --red-tint:#3b1e1b;
+  --amber:#e3b466; --amber-tint:#352810;
+  --green:#8bcfa3; --green-tint:#13301e;
+  --grey:#93a9ab; --grey-tint:#1a2b2d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -14px rgba(0,0,0,.7);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:0 80px}
+.mono{font-family:var(--mono);font-size:.92em}
+h1,h2,h3{font-family:var(--serif);font-weight:600;text-wrap:balance;margin:0}
+h2{font-size:19px}
+h3{font-size:16px}
+p{margin:0}
+[data-tone="green"]{--tone:var(--green);--tint:var(--green-tint)}
+[data-tone="amber"]{--tone:var(--amber);--tint:var(--amber-tint)}
+[data-tone="red"]{--tone:var(--red);--tint:var(--red-tint)}
+[data-tone="grey"]{--tone:var(--grey);--tint:var(--grey-tint)}
+[data-tone="petrol"]{--tone:var(--petrol);--tint:var(--petrol-tint)}
+
+/* шапка */
+.head{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--paper);border-bottom:1px solid var(--line);padding-top:14px}
+.head-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+h1{font-size:clamp(25px,4.4vw,32px);letter-spacing:-.01em;margin-top:2px}
+.status{display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-3);font-family:var(--mono)}
+.status span{display:inline-flex;align-items:center;gap:6px}
+.status i{width:7px;height:7px;border-radius:50%;background:var(--tone,var(--grey));display:inline-block}
+.tabs{display:flex;gap:2px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
+.tab{font:inherit;font-weight:600;color:var(--ink-2);background:none;border:0;border-bottom:2px solid transparent;padding:9px 12px 8px;cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--petrol)}
+.tab .n{font-family:var(--mono);font-weight:500;font-size:12px;color:var(--ink-3);margin-left:4px}
+
+/* общие элементы */
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);padding:7px 13px;transition:background .12s,border-color .12s}
+button:hover{background:var(--surface-2)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,.drop:focus-within{outline:2px solid var(--petrol);outline-offset:2px}
+button.primary{background:var(--petrol);border-color:var(--petrol);color:var(--paper);font-weight:600}
+button.primary:hover{background:var(--petrol-2);border-color:var(--petrol-2)}
+button.ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+button.ghost:hover{background:var(--surface-2);color:var(--ink)}
+button[disabled]{opacity:.45;cursor:not-allowed}
+button.danger{color:var(--red);border-color:var(--red)}
+input[type=text],select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;width:100%;max-width:100%}
+textarea{resize:vertical;line-height:1.45}
+textarea.mono{font-family:var(--mono);font-size:13px}
+label.f{display:flex;flex-direction:column;gap:5px;min-width:0}
+.lbl{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.hint{font-size:13px;color:var(--ink-3)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.row>*{min-width:0}
+.grow{flex:1 1 200px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow);min-width:0;display:flex;flex-direction:column;gap:12px}
+.card-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.grid{display:grid;gap:16px;margin-top:16px}
+@media (min-width:980px){.grid{grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:start}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+
+/* сегментные переключатели */
+fieldset.seg{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;min-width:0}
+fieldset.seg legend{padding:0;margin-bottom:5px}
+.seg-in{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;background:var(--surface);width:max-content;max-width:100%}
+.seg-in label{position:relative;cursor:pointer}
+.seg-in input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg-in span{display:block;padding:6px 11px;color:var(--ink-2);border-right:1px solid var(--line);white-space:nowrap}
+.seg-in label:last-child span{border-right:0}
+.seg-in input:checked+span{background:var(--petrol-tint);color:var(--ink);font-weight:600}
+.seg-in input:focus-visible+span{outline:2px solid var(--petrol);outline-offset:-2px}
+
+/* зоны загрузки */
+.drop{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;border:1.5px dashed var(--line-2);border-radius:10px;padding:18px 12px;color:var(--ink-2);cursor:pointer;background:var(--paper)}
+.drop.small{padding:10px 12px;flex-direction:row;gap:8px}
+.drop input{position:absolute;width:1px;height:1px;opacity:0}
+.drop b{color:var(--ink)}
+.drop.over{border-color:var(--petrol);background:var(--petrol-tint)}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.thumb{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface-2);aspect-ratio:3/4;max-width:100%}
+.thumb canvas{width:100%;height:100%;object-fit:contain;display:block}
+.thumb .pg{position:absolute;left:4px;top:4px;font:500 11px/1 var(--mono);background:var(--surface);color:var(--ink);border-radius:4px;padding:3px 5px;border:1px solid var(--line)}
+.thumb .tb{position:absolute;right:4px;bottom:4px;display:flex;gap:4px}
+.thumb .tb button{padding:2px 7px;font-size:13px;line-height:1.3;border-radius:6px}
+
+/* результат */
+.ex-note{display:flex;gap:10px;align-items:flex-start;background:var(--petrol-tint);border-radius:8px;padding:9px 12px;font-size:14px;color:var(--ink)}
+.ex-note b{font-weight:700}
+.res-top{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap}
+.score{font-family:var(--serif);font-weight:600;font-size:46px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.score small{font-size:20px;color:var(--ink-3);font-weight:500;margin-left:2px}
+.res-meta{display:flex;flex-direction:column;gap:2px;min-width:0}
+.res-meta .who{font-weight:700;font-size:16px}
+.res-meta .what{color:var(--ink-2)}
+.counts{display:flex;gap:6px;flex-wrap:wrap;font-size:13px}
+.cnt{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px 3px 8px;background:var(--tint);color:var(--ink)}
+.cnt b{font-family:var(--mono);font-weight:500;color:var(--tone)}
+.strip{display:flex;flex-wrap:wrap;gap:3px}
+.sm{width:30px;height:34px;padding:0;border-radius:5px;border:1px solid var(--line);background:var(--tint);color:var(--tone);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.sm .m{font:600 16px/1 var(--mono)}
+.sm .k{font:500 9.5px/1 var(--mono);color:var(--ink-3);margin-top:2px}
+.sm.flag{box-shadow:inset 0 -3px 0 var(--amber)}
+.flagbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--amber);background:var(--amber-tint);border-radius:8px;padding:8px 12px}
+.flagbar b{color:var(--ink)}
+.tasks{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.task{display:grid;grid-template-columns:34px minmax(0,1fr);gap:4px 12px;padding:11px 0;border-bottom:1px solid var(--line);scroll-margin-top:130px}
+.mark{width:34px;height:34px;padding:0;border-radius:7px;border:1px solid var(--tone);background:var(--tint);color:var(--tone);font:600 18px/1 var(--mono);position:relative}
+.mark:hover{background:var(--tint);filter:brightness(.97)}
+.mark.minor::after{content:"";position:absolute;right:-3px;top:-3px;width:9px;height:9px;border-radius:50%;background:var(--amber);border:2px solid var(--surface)}
+.t-main{display:flex;flex-direction:column;gap:5px;min-width:0}
+.t-head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.t-n{font-weight:700;white-space:nowrap}
+.t-st{font-family:var(--mono);font-size:13.5px;color:var(--ink-2);overflow-wrap:anywhere}
+.t-ans{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:14px;color:var(--ink-2)}
+.t-ans b{font-family:var(--mono);font-weight:500;color:var(--ink);font-size:13.5px}
+.calc{font-family:var(--mono);font-size:12px;border-radius:4px;padding:1px 6px;background:var(--tint);color:var(--tone)}
+.t-err{font-size:14.5px}
+.etype{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--tone);background:var(--tint);border-radius:4px;padding:1px 6px;margin-right:6px;vertical-align:1px}
+.t-err q{font-family:var(--mono);font-size:13px;quotes:"«" "»"}
+.flags{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px}
+.flags li{font-size:13.5px;color:var(--amber)}
+.flags li::before{content:"⚠ ";}
+.who-ed{font-size:12px;color:var(--ink-3)}
+details.more summary{cursor:pointer;color:var(--ink-3);font-size:13px;width:max-content}
+details.more[open] summary{margin-bottom:6px}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:14px}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.seen{font-family:var(--mono);font-size:13px;white-space:pre-wrap;background:var(--paper);border-radius:6px;padding:6px 8px}
+.task.compact .t-err,.task.compact .flags{display:none}
+.summary{display:grid;gap:10px}
+@media (min-width:640px){.summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.summary div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.summary p{font-size:14.5px}
+.note-amber{font-size:14px;color:var(--amber);background:var(--amber-tint);border-radius:8px;padding:8px 12px}
+
+/* ход проверки */
+.work{display:flex;flex-direction:column;gap:10px;padding:8px 0}
+.work .big{font-family:var(--serif);font-size:22px;font-weight:600}
+.bar{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--petrol);transition:width .4s}
+.err{font-size:14.5px;color:var(--red);background:var(--red-tint);border-radius:8px;padding:9px 12px}
+
+/* сообщение */
+#msg{min-height:260px;font-size:15.5px;line-height:1.55}
+#msg[readonly]{background:var(--paper)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.stale{font-size:13px;color:var(--amber)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);border-radius:8px;padding:9px 14px;font-size:14px;z-index:50;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
+
+/* меню выбора отметки */
+.pop{position:absolute;z-index:40;background:var(--surface);border:1px solid var(--line-2);border-radius:10px;box-shadow:var(--shadow);padding:5px;display:flex;flex-direction:column;min-width:210px}
+.pop button{border:0;border-radius:6px;background:none;text-align:left;display:flex;gap:10px;align-items:center;padding:6px 8px}
+.pop button:hover,.pop button:focus-visible{background:var(--surface-2)}
+.pop .pm{width:24px;height:24px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;background:var(--tint);color:var(--tone);font:600 15px/1 var(--mono)}
+.pop button[aria-checked="true"]{font-weight:700}
+
+/* стиль */
+.style-grid{display:grid;gap:16px;margin-top:16px}
+@media (min-width:980px){.style-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}}
+.segs{display:flex;flex-wrap:wrap;gap:14px 22px}
+#st-examples{min-height:230px}
+#st-rules{min-height:150px}
+.preview{white-space:pre-wrap;font-size:15px;background:var(--paper);border-radius:8px;padding:12px 14px;min-height:120px}
+
+/* история */
+.hist-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.hist{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.h-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 14px;align-items:center}
+.h-item .h-who{font-weight:700}
+.h-item .h-what{color:var(--ink-2)}
+.h-item .h-date{font-family:var(--mono);font-size:12.5px;color:var(--ink-3)}
+.h-item .h-score{font-family:var(--serif);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.h-item .strip .sm{width:16px;height:16px;border-radius:3px}
+.h-item .strip .sm .m{font-size:10px}
+.h-item .strip .sm .k{display:none}
+.h-act{display:flex;gap:6px;grid-column:1/-1;flex-wrap:wrap}
+.empty{color:var(--ink-3);text-align:center;padding:30px 16px}
+.foot{margin-top:28px;font-size:13px;color:var(--ink-3);max-width:70ch}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* режим экзамена */
+.mode-row{display:flex;gap:10px 16px;flex-wrap:wrap;align-items:flex-end}
+.exam-status{font-size:13.5px;color:var(--ink-2);background:var(--paper);border-radius:8px;padding:8px 11px}
+.exam-status b{color:var(--ink)}
+.exam-status .draft{color:var(--amber);font-weight:600}
+.nchips{display:flex;flex-wrap:wrap;gap:4px}
+.nchip{width:34px;height:32px;padding:0;border-radius:6px;font:500 12.5px/1 var(--mono);color:var(--ink-3);background:var(--paper);border:1px dashed var(--line-2)}
+.nchip.p2{font-weight:700}
+.nchip[aria-pressed="true"]{background:var(--petrol-tint);color:var(--ink);border:1px solid var(--petrol)}
+.nchip-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.nchip-tools button{padding:4px 10px;font-size:13px}
+details.crit-all summary{cursor:pointer;color:var(--petrol);font-weight:600;font-size:14px;width:max-content}
+.crit-box{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.crit-task h3{font-family:var(--sans);font-size:14.5px;font-weight:700;margin-bottom:4px}
+.crit{width:100%;border-collapse:collapse;font-size:13.5px}
+.crit td{padding:5px 6px;border-top:1px solid var(--line);vertical-align:top}
+.crit td:first-child{font-family:var(--mono);width:30px;color:var(--ink-2);font-weight:500}
+.crit tr.hit td{background:var(--tint)}
+.crit-note{font-size:13px;color:var(--ink-3);margin-top:4px}
+.crit-note.draft{color:var(--amber)}
+.rules{margin:0;padding-left:18px;font-size:13.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:3px}
+.tot-line{font-size:15px;color:var(--ink-2)}
+.tot-line b{color:var(--ink);font-weight:700}
+.mark.pts{font-size:13px;letter-spacing:-.02em}
+.crit-hit{font-size:14px;border-left:3px solid var(--tone);padding:2px 0 2px 9px}
+.crit-hit .why{display:block;color:var(--ink-2);margin-top:2px}
+.auto{font-size:13px;color:var(--ink-3)}
+.pop.wide{min-width:260px;max-width:min(440px,calc(100vw - 16px))}
+.pop.wide button{align-items:flex-start;white-space:normal;text-align:left;line-height:1.35}
+.pop.wide .pm{flex:none}
+.exam-inner{display:flex;flex-direction:column;gap:10px}
+.head-side{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#api-card{border-color:var(--petrol)}
+#api-card a{color:var(--petrol)}
+.hist-io{display:inline-flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.btn-like{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);padding:7px 13px}
+.btn-like:hover{background:var(--surface-2)}
+.btn-like:focus-within{outline:2px solid var(--petrol);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <div class="head-row">
+      <div>
+        <div class="eyebrow">Репетиторство · математика</div>
+        <h1>Проверка ДЗ</h1>
+      </div>
+      <div class="head-side">
+        <div class="status" id="status"></div>
+        <button class="ghost" id="api-btn" type="button" hidden>⚙ Ключ API</button>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-check" aria-controls="p-check" aria-selected="true">Проверить</button>
+      <button class="tab" role="tab" id="tab-style" aria-controls="p-style" aria-selected="false">Мой стиль</button>
+      <button class="tab" role="tab" id="tab-history" aria-controls="p-history" aria-selected="false">История<span class="n" id="hist-n"></span></button>
+    </nav>
+  </header>
+
+  <!-- ===== Проверить ===== -->
+  <section id="p-check" role="tabpanel" aria-labelledby="tab-check">
+    <div class="grid">
+      <div class="col">
+        <div class="card" id="api-card" hidden>
+          <div class="card-h"><h2>Ключ Anthropic API</h2><span class="hint" id="api-state"></span></div>
+          <p class="hint">Сайт обращается к Claude прямо из этого браузера по вашему ключу. Ключ хранится только здесь и уходит только на api.anthropic.com. Оплата — по тарифу API, отдельно от подписки Claude: ориентир $0,3–1 за проверку варианта, с двойной проверкой вдвое больше. Сколько стоила каждая проверка, видно в результате.</p>
+          <label class="f"><span class="lbl">Ключ</span><input type="password" id="api-key" autocomplete="off" spellcheck="false" placeholder="sk-ant-…"></label>
+          <div class="actions">
+            <button class="primary" id="api-save" type="button">Сохранить в этом браузере</button>
+            <button id="api-test" type="button">Проверить ключ</button>
+            <button class="ghost" id="api-del" type="button">Удалить</button>
+            <span class="hint" id="api-hint"></span>
+          </div>
+          <p class="hint">Ключ создаётся в консоли Anthropic: <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com → API Keys</a>, там же пополняется баланс. На чужом компьютере ключ не сохраняйте.</p>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2>Ученик</h2><button class="ghost" id="clear-all" type="button">Новая проверка</button></div>
+          <div class="row">
+            <label class="f grow"><span class="lbl">Имя</span><input type="text" id="student" list="students" placeholder="Например, Аня" autocomplete="off"></label>
+            <fieldset class="seg"><legend class="lbl">Род в сообщении</legend>
+              <div class="seg-in">
+                <label title="«ты решил»"><input type="radio" name="sgender" value="m"><span>он</span></label>
+                <label title="«ты решила»"><input type="radio" name="sgender" value="f"><span>она</span></label>
+                <label title="Без глаголов прошедшего времени"><input type="radio" name="sgender" value="none" checked><span>—</span></label>
+              </div>
+            </fieldset>
+          </div>
+          <datalist id="students"></datalist>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h2>Задание</h2><span class="hint" id="hw-count"></span></div>
+          <div class="mode-row">
+            <fieldset class="seg"><legend class="lbl">Тип работы</legend>
+              <div class="seg-in">
+                <label><input type="radio" name="mode" value="hw" checked><span>ДЗ</span></label>
+                <label><input type="radio" name="mode" value="oge"><span>ОГЭ</span></label>
+                <label><input type="radio" name="mode" value="egep"><span>ЕГЭ профиль</span></label>
+                <label><input type="radio" name="mode" value="egeb"><span>ЕГЭ база</span></label>
+              </div>
+            </fieldset>
+            <label class="f" id="ver-box" hidden><span class="lbl">Версия</span>
+              <select id="exam-ver">
+                <option value="ege-p-2027">2027 — проект ФИПИ, 20 заданий</option>
+                <option value="ege-p-2026">2026 — 19 заданий</option>
+              </select></label>
+          </div>
+
+          <div id="exam-box" hidden>
+            <div class="exam-inner">
+              <p class="exam-status" id="exam-status"></p>
+              <div class="f"><span class="lbl">Задания в работе</span>
+                <div class="nchip-tools">
+                  <button type="button" id="sel-all">все</button>
+                  <button type="button" id="sel-p1">часть 1</button>
+                  <button type="button" id="sel-p2">часть 2</button>
+                  <span class="hint" id="sel-hint"></span>
+                </div>
+                <div class="nchips" id="nchips" role="group" aria-label="Номера заданий в работе"></div>
+              </div>
+              <details class="crit-all" id="crit-all"><summary>Критерии ФИПИ для выбранных заданий</summary><div class="crit-box" id="crit-box"></div></details>
+            </div>
+          </div>
+
+          <label class="f" id="preset-box"><span class="lbl">Из моих уроков</span>
+            <select id="preset"><option value="">Своё задание</option></select>
+          </label>
+          <label class="f"><span class="lbl">Название — для истории</span><input type="text" id="hw-title" placeholder="Например, ДЗ: дроби и степени"></label>
+          <label class="f"><span class="lbl" id="text-lbl">Условия</span>
+            <textarea id="hw-text" class="mono" rows="6" placeholder="1. (3/4)·(8/3)&#10;2. √98 : √2&#10;…&#10;Можно оставить пустым, если условия на фото"></textarea></label>
+          <label class="f"><span class="lbl"><span id="key-lbl">Ответы-ключ</span> <span id="key-sub" style="text-transform:none;letter-spacing:0;font-weight:400">— если есть, проверка точнее</span></span>
+            <textarea id="hw-key" class="mono" rows="2" placeholder="1) 2  2) 7  3) −0,5 …"></textarea></label>
+          <label class="f"><span class="lbl" id="req-lbl">Требования к оформлению</span>
+            <textarea id="hw-req" rows="2" placeholder="Например: ответ десятичной дробью; обязательна проверка умножением"></textarea></label>
+          <label class="drop small" id="cond-drop"><input type="file" id="cond-file" accept="image/*,application/pdf" multiple><span>Условия на фото или в PDF — <b>добавить</b></span></label>
+          <div class="thumbs" id="cond-thumbs" hidden></div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h2>Решение ученика</h2><span class="hint" id="sol-count"></span></div>
+          <label class="drop" id="sol-drop"><input type="file" id="sol-file" accept="image/*,application/pdf" multiple>
+            <b>Фото страниц или PDF</b>
+            <span class="hint">Перетащите сюда, нажмите, чтобы выбрать, или вставьте скриншот: Ctrl+V</span>
+          </label>
+          <div class="thumbs" id="sol-thumbs" hidden></div>
+          <div class="row">
+            <fieldset class="seg" id="scope-box"><legend class="lbl">Что проверять</legend>
+              <div class="seg-in">
+                <label><input type="radio" name="scope" value="full" checked><span>ответ и решение</span></label>
+                <label><input type="radio" name="scope" value="answers"><span>только ответы</span></label>
+              </div>
+            </fieldset>
+            <fieldset class="seg"><legend class="lbl">Проверка</legend>
+              <div class="seg-in">
+                <label title="Самая сильная модель: дольше, но точнее читает почерк"><input type="radio" name="tier" value="complex" checked><span>тщательная</span></label>
+                <label title="Быстрее, но может ошибаться чаще"><input type="radio" name="tier" value="default"><span>быстрая</span></label>
+              </div>
+            </fieldset>
+            <fieldset class="seg"><legend class="lbl">Двойная проверка</legend>
+              <div class="seg-in">
+                <label title="Две независимые проверки: расхождения в баллах и в прочтении ответов помечаются ⚠. Расходует вдвое больше лимита"><input type="radio" name="double" value="on"><span>да</span></label>
+                <label><input type="radio" name="double" value="off" checked><span>нет</span></label>
+              </div>
+            </fieldset>
+          </div>
+          <div class="actions">
+            <button class="primary" id="run" type="button">Проверить</button>
+            <button id="stop" type="button" hidden>Остановить</button>
+            <span class="hint" id="run-hint"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card" id="res-card"></div>
+        <div class="card" id="msg-card">
+          <div class="card-h"><h2>Сообщение ученику</h2><span class="stale" id="msg-stale" hidden>Отметки менялись — пересоберите сообщение</span></div>
+          <textarea id="msg" aria-label="Текст сообщения"></textarea>
+          <label class="f"><span class="lbl">Добавить от себя</span><input type="text" id="msg-extra" placeholder="Срок исправлений, напоминание о пробнике, отдельная похвала…"></label>
+          <div class="actions">
+            <button class="primary" id="copy" type="button">Скопировать</button>
+            <button id="regen" type="button">Пересобрать</button>
+            <button id="shorter" type="button">Короче</button>
+            <button id="warmer" type="button">Теплее</button>
+            <button id="stop-msg" type="button" hidden>Остановить</button>
+            <span class="hint" id="msg-hint"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="foot" id="foot">Фото решений отправляются в Claude под вашим аккаунтом и нигде не сохраняются. В историю попадают только отметки, разбор и текст сообщения. Числовые ответы страница пересчитывает сама точной арифметикой; в режиме экзамена первую часть по ключу оценивает программа, а не Claude. Всё, что вызывает сомнение, помечено «⚠».</p>
+  </section>
+
+  <!-- ===== Мой стиль ===== -->
+  <section id="p-style" role="tabpanel" aria-labelledby="tab-style" hidden>
+    <div class="style-grid">
+      <div class="col">
+        <div class="card">
+          <h2>Как я пишу ученикам</h2>
+          <div class="segs">
+            <fieldset class="seg"><legend class="lbl">Обращение</legend><div class="seg-in">
+              <label><input type="radio" name="st-address" value="ty"><span>на «ты»</span></label>
+              <label><input type="radio" name="st-address" value="vy"><span>на «вы»</span></label></div></fieldset>
+            <fieldset class="seg"><legend class="lbl">О себе пишу</legend><div class="seg-in">
+              <label><input type="radio" name="st-voice" value="m"><span>«проверил»</span></label>
+              <label><input type="radio" name="st-voice" value="f"><span>«проверила»</span></label>
+              <label><input type="radio" name="st-voice" value="none"><span>без рода</span></label></div></fieldset>
+            <fieldset class="seg"><legend class="lbl">Длина</legend><div class="seg-in">
+              <label><input type="radio" name="st-length" value="short"><span>коротко</span></label>
+              <label><input type="radio" name="st-length" value="mid"><span>средне</span></label>
+              <label><input type="radio" name="st-length" value="long"><span>подробно</span></label></div></fieldset>
+            <fieldset class="seg"><legend class="lbl">Эмодзи</legend><div class="seg-in">
+              <label><input type="radio" name="st-emoji" value="none"><span>без</span></label>
+              <label><input type="radio" name="st-emoji" value="few"><span>немного</span></label>
+              <label><input type="radio" name="st-emoji" value="many"><span>охотно</span></label></div></fieldset>
+            <fieldset class="seg"><legend class="lbl">Верные ответы</legend><div class="seg-in">
+              <label><input type="radio" name="st-answers" value="hints"><span>не называю, подсказываю</span></label>
+              <label><input type="radio" name="st-answers" value="give"><span>называю</span></label></div></fieldset>
+          </div>
+          <label class="f"><span class="lbl">Подпись</span><input type="text" id="st-sign" placeholder="Например: «Д.»; пусто — без подписи"></label>
+          <label class="f"><span class="lbl">Мои правила</span><textarea id="st-rules"></textarea></label>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <h2>Образцы моих сообщений</h2>
+          <p class="hint">Главный источник стиля. Вставьте 3–5 настоящих сообщений, которые вы отправляли ученикам после проверки, — с вашими приветствиями, оборотами и пунктуацией. Между сообщениями — строка <span class="mono">---</span>.</p>
+          <textarea id="st-examples" placeholder="Привет! Посмотрел домашку…&#10;---&#10;Отлично, почти всё верно…"></textarea>
+          <div class="actions">
+            <button class="primary" id="st-save" type="button">Сохранить стиль</button>
+            <button id="st-try" type="button">Показать на примере</button>
+            <span class="hint" id="st-hint"></span>
+          </div>
+          <div class="preview" id="st-preview">Нажмите «Показать на примере» — Claude напишет сообщение по образцовой проверке (Аня, ЕГЭ база 14) в этом стиле.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== История ===== -->
+  <section id="p-history" role="tabpanel" aria-labelledby="tab-history" hidden>
+    <div class="hist-tools">
+      <input type="text" id="hist-q" placeholder="Поиск по ученику или заданию" style="max-width:340px">
+      <span class="hint" id="hist-hint"></span>
+      <span class="hist-io" id="hist-io" hidden>
+        <button type="button" id="hist-export">Выгрузить в файл</button>
+        <label class="btn-like"><input type="file" id="hist-import" accept="application/json,.json" hidden>Загрузить из файла</label>
+      </span>
+    </div>
+    <div class="hist" id="hist"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= Мои уроки: задания с ключами (ключи пересчитаны программой) ================= */
+var PRESETS = [
+  { id:"ege14", short:"ЕГЭ база 14 · ДЗ", title:"ЕГЭ база, задание 14 — домашнее задание (20 задач)",
+    text:"1. 0,7 − 1/2\n2. (3/4)·(8/3)\n3. (1/2 − 1/5)·10\n4. (0,6 + 2/5) : 0,5\n5. (5/6 + 1/3)·6\n6. 2⁶ : (2²·2²)\n7. 5⁻²·5⁴\n8. (4^0,5)³\n9. 81^(3/4)\n10. 0,1⁻³\n11. √98 : √2\n12. √3 · √27\n13. (5 − √7)(5 + √7)\n14. (4√5)² : 10\n15. √0,04 · 50\n16. log₃243\n17. log₂10 − log₂5\n18. log₄8 + log₄2\n19. 3^(log₃6)\n20. log₆(1/36)",
+    key:"1) 0,2  2) 2  3) 3  4) 2  5) 7  6) 4  7) 25  8) 8  9) 27  10) 1000  11) 7  12) 9  13) 18  14) 8  15) 10  16) 5  17) 1  18) 2  19) 6  20) −2",
+    req:"Ответ в задании 14 — целое число или конечная десятичная дробь. Верное значение, записанное обыкновенной дробью (1/5 вместо 0,2), — «верно с недочётом»: в бланк ЕГЭ так не впишешь." },
+  { id:"matr15", short:"Обратная матрица · ДЗ", title:"Обратная матрица (§1.5) — домашнее задание (6 задач)",
+    text:"1. Найти обратные и проверить умножением: |5 2; 7 3| и |1 −2; 3 −5|\n2. По алгоритму учебника (все пять шагов, с записью A' и Ã) найти обратную к |2 1 0; 1 3 1; 0 2 1|\n3. По тому же алгоритму найти обратную к |1 2 3; 0 1 4; 5 6 0|\n4. Решить систему матричным методом, используя ответ п. 2:\n   2x + y = 3;  x + 3y + z = 6;  2y + z = 5\n5. Доказать свойство: (A⁻¹)' = (A')⁻¹\n6. При каких λ матрица |λ 2; 3 λ| не имеет обратной?",
+    key:"1) |3 −2; −7 5| и |−5 2; −3 1|\n2) |1 −1 1; −1 2 −2; 2 −4 5|\n3) |−24 18 5; 20 −15 −4; −5 4 1|\n4) x = 2, y = −1, z = 7\n5) транспонировать A·A⁻¹ = E, получить (A⁻¹)'·A' = E; по единственности обратной (A⁻¹)' = (A')⁻¹\n6) λ = ±√6",
+    req:"Обозначения как в учебнике ученика: |A| — определитель, A' — транспонированная, Ã — присоединённая, A'ᵢⱼ — алгебраические дополнения. Матрица в строку: |a b; c d|, строки через «;». В п. 2 и 3 должны быть все пять шагов алгоритма (|A|, A', Ã, деление на |A|, проверка); ответ верный, а шаги пропущены — «верно с недочётом». В п. 1 проверка умножением обязательна." }
+];
+
+/* ================= Экзамены: структура, критерии ФИПИ, шкалы ================= */
+/*EXAMS-BEGIN*/
+var C0 = "Решение не соответствует ни одному из критериев, перечисленных выше";
+var CRIT = {
+  egeEq:   {max:2, rows:[[2,"Обоснованно получены верные ответы в обоих пунктах"],
+                         [1,"Обоснованно получен верный ответ в пункте а, ИЛИ получены неверные ответы из-за вычислительной ошибки, но при этом имеется верная последовательность всех шагов решения обоих пунктов: пункта а и пункта б"],[0,C0]]},
+  egeGeo:  {max:3, rows:[[3,"Имеется верное доказательство утверждения пункта а, и обоснованно получен верный ответ в пункте б"],
+                         [2,"Обоснованно получен верный ответ в пункте б, ИЛИ имеется верное доказательство утверждения пункта а, и при обоснованном решении пункта б получен неверный ответ из-за арифметической ошибки"],
+                         [1,"Имеется верное доказательство утверждения пункта а, ИЛИ при обоснованном решении пункта б получен неверный ответ из-за арифметической ошибки, ИЛИ обоснованно получен верный ответ в пункте б с использованием утверждения пункта а, при этом пункт а не выполнен"],[0,C0]]},
+  egeIneq: {max:2, rows:[[2,"Обоснованно получен верный ответ"],
+                         [1,"Обоснованно получен ответ, отличающийся от верного исключением или включением граничной точки (точек), ИЛИ получен неверный ответ из-за вычислительной ошибки, но при этом имеется верная последовательность всех шагов решения"],[0,C0]],
+            note:"На 1 балл допустима только ошибка в строгости неравенства на границе. Если в ответ попало значение, при котором одна из частей неравенства не имеет смысла, это не «лишняя точка», а 0 баллов."},
+  egeEcon: {max:2, rows:[[2,"Обоснованно получен верный ответ"],[1,"Верно построена математическая модель"],[0,C0]]},
+  egeModel:{max:2, rows:[[2,"Обоснованно получен верный ответ"],[1,"Верно построена математическая модель"],[0,C0]],
+            draft:"Критерии нового задания 17 в проекте 2027 года в открытых источниках не опубликованы. До финальной демоверсии применяются критерии задачи с моделью 2026 года (экономическая задача № 16)."},
+  egeParam:{max:4, rows:[[4,"Обоснованно получен верный ответ"],
+                         [3,"С помощью верного рассуждения получено множество значений a, отличающееся от искомого конечным числом точек"],
+                         [2,"С помощью верного рассуждения получены все граничные точки искомого множества значений a"],
+                         [1,"Верно получена хотя бы одна граничная точка искомого множества значений a"],[0,C0]],
+            note:"В конкретном варианте ФИПИ формулировки на 1–2 балла уточняются под задачу (например, «задача верно сведена к исследованию…»). Если критерии варианта приложены, применяются они."},
+  egeNum:  {max:4, rows:[[4,"Верно получены все перечисленные (см. критерий на 1 балл) результаты"],
+                         [3,"Верно получены три из перечисленных (см. критерий на 1 балл) результатов"],
+                         [2,"Верно получены два из перечисленных (см. критерий на 1 балл) результатов"],
+                         [1,"Верно получен один из следующих результатов: обоснованное решение пункта а; обоснованное решение пункта б; искомая оценка в пункте в; пример в пункте в, обеспечивающий точность предыдущей оценки"],[0,C0]]},
+  oge20:   {max:2, rows:[[2,"Обоснованно получен верный ответ"],
+                         [1,"Решение доведено до конца, но допущена ошибка вычислительного характера (описка), с её учётом дальнейшие шаги выполнены верно"],[0,C0]]},
+  oge21:   {max:2, rows:[[2,"Ход решения задачи верный, получен верный ответ"],
+                         [1,"Ход решения верный, все его шаги присутствуют, но допущена описка и/или ошибка вычислительного характера"],[0,C0]]},
+  oge22:   {max:2, rows:[[2,"График построен верно, верно найдены искомые значения параметра"],
+                         [1,"График построен верно, но искомые значения параметра найдены неверно или не найдены"],[0,C0]],
+            note:"Основное условие положительной оценки — верное построение графика: масштаб, содержательная таблица значений или объяснение построения, выколотая точка, обозначенная в соответствии с её координатами."},
+  oge23:   {max:2, rows:[[2,"Ход решения верный, все его шаги выполнены правильно, получен верный ответ"],
+                         [1,"Ход решения верный, все его шаги выполнены правильно, но даны неполные объяснения или допущена одна вычислительная ошибка"],[0,C0]]},
+  oge24:   {max:2, rows:[[2,"Доказательство верное, все шаги обоснованы"],[1,"Доказательство в целом верное, но содержит неточности"],[0,C0]]}
+};
+var RULES_EGE = [
+  "Проверяется математическое содержание решения, особенности записи не учитываются. Допустим любой верный способ решения.",
+  "Без доказательства можно использовать математические факты из учебников, допущенных к использованию в школе.",
+  "Балл ставится по первой сверху строке критериев, которой решение соответствует полностью.",
+  "«Обоснованно» значит: ход решения записан и верен. Ответ без решения или при неверном ходе решения — 0 баллов.",
+  "Часть 1: оценивается только ответ — 1 балл, если он верный и его можно вписать в бланк: целое число или конечная десятичная дробь."
+];
+var RULES_OGE = [
+  "Оценивается математическое содержание решения; допустим любой верный способ.",
+  "При 2 баллах решение может содержать описки, не влияющие на ход решения и ответ, и несущественные неточности в терминологии или обозначениях.",
+  "Балл ставится по первой сверху строке критериев, которой решение соответствует полностью.",
+  "Ответ без решения или при неверном ходе решения — 0 баллов.",
+  "Часть 1: оценивается только ответ — 1 балл, если он верный и записан в допустимом виде: число, номер варианта или последовательность цифр без пробелов и запятых."
+];
+function sT(list){ return list.map(function(a){ return {n:a[0], t:a[1]||"", kind:"short", max:1, fmt:a[2]||"num", geo:!!a[3]}; }); }
+function lT(n,t,crit,geo){ return {n:n, t:t, kind:"long", max:CRIT[crit].max, crit:crit, geo:!!geo}; }
+var EXAMS = [
+  { id:"ege-p-2027", group:"egep", short:"ЕГЭ профиль 2027", kind:"ege",
+    status:"Проект демоверсии ФИПИ на 2027 год: 20 заданий, максимум 33 первичных балла. Новое: № 6 (случайная величина), № 13 (финансовая задача перенесена в часть 1), № 17 (моделирование в части 2); задание на наибольшее и наименьшее значение убрано.",
+    draft:"Это проект: до финальной демоверсии ФИПИ возможны правки. Шкала перевода в тестовые баллы на 2027 год ещё не утверждена.",
+    tasks: sT([[1,"Планиметрия"],[2,"Векторы"],[3,"Стереометрия"],[4,"Теория вероятностей"],[5,"Теория вероятностей: сложные события"],[6,"Случайная величина: распределение, математическое ожидание, дисперсия"],[7,"Простейшие уравнения"],[8,"Вычисления и преобразования"],[9,"Производная и первообразная по графику"],[10,"Задача с прикладным содержанием"],[11,"Текстовая задача"],[12,"Графики функций"],[13,"Финансовая задача"]])
+      .concat([lT(14,"Уравнение: а) решить, б) отобрать корни","egeEq"), lT(15,"Стереометрия: а) доказать, б) вычислить","egeGeo"), lT(16,"Неравенство","egeIneq"),
+               lT(17,"Моделирование: построить и исследовать модель","egeModel"), lT(18,"Планиметрия: а) доказать, б) вычислить","egeGeo"), lT(19,"Задача с параметром","egeParam"), lT(20,"Числа и их свойства: пункты а, б, в","egeNum")]) },
+  { id:"ege-p-2026", group:"egep", short:"ЕГЭ профиль 2026", kind:"ege",
+    status:"Демоверсия ФИПИ 2026 года: 19 заданий, максимум 32 первичных балла. Перевод в тестовые — по шкале Рособрнадзора 2026 года, порог 27 тестовых.",
+    scale:[0,6,11,17,22,27,34,40,46,52,58,64,70,72,74,76,78,80,82,84,86,88,90,92,94,95,96,97,98,99,100,100,100], minTest:27,
+    tasks: sT([[1,"Планиметрия"],[2,"Векторы"],[3,"Стереометрия"],[4,"Теория вероятностей"],[5,"Теория вероятностей: сложные события"],[6,"Простейшие уравнения"],[7,"Вычисления и преобразования"],[8,"Производная и первообразная по графику"],[9,"Задача с прикладным содержанием"],[10,"Текстовая задача"],[11,"Графики функций"],[12,"Наибольшее и наименьшее значение функции"]])
+      .concat([lT(13,"Уравнение: а) решить, б) отобрать корни","egeEq"), lT(14,"Стереометрия: а) доказать, б) вычислить","egeGeo"), lT(15,"Неравенство","egeIneq"),
+               lT(16,"Экономическая задача","egeEcon"), lT(17,"Планиметрия: а) доказать, б) вычислить","egeGeo"), lT(18,"Задача с параметром","egeParam"), lT(19,"Числа и их свойства: пункты а, б, в","egeNum")]) },
+  { id:"ege-b", group:"egeb", short:"ЕГЭ база", kind:"ege", grade:"egeb",
+    status:"21 задание с кратким ответом, по 1 баллу, максимум 21. Оценка: 7–11 — «3», 12–16 — «4», 17–21 — «5» (шкала 2026 года). По проекту ФИПИ в 2027 году без изменений.",
+    tasks: sT([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21].map(function(n){ return [n,"",  "any"]; })) },
+  { id:"oge", group:"oge", short:"ОГЭ", kind:"oge", grade:"oge",
+    status:"25 заданий: 19 с кратким ответом по 1 баллу и 6 с развёрнутым по 2 балла, максимум 31. Оценка по рекомендованной шкале ФИПИ: 8–14 — «3», 15–21 — «4», 22–31 — «5», и не меньше 2 баллов за геометрию (15–19, 23–25). Регион может утвердить свою шкалу. По проекту ФИПИ в 2027 году без изменений.",
+    tasks: sT([[1,"Практико-ориентированная задача (общий сюжет 1–5)","any"],[2,"Практико-ориентированная задача","any"],[3,"Практико-ориентированная задача","any"],[4,"Практико-ориентированная задача","any"],[5,"Практико-ориентированная задача","any"],
+               [6,"Вычисления"],[7,"Числа на координатной прямой","any"],[8,"Степени и корни"],[9,"Уравнения"],[10,"Вероятность"],[11,"Графики функций: соответствие","any"],[12,"Расчёты по формулам"],[13,"Неравенства","any"],[14,"Прогрессии: текстовая задача"],
+               [15,"Треугольники","num",1],[16,"Окружность","num",1],[17,"Четырёхугольники","num",1],[18,"Фигуры на клетчатой бумаге","num",1],[19,"Геометрические утверждения: номера верных","set",1]])
+      .concat([lT(20,"Уравнение, неравенство или система","oge20"), lT(21,"Текстовая задача","oge21"), lT(22,"Функция и её график, параметр","oge22"),
+               lT(23,"Геометрия: задача на вычисление","oge23",1), lT(24,"Геометрия: доказательство","oge24",1), lT(25,"Геометрия повышенной сложности","oge23",1)]) }
+];
+function examById(id){ for(var i=0;i<EXAMS.length;i++) if(EXAMS[i].id===id) return EXAMS[i]; return null; }
+function examTask(ex,n){ for(var i=0;i<ex.tasks.length;i++) if(String(ex.tasks[i].n)===String(n)) return ex.tasks[i]; return null; }
+function examGrade(ex,sum,geo){
+  if(ex.grade==="oge"){
+    if(sum<8) return {mark:2, note:"меньше 8 баллов"};
+    if(geo<2) return {mark:2, note:"за геометрию меньше 2 баллов"};
+    return {mark: sum<=14?3:(sum<=21?4:5)};
+  }
+  if(ex.grade==="egeb") return {mark: sum<=6?2:(sum<=11?3:(sum<=16?4:5))};
+  return null;
+}
+function examTotals(r){
+  var ex=examById(r.exam&&r.exam.id), o={sum:0,max:0,p1:0,p1m:0,p2:0,p2m:0,geo:0,full:!!r.full,test:null,grade:null,below:false};
+  r.tasks.forEach(function(t){ var s=t.score||0; o.sum+=s; o.max+=t.max; if(t.kind==="short"){ o.p1+=s; o.p1m+=t.max; } else { o.p2+=s; o.p2m+=t.max; } if(t.geo) o.geo+=s; });
+  if(ex && o.full){
+    if(ex.scale){ o.test=ex.scale[Math.min(o.sum,ex.scale.length-1)]; o.below=o.test<ex.minTest; }
+    if(ex.grade) o.grade=examGrade(ex,o.sum,o.geo);
+  }
+  return o;
+}
+/*EXAMS-END*/
+
+/* ================= Точная арифметика: дроби на BigInt ================= */
+/*EXACT-BEGIN*/
+var Q = {
+  gcd: function(a,b){ if(a<0n)a=-a; if(b<0n)b=-b; while(b){ var t=a%b; a=b; b=t; } return a; },
+  make: function(n,d){ if(d===0n) throw new Error("деление на ноль"); if(d<0n){ n=-n; d=-d; } var g=Q.gcd(n,d)||1n; return {n:n/g, d:d/g}; },
+  add: function(a,b){ return Q.make(a.n*b.d+b.n*a.d, a.d*b.d); },
+  sub: function(a,b){ return Q.make(a.n*b.d-b.n*a.d, a.d*b.d); },
+  mul: function(a,b){ return Q.make(a.n*b.n, a.d*b.d); },
+  div: function(a,b){ if(b.n===0n) throw new Error("деление на ноль"); return Q.make(a.n*b.d, a.d*b.n); },
+  ipow: function(a,k){ if(k<0n){ if(a.n===0n) throw new Error("0 в отрицательной степени"); return Q.ipow(Q.make(a.d,a.n),-k); } return Q.make(a.n**k, a.d**k); },
+  num: function(q){ return Number(q.n)/Number(q.d); },
+  eq: function(a,b){ return a.n*b.d===b.n*a.d; }
+};
+function iroot(x,k){ if(x<0n) return null; if(x<2n) return x; var r=BigInt(Math.round(Math.pow(Number(x),1/Number(k)))); for(var c=r-1n;c<=r+1n;c++){ if(c>=0n && c**k===x) return c; } return null; }
+function rootQ(a,k){ var neg=a.n<0n; if(neg && k%2n===0n) return null; var n=iroot(neg?-a.n:a.n,k), d=iroot(a.d,k); if(n===null||d===null) return null; return Q.make(neg?-n:n,d); }
+function toF(v){ return v.q ? Q.num(v.q) : v.f; }
+function EX(q){ return {q:q}; }
+function FL(f){ if(!isFinite(f)) throw new Error("значение не определено"); return {f:f}; }
+function binV(op,a,b){ if(a.q&&b.q) return EX(Q[op](a.q,b.q)); var x=toF(a), y=toF(b); if(op==="div"&&y===0) throw new Error("деление на ноль"); return FL(op==="add"?x+y:op==="sub"?x-y:op==="mul"?x*y:x/y); }
+function powV(a,b){
+  if(a.q&&b.q){
+    var p=b.q.n, k=b.q.d;
+    if(k===1n){ if(p>-4000n && p<4000n) return EX(Q.ipow(a.q,p)); }
+    else { var r=rootQ(a.q,k); if(r && p>-4000n && p<4000n) return EX(Q.ipow(r,p)); }
+  }
+  return FL(Math.pow(toF(a),toF(b)));
+}
+function logV(b,x){
+  var v=Math.log(toF(x))/Math.log(toF(b));
+  if(!isFinite(v)) throw new Error("логарифм не определён");
+  if(b.q&&x.q){ for(var den=1;den<=12;den++){ var num=Math.round(v*den); if(Math.abs(num/den-v)<1e-9){ var r=Q.make(BigInt(num),BigInt(den)); var back=powV(b,EX(r)); if(back.q && Q.eq(back.q,x.q)) return EX(r); } } }
+  return FL(v);
+}
+var FUNS = {
+  sqrt: function(a){ if(toF(a)<0) throw new Error("корень из отрицательного"); return powV(a,EX(Q.make(1n,2n))); },
+  cbrt: function(a){ return rootN(a,3); },
+  root: function(a,n){ return rootN(a,toF(n)); },
+  log: function(b,x){ if(x===undefined) return logV(EX(Q.make(10n,1n)),b); return logV(b,x); },
+  lg: function(x){ return logV(EX(Q.make(10n,1n)),x); },
+  ln: function(x){ return FL(Math.log(toF(x))); },
+  abs: function(x){ return x.q ? EX(Q.make(x.q.n<0n?-x.q.n:x.q.n, x.q.d)) : FL(Math.abs(x.f)); }
+};
+function rootN(a,n){ if(!(n>=2 && Number.isInteger(n))) throw new Error("плохая степень корня"); if(a.q){ var r=rootQ(a.q,BigInt(n)); if(r) return EX(r); } var x=toF(a); if(x<0 && n%2===1) return FL(-Math.pow(-x,1/n)); return FL(Math.pow(x,1/n)); }
+var SUP = {"⁰":"0","¹":"1","²":"2","³":"3","⁴":"4","⁵":"5","⁶":"6","⁷":"7","⁸":"8","⁹":"9","⁻":"-"};
+function normExpr(s){
+  s=String(s).replace(/[·×∙⋅]/g,"*").replace(/[:÷]/g,"/").replace(/[−–—]/g,"-").replace(/\*\*/g,"^").replace(/√/g,"sqrt").replace(/π/g,"pi");
+  s=s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+/g,function(m){ return "^("+m.split("").map(function(c){return SUP[c];}).join("")+")"; });
+  return s;
+}
+function evalExpr(src){
+  var s=normExpr(src), i=0, toks=[], m;
+  var re=/\s*(?:(\d+(?:\.\d+)?)|([A-Za-z_]+)|(.))/y;
+  while(i<s.length){ re.lastIndex=i; m=re.exec(s); if(!m) break; i=re.lastIndex; if(m[1]) toks.push({t:"n",v:m[1]}); else if(m[2]) toks.push({t:"id",v:m[2].toLowerCase()}); else if(m[3] && m[3].trim()) toks.push({t:"op",v:m[3]}); }
+  var p=0;
+  function peek(){ return toks[p]; }
+  function isOp(v){ var t=toks[p]; return t && t.t==="op" && t.v===v; }
+  function expect(v){ if(!isOp(v)) throw new Error("ожидалось «"+v+"»"); p++; }
+  function expr(){ var v=term(); while(isOp("+")||isOp("-")){ var o=toks[p++].v; v=binV(o==="+"?"add":"sub",v,term()); } return v; }
+  function startsFactor(){ var t=peek(); return t && (t.t==="n"||t.t==="id"||(t.t==="op"&&t.v==="(")); }
+  function term(){ var v=unary(); for(;;){ if(isOp("*")){ p++; v=binV("mul",v,unary()); } else if(isOp("/")){ p++; v=binV("div",v,unary()); } else if(startsFactor()){ v=binV("mul",v,power()); } else return v; } }
+  function unary(){ if(isOp("-")){ p++; return binV("sub",EX(Q.make(0n,1n)),unary()); } if(isOp("+")){ p++; return unary(); } return power(); }
+  function power(){ var b=primary(); if(isOp("^")){ p++; return powV(b,unary()); } return b; }
+  function primary(){
+    var t=toks[p++]; if(!t) throw new Error("выражение оборвалось");
+    if(t.t==="n"){ var parts=t.v.split("."); var den=parts[1]?10n**BigInt(parts[1].length):1n; return EX(Q.make(BigInt(parts[0]+(parts[1]||"")),den)); }
+    if(t.t==="op"&&t.v==="("){ var v=expr(); expect(")"); return v; }
+    if(t.t==="id"){
+      if(t.v==="pi") return FL(Math.PI);
+      if(t.v==="e") return FL(Math.E);
+      var f=FUNS[t.v]; if(!f) throw new Error("неизвестная функция "+t.v);
+      if(isOp("(")){ p++; var args=[expr()]; while(isOp(",")||isOp(";")){ p++; args.push(expr()); } expect(")"); return f.apply(null,args); }
+      return f(power());
+    }
+    throw new Error("лишний символ «"+t.v+"»");
+  }
+  var v=expr(); if(p<toks.length) throw new Error("лишний символ «"+toks[p].v+"»");
+  return v;
+}
+function tryEval(s){ try{ return s==null||String(s).trim()==="" ? null : evalExpr(s); }catch(e){ return null; } }
+function parseAns(s){
+  if(s==null) return null; s=String(s).trim(); if(!s) return null;
+  s=s.replace(/^ответ\s*:?\s*/i,"").replace(/^[a-zа-яλ]\s*=\s*/i,"").replace(/[.;]\s*$/,"");
+  if(/[;|±\n=]|\bи\b|матр/i.test(s)) return null;
+  if(!/[(]/.test(s)) s=s.replace(/,/g,".");
+  return tryEval(s);
+}
+function eqV(a,b){ if(a.q&&b.q) return Q.eq(a.q,b.q); var x=toF(a), y=toF(b); return Math.abs(x-y)<=1e-9*Math.max(1,Math.abs(x),Math.abs(y)); }
+function fmtV(v){
+  if(v.q){
+    var n=v.q.n, d=v.q.d, dd=d, two=0, five=0, neg=n<0n, an=neg?-n:n;
+    while(dd%2n===0n){ dd/=2n; two++; } while(dd%5n===0n){ dd/=5n; five++; }
+    if(dd===1n){ var k=Math.max(two,five), sc=an*(10n**BigInt(k))/d, str=sc.toString().padStart(k+1,"0"); return (neg?"−":"")+str.slice(0,str.length-k)+(k?","+str.slice(str.length-k):""); }
+    return (neg?"−":"")+an+"/"+d;
+  }
+  var r=Math.round(v.f*1e6)/1e6, nice=Math.abs(r-v.f)<1e-9;
+  return (nice?"":"≈")+String(r).replace("-","−").replace(".",",");
+}
+function parseKey(text){
+  var out={}; if(!text) return out;
+  var re=/(?:^|\s)(\d{1,3}[а-яa-z]?)\s*[).]\s/gi, hits=[], m;
+  var t=" "+String(text)+" ";
+  while((m=re.exec(t))) hits.push({n:m[1].toLowerCase(), s:m.index, e:re.lastIndex});
+  for(var i=0;i<hits.length;i++){ var v=t.slice(hits[i].e, i+1<hits.length?hits[i+1].s:t.length).trim().replace(/[;,]\s*$/,""); if(v) out[hits[i].n]=v; }
+  return out;
+}
+/* ответ части 1 против ключа: так, как его прочитал бы сканер бланка */
+function normAns(s){ return String(s==null?"":s).trim().replace(/^ответ\s*:?\s*/i,"").replace(/\s+/g,"").replace(/[−–—]/g,"-").replace(/\./g,",").replace(/[,;]+$/,""); }
+function validNum(s){ return /^-?\d+(,\d+)?$/.test(s); }
+function scoreShort(fmt,stud,key){
+  if(key==null || String(key).trim()==="") return null;
+  if(stud==null || String(stud).trim()==="") return {score:0, note:"ответа нет"};
+  var s=normAns(stud), k=normAns(key);
+  if(fmt==="set"){
+    if(!/^\d+$/.test(s)) return {score:0, note:"в бланк пишутся только номера утверждений, цифрами подряд"};
+    var a=s.split("").sort().join(""), b=k.replace(/\D/g,"").split("").sort().join("");
+    return {score:a===b?1:0};
+  }
+  if(s===k) return {score:1};
+  if(validNum(k)){
+    var x=parseAns(s), y=parseAns(k), same=!!(x&&y&&eqV(x,y));
+    if(!validNum(s)) return {score:0, note: same ? "значение верное, но в бланк так не впишешь: нужно целое число или десятичная дробь" : "в бланк так не впишешь: нужно целое число, десятичная дробь или цифры подряд"};
+    return {score: same?1:0};
+  }
+  return {score:0};
+}
+/*EXACT-END*/
+
+/* ================= Отметки ================= */
+var V = {
+  ok:        {mark:"+", label:"верно",                 tone:"green", solved:true},
+  minor:     {mark:"+", label:"верно, есть недочёт",   tone:"green", solved:true},
+  partial:   {mark:"±", label:"частично",              tone:"amber"},
+  wrong:     {mark:"−", label:"неверно",               tone:"red"},
+  missing:   {mark:"—", label:"не решено",             tone:"grey"},
+  unreadable:{mark:"?", label:"не разобрать",          tone:"grey"}
+};
+var ORDER = ["ok","minor","partial","wrong","missing","unreadable"];
+
+/* ================= Стиль по умолчанию ================= */
+var DEFAULT_STYLE = {
+  address:"ty", voice:"none", length:"short", emoji:"none", answers:"hints", sign:"",
+  rules:"Начинаю с того, что получилось, — конкретно, с номерами, без «молодец» на пустом месте.\nОшибки называю по номерам и прямо, без «к сожалению».\nОдинаковую ошибку в нескольких номерах называю один раз и перечисляю номера.\nВ конце — что сделать дальше и к какому сроку.",
+  examples:""
+};
+
+/* ================= Пример: так выглядит результат до первой проверки ================= */
+var EX_TASKS = [
+  ["1","0,7 − 1/2","1/5","0,2","0.7-1/2","minor","0,7 − 1/2 = 7/10 − 5/10 = 2/10 = 1/5",{where:"= 1/5",what:"значение верное, но записано обыкновенной дробью — в бланк ЕГЭ нужно 0,2",type:"оформление"},"Ответ верный, форма записи не для бланка.","Переведи ответ в десятичную дробь — в бланк нужна именно она.",0.95],
+  ["2","(3/4)·(8/3)","2","2","(3/4)*(8/3)","ok","(3/4)·(8/3) = 24/12 = 2",null,"","",0.97],
+  ["3","(1/2 − 1/5)·10","3","3","(1/2-1/5)*10","ok","(5/10 − 2/10)·10 = 3",null,"","",0.97],
+  ["4","(0,6 + 2/5) : 0,5","0,5","2","(0.6+2/5)/0.5","wrong","(0,6 + 0,4) : 0,5 = 1 · 0,5 = 0,5",{where:"1 : 0,5 = 1 · 0,5",what:"деление на 0,5 заменено умножением на 0,5; 1 : 0,5 = 2",type:"правило/формула"},"Скобка посчитана верно, ошибка в последнем действии.","Сколько раз 0,5 помещается в единице?",0.93],
+  ["5","(5/6 + 1/3)·6","7","7","(5/6+1/3)*6","ok","(5/6 + 2/6)·6 = 7",null,"","",0.96],
+  ["6","2⁶ : (2²·2²)","4","4","2^6/(2^2*2^2)","ok","2⁶ : 2⁴ = 2² = 4",null,"","",0.97],
+  ["7","5⁻²·5⁴","25","25","5^(-2)*5^4","ok","5⁻²⁺⁴ = 5² = 25",null,"","",0.97],
+  ["8","(4^0,5)³","8","8","(4^0.5)^3","ok","2³ = 8",null,"","",0.96],
+  ["9","81^(3/4)","27","27","81^(3/4)","ok","(3⁴)^(3/4) = 3³ = 27",null,"","",0.96],
+  ["10","0,1⁻³","0,001","1000","0.1^(-3)","wrong","0,1⁻³ = 0,1·0,1·0,1 = 0,001",{where:"0,1⁻³ = 0,1·0,1·0,1",what:"минус в показателе потерян: 0,1⁻³ = 1 : 0,1³ = 1000",type:"правило/формула"},"Отрицательная степень посчитана как положительная.","Что делает минус в показателе степени? Вспомни 2⁻³ из диагностики.",0.94],
+  ["11","√98 : √2","7","7","sqrt(98)/sqrt(2)","ok","√(98:2) = √49 = 7",null,"","",0.97],
+  ["12","√3 · √27","9","9","sqrt(3)*sqrt(27)","ok","√81 = 9",null,"","",0.97],
+  ["13","(5 − √7)(5 + √7)","−24","18","(5-sqrt(7))*(5+sqrt(7))","wrong","(5 − √7)(5 + √7) = 25 − 49 = −24",{where:"25 − 49",what:"(√7)² = 7, а не 49",type:"правило/формула"},"Формула разности квадратов применена верно, ошибка в квадрате корня.","Чему равно (√7)²?",0.9],
+  ["14","(4√5)² : 10","8","8","(4*sqrt(5))^2/10","ok","16·5 : 10 = 8",null,"","",0.95],
+  ["15","√0,04 · 50","10","10","sqrt(0.04)*50","ok","0,2 · 50 = 10",null,"Последняя строка смазана, читается как 10.","",0.6],
+  ["16","log₃243","5","5","log(3,243)","ok","3⁵ = 243 → 5",null,"","",0.97],
+  ["17","log₂10 − log₂5","1","1","log(2,10)-log(2,5)","ok","log₂(10:5) = log₂2 = 1",null,"","",0.97],
+  ["18","log₄8 + log₄2","2","2","log(4,8)+log(4,2)","ok","log₄16 = 2",null,"","",0.96],
+  ["19","3^(log₃6)","6","6","3^log(3,6)","ok","= 6",null,"","",0.97],
+  ["20","log₆(1/36)",null,"−2","log(6,1/36)","missing","",null,"Номер не решён.","Это то же, что № 16, только число меньше единицы.",0.98]
+];
+function exampleResult(){
+  var keyMap=parseKey(PRESETS[0].key);
+  return {
+    example:true, mode:"hw", at:"2026-10-07T18:40:00", student:"Аня", sgender:"none", hwTitle:"ЕГЭ база 14 · ДЗ", scope:"full",
+    tasks: EX_TASKS.map(function(a){ return {n:a[0],statement:a[1],student:a[2],correct:a[3],check:a[4],verdict:a[5],aiVerdict:a[5],seen:a[6],error:a[7],comment:a[8],hint:a[9],confidence:a[10],key:keyMap[a[0]]}; }),
+    summary:{strong:"Степени и логарифмы (№ 6–9, 16–19) — без ошибок; корни через свойства (№ 11, 12, 14) тоже.",weak:"Отрицательная степень (№ 10), квадрат корня (№ 13), деление на десятичную дробь (№ 4).",next:"5–6 примеров на a⁻ⁿ и (√a)²; повторить, что делить на 0,5 — значит умножать на 2."},
+    unreadable:null,
+    message:"Аня, привет! ДЗ по 14-му заданию проверено: 16 из 20.\nСтепени и логарифмы — чисто, ни одной ошибки.\n\nПосмотри ещё раз:\n№ 4 — сколько раз 0,5 помещается в единице?\n№ 10 — что делает минус в показателе? Вспомни 2⁻³ из диагностики.\n№ 13 — чему равно (√7)²?\n№ 20 — не решён, это то же, что № 16.\n№ 1 — ответ верный, но в бланк нужна десятичная дробь.\n\nИсправь эти номера к следующему занятию и пришли фото."
+  };
+}
+
+/* ================= Состояние ================= */
+var S = {
+  cond:[], sol:[], result:null, message:"", resultId:null, msgStale:false,
+  style: clone(DEFAULT_STYLE), history:[], busy:false, msgBusy:false, lastZone:"sol", sel:{}, doubleTouched:false
+};
+var P = { sample:null, db:null, user:null, uid:null, img:null, ready:false, histRef:null, styleRef:null };
+var wq = Promise.resolve();
+function enqueue(fn){ wq = wq.then(fn).catch(function(e){ console.warn("db", e); }); return wq; }
+
+/* ================= Утилиты ================= */
+function $(s,r){ return (r||document).querySelector(s); }
+function $$(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function h(tag,attrs){
+  var el=document.createElement(tag), kids=Array.prototype.slice.call(arguments,2);
+  if(attrs) Object.keys(attrs).forEach(function(k){ var v=attrs[k]; if(v==null||v===false) return;
+    if(k==="class") el.className=v; else if(k==="text") el.textContent=v; else if(k.slice(0,2)==="on") el.addEventListener(k.slice(2),v);
+    else el.setAttribute(k, v===true?"":v); });
+  (function add(list){ list.forEach(function(k){ if(k==null||k===false) return; if(Array.isArray(k)) add(k); else el.append(k.nodeType?k:String(k)); }); })(kids);
+  return el;
+}
+function radio(name){ var el=$('input[name="'+name+'"]:checked'); return el?el.value:null; }
+function setRadio(name,val){ $$('input[name="'+name+'"]').forEach(function(r){ r.checked=(r.value===val); }); }
+var toastT=null;
+function toast(msg){ var old=$(".toast"); if(old) old.remove(); var t=h("div",{class:"toast",role:"status"},msg); document.body.append(t); clearTimeout(toastT); toastT=setTimeout(function(){ t.remove(); },3800); }
+function ranges(list){
+  var ints=list.map(Number); if(ints.some(function(x){return !Number.isInteger(x);})) return list.join(", ");
+  var out=[], i=0; while(i<ints.length){ var j=i; while(j+1<ints.length && ints[j+1]===ints[j]+1) j++; out.push(j-i>=2? ints[i]+"–"+ints[j] : (j>i? ints[i]+", "+ints[j] : String(ints[i]))); i=j+1; }
+  return out.join(", ");
+}
+function fmtDate(iso){ try{ return new Date(iso).toLocaleString("ru-RU",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } }
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function plainTasks(tasks){ return tasks.map(function(t){ var o={}; Object.keys(t).forEach(function(k){ if(k.charAt(0)!=="_") o[k]=t[k]; }); return o; }); }
+function plural(n,a,b,c){ n=Math.abs(n)%100; var m=n%10; if(n>10&&n<20) return c; if(m>1&&m<5) return b; if(m===1) return a; return c; }
+function balls(n){ return n+" "+plural(n,"балл","балла","баллов"); }
+
+/* ================= Где работает страница: артефакт claude.ai или сайт ================= */
+var SITE = !!document.querySelector('meta[name="proverka-site"]');
+var API_BASE = (function(){ var m=document.querySelector('meta[name="proverka-api-base"]'); return (m&&m.content)||"https://api.anthropic.com"; })();
+var MODEL = "claude-opus-5-5";
+var PRICE = {inp:4, out:20, cacheWrite:5, cacheRead:0.2};   // $ за 1 млн токенов, Claude Opus 5.5
+var AI = {kind:null, img:null, cost:0};                        // kind: "artifact" — подписка claude.ai, "api" — ключ на сайте
+var memKey = "";
+function apiKey(){ return lsGet("proverka-api-key")||memKey; }
+function blobToB64(b){ return new Promise(function(res,rej){ var r=new FileReader(); r.onload=function(){ res(String(r.result).split(",")[1]||""); }; r.onerror=function(){ rej(r.error); }; r.readAsDataURL(b); }); }
+function parseLoose(text){
+  var t=String(text||"").trim(); try{ return JSON.parse(t); }catch(e){}
+  var m=t.match(/```(?:json)?\s*([\s\S]*?)```/); if(m){ try{ return JSON.parse(m[1]); }catch(e){} }
+  var a=t.search(/[\[{]/), b=Math.max(t.lastIndexOf("}"),t.lastIndexOf("]")); if(a>=0&&b>a){ try{ return JSON.parse(t.slice(a,b+1)); }catch(e){} }
+  return undefined;
+}
+function apiErr(e,signal){
+  if(signal&&signal.aborted) return {code:"cancelled"};
+  if(e&&e.code&&e.status==null) return e;
+  if(e&&e.name==="APIUserAbortError") return {code:"cancelled"};
+  var st=e&&e.status, msg=(e&&e.error&&e.error.error&&e.error.error.message)||(e&&e.message)||"";
+  if(st===401) return {code:"bad_key"};
+  if(st===403) return {code:"forbidden",message:msg};
+  if(st===413) return {code:"prompt_too_large"};
+  if(st===429) return {code:"rate_limited"};
+  if(st===400) return {code:"api_400",message:msg};
+  if(st>=500) return {code:"upstream_error"};
+  return {code:"network",message:msg};
+}
+function apiCall(prompt,o){
+  var key=apiKey(); if(!key) return Promise.reject({code:"no_key"});
+  if(!window.AnthropicSDK) return Promise.reject({code:"network",message:"не загрузился SDK"});
+  var client=new window.AnthropicSDK.Anthropic({apiKey:key, baseURL:API_BASE, dangerouslyAllowBrowser:true, maxRetries:2});
+  return Promise.all((o.images||[]).map(blobToB64)).then(function(list){
+    var content=list.map(function(d){ return {type:"image",source:{type:"base64",media_type:"image/jpeg",data:d}}; });
+    content.push({type:"text",text:prompt});
+    var stream=client.beta.messages.stream({model:MODEL, max_tokens:o.maxTokens||32000, thinking:{type:"adaptive"}, output_config:{effort:o.effort||"high"},
+      betas:["server-side-fallback-2026-07-01"], fallbacks:"default", messages:[{role:"user",content:content}]},{signal:o.signal});
+    stream.on("text",function(delta,snap){ if(o.onText) o.onText({text:snap,delta:delta}); });
+    return stream.finalMessage();
+  }).then(function(msg){
+    var u=msg.usage||{}, c=((u.input_tokens||0)*PRICE.inp+(u.cache_creation_input_tokens||0)*PRICE.cacheWrite+(u.cache_read_input_tokens||0)*PRICE.cacheRead+(u.output_tokens||0)*PRICE.out)/1e6;
+    AI.cost+=c;
+    if(msg.stop_reason==="refusal") throw {code:"refused"};
+    var text=(msg.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("");
+    if(!text.trim()) throw {code:"empty_completion"};
+    return {text:text, truncated:msg.stop_reason==="max_tokens", cost:c};
+  }).catch(function(e){ throw apiErr(e,o.signal); });
+}
+AI.json=function(prompt,o){
+  if(AI.kind==="artifact"){ var x={modelTier:o.tier, signal:o.signal, cache:false, onText:o.onText}; if(o.images&&o.images.length) x.images=o.images; return P.sample.json(prompt,x); }
+  return apiCall(prompt,{images:o.images, effort:o.tier==="complex"?"high":"low", maxTokens:64000, signal:o.signal, onText:o.onText})
+    .then(function(r){ var v=parseLoose(r.text); if(v===undefined) throw {code:"invalid_json",text:r.text}; return v; });
+};
+AI.text=function(prompt,o){
+  if(AI.kind==="artifact") return P.sample(prompt,{signal:o.signal, cache:false, onText:o.onText}).then(function(r){ return r.text; });
+  return apiCall(prompt,{effort:"low", maxTokens:16000, signal:o.signal, onText:o.onText}).then(function(r){ return r.text; });
+};
+function fmtCost(c){ return "$"+(c<0.01?"0,01":c.toFixed(2).replace(".",",")); }
+
+/* хранилище: база страницы на claude.ai или этот браузер на сайте */
+var Store = {kind:null};
+function localHist(){ try{ var a=JSON.parse(lsGet("proverka-history")||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function setLocalHist(a){
+  a.sort(function(x,y){ return String(y.at).localeCompare(String(x.at)); });
+  try{ localStorage.setItem("proverka-history",JSON.stringify(a.slice(0,150))); }
+  catch(e){ toast("История не поместилась в память браузера. Выгрузите её в файл и удалите старые проверки."); }
+}
+Store.loadStyle=function(){
+  if(Store.kind==="db") return P.styleRef.get().then(function(snap){ return snap.exists?(snap.data()||null):null; });
+  try{ var ls=lsGet("proverka-style"); return Promise.resolve(ls?JSON.parse(ls):null); }catch(e){ return Promise.resolve(null); }
+};
+Store.saveStyle=function(st){
+  var d=Object.assign({},st,{updatedAt:new Date().toISOString()});
+  if(Store.kind==="db") return enqueue(function(){ return P.styleRef.set(d); });
+  lsSet("proverka-style",JSON.stringify(d)); return Promise.resolve();
+};
+Store.list=function(){
+  if(Store.kind==="db") return P.histRef.orderBy("at","desc").limit(100).get().then(function(snap){ return snap.docs.map(function(d){ var o=d.data()||{}; o.id=d.id; return o; }); });
+  return Promise.resolve(Store.kind==="local"?localHist():[]);
+};
+Store.save=function(id,data){
+  if(Store.kind==="db") return enqueue(function(){ return P.histRef.doc(id).set(data); });
+  if(Store.kind==="local"){ var a=localHist().filter(function(x){return x.id!==id;}); a.push(Object.assign({},data,{id:id})); setLocalHist(a); }
+  return Promise.resolve();
+};
+Store.update=function(id,patch){
+  if(Store.kind==="db") return enqueue(function(){ return P.histRef.doc(id).update(patch); });
+  if(Store.kind==="local"){ var a=localHist(); a.forEach(function(x){ if(x.id===id) Object.assign(x,patch); }); setLocalHist(a); }
+  return Promise.resolve();
+};
+Store.remove=function(id){
+  if(Store.kind==="db") return enqueue(function(){ return P.histRef.doc(id).delete(); });
+  if(Store.kind==="local") setLocalHist(localHist().filter(function(x){return x.id!==id;}));
+  return Promise.resolve();
+};
+
+/* ================= Вкладки ================= */
+function showTab(name){
+  ["check","style","history"].forEach(function(n){ $("#tab-"+n).setAttribute("aria-selected",String(n===name)); $("#p-"+n).hidden=(n!==name); });
+}
+$$(".tab").forEach(function(b){ b.addEventListener("click",function(){ showTab(b.id.slice(4)); }); });
+if(/^#(style|history)$/.test(location.hash)) showTab(location.hash.slice(1));
+
+/* ================= Тип работы и экзамен ================= */
+function currentExam(){
+  var m=radio("mode");
+  if(m==="oge") return examById("oge");
+  if(m==="egeb") return examById("ege-b");
+  if(m==="egep") return examById($("#exam-ver").value);
+  return null;
+}
+function selFor(ex){ if(!S.sel[ex.id]) S.sel[ex.id]=ex.tasks.map(function(t){return t.n;}); return S.sel[ex.id]; }
+function selTasks(ex){ var sel=selFor(ex); return ex.tasks.filter(function(t){ return sel.indexOf(t.n)>=0; }); }
+function renderMode(){
+  var m=radio("mode"), ex=currentExam();
+  $("#exam-box").hidden=!ex; $("#preset-box").hidden=!!ex; $("#scope-box").hidden=!!ex; $("#ver-box").hidden=(m!=="egep");
+  $("#text-lbl").textContent = ex ? "Условия варианта" : "Условия";
+  $("#key-lbl").textContent = ex ? "Ответы к варианту" : "Ответы-ключ";
+  $("#key-sub").textContent = ex ? "— часть 1 по ключу оценивает программа, без ошибок чтения ключа" : "— если есть, проверка точнее";
+  $("#req-lbl").textContent = ex ? "Особые указания — например, критерии своего варианта" : "Требования к оформлению";
+  $("#hw-title").placeholder = ex ? ex.short+" · пробник" : "Например, ДЗ: дроби и степени";
+  $("#hw-text").placeholder = ex ? "Текст варианта. Можно оставить пустым, если условия на фото или переписаны в работе" : "1. (3/4)·(8/3)\n2. √98 : √2\n…\nМожно оставить пустым, если условия на фото";
+  $("#hw-key").placeholder = ex ? "1) 12  2) −0,5  3) 214 … 13) а) πk; б) −2π" : "1) 2  2) 7  3) −0,5 …";
+  $("#hw-req").placeholder = ex ? "Например: критерии к № 18 из своего варианта; вариант из сборника, номера 1–12" : "Например: ответ десятичной дробью; обязательна проверка умножением";
+  if(!S.doubleTouched) setRadio("double", ex?"on":"off");
+  if(ex){
+    var st=$("#exam-status"); st.textContent=""; st.append(h("b",null,ex.short+". "), ex.status); if(ex.draft) st.append(h("span",{class:"draft"}," "+ex.draft));
+    renderChips(ex); renderCrit(ex);
+  }
+  lsSet("proverka-mode", m+(m==="egep"?":"+$("#exam-ver").value:""));
+  updateHw();
+}
+function renderChips(ex){
+  var box=$("#nchips"), sel=selFor(ex); box.textContent="";
+  ex.tasks.forEach(function(t){
+    var on=sel.indexOf(t.n)>=0;
+    box.append(h("button",{type:"button",class:"nchip"+(t.kind==="long"?" p2":""),"aria-pressed":String(on),title:"№ "+t.n+(t.t?": "+t.t:"")+" · "+balls(t.max),
+      onclick:function(){ var i=sel.indexOf(t.n); if(i>=0) sel.splice(i,1); else { sel.push(t.n); sel.sort(function(a,b){return a-b;}); } renderChips(ex); renderCrit(ex); updateHw(); }},String(t.n)));
+  });
+  var ch=selTasks(ex), mx=ch.reduce(function(a,t){return a+t.max;},0);
+  $("#sel-hint").textContent = ch.length ? ("выбрано "+ch.length+" из "+ex.tasks.length+" · максимум "+balls(mx)+(ch.length===ex.tasks.length?" · весь вариант":"")) : "ничего не выбрано";
+}
+function critTable(t,hitScore){
+  var c=CRIT[t.crit];
+  return h("div",{class:"crit-task"},
+    h("h3",null,"№ "+t.n+" · "+t.t+" · 0–"+c.max),
+    h("table",{class:"crit"},h("tbody",null,c.rows.map(function(r){ return h("tr",{class:r[0]===hitScore?"hit":null,"data-tone":"green"},h("td",null,String(r[0])),h("td",null,r[1])); }))),
+    c.note?h("p",{class:"crit-note"},c.note):null,
+    c.draft?h("p",{class:"crit-note draft"},c.draft):null);
+}
+function renderCrit(ex){
+  var box=$("#crit-box"); box.textContent="";
+  box.append(h("div",null,h("span",{class:"lbl"},"Общие правила"),h("ul",{class:"rules"},(ex.kind==="oge"?RULES_OGE:RULES_EGE).map(function(r){ return h("li",null,r); }))));
+  selTasks(ex).filter(function(t){return t.kind==="long";}).forEach(function(t){ box.append(critTable(t)); });
+}
+$$('input[name="mode"]').forEach(function(r){ r.addEventListener("change",renderMode); });
+$("#exam-ver").addEventListener("change",renderMode);
+$$('input[name="double"]').forEach(function(r){ r.addEventListener("change",function(){ S.doubleTouched=true; }); });
+function selectWhere(pred){ var ex=currentExam(); if(!ex) return; S.sel[ex.id]=ex.tasks.filter(pred).map(function(t){return t.n;}); renderChips(ex); renderCrit(ex); updateHw(); }
+$("#sel-all").addEventListener("click",function(){ selectWhere(function(){ return true; }); });
+$("#sel-p1").addEventListener("click",function(){ selectWhere(function(t){ return t.kind==="short"; }); });
+$("#sel-p2").addEventListener("click",function(){ selectWhere(function(t){ return t.kind==="long"; }); });
+(function restoreMode(){
+  var h0=location.hash.slice(1), saved=lsGet("proverka-mode")||"";
+  if(/^(oge|egep|egeb)$/.test(h0)) saved=h0;
+  var parts=saved.split(":"); if(/^(hw|oge|egep|egeb)$/.test(parts[0])) setRadio("mode",parts[0]);
+  if(parts[1] && examById(parts[1])) $("#exam-ver").value=parts[1];
+})();
+
+/* ================= Задание ================= */
+PRESETS.forEach(function(p){ $("#preset").append(h("option",{value:p.id},p.title)); });
+$("#preset").addEventListener("change",function(){
+  var id=this.value, p=PRESETS.filter(function(x){return x.id===id;})[0];
+  $("#hw-title").value=p?p.short:""; $("#hw-text").value=p?p.text:""; $("#hw-key").value=p?p.key:""; $("#hw-req").value=p?p.req:"";
+  updateHw();
+});
+["#hw-text","#hw-key"].forEach(function(s){ $(s).addEventListener("input",updateHw); });
+function expectedCount(){
+  var ex=currentExam(); if(ex) return selTasks(ex).length;
+  var k=Object.keys(parseKey($("#hw-key").value)).length;
+  var t=($("#hw-text").value.match(/^\s*\d{1,3}[а-я]?[.)]\s/gm)||[]).length;
+  return Math.max(k,t)||0;
+}
+function updateHw(){
+  var ex=currentExam(), keyMap=parseKey($("#hw-key").value), k=Object.keys(keyMap).length;
+  if(ex){
+    var p1=selTasks(ex).filter(function(t){return t.kind==="short";}), withKey=p1.filter(function(t){ return keyMap[String(t.n)]!=null; }).length;
+    $("#hw-count").textContent = p1.length ? ("ключ к части 1: "+withKey+" из "+p1.length) : "";
+  } else {
+    var n=expectedCount();
+    $("#hw-count").textContent = n ? (n+" "+plural(n,"задача","задачи","задач")+(k?" · ключ к "+k:"")) : "";
+  }
+  updateRun();
+}
+
+/* ================= Картинки ================= */
+var seq=0, pdfLib=null;
+function loadPdfJs(){
+  if(pdfLib) return pdfLib;
+  var base=SITE?"vendor/":"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+  function load(src){ return new Promise(function(res,rej){ var s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=function(){ rej(new Error("pdf.js не загрузился")); }; document.head.append(s); }); }
+  pdfLib = (SITE?Promise.resolve():load(base+"pdf.worker.min.js")).then(function(){ return load(base+"pdf.min.js"); }).then(function(){
+    var lib=window.pdfjsLib; if(!lib) throw new Error("pdf.js не загрузился"); lib.GlobalWorkerOptions.workerSrc=base+"pdf.worker.min.js"; return lib; });
+  pdfLib.catch(function(){ pdfLib=null; });
+  return pdfLib;
+}
+function pdfPages(file){
+  return Promise.all([loadPdfJs(), file.arrayBuffer()]).then(function(r){
+    return r[0].getDocument({data:new Uint8Array(r[1]), isEvalSupported:false}).promise;
+  }).then(function(pdf){
+    var n=Math.min(pdf.numPages,20), out=[], chain=Promise.resolve();
+    for(var i=1;i<=n;i++) (function(i){ chain=chain.then(function(){ return pdf.getPage(i); }).then(function(page){
+      var v1=page.getViewport({scale:1}), sc=Math.min(3,2400/Math.max(v1.width,v1.height)), vp=page.getViewport({scale:sc});
+      var c=document.createElement("canvas"); c.width=Math.round(vp.width); c.height=Math.round(vp.height);
+      var g=c.getContext("2d"); g.fillStyle="#fff"; g.fillRect(0,0,c.width,c.height);
+      return page.render({canvasContext:g,viewport:vp}).promise.then(function(){ out.push(c); });
+    }); })(i);
+    return chain.then(function(){ if(pdf.numPages>20) toast("Из PDF взяты первые 20 страниц"); return out; });
+  });
+}
+function addFiles(files, zone){
+  files=Array.prototype.slice.call(files||[]); if(!files.length) return;
+  var list=S[zone], chain=Promise.resolve();
+  files.forEach(function(file){
+    chain=chain.then(function(){
+      var isPdf=file.type==="application/pdf"||/\.pdf$/i.test(file.name||"");
+      if(isPdf) return pdfPages(file).then(function(cs){ cs.forEach(function(c){ list.push(mkItem(c)); }); }).catch(function(){ toast("PDF не открылся. Пришлите страницы фотографиями или скриншотами."); });
+      if(file.type && file.type.indexOf("image/")!==0 && !/\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name||"")){ toast("«"+(file.name||"файл")+"» — нужен снимок (JPG, PNG) или PDF"); return; }
+      return createImageBitmap(file).then(function(bm){ list.push(mkItem(bm)); }).catch(function(){ toast("«"+(file.name||"снимок")+"» не открылся. Если это HEIC с iPhone — пришлите JPG или скриншот."); });
+    });
+  });
+  chain.then(function(){ renderThumbs(zone); updateRun(); });
+}
+function mkItem(src){ return {id:++seq, src:src, rot:0, thumb:null}; }
+function drawRotated(it,maxSide){
+  var r=((it.rot%360)+360)%360, sw=it.src.width, sh=it.src.height, swap=(r===90||r===270);
+  var W=swap?sh:sw, H=swap?sw:sh, k=Math.min(1,maxSide/Math.max(W,H)), cw=Math.max(1,Math.round(W*k)), ch=Math.max(1,Math.round(H*k));
+  var c=document.createElement("canvas"); c.width=cw; c.height=ch; var g=c.getContext("2d");
+  g.fillStyle="#fff"; g.fillRect(0,0,cw,ch); g.translate(cw/2,ch/2); g.rotate(r*Math.PI/180);
+  var dw=swap?ch:cw, dh=swap?cw:ch; g.drawImage(it.src,-dw/2,-dh/2,dw,dh); return c;
+}
+function renderThumbs(zone){
+  var box=$("#"+zone+"-thumbs"), list=S[zone]; box.textContent=""; box.hidden=!list.length;
+  list.forEach(function(it,i){
+    if(!it.thumb) it.thumb=drawRotated(it,320);
+    box.append(h("div",{class:"thumb"}, it.thumb, h("span",{class:"pg"},(zone==="sol"?"стр. ":"усл. ")+(i+1)),
+      h("div",{class:"tb"},
+        h("button",{type:"button",title:"Повернуть","aria-label":"Повернуть",onclick:function(){ it.rot=(it.rot+90)%360; it.thumb=null; renderThumbs(zone); }},"⟳"),
+        h("button",{type:"button",title:"Убрать","aria-label":"Убрать",onclick:function(){ list.splice(list.indexOf(it),1); renderThumbs(zone); updateRun(); }},"×"))));
+  });
+  if(zone==="sol") $("#sol-count").textContent = list.length ? list.length+" "+plural(list.length,"страница","страницы","страниц") : "";
+}
+function wireDrop(zone){
+  var d=$("#"+zone+"-drop"), inp=$("#"+zone+"-file");
+  inp.addEventListener("change",function(){ addFiles(inp.files,zone); inp.value=""; });
+  d.addEventListener("dragover",function(e){ e.preventDefault(); d.classList.add("over"); });
+  d.addEventListener("dragleave",function(){ d.classList.remove("over"); });
+  d.addEventListener("drop",function(e){ e.preventDefault(); d.classList.remove("over"); addFiles(e.dataTransfer.files,zone); });
+  d.addEventListener("pointerdown",function(){ S.lastZone=zone; });
+}
+wireDrop("sol"); wireDrop("cond");
+document.addEventListener("paste",function(e){
+  var items=(e.clipboardData&&e.clipboardData.files)||[]; var files=Array.prototype.filter.call(items,function(f){ return /^image\//.test(f.type); });
+  if(!files.length) return; e.preventDefault();
+  if(!$("#p-check").hidden){ addFiles(files,S.lastZone); toast(files.length+" "+plural(files.length,"снимок","снимка","снимков")+" добавлено"); }
+});
+function partsFor(c){ var a=Math.max(c.width,c.height)/Math.min(c.width,c.height); return a>=2.1?3:(a>=1.15?2:1); }
+function fitCanvas(c,edge){ var L=Math.max(c.width,c.height); if(L<=edge) return c; var k=edge/L, t=document.createElement("canvas"); t.width=Math.round(c.width*k); t.height=Math.round(c.height*k); t.getContext("2d").drawImage(c,0,0,t.width,t.height); return t; }
+function toBlob(c,q){ return new Promise(function(res){ c.toBlob(function(b){ res(b); },"image/jpeg",q); }); }
+var PART_NAMES = {2:{v:["верхняя половина","нижняя половина"],h:["левая половина","правая половина"]},3:{v:["верхняя треть","середина","нижняя треть"],h:["левая треть","середина","правая треть"]}};
+function buildImages(){
+  var IMG=AI.img||{}, max=IMG.maxCount||20, maxBytes=IMG.maxInputBytes||5e6, edge=IMG.longEdge||3400;
+  var cond=S.cond.map(function(it){ return drawRotated(it,Math.min(2600,edge)); }), sol=S.sol.map(function(it){ return drawRotated(it,IMG.tile===false?4100:3400); });
+  var parts=sol.map(function(c){ var n=partsFor(c); return IMG.tile===false&&n<3?1:n; }), total=cond.length+parts.reduce(function(a,b){return a+b;},0);
+  if(total>max) parts=parts.map(function(){ return 1; });
+  if(cond.length+sol.length>max) return Promise.reject({code:"too_many", message:"Слишком много страниц: за одну проверку можно до "+max+". Разбейте работу на две проверки."});
+  var jobs=[], labels=[];
+  cond.forEach(function(c,i){ jobs.push(c); labels.push({kind:"cond",text:"условия, лист "+(i+1)}); });
+  sol.forEach(function(c,i){
+    var n=parts[i]; if(n===1){ jobs.push(c); labels.push({kind:"sol",text:"страница "+(i+1)+" целиком"}); return; }
+    var vert=c.height>=c.width, L=vert?c.height:c.width, ov=Math.round(L*0.06), step=L/n;
+    for(var k=0;k<n;k++){
+      var a=Math.max(0,Math.round(k*step-ov)), b=Math.min(L,Math.round((k+1)*step+ov)), t=document.createElement("canvas");
+      if(vert){ t.width=c.width; t.height=b-a; t.getContext("2d").drawImage(c,0,a,c.width,b-a,0,0,c.width,b-a); }
+      else { t.width=b-a; t.height=c.height; t.getContext("2d").drawImage(c,a,0,b-a,c.height,0,0,b-a,c.height); }
+      jobs.push(t); labels.push({kind:"sol",text:"страница "+(i+1)+", "+PART_NAMES[n][vert?"v":"h"][k]});
+    }
+  });
+  return Promise.all(jobs.map(function(c){
+    c=fitCanvas(c,edge);
+    return toBlob(c,0.86).then(function(b){ if(b && b.size<=maxBytes) return b; var s=document.createElement("canvas"), k=Math.sqrt(maxBytes/(b?b.size:maxBytes*2))*0.9; s.width=Math.round(c.width*k); s.height=Math.round(c.height*k); s.getContext("2d").drawImage(c,0,0,s.width,s.height); return toBlob(s,0.82); });
+  })).then(function(blobs){ return {blobs:blobs, labels:labels, split:parts.some(function(p){return p>1;})}; });
+}
+
+/* ================= Промпты проверки ================= */
+function imageLines(o){
+  var L=["","ИЗОБРАЖЕНИЯ"];
+  o.labels.forEach(function(l,i){ L.push("Изображение "+(i+1)+": "+(l.kind==="cond"?"":"решение ученика, ")+l.text+"."); });
+  if(o.split) L.push("Части одной страницы перекрываются: строка на стыке может попасть на две картинки — не считай её дважды.");
+  return L;
+}
+function taskTextLines(o,what){
+  var nCond=o.labels.filter(function(l){return l.kind==="cond";}).length, L=["",what];
+  if(o.text) L.push("<<<",o.text,">>>"); else L.push("Отдельного текста условий нет.");
+  if(nCond) L.push("Условия есть и на изображениях с пометкой «условия».");
+  if(!o.text && !nCond) L.push("Условий отдельно нет: бери их из работы ученика (обычно номер и условие переписаны). Если условие не видно, восстанови его по решению и напиши об этом в comment.");
+  return L;
+}
+var READ_RULES = [
+  "Сначала прочитай работу целиком. В seen перепиши ключевые строки так, как они написаны у ученика, — с его ошибками, ничего не исправляя. Формулы — в одну строку обычными символами: ·, :, ², ⁻¹, √, log₂.",
+  "Не додумывай. Если строку нельзя прочитать уверенно, ставь verdict \"unreadable\", а в seen — то, что видно, с пометкой [неразборчиво].",
+  "Задачи нет в работе — verdict \"missing\".",
+  "Ищи ПЕРВУЮ ошибку: строку, где она появилась (error.where — цитата из решения), и что должно было быть (error.what). Следствия первой ошибки отдельными ошибками не считай.",
+  "error.type — одно из: вычисление, знак, порядок действий, правило/формула, понимание условия, не доведено, обоснование, оформление, другое.",
+  "Для задач с числовым ответом заполни check — выражение, значение которого равно верному ответу; программа пересчитает его точно. Синтаксис: числа с точкой (0.6), + - * / ^ и скобки, функции sqrt(x), root(x,n), log(a,x), lg(x), ln(x), pi. Пример: «(0,6 + 2/5) : 0,5» → \"(0.6+2/5)/0.5\"; «log₄8» → \"log(4,8)\". Если ответ не одно число (матрица, система, доказательство, промежуток, серия корней) — check: null.",
+  "hint — подсказка ученику: наводит на ошибку, но не называет верный ответ.",
+  "confidence — от 0 до 1: насколько ты уверен в оценке с учётом почерка и собственного решения."
+];
+function buildCheckPrompt(o){
+  var L=[];
+  L.push("Ты — опытный репетитор по математике. Проверь домашнюю работу ученика. Проверку читает преподаватель: он сверит её, при необходимости поправит и отправит ученику сообщение. Нужна точная и честная проверка, а не похвала.");
+  L=L.concat(imageLines(o), taskTextLines(o,"ЗАДАНИЕ"));
+  L.push("","КЛЮЧ ОТВЕТОВ");
+  if(o.key) L.push("Ключ проверен преподавателем — верным ответом считай его, а не свой. Если твоё решение с ключом не сходится, всё равно бери ответ из ключа, а расхождение опиши в comment.","<<<",o.key,">>>");
+  else L.push("Ключа нет. Реши каждую задачу сам, аккуратно, и запиши свой ответ в correct. Перепроверь вычисления подстановкой или другим способом.");
+  L.push("","ТРЕБОВАНИЯ ПРЕПОДАВАТЕЛЯ", o.req||"Особых требований нет.");
+  L.push("","ЧТО ПРОВЕРЯТЬ", o.scope==="answers" ? "Только итоговые ответы. Ход решения смотри лишь затем, чтобы найти и прочитать ответ; verdict ставь по ответу." : "Ответ и ход решения: найди, где именно ошибка, даже если ответ верный.");
+  L.push("","ПРАВИЛА");
+  READ_RULES.forEach(function(r,i){ L.push((i+1)+". "+r); });
+  L.push((READ_RULES.length+1)+". Верный ответ в другой равносильной форме (3/4 и 0,75; 0.75 и 0,75) — это верно, если требования преподавателя не говорят иначе.");
+  L.push((READ_RULES.length+2)+". Ответ и решение верны, но есть недочёт оформления или пропущен обязательный шаг — \"minor\". Ответ верный, но в решении есть ошибка по существу (ответ подогнан, ошибки компенсировали друг друга) — \"partial\". Решение верно до последнего шага и сорвалось на арифметике — \"wrong\", но в error.what напиши, что метод верный.");
+  L.push("","ОТВЕТ — только JSON такого вида:",
+    '{"tasks":[{"n":"4","statement":"(0,6 + 2/5) : 0,5","student":"0,5","correct":"2","check":"(0.6+2/5)/0.5","verdict":"wrong","seen":"(0,6+0,4):0,5 = 1·0,5 = 0,5","error":{"where":"1 : 0,5 = 1·0,5","what":"деление на 0,5 заменено умножением; 1 : 0,5 = 2","type":"правило/формула"},"comment":"скобка верно, ошибка в последнем действии","hint":"Сколько раз 0,5 помещается в единице?","confidence":0.9}],',
+    ' "summary":{"strong":"что получается, с номерами","weak":"где проседает, с номерами","next":"что дать дальше: 1–2 конкретных пункта"},',
+    ' "unreadable":null}',
+    "verdict — одно из: \"ok\", \"minor\", \"partial\", \"wrong\", \"missing\", \"unreadable\". При \"ok\" поле error — null. student — итоговый ответ ученика как написан, или null, если ответа нет. n — номер задачи как в задании (подпункты: \"2а\"). Задачи — в порядке задания, все до одной"+(o.expected?" (их "+o.expected+")":"")+". unreadable — какие страницы или места не удалось прочитать, или null. Все тексты — по-русски и коротко.");
+  return L.join("\n");
+}
+function fmtLine(t){ return t.fmt==="set" ? "номера верных утверждений цифрами подряд, в любом порядке" : t.fmt==="any" ? "число или последовательность цифр — как требует условие" : "целое число или конечная десятичная дробь"; }
+function buildExamPrompt(o){
+  var ex=o.ex, L=[], who=ex.kind==="oge"?"ОГЭ":"ЕГЭ";
+  L.push("Ты — эксперт предметной комиссии "+who+" по математике. Проверь работу ученика так, как её проверили бы на экзамене: строго по критериям ФИПИ ниже ("+ex.short+"). Результат прочитает репетитор ученика. Нужна точная экзаменационная оценка — без снисхождения и без придирок сверх критериев.");
+  if(ex.draft) L.push("Структура — по проекту демоверсии; критерии части 2 — как приведены ниже.");
+  L=L.concat(imageLines(o), taskTextLines(o,"УСЛОВИЯ ВАРИАНТА"));
+  L.push("","ОТВЕТЫ К ВАРИАНТУ");
+  if(o.key) L.push("Ответы даны преподавателем — верным ответом считай их, а не свой. Расхождение со своим решением опиши в comment.","<<<",o.key,">>>");
+  else L.push("Ответов нет. Реши каждое задание сам, аккуратно, перепроверь, и запиши свой ответ в correct.");
+  L.push("","ЗАДАНИЯ В РАБОТЕ — проверь все до одного и только их:");
+  o.sel.forEach(function(t){
+    if(t.kind==="short"){ L.push("№ "+t.n+" — часть 1, краткий ответ, 1 балл."+(t.t?" Тема: "+t.t+".":"")+" Ответ: "+fmtLine(t)+"."); return; }
+    var c=CRIT[t.crit];
+    L.push("№ "+t.n+" — часть 2, развёрнутое решение, 0–"+c.max+" "+plural(c.max,"балл","балла","баллов")+". Тема: "+t.t+". Критерии:");
+    c.rows.forEach(function(r){ L.push("  "+r[0]+" — "+r[1]); });
+    if(c.note) L.push("  Примечание: "+c.note);
+  });
+  L.push("","ОБЩИЕ ПРАВИЛА ОЦЕНИВАНИЯ");
+  (ex.kind==="oge"?RULES_OGE:RULES_EGE).forEach(function(r){ L.push("- "+r); });
+  if(o.req) L.push("","УКАЗАНИЯ ПРЕПОДАВАТЕЛЯ — важнее общих правил, если противоречат (например, критерии конкретного варианта):",o.req);
+  L.push("","ПРАВИЛА РАЗБОРА");
+  READ_RULES.forEach(function(r,i){ L.push((i+1)+". "+r); });
+  L.push((READ_RULES.length+1)+". Прежде чем ставить балл за часть 2, реши задание сам и сравни с решением ученика. Другой верный путь к ответу — это верно.");
+  L.push((READ_RULES.length+2)+". В criterion перепиши строку критериев, по которой поставлен балл; в reason объясни, почему балл именно такой: что выполнено и чего не хватило до следующего балла.");
+  L.push("","ОТВЕТ — только JSON такого вида:",
+    '{"tasks":[{"n":"'+(o.sel.filter(function(t){return t.kind==="long";})[0]||o.sel[0]).n+'","statement":"кратко условие","student":"итоговый ответ ученика","correct":"верный ответ","check":null,"score":1,"criterion":"строка критериев, по которой поставлен балл","reason":"что выполнено и чего не хватило до следующего балла","verdict":"partial","seen":"ключевые строки решения как написаны","error":{"where":"…","what":"…","type":"обоснование"},"comment":"…","hint":"…","confidence":0.8}],',
+    ' "summary":{"strong":"что получается, с номерами","weak":"где теряются баллы, с номерами","next":"что тренировать: 1–2 конкретных пункта"},',
+    ' "unreadable":null}',
+    "score — целое от 0 до максимума задания. verdict: \"ok\" — полный балл, \"partial\" — часть баллов, \"wrong\" — 0 баллов при попытке решения, \"missing\" — задания нет в работе, \"unreadable\" — не разобрать. Для части 1 criterion и reason — null. n — номер задания из списка выше. Порядок — как в списке, все "+o.sel.length+". unreadable — какие страницы или места не удалось прочитать, или null. Все тексты — по-русски и коротко.");
+  return L.join("\n");
+}
+
+/* ================= Разбор ответа Claude ================= */
+function cleanN(n,i){ return String(n!=null?n:(i+1)).replace(/^(?:№|задача|задание)\s*/i,"").replace(/[).:]\s*$/,"").trim(); }
+function normTask(t,i,keyMap,def){
+  var v=String(t.verdict||"").toLowerCase(); if(!V[v]) v="unreadable";
+  var n=def?String(def.n):cleanN(t.n,i), kk=keyMap[n.toLowerCase()];
+  var o={n:n, statement:t.statement||"", student:t.student==null||t.student===""?null:String(t.student), correct:t.correct==null?"":String(t.correct), check:t.check||null,
+    verdict:v, aiVerdict:v, seen:t.seen||"", error:t.error&&t.error.what?{where:t.error.where||"",what:t.error.what,type:t.error.type||""}:null,
+    comment:t.comment||"", hint:t.hint||"", confidence:typeof t.confidence==="number"?t.confidence:null, key:kk!=null?kk:null};
+  if(def){
+    var sc=Number(t.score); if(t.score==null||!isFinite(sc)) sc=(v==="ok"||v==="minor")?def.max:0;
+    sc=Math.max(0,Math.min(def.max,Math.round(sc)));
+    o.max=def.max; o.kind=def.kind; o.fmt=def.fmt||null; o.geo=def.geo||false; o.topic=def.t||""; o.crit=def.crit||null;
+    o.aiScore=sc; o.score=sc; o.criterion=t.criterion||""; o.reason=t.reason||"";
+  }
+  return o;
+}
+function normalizeResult(raw,keyMap,ex,sel){
+  if(!raw || !Array.isArray(raw.tasks) || (!ex && !raw.tasks.length)) throw {code:"invalid_json"};
+  var tasks;
+  if(ex){
+    var got={}; raw.tasks.forEach(function(t,i){ got[cleanN(t.n,i)]=t; });
+    tasks=sel.map(function(def){ var t=got[String(def.n)]; if(t) return normTask(t,0,keyMap,def); var o=normTask({verdict:"unreadable"},0,keyMap,def); o.lost=true; return o; });
+  } else tasks=raw.tasks.map(function(t,i){ return normTask(t,i,keyMap,null); });
+  var s=raw.summary||{};
+  return {tasks:tasks, summary:{strong:s.strong||"",weak:s.weak||"",next:s.next||""}, unreadable:raw.unreadable||null};
+}
+function attachSecond(a,b){
+  var by={}; b.tasks.forEach(function(t){ by[t.n]=t; });
+  a.tasks.forEach(function(t){ var o=by[t.n]; if(o && !o.lost) t.alt={score:o.aiScore!=null?o.aiScore:null, verdict:o.aiVerdict, student:o.student}; });
+}
+function annotate(t){
+  var f=[], exam=t.max!=null;
+  t._calc=null; t._calcOk=null; t._auto=null;
+  var cv=tryEval(t.check), corr=parseAns(t.correct), key=t.key!=null?parseAns(t.key):null, st=parseAns(t.student);
+  if(cv){ t._calc=fmtV(cv); if(corr){ t._calcOk=eqV(cv,corr); if(!t._calcOk) f.push("пересчёт даёт "+fmtV(cv)+", а в проверке верный ответ "+t.correct); } }
+  if(key && corr && !eqV(key,corr)) f.push("в ключе "+t.key+", а в проверке верный ответ "+t.correct);
+  if(exam){
+    if(t.kind==="short"){
+      var r=scoreShort(t.fmt,t.student,t.key); t._auto=r;
+      if(r && !t.teacher){ if(r.score!==t.aiScore && t.aiVerdict!=="unreadable") f.push("Claude поставил "+t.aiScore+", по ключу — "+r.score); t.score=r.score; }
+    } else if(!t.teacher && key && st){
+      var same=eqV(key,st);
+      if(same && t.score===0) f.push("итоговый ответ совпадает с ключом, а балл 0 — посмотрите обоснование");
+      if(!same && t.score===t.max) f.push("итоговый ответ "+t.student+" не совпадает с ключом "+t.key+", а балл полный");
+    }
+    var s=t.score||0;
+    t.verdict = s>=t.max ? (t.aiVerdict==="minor"?"minor":"ok") : s>0 ? "partial" : (t.aiVerdict==="missing"||t.aiVerdict==="unreadable") ? t.aiVerdict : "wrong";
+    if(t.lost) f.push("Claude не вернул разбор этого номера — посмотрите сами");
+  }
+  if(!t.teacher){
+    var generic = !exam || (t.kind==="short" ? !t._auto : !key);
+    if(generic){
+      var ref=key||cv||corr;
+      if(ref && st){ var same2=eqV(ref,st);
+        if(same2 && (t.verdict==="wrong"||t.verdict==="missing")) f.push(exam&&t.kind==="long" ? "итоговый ответ совпадает с верным, а балл 0 — посмотрите обоснование" : "ответ ученика совпадает с верным — проверьте отметку");
+        if(!same2 && V[t.verdict] && V[t.verdict].solved) f.push("ответ ученика "+t.student+" не совпадает с верным "+fmtV(ref)); }
+    }
+    if(t.alt){
+      if(exam && t.kind==="long" && t.alt.score!=null && t.alt.score!==t.aiScore) f.push("две проверки разошлись: "+t.aiScore+" и "+t.alt.score+" из "+t.max+" — решите как третий эксперт");
+      if(!exam && t.alt.verdict && t.alt.verdict!==t.aiVerdict) f.push("вторая проверка: «"+V[t.alt.verdict].label+"»");
+      if(normAns(t.alt.student)!==normAns(t.student)) f.push("вторая проверка прочитала ответ как «"+(t.alt.student==null?"—":t.alt.student)+"»");
+    }
+    if(typeof t.confidence==="number" && t.confidence<0.7) f.push("Claude не уверен в оценке");
+    if(t.aiVerdict==="unreadable" && !t.lost) f.push("не удалось разобрать почерк — посмотрите фото");
+  }
+  t._flags=f; return t;
+}
+function counts(tasks){ var c={}; ORDER.forEach(function(k){c[k]=0;}); tasks.forEach(function(t){ c[t.verdict]=(c[t.verdict]||0)+1; }); c.solved=c.ok+c.minor; c.total=tasks.length; return c; }
+
+/* ================= Проверка ================= */
+var runCtl=null, runTimer=null;
+function updateRun(){
+  var b=$("#run"), hint=$("#run-hint"), ex=currentExam();
+  if(S.busy){ b.disabled=true; return; }
+  if(!AI.kind){ b.disabled=true; hint.textContent = SITE ? "Добавьте ключ Anthropic API — кнопка «⚙ Ключ API» вверху" : P.ready ? "Claude недоступен в этом окне — откройте страницу на claude.ai под своим аккаунтом" : "Подключаюсь к Claude…"; return; }
+  if(!AI.img){ b.disabled=true; hint.textContent="В этом окне страница не может отправлять фото в Claude"; return; }
+  if(!S.sol.length){ b.disabled=true; hint.textContent="Добавьте фото решения"; return; }
+  if(ex && !selTasks(ex).length){ b.disabled=true; hint.textContent="Выберите задания, которые есть в работе"; return; }
+  b.disabled=false; hint.textContent = radio("double")==="on" ? "Две проверки параллельно, обычно 1–3 минуты" : "Обычно 1–2 минуты";
+}
+function runCheck(){
+  if(S.busy||!AI.kind) return;
+  var ex=currentExam(), sel=ex?selTasks(ex):null;
+  var o={ ex:ex, sel:sel, text:$("#hw-text").value.trim(), key:$("#hw-key").value.trim(), req:$("#hw-req").value.trim(), scope:radio("scope"), tier:radio("tier"), expected:expectedCount() };
+  var full=!!(ex && sel.length===ex.tasks.length);
+  var title=$("#hw-title").value.trim()||(ex? ex.short+(full?" · пробник":" · № "+ranges(sel.map(function(t){return t.n;}))) : (o.text?o.text.split("\n")[0].slice(0,60):"ДЗ"));
+  var meta={ student:$("#student").value.trim(), sgender:radio("sgender"), hwTitle:title, scope:o.scope, mode:ex?"exam":"hw" };
+  if(ex){ meta.exam={id:ex.id, short:ex.short}; meta.full=full; }
+  var keyMap=parseKey(o.key), prev=S.result, dbl=radio("double")==="on"; AI.cost=0;
+  S.busy=true; updateRun(); $("#stop").hidden=false;
+  runCtl=new AbortController(); var ctl=runCtl, t0=Date.now(), seen=[0,0];
+  function tick(){ renderWork(Math.round((Date.now()-t0)/1000),o.expected,seen,dbl); }
+  tick(); clearInterval(runTimer); runTimer=setInterval(tick,1000);
+  buildImages().then(function(im){
+    o.labels=im.labels; o.split=im.split;
+    var prompt=ex?buildExamPrompt(o):buildCheckPrompt(o);
+    function call(i){ return AI.json(prompt,{images:im.blobs, tier:o.tier, signal:ctl.signal, onText:function(u){ seen[i]=(u.text.match(/"verdict"\s*:/g)||[]).length; }}); }
+    var runs = dbl ? [call(0),call(1)] : [call(0)];
+    return Promise.all(runs.map(function(p){ return p.then(function(v){ return {ok:v}; },function(e){ return {err:e}; }); })).then(function(rs){
+      var good=rs.filter(function(x){ return x.ok; }), parsed=[];
+      good.forEach(function(x){ try{ parsed.push(normalizeResult(x.ok,keyMap,ex,sel)); }catch(e){} });
+      if(!parsed.length){ var e0=rs[0].err||(rs[1]&&rs[1].err)||{code:"invalid_json"}; throw e0; }
+      var r=parsed[0]; if(parsed[1]) attachSecond(r,parsed[1]);
+      r.tasks.forEach(annotate);
+      S.result=Object.assign({at:new Date().toISOString(), double:parsed.length>1, cost:AI.kind==="api"?AI.cost:null},meta,r); S.resultId=null; S.message=""; S.msgStale=false;
+      renderResult(); saveCheck(); generateMessage("new");
+      if(dbl && parsed.length<2) toast("Вторая проверка не удалась — показана одна");
+    });
+  }).catch(function(e){
+    if(!(e&&e.code)) console.error(e);
+    S.result=prev; renderResult();
+    var t=e&&e.code==="too_many"?e.message:errText(e);
+    if(t) $("#res-card").prepend(h("div",{class:"err",role:"alert"},t));
+  }).then(function(){ clearInterval(runTimer); S.busy=false; $("#stop").hidden=true; updateRun(); });
+}
+$("#run").addEventListener("click",runCheck);
+$("#stop").addEventListener("click",function(){ if(runCtl) runCtl.abort(); });
+function errText(e){
+  switch(e&&e.code){
+    case "cancelled": return "";
+    case "not_granted": return "Странице не разрешено обращаться к Claude. Разрешите в меню страницы → Permissions и обновите её.";
+    case "rate_limited": return "Слишком много запросов подряд или исчерпан лимит Claude. Попробуйте через несколько минут.";
+    case "session_expired": return "Сессия claude.ai истекла. Войдите заново и обновите страницу.";
+    case "image_rejected": return "Один из снимков не подошёл по формату или размеру. Уберите его или замените скриншотом.";
+    case "images_unavailable": return "В этом окне страница не может отправлять фото в Claude.";
+    case "prompt_too_large": return "Задание слишком длинное. Сократите условия или разбейте проверку на части.";
+    case "refused": return "Claude отказался обрабатывать этот запрос. Проверьте, что на снимках только решение.";
+    case "invalid_json": return "Ответ пришёл в неожиданном виде. Нажмите «Проверить» ещё раз.";
+    case "empty_completion": return "Claude вернул пустой ответ. Попробуйте ещё раз или уберите часть страниц.";
+    case "sampling_disabled": return "Claude недоступен для этого аккаунта.";
+    case "no_key": return "Добавьте ключ Anthropic API: кнопка «⚙ Ключ API» вверху страницы.";
+    case "bad_key": return "Ключ API не подошёл. Проверьте его: кнопка «⚙ Ключ API».";
+    case "forbidden": return "У ключа нет доступа к модели: "+(e.message||"");
+    case "api_400": return "Anthropic API отклонил запрос: "+(e.message||"")+(/credit|balance/i.test(e.message||"")?" — пополните баланс в консоли Anthropic.":"");
+    case "network": return "Нет связи с api.anthropic.com"+(e.message?" ("+e.message+")":"")+". Проверьте интернет и попробуйте ещё раз.";
+    default: return "Связь с Claude прервалась. Попробуйте ещё раз.";
+  }
+}
+
+/* ================= Отрисовка результата ================= */
+function renderWork(sec,total,seen,dbl){
+  var c=$("#res-card"); c.textContent="";
+  var mm=Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"), done=dbl?Math.min(seen[0],seen[1]):seen[0];
+  var line = seen[0]||seen[1] ? "Разобрано задач: "+seen[0]+(total?" из "+total:"")+(dbl?" · вторая проверка: "+seen[1]:"") : (sec<4?"Готовлю снимки…":"Читаю решение…");
+  c.append(h("div",{class:"work",role:"status","aria-live":"polite"},
+    h("div",{class:"lbl"},"Идёт проверка · "+mm),
+    h("div",{class:"big"},line),
+    h("div",{class:"bar"},h("i",{style:"width:"+(total&&done?Math.min(100,Math.round(done/total*100)):Math.min(30,sec))+"%"})),
+    h("p",{class:"hint"},"Если появилось окно с разрешением — подтвердите его. Тщательная проверка варианта занимает 1–3 минуты.")));
+}
+function toneOf(t){ if(t.max==null) return V[t.verdict].tone; var s=t.score||0; if(s>=t.max) return "green"; if(s>0) return "amber"; return (t.verdict==="missing"||t.verdict==="unreadable")?"grey":"red"; }
+function markText(t){ if(t.max==null||t.kind==="short") return V[t.verdict].mark; return (t.score||0)+"/"+t.max; }
+function renderResult(){
+  var c=$("#res-card"), r=S.result; c.textContent=""; closePop();
+  if(!r){ c.append(h("p",{class:"empty"},"Здесь появится разбор")); return; }
+  var flagged=r.tasks.filter(function(t){return t._flags&&t._flags.length;});
+  if(r.example) c.append(h("div",{class:"ex-note"},h("span",null,h("b",null,"Пример. "),"Так выглядит результат проверки ДЗ. Добавьте фото решения слева и нажмите «Проверить». Для пробника выберите ОГЭ или ЕГЭ в поле «Тип работы».")));
+  if(r.mode==="exam") renderExamHead(c,r); else renderHwHead(c,r);
+  c.append(strip(r.tasks,true));
+  if(flagged.length) c.append(h("div",{class:"flagbar"},h("b",null,"Проверьте сами: "),flagged.map(function(t){return "№ "+t.n;}).join(", "),h("span",null,"— пометка ⚠ в разборе")));
+  if(r.unreadable) c.append(h("div",{class:"note-amber"},"Не прочитано: "+r.unreadable));
+  var list=h("div",{class:"tasks"}); r.tasks.forEach(function(t){ list.append(taskRow(t,r)); }); c.append(list);
+  if(r.summary&&(r.summary.strong||r.summary.weak||r.summary.next)) c.append(h("div",{class:"summary"},
+    h("div",null,h("span",{class:"lbl"},"Получается"),h("p",null,r.summary.strong||"—")),
+    h("div",null,h("span",{class:"lbl"},r.mode==="exam"?"Теряются баллы":"Проседает"),h("p",null,r.summary.weak||"—")),
+    h("div",null,h("span",{class:"lbl"},"Дальше"),h("p",null,r.summary.next||"—"))));
+}
+function renderHwHead(c,r){
+  var cn=counts(r.tasks);
+  c.append(h("div",{class:"res-top"},
+    h("div",{class:"score","aria-label":"Верно "+cn.solved+" из "+cn.total},cn.solved,h("small",null,"/"+cn.total)),
+    h("div",{class:"res-meta"},h("span",{class:"who"},r.student||"Ученик без имени"),h("span",{class:"what"},r.hwTitle||""),h("span",{class:"hint"},fmtDate(r.at)+(r.scope==="answers"?" · только ответы":"")+(r.double?" · двойная проверка":"")+(r.cost?" · ≈ "+fmtCost(r.cost):"")))));
+  var cs=h("div",{class:"counts"});
+  [["ok","верно"],["minor","с недочётом"],["partial","частично"],["wrong","неверно"],["missing","не решено"],["unreadable","не разобрать"]].forEach(function(p){ if(cn[p[0]]) cs.append(h("span",{class:"cnt","data-tone":V[p[0]].tone},h("b",null,cn[p[0]]),p[1])); });
+  c.append(cs);
+}
+function totalLine(r,tt){
+  var ex=examById(r.exam&&r.exam.id);
+  if(!tt.full) return h("span",null,"По выбранным заданиям. Тестовый балл и оценка считаются только по всему варианту.");
+  if(tt.test!=null) return h("span",null,h("b",null,tt.test+" "+plural(tt.test,"тестовый балл","тестовых балла","тестовых баллов")),tt.below?" — ниже минимального порога "+ex.minTest:"");
+  if(tt.grade) return h("span",null,"Оценка ",h("b",null,"«"+tt.grade.mark+"»"),tt.grade.note?" — "+tt.grade.note:"",ex&&ex.grade==="oge"?" · шкала ФИПИ, в регионе может отличаться":"");
+  if(ex&&ex.draft) return h("span",null,"Шкала перевода в тестовые баллы на 2027 год ещё не утверждена.");
+  return null;
+}
+function renderExamHead(c,r){
+  var tt=examTotals(r);
+  c.append(h("div",{class:"res-top"},
+    h("div",{class:"score","aria-label":tt.sum+" из "+tt.max+" первичных баллов"},tt.sum,h("small",null,"/"+tt.max)),
+    h("div",{class:"res-meta"},h("span",{class:"who"},r.student||"Ученик без имени"),h("span",{class:"what"},r.hwTitle||""),h("span",{class:"hint"},fmtDate(r.at)+" · первичные баллы"+(r.double?" · двойная проверка":"")+(r.cost?" · ≈ "+fmtCost(r.cost):"")))));
+  var line=totalLine(r,tt); if(line) c.append(h("p",{class:"tot-line"},line));
+  var cs=h("div",{class:"counts"});
+  if(tt.p1m) cs.append(h("span",{class:"cnt","data-tone":"petrol"},h("b",null,tt.p1+"/"+tt.p1m),"часть 1"));
+  if(tt.p2m) cs.append(h("span",{class:"cnt","data-tone":"petrol"},h("b",null,tt.p2+"/"+tt.p2m),"часть 2"));
+  var ex=examById(r.exam.id); if(ex&&ex.grade==="oge") cs.append(h("span",{class:"cnt","data-tone":tt.geo>=2?"green":"amber"},h("b",null,tt.geo),"за геометрию"));
+  c.append(cs);
+}
+function strip(tasks,big){
+  var s=h("div",{class:"strip","aria-label":"Отметки по задачам"});
+  tasks.forEach(function(t){
+    var lab=t.max!=null?(t.score||0)+" из "+t.max:V[t.verdict].label;
+    s.append(h(big?"button":"span",{type:big?"button":null,class:"sm"+(t._flags&&t._flags.length?" flag":""),"data-tone":toneOf(t),title:"№ "+t.n+": "+lab,
+      onclick:big?function(){ var el=document.getElementById("t-"+t.n); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); }:null},
+      h("span",{class:"m"},t.max!=null&&t.kind==="long"?String(t.score||0):V[t.verdict].mark),h("span",{class:"k"},t.n))); });
+  return s;
+}
+function taskRow(t,r){
+  var exam=t.max!=null, v=V[t.verdict], flags=t._flags||[], compact=(!exam||t.kind==="short") && t.verdict==="ok" && !flags.length;
+  var label=exam ? ((t.score||0)+" из "+balls(t.max)) : v.label;
+  var mk=h("button",{type:"button",class:"mark"+(t.verdict==="minor"?" minor":"")+(exam&&t.kind==="long"?" pts":""),"data-tone":toneOf(t),"aria-haspopup":"menu","aria-label":"№ "+t.n+": "+label+". Изменить",title:label+" — нажмите, чтобы изменить"},markText(t));
+  mk.addEventListener("click",function(e){ e.stopPropagation(); openMenu(mk,t); });
+  var ans=h("div",{class:"t-ans"},
+    h("span",null,"ученик: ",h("b",null,t.student==null?"—":t.student)),
+    t.correct?h("span",null,"верно: ",h("b",null,t.correct)):null,
+    t._calc?h("span",{class:"calc","data-tone":t._calcOk===false?"amber":"petrol",title:"Точный пересчёт выражения "+t.check},"пересчёт "+(t._calcOk===false?"≠ ":"✓ ")+t._calc):null,
+    exam&&t.kind==="short"&&t._auto?h("span",{class:"auto"},"по ключу: "+balls(t._auto.score)+(t._auto.note?" — "+t._auto.note:"")):null);
+  var crit=null;
+  if(exam && t.kind==="long" && (t.criterion||t.reason) && !t.teacher)
+    crit=h("p",{class:"crit-hit","data-tone":toneOf(t)},h("b",null,(t.score||0)+" — "),t.criterion||"",t.reason?h("span",{class:"why"},t.reason):null);
+  var err=null;
+  if(t.error && t.verdict!=="ok") err=h("p",{class:"t-err","data-tone":toneOf(t)},t.error.type?h("span",{class:"etype"},t.error.type):null,t.error.what,t.error.where?h("span",{class:"hint"}," · в строке ",h("q",null,t.error.where)):null);
+  else if(t.comment && t.verdict!=="ok" && !crit) err=h("p",{class:"t-err"},t.comment);
+  var note=h("input",{type:"text",id:"note-"+t.n,value:t.note||"",placeholder:"Например: это описка, не ругать"});
+  note.addEventListener("change",function(){ t.note=note.value.trim(); markStale(); if(S.resultId) saveCheck(); });
+  var more=h("details",{class:"more"},h("summary",null,"Подробнее"),
+    h("dl",{class:"kv"},
+      t.seen?[h("dt",null,"Как прочитано"),h("dd",null,h("div",{class:"seen"},t.seen))]:null,
+      t.comment?[h("dt",null,"Комментарий"),h("dd",null,t.comment)]:null,
+      t.hint?[h("dt",null,"Подсказка"),h("dd",null,t.hint)]:null,
+      t.key?[h("dt",null,"Ключ"),h("dd",{class:"mono"},t.key)]:null,
+      t.alt?[h("dt",null,"Вторая проверка"),h("dd",null,(exam&&t.alt.score!=null?balls(t.alt.score)+" · ":"")+(t.alt.verdict?V[t.alt.verdict].label:"")+" · ответ: "+(t.alt.student==null?"—":t.alt.student))]:null,
+      exam&&t.teacher&&t.aiScore!=null?[h("dt",null,"Claude ставил"),h("dd",null,balls(t.aiScore))]:null,
+      t.confidence!=null?[h("dt",null,"Уверенность"),h("dd",{class:"mono"},Math.round(t.confidence*100)+"%")]:null,
+      [h("dt",null,"Для сообщения"),h("dd",null,note)]),
+    exam&&t.kind==="long"&&t.crit&&CRIT[t.crit]?critTable({n:t.n,t:t.topic,crit:t.crit},t.score):null);
+  return h("div",{class:"task"+(compact?" compact":""),id:"t-"+t.n},mk,
+    h("div",{class:"t-main"},
+      h("div",{class:"t-head"},h("span",{class:"t-n"},"№ "+t.n),exam&&t.topic?h("span",{class:"hint"},t.topic):null,t.statement&&t.statement!==t.topic?h("span",{class:"t-st"},t.statement):null,t.teacher?h("span",{class:"who-ed"},"изменено вами"):null),
+      ans, crit, err, flags.length?h("ul",{class:"flags"},flags.map(function(f){return h("li",null,f);})):null, more));
+}
+var pop=null;
+function closePop(){ if(pop){ pop.remove(); pop=null; } }
+function openMenu(btn,t){
+  closePop();
+  var items;
+  if(t.max!=null){
+    var rows=t.kind==="long"&&t.crit&&CRIT[t.crit]?CRIT[t.crit].rows:[[1,"верно"],[0,"неверно"]];
+    items=rows.map(function(rw){ var tn=rw[0]>=t.max?"green":rw[0]>0?"amber":"red";
+      return h("button",{type:"button",role:"menuitemradio","aria-checked":String((t.score||0)===rw[0]),"data-tone":tn,onclick:function(){ closePop(); setScore(t,rw[0]); }},h("span",{class:"pm"},String(rw[0])),rw[1]); });
+    pop=h("div",{class:"pop wide",role:"menu"},items);
+  } else {
+    items=ORDER.map(function(k){ var v=V[k];
+      return h("button",{type:"button",role:"menuitemradio","aria-checked":String(t.verdict===k),"data-tone":v.tone,onclick:function(){ closePop(); setVerdict(t,k); }},h("span",{class:"pm"},v.mark),v.label); });
+    pop=h("div",{class:"pop",role:"menu"},items);
+  }
+  document.body.append(pop);
+  var r=btn.getBoundingClientRect();
+  pop.style.left=Math.max(8,Math.min(window.innerWidth-pop.offsetWidth-8,r.left))+window.scrollX+"px";
+  pop.style.top=(r.bottom+window.scrollY+4)+"px";
+  var cur=pop.querySelector('[aria-checked="true"]')||pop.querySelector("button"); if(cur) cur.focus();
+}
+document.addEventListener("click",function(e){ if(pop&&!pop.contains(e.target)) closePop(); });
+document.addEventListener("keydown",function(e){ if(e.key==="Escape") closePop();
+  if(pop&&(e.key==="ArrowDown"||e.key==="ArrowUp")){ e.preventDefault(); var b=$$("button",pop), i=b.indexOf(document.activeElement); b[(i+(e.key==="ArrowDown"?1:b.length-1))%b.length].focus(); } });
+function afterEdit(t){
+  annotate(t); renderResult(); markStale();
+  var el=document.getElementById("t-"+t.n); if(el) el.querySelector(".mark").focus();
+  if(S.resultId) saveCheck();
+}
+function setVerdict(t,k){ if(t.verdict===k) return; t.verdict=k; t.teacher=true; afterEdit(t); }
+function setScore(t,p){ if((t.score||0)===p && t.teacher) return; t.score=p; t.teacher=true; afterEdit(t); }
+function markStale(){ if(S.result&&!S.result.example){ S.msgStale=true; $("#msg-stale").hidden=false; } }
+
+/* ================= Сообщение ученику ================= */
+var STYLE_TEXT = {
+  address:{ty:"Обращайся к ученику на «ты».",vy:"Обращайся к ученику на «вы»."},
+  voice:{m:"Преподаватель пишет о себе в мужском роде («проверил», «посмотрел»).",f:"Преподаватель пишет о себе в женском роде («проверила», «посмотрела»).",none:"Не используй глаголы прошедшего времени от первого лица: вместо «проверил» — «ДЗ проверено», «смотрю»."},
+  length:{short:"Коротко: 4–8 строк.",mid:"Средне: 8–14 строк.",long:"Подробно: можно коротко разобрать каждую ошибку."},
+  emoji:{none:"Без эмодзи.",few:"Эмодзи — одно-два, к месту.",many:"Эмодзи можно использовать свободно."},
+  answers:{hints:"Не называй верные ответы и не решай за ученика: назови номер и подскажи, где искать ошибку.",give:"Можно называть верный ответ и коротко показывать, где ошибка."}
+};
+var SGENDER = {m:"Об ученике — в мужском роде («ты решил»).",f:"Об ученике — в женском роде («ты решила»).",none:"Не используй глаголы прошедшего времени, обращённые к ученику («ты решил/решила»): пиши «у тебя верно», «в № 4 ошибка»."};
+function resultText(r){ return r.mode==="exam" ? examText(r) : hwText(r); }
+function hwText(r){
+  var cn=counts(r.tasks), L=[];
+  L.push("Ученик: "+(r.student||"без имени"));
+  L.push("Задание: "+(r.hwTitle||"домашнее задание"));
+  L.push("Итог: верно "+cn.solved+" из "+cn.total+(cn.minor?" (из них с недочётом "+cn.minor+")":"")+"; частично "+cn.partial+"; неверно "+cn.wrong+"; не решено "+cn.missing+(cn.unreadable?"; не удалось прочитать "+cn.unreadable:"")+".");
+  var okN=r.tasks.filter(function(t){return t.verdict==="ok"&&!t.note;}).map(function(t){return t.n;});
+  if(okN.length) L.push("Верно без замечаний: № "+ranges(okN)+".");
+  r.tasks.forEach(function(t){
+    if(t.verdict==="ok"&&!t.note) return;
+    var s="№ "+t.n+" — "+V[t.verdict].label+".";
+    if(t.verdict!=="ok"){
+      if(t.error&&!(t.teacher&&V[t.verdict].solved)) s+=" Ошибка ("+(t.error.type||"другое")+"): "+t.error.what+".";
+      else if(t.teacher&&!V[t.verdict].solved&&!t.error) s+=" Ошибку отметил преподаватель, подробностей нет — скажи только, что номер нужно перерешать.";
+      if(t.hint&&!(t.teacher&&V[t.verdict].solved)) s+=" Подсказка: "+t.hint;
+      if(t.verdict==="unreadable") s+=" (почерк не разобран — попроси переписать разборчивее)";
+    }
+    if(t.note) s+=" Заметка преподавателя, учесть обязательно: "+t.note;
+    L.push(s);
+  });
+  summaryLines(r,L);
+  return L.join("\n");
+}
+function examText(r){
+  var tt=examTotals(r), ex=examById(r.exam.id), L=[];
+  L.push("Ученик: "+(r.student||"без имени"));
+  L.push("Работа: "+r.exam.short+(tt.full?" — весь вариант":" — задания № "+ranges(r.tasks.map(function(t){return t.n;})))+(r.hwTitle?" ("+r.hwTitle+")":""));
+  var line="Итог: "+tt.sum+" из "+tt.max+" первичных баллов";
+  if(tt.test!=null) line+=" → "+tt.test+" тестовых"+(tt.below?" (ниже порога "+ex.minTest+")":"");
+  if(tt.grade) line+=" → оценка «"+tt.grade.mark+"»"+(tt.grade.note?" ("+tt.grade.note+")":"");
+  if(tt.full && ex && ex.draft && tt.test==null) line+=" (шкала 2027 года ещё не утверждена — тестовый балл не называй)";
+  L.push(line+".");
+  if(tt.p1m){ var lost=r.tasks.filter(function(t){return t.kind==="short"&&(t.score||0)<t.max;}).map(function(t){return t.n;});
+    L.push("Часть 1: "+tt.p1+" из "+tt.p1m+(lost.length?". Не засчитаны: № "+ranges(lost):", всё верно")+"."); }
+  if(tt.p2m) L.push("Часть 2: "+tt.p2+" из "+tt.p2m+".");
+  r.tasks.forEach(function(t){
+    var full=(t.score||0)>=t.max;
+    if(t.kind==="short"){
+      if(full && !t.note) return;
+      var s="№ "+t.n+" (часть 1) — "+(full?"засчитано":(t.verdict==="missing"?"не решено":"не засчитано"))+".";
+      if(t._auto&&t._auto.note) s+=" "+t._auto.note+".";
+      if(!full && t.error && !t.teacher) s+=" Ошибка: "+t.error.what+".";
+      if(!full && t.hint) s+=" Подсказка: "+t.hint;
+      if(t.note) s+=" Заметка преподавателя, учесть обязательно: "+t.note;
+      L.push(s); return;
+    }
+    var s2="№ "+t.n+" (часть 2"+(t.topic?", "+t.topic:"")+") — "+(t.score||0)+" из "+t.max+".";
+    if(t.teacher) s2+=" Балл выставил преподаватель.";
+    else { if(t.criterion) s2+=" По критерию: "+t.criterion+"."; if(t.reason) s2+=" "+t.reason; if(!full && t.error) s2+=" Ошибка: "+t.error.what+"."; }
+    if(!full && t.hint) s2+=" Подсказка: "+t.hint;
+    if(t.note) s2+=" Заметка преподавателя, учесть обязательно: "+t.note;
+    L.push(s2);
+  });
+  summaryLines(r,L);
+  return L.join("\n");
+}
+function summaryLines(r,L){ if(r.summary){ if(r.summary.strong) L.push("Получается: "+r.summary.strong); if(r.summary.weak) L.push("Проседает: "+r.summary.weak); if(r.summary.next) L.push("Что дальше: "+r.summary.next); } }
+function buildMsgPrompt(r,st,extra,variant,prev){
+  var L=[];
+  L.push(r.mode==="exam"
+    ? "Напиши сообщение ученику от имени его преподавателя-репетитора по математике — по итогам проверки пробного экзамена ("+r.exam.short+"). Назови итоговый балл; по части 2 — сколько баллов за номер и чего не хватило до полного балла по критериям. Сообщение отправят в мессенджер как есть."
+    : "Напиши сообщение ученику от имени его преподавателя-репетитора по математике — по итогам проверки домашнего задания. Сообщение отправят в мессенджер как есть.");
+  L.push("","КАК ПИШЕТ ПРЕПОДАВАТЕЛЬ");
+  ["address","voice","length","emoji","answers"].forEach(function(k){ var t=STYLE_TEXT[k][st[k]]; if(t) L.push("- "+t); });
+  L.push("- "+(SGENDER[r.sgender]||SGENDER.none));
+  if(st.sign) L.push("- В конце подпись: «"+st.sign+"».");
+  if(st.rules&&st.rules.trim()) L.push("","Правила преподавателя:",st.rules.trim());
+  var ex=(st.examples||"").trim();
+  if(ex) L.push("","Образцы настоящих сообщений преподавателя. Повтори манеру: длину фраз, слова, приветствие, пунктуацию, как хвалит и как говорит об ошибках. Фразы целиком не копируй, факты бери только из результата проверки.","<<<",ex.slice(0,12000),">>>");
+  L.push("","РЕЗУЛЬТАТ ПРОВЕРКИ",resultText(r));
+  if(extra) L.push("","Добавить от преподавателя (включи обязательно): "+extra);
+  if(variant==="shorter"&&prev) L.push("","Предыдущий вариант:","<<<",prev,">>>","Перепиши его заметно короче: только главное, все номера с ошибками сохрани.");
+  else if(variant==="warmer"&&prev) L.push("","Предыдущий вариант:","<<<",prev,">>>","Перепиши его теплее и ободряюще, сохранив все номера и подсказки.");
+  else if(variant==="regen"&&prev) L.push("","Предыдущий вариант не подошёл — напиши другой, иначе построенный.","<<<",prev,">>>");
+  L.push("","Пиши только о том, что есть в результате проверки. Номера — как «№ 4». Математику — обычными символами (√, ², ⁻¹, ·), без LaTeX и без Markdown (никаких **, #, списков с дефисами, если их нет в образцах). Выведи только текст сообщения — без вступления, пояснений и кавычек.");
+  return L.join("\n");
+}
+var msgCtl=null;
+function generateMessage(variant,target){
+  var r=target?target.result:S.result; if(!r||!AI.kind) return;
+  var st=target?target.style:S.style, out=target?target.out:$("#msg"), prev=target?null:$("#msg").value.trim();
+  var prompt=buildMsgPrompt(r,st,target?"":$("#msg-extra").value.trim(),variant,prev);
+  if(msgCtl) msgCtl.abort(); msgCtl=new AbortController(); var ctl=msgCtl;
+  setMsgBusy(true,target);
+  if(target) out.textContent="Пишу…"; else { out.value=""; out.placeholder="Пишу сообщение…"; }
+  var c0=AI.cost;
+  AI.text(prompt,{signal:ctl.signal, onText:function(u){ if(target) out.textContent=u.text; else out.value=u.text; }}).then(function(res){
+    var text=String(res).trim();
+    if(target){ out.textContent=text; return; }
+    out.value=text; S.message=text; S.msgStale=false; $("#msg-stale").hidden=true;
+    var patch={message:text};
+    if(AI.kind==="api" && S.result===r){ r.cost=(r.cost||0)+(AI.cost-c0); patch.cost=r.cost; renderResult(); }
+    if(S.resultId) Store.update(S.resultId,patch).then(refreshHistory);
+  }).catch(function(e){
+    var t=errText(e); if(target){ out.textContent=t||"Остановлено."; return; }
+    if(e&&e.text) out.value=e.text; if(t) toast(t);
+  }).then(function(){ setMsgBusy(false,target); if(!target) out.placeholder=""; });
+}
+function setMsgBusy(on,target){
+  if(target){ $("#st-try").disabled=on; return; }
+  S.msgBusy=on; $("#msg").readOnly=on; $("#stop-msg").hidden=!on;
+  ["#regen","#shorter","#warmer"].forEach(function(s){ $(s).disabled=on||!AI.kind; });
+}
+$("#regen").addEventListener("click",function(){ generateMessage("regen"); });
+$("#shorter").addEventListener("click",function(){ generateMessage("shorter"); });
+$("#warmer").addEventListener("click",function(){ generateMessage("warmer"); });
+$("#stop-msg").addEventListener("click",function(){ if(msgCtl) msgCtl.abort(); });
+$("#copy").addEventListener("click",function(){
+  var ta=$("#msg"), text=ta.value;
+  function done(){ toast("Скопировано"); if(S.resultId&&text!==S.message){ S.message=text; Store.update(S.resultId,{message:text}).then(refreshHistory); } }
+  try{ navigator.clipboard.writeText(text).then(done,function(){ ta.select(); toast("Выделено — нажмите Ctrl+C"); }); }catch(e){ ta.select(); toast("Выделено — нажмите Ctrl+C"); }
+});
+
+/* ================= Новая проверка ================= */
+$("#clear-all").addEventListener("click",function(){
+  S.sol=[]; S.cond=[]; renderThumbs("sol"); renderThumbs("cond");
+  $("#student").value=""; setRadio("sgender","none"); $("#msg-extra").value="";
+  updateRun(); $("#student").focus();
+});
+
+/* ================= Стиль ================= */
+function styleToForm(st){
+  ["address","voice","length","emoji","answers"].forEach(function(k){ setRadio("st-"+k,st[k]); });
+  $("#st-sign").value=st.sign||""; $("#st-rules").value=st.rules||""; $("#st-examples").value=st.examples||"";
+}
+function formToStyle(){
+  var st={}; ["address","voice","length","emoji","answers"].forEach(function(k){ st[k]=radio("st-"+k)||DEFAULT_STYLE[k]; });
+  st.sign=$("#st-sign").value.trim(); st.rules=$("#st-rules").value; st.examples=$("#st-examples").value; return st;
+}
+function styleStatus(){
+  var n=(S.style.examples||"").split(/\n\s*-{3,}\s*\n/).filter(function(s){return s.trim();}).length;
+  return n ? "Стиль: "+n+" "+plural(n,"образец","образца","образцов") : "Стиль: без образцов";
+}
+$("#st-save").addEventListener("click",function(){
+  S.style=formToStyle(); renderStatus();
+  $("#st-hint").textContent="Сохраняю…";
+  Store.saveStyle(S.style).then(function(){ $("#st-hint").textContent = Store.kind==="db" ? "Сохранено" : "Сохранено в этом браузере"; });
+});
+$("#st-try").addEventListener("click",function(){
+  if(!AI.kind){ $("#st-preview").textContent = SITE ? "Сначала добавьте ключ Anthropic API." : "Claude недоступен в этом окне."; return; }
+  var r=exampleResult(); r.tasks.forEach(annotate);
+  generateMessage("new",{result:r, style:formToStyle(), out:$("#st-preview")});
+});
+
+/* ================= История ================= */
+function saveCheck(){
+  if(!Store.kind||!S.result||S.result.example) return;
+  var r=S.result, id=S.resultId||("c"+Date.now().toString(36)); S.resultId=id;
+  var data={v:2, at:r.at, mode:r.mode||"hw", student:r.student||"", sgender:r.sgender||"none", hwTitle:r.hwTitle||"", scope:r.scope||"full", double:!!r.double,
+    tasks:plainTasks(r.tasks), summary:r.summary||{}, unreadable:r.unreadable||null, message:S.message||"", cost:r.cost||null};
+  if(r.mode==="exam"){ var tt=examTotals(r); data.exam=r.exam; data.full=!!r.full; data.solved=tt.sum; data.total=tt.max; data.test=tt.test; data.grade=tt.grade?tt.grade.mark:null; }
+  else { var cn=counts(r.tasks); data.solved=cn.solved; data.total=cn.total; }
+  Store.save(id,data).then(refreshHistory);
+}
+function refreshHistory(){
+  if(!Store.kind) return Promise.resolve();
+  return Store.list().then(function(a){ S.history=a; renderHistory(); }).catch(function(e){ console.warn(e); });
+}
+function renderHistory(){
+  var box=$("#hist"), q=$("#hist-q").value.trim().toLowerCase(); box.textContent="";
+  $("#hist-n").textContent=S.history.length?String(S.history.length):"";
+  var dl=$("#students"); dl.textContent=""; Array.from(new Set(S.history.map(function(x){return x.student;}).filter(Boolean))).forEach(function(n){ dl.append(h("option",{value:n})); });
+  if(!Store.kind){ box.append(h("div",{class:"card empty"},P.ready?"История недоступна в этом окне.":"Загружаю историю…")); return; }
+  var items=S.history.filter(function(x){ return !q || (x.student+" "+x.hwTitle+" "+(x.exam?x.exam.short:"")).toLowerCase().indexOf(q)>=0; });
+  $("#hist-hint").textContent = S.history.length ? "Показано "+items.length+" из "+S.history.length : "";
+  if(!items.length){ box.append(h("div",{class:"card empty"},S.history.length?"Ничего не нашлось.":"Пока пусто. Каждая проверка сохраняется сюда сама: ученик, отметки или баллы, разбор и отправленное сообщение.")); return; }
+  items.forEach(function(x){
+    var tasks=(x.tasks||[]).map(function(t){ return annotate(Object.assign({},t)); });
+    var del=h("button",{type:"button",class:"ghost"},"Удалить"), armed=false, tm=null;
+    del.addEventListener("click",function(){
+      if(!armed){ armed=true; del.textContent="Точно удалить?"; del.classList.add("danger"); tm=setTimeout(function(){ armed=false; del.textContent="Удалить"; del.classList.remove("danger"); },3500); return; }
+      clearTimeout(tm); Store.remove(x.id).then(function(){ if(S.resultId===x.id) S.resultId=null; return refreshHistory(); });
+    });
+    var sc=(x.solved!=null?x.solved:counts(tasks).solved)+"/"+(x.total||tasks.length);
+    var extra=x.mode==="exam" ? (x.test!=null?" · "+x.test:(x.grade?" · «"+x.grade+"»":"")) : "";
+    box.append(h("div",{class:"card h-item"},
+      h("div",null,h("div",{class:"h-who"},x.student||"Без имени"),h("div",{class:"h-what"},x.hwTitle||(x.exam?x.exam.short:"")),h("div",{class:"h-date"},fmtDate(x.at)+(x.mode==="exam"?" · первичные баллы":""))),
+      h("div",{class:"h-score"},sc+extra),
+      h("div",{style:"grid-column:1/-1"},strip(tasks,false)),
+      h("div",{class:"h-act"},h("button",{type:"button",onclick:function(){ openFromHistory(x); }},"Открыть"),del)));
+  });
+}
+$("#hist-q").addEventListener("input",renderHistory);
+function openFromHistory(x){
+  S.result={at:x.at, mode:x.mode||"hw", exam:x.exam||null, full:!!x.full, double:!!x.double, cost:x.cost||null, student:x.student, sgender:x.sgender, hwTitle:x.hwTitle, scope:x.scope,
+    tasks:(x.tasks||[]).map(function(t){ return annotate(Object.assign({},t)); }), summary:x.summary||{}, unreadable:x.unreadable||null};
+  S.resultId=x.id; S.message=x.message||""; $("#msg").value=S.message; S.msgStale=false; $("#msg-stale").hidden=true;
+  renderResult(); showTab("check"); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ================= Статус и подключение ================= */
+function renderStatus(){
+  var s=$("#status"); s.textContent="";
+  var cl = SITE ? (apiKey()?["green","Claude API: ключ есть"]:["red","Claude API: нужен ключ"])
+    : !P.ready ? ["grey","Claude: подключаюсь"] : AI.kind ? (AI.img?["green","Claude подключён"]:["amber","Claude: без фото"]) : ["red","Claude недоступен"];
+  s.append(h("span",{"data-tone":cl[0]},h("i"),cl[1]));
+  s.append(h("span",{"data-tone":S.style.examples&&S.style.examples.trim()?"green":"amber"},h("i"),styleStatus()));
+}
+function init(){
+  S.result=exampleResult(); S.result.tasks.forEach(annotate); $("#msg").value=S.result.message;
+  styleToForm(S.style); renderMode(); renderResult(); renderStatus(); renderHistory(); updateRun(); setMsgBusy(false);
+  if(SITE){ initSite(); return; }
+  var c=window.claude;
+  if(!c||typeof c.use!=="function"){ P.ready=true; afterConnect(); return; }
+  Promise.all([c.use("sample"),c.use("db"),c.use("user")].map(function(p){ return Promise.resolve(p).catch(function(){ return null; }); })).then(function(r){
+    P.sample=r[0]; P.db=r[1]; P.user=r[2]; AI.kind=P.sample?"artifact":null;
+    var lim = P.sample&&P.sample.limits ? P.sample.limits().then(function(l){ var im=l&&l.images; AI.img=im?{maxCount:im.maxCount, maxInputBytes:im.maxInputBytes, longEdge:3400, tile:true}:null; }).catch(function(){}) : null;
+    var id = P.user&&P.user.id ? P.user.id().then(function(v){ P.uid=v||null; }).catch(function(){}) : null;
+    return Promise.all([lim,id]);
+  }).then(function(){
+    P.ready=true;
+    if(P.db&&P.uid){
+      P.styleRef=P.db.doc("data/users/"+P.uid+"/style");
+      P.histRef=P.db.doc("data/users/"+P.uid+"/archive").collection("checks");
+      Store.kind="db";
+    }
+  }).then(afterConnect,afterConnect);
+}
+function applyStyle(d){ if(d){ S.style=Object.assign(clone(DEFAULT_STYLE),d); delete S.style.updatedAt; styleToForm(S.style); } renderStatus(); }
+function afterConnect(){
+  if(!Store.kind) Store.kind="local";
+  P.ready=true; renderStatus(); renderHistory(); updateRun(); setMsgBusy(false);
+  Store.loadStyle().then(applyStyle).catch(function(e){ console.warn(e); });
+  refreshHistory();
+}
+
+/* ================= Сайт: ключ API, хранение в браузере, выгрузка истории ================= */
+function renderApiState(){
+  var k=apiKey();
+  $("#api-state").textContent = k ? "сохранён: …"+k.slice(-4) : "не задан";
+  AI.kind = k ? "api" : null;
+  renderStatus(); updateRun(); setMsgBusy(false);
+}
+function initSite(){
+  Store.kind="local"; P.ready=true;
+  AI.img={maxCount:20, maxInputBytes:3.5e6, longEdge:2576, tile:false};
+  $("#api-btn").hidden=false; $("#api-card").hidden=!!apiKey(); $("#hist-io").hidden=false;
+  $("#foot").textContent="Фото решений уходят из этого браузера напрямую в Anthropic API по вашему ключу. У сайта нет своего сервера: стиль, история проверок и ключ хранятся только в этом браузере. Числовые ответы страница пересчитывает сама точной арифметикой; в режиме экзамена первую часть по ключу оценивает программа, а не Claude. Всё, что вызывает сомнение, помечено «⚠».";
+  renderApiState(); renderHistory();
+  Store.loadStyle().then(applyStyle);
+  refreshHistory();
+}
+$("#api-btn").addEventListener("click",function(){ var c=$("#api-card"); c.hidden=!c.hidden; if(!c.hidden){ showTab("check"); $("#api-key").focus(); } });
+$("#api-save").addEventListener("click",function(){
+  var v=$("#api-key").value.trim();
+  if(!/^sk-ant-/.test(v)){ $("#api-hint").textContent="Ключ начинается с sk-ant-"; return; }
+  memKey=v; lsSet("proverka-api-key",v); $("#api-key").value=""; $("#api-hint").textContent="Сохранено";
+  renderApiState();
+});
+$("#api-del").addEventListener("click",function(){
+  memKey=""; try{ localStorage.removeItem("proverka-api-key"); }catch(e){}
+  $("#api-hint").textContent="Ключ удалён из этого браузера"; renderApiState();
+});
+$("#api-test").addEventListener("click",function(){
+  var v=$("#api-key").value.trim(); if(v){ if(!/^sk-ant-/.test(v)){ $("#api-hint").textContent="Ключ начинается с sk-ant-"; return; } memKey=v; lsSet("proverka-api-key",v); $("#api-key").value=""; renderApiState(); }
+  if(!apiKey()){ $("#api-hint").textContent="Сначала вставьте ключ"; return; }
+  var b=$("#api-test"); b.disabled=true; $("#api-hint").textContent="Проверяю…"; var c0=AI.cost;
+  apiCall("Ответь одним словом: готово.",{effort:"low", maxTokens:2000}).then(function(){ $("#api-hint").textContent="Ключ работает · запрос стоил ≈ "+fmtCost(AI.cost-c0); })
+    .catch(function(e){ $("#api-hint").textContent=errText(e)||"Не получилось"; }).then(function(){ b.disabled=false; });
+});
+$("#hist-export").addEventListener("click",function(){
+  var data={kind:"proverka-dz", exportedAt:new Date().toISOString(), style:S.style, history:localHist()};
+  var url=URL.createObjectURL(new Blob([JSON.stringify(data,null,1)],{type:"application/json"}));
+  var a=h("a",{href:url,download:"proverka-dz-"+new Date().toISOString().slice(0,10)+".json"}); document.body.append(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); },2000);
+});
+$("#hist-import").addEventListener("change",function(){
+  var f=this.files&&this.files[0]; this.value=""; if(!f) return;
+  f.text().then(function(t){
+    var d=JSON.parse(t); if(!d||d.kind!=="proverka-dz"||!Array.isArray(d.history)) throw new Error("bad");
+    var have={}, a=localHist(); a.forEach(function(x){ have[x.id]=1; });
+    var added=d.history.filter(function(x){ return x&&x.id&&!have[x.id]; }); setLocalHist(a.concat(added));
+    if(d.style && !(S.style.examples||"").trim()){ applyStyle(d.style); Store.saveStyle(S.style); }
+    toast("Загружено проверок: "+added.length); refreshHistory();
+  }).catch(function(){ toast("Это не файл выгрузки проверок"); });
+});
+init();
+})();
+</script>

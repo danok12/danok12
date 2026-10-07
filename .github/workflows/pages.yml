@@ -1,10 +1,11 @@
-name: Публикация сайта с домашними заданиями
+name: Публикация сайта — журнал ДЗ и проверка ДЗ
 
 on:
   push:
     branches: [main]
     paths:
       - 'site/**'
+      - 'proverka-dz/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -29,6 +30,8 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Собрать страницу проверки ДЗ в site/proverka
+        run: python3 proverka-dz/build_site.py site/proverka
       - name: Собрать содержимое каталога site
         uses: actions/upload-pages-artifact@v3
         with:
