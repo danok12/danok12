@@ -5,6 +5,7 @@
 """
 from pyrevit import HOST_APP
 from Autodesk.Revit import DB
+from Autodesk.Revit.DB import Plumbing
 from System.Collections.Generic import List
 import kvv
 reload(kvv)
@@ -189,6 +190,72 @@ def zagolovok(vp, v, imya, log):
         log(u'  положение заголовка не задано:', ex)
 
 
+def metka_e(e):
+    try:
+        p = e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+    except Exception:
+        return u''
+    return (p.AsString() or u'') if p is not None and p.HasValue else u''
+
+
+def seredina_chertezha(vp, v):
+    """Середина чертежа по горизонтали на листе: у плана — здание (стены), у схемы — трубы своей системы.
+    Модель → лист: через проекцию вида и GetProjectionToSheetTransform, иначе — от центра подрезки
+    (видовой экран симметричен относительно рамки подрезки)."""
+    if isinstance(v, DB.View3D):
+        pref = u'КВВ-В1' if v.Name.startswith(u'В1') else u'КВВ-К1'
+        elems = [e for e in DB.FilteredElementCollector(doc).OfClass(Plumbing.Pipe) if metka_e(e).startswith(pref)]
+    else:
+        elems = list(DB.FilteredElementCollector(doc, v.Id).OfClass(DB.Wall))
+    tochki = []
+    for e in elems:
+        bb = e.get_BoundingBox(None)
+        if bb is None:
+            continue
+        for x in (bb.Min.X, bb.Max.X):
+            for y in (bb.Min.Y, bb.Max.Y):
+                for z in (bb.Min.Z, bb.Max.Z):
+                    tochki.append(DB.XYZ(x, y, z))
+    if not tochki:
+        return None
+    try:
+        m2p = v.GetModelToProjectionTransforms()[0].GetModelToProjectionTransform()
+        p2s = vp.GetProjectionToSheetTransform()
+        xs = [p2s.OfPoint(m2p.OfPoint(t)).X for t in tochki]
+    except Exception:
+        cb = v.CropBox
+        c0 = cb.Transform.OfPoint((cb.Min + cb.Max).Multiply(0.5))
+        r = v.RightDirection
+        bc = vp.GetBoxCenter()
+        xs = [bc.X + (t - c0).DotProduct(r) / v.Scale for t in tochki]
+    return (min(xs) + max(xs)) / 2
+
+
+def zagolovok_po_centru(vp, v, log):
+    """Заголовок вида — посередине над чертежом: середина текста заголовка = середина чертежа. Полка заголовка
+    короткая, иначе контур заголовка — это полка, а текст начинается с её левого края."""
+    cel = seredina_chertezha(vp, v)
+    if cel is None:
+        log(u'  заголовок: середина чертежа не найдена')
+        return
+    try:
+        vp.LabelLineLength = 2 * MM
+    except Exception:
+        pass
+    doc.Regenerate()
+    for _ in range(4):
+        lo = vp.GetLabelOutline()
+        d = cel - (lo.MinimumPoint.X + lo.MaximumPoint.X) / 2
+        if abs(d) < 0.2 * MM:
+            break
+        of = vp.LabelOffset
+        vp.LabelOffset = DB.XYZ(of.X + d, of.Y, 0)
+        doc.Regenerate()
+    lo = vp.GetLabelOutline()
+    log(u'  заголовок по середине чертежа: середина чертежа %.1f мм, середина заголовка %.1f мм' % (
+        cel / MM, (lo.MinimumPoint.X + lo.MaximumPoint.X) / 2 / MM))
+
+
 def vid_po_imeni(nm):
     for v in DB.FilteredElementCollector(doc).OfClass(DB.View):
         if not v.IsTemplate and v.Name == nm:
@@ -335,6 +402,10 @@ def main(log):
                     cy = bb.Min.Y + (60 + (h / MM - 75) / 2) * MM
                 vp.SetBoxCenter(DB.XYZ(cx, cy, 0))
                 doc.Regenerate()
+                try:
+                    zagolovok_po_centru(vp, v, log)
+                except Exception as ex:
+                    log(u'  заголовок не выровнен по середине:', ex)
                 try:
                     lo = vp.GetLabelOutline()
                     log(u'  заголовок вида: %.0f..%.0f x %.0f..%.0f мм от угла листа' % (
