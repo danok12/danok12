@@ -1,7 +1,7 @@
-"""Предпросмотр листов (PDF + PNG) средствами ezdxf - для проверки вёрстки.
+"""Запасной предпросмотр листов средствами ezdxf - там, где нет AutoCAD.
 
-Все листы чертежа идут в один многостраничный PDF; PNG - по листу:
-<имя>_preview.png (Лист 1), <имя>_list2_preview.png (Лист 2) и т. д.
+PNG по листам: preview_list1.png, preview_list2.png, ... (те же имена, что даёт
+vypusk_acad.py; окончательные DWG и PDF - только из AutoCAD, папка «Чертежи»).
 """
 import sys
 import ezdxf
@@ -21,7 +21,6 @@ cfg = config.Configuration(background_policy=config.BackgroundPolicy.WHITE,
                            lineweight_scaling=1.0,
                            min_dash_length=0.01)
 page = layout.Page(420, 297, layout.Units.mm, margins=layout.Margins.all(0))
-out = pymupdf.open()
 names = [n for n in doc.layouts.names_in_taborder() if n != "Model"]
 for k, name in enumerate(names, start=1):
     psp = doc.paperspace(name)
@@ -29,8 +28,6 @@ for k, name in enumerate(names, start=1):
     ctx.set_current_layout(psp)
     be = PyMuPdfBackend()
     Frontend(ctx, be, config=cfg).draw_layout(psp)
-    out.insert_pdf(pymupdf.open("pdf", be.get_pdf_bytes(page, settings=layout.Settings(fit_page=False, scale=1))))
-    png = stem + ("_preview.png" if k == 1 else f"_list{k}_preview.png")
+    png = f"preview_list{k}.png"
     open(png, "wb").write(be.get_pixmap_bytes(page, fmt="png", dpi=dpi))
-out.save(stem + ".pdf")
 print("ok", stem, names)

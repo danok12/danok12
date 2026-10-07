@@ -1,9 +1,11 @@
-"""Выпуск чертежа средствами AutoCAD: DXF -> DWG и PDF (оба листа), PNG для проверки.
+"""Выпуск чертежей средствами AutoCAD: каждый лист - отдельные DWG и PDF в папке «Чертежи».
 
-Работает через accoreconsole.exe (AutoCAD без окна): открывает DXF, печатает
-каждый лист по его параметрам печати (A3, DWG To PDF, acad.ctb), сохраняет DWG.
-Листы склеиваются в один PDF; PNG рисуются из этого PDF, то есть это
-вид листов ровно таким, каким его печатает AutoCAD.
+Работает через accoreconsole.exe (AutoCAD без окна). Для каждого листа из
+План_ЛНР_вариант2.dxf делается копия только с этим листом; AutoCAD печатает его
+по параметрам печати листа (A3, DWG To PDF, acad.ctb), делает AUDIT и сохраняет
+DWG. Проверки: AUDIT без ошибок, в PDF только шрифт GOST type B (AutoCAD молча
+печатает Arial, если шрифт не установлен для всех пользователей). PNG для
+просмотра рисуются из этих PDF - это вид листов ровно таким, каким его печатает AutoCAD.
 
     python vypusk_acad.py
 """
@@ -11,68 +13,68 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+import ezdxf
 import pymupdf
 
 ACAD = Path(r"C:\Program Files\Autodesk\AutoCAD 2026\accoreconsole.exe")
 HERE = Path(__file__).resolve().parent
-STEM = "План_ЛНР_вариант2"
+SRC = HERE / "План_ЛНР_вариант2.dxf"
+OUT = HERE / "Чертежи"
 WORK = HERE / "_acad"                 # латинский путь: скрипт AutoCAD пишется в ASCII
-SHEETS = 2
+SHEETS = {
+    "Лист 1": "Лист 1. План площадки с рабочими отметками и ЛНР (черновик)",
+    "Лист 2": "Лист 2. План площадки с окончательными рабочими отметками и обводами",
+    "Лист 3": "Лист 3. Продольный и поперечный разрезы площадки по котловану",
+}
 
 if WORK.exists():
     shutil.rmtree(WORK)
 WORK.mkdir()
-shutil.copy(HERE / f"{STEM}.dxf", WORK / "plan.dxf")
+OUT.mkdir(exist_ok=True)
 w = WORK.as_posix()
-scr = [
+SCR = [
     '(setvar "FILEDIA" 0)',
     '(setvar "CMDDIA" 0)',
     '(setvar "EXPERT" 5)',
-    # листы по порядку вкладок (код 71); имя - ключ словаря (код 3); layoutlist в accoreconsole нет
-    "(setq lays nil)",
+    # единственный лист копии; имя - ключ словаря (код 3), layoutlist в accoreconsole нет
     '(foreach p (dictsearch (namedobjdict) "ACAD_LAYOUT")'
-    " (if (= (car p) 3) (setq nm (cdr p)))"
-    ' (if (and (= (car p) 350) (/= nm "Model"))'
-    " (setq lays (cons (cons (cdr (assoc 71 (entget (cdr p)))) nm) lays))))",
-    "(setq k 0 o 0)",
-    "(repeat 64 (setq o (1+ o)) (if (setq nm (cdr (assoc o lays)))"
-    ' (progn (setq k (1+ k)) (setvar "CTAB" nm)'
-    f' (command "_.-PLOT" "_N" "" "" "" (strcat "{w}/list" (itoa k) ".pdf") "_N" "_Y"))))',
+    ' (if (= (car p) 3) (setq nm (cdr p)))'
+    ' (if (and (= (car p) 350) (/= nm "Model")) (setq lay nm)))',
+    '(setvar "CTAB" lay)',
+    f'(command "_.-PLOT" "_N" "" "" "" "{w}/sheet.pdf" "_N" "_Y")',
     "_.AUDIT _N",                     # проверка базы чертежа самим AutoCAD, без исправлений
-    f'(command "_.SAVEAS" "2018" "{w}/plan.dwg")',
+    f'(command "_.SAVEAS" "2018" "{w}/sheet.dwg")',
     "",
 ]
-(WORK / "vypusk.scr").write_text("\n".join(scr), encoding="ascii")
-r = subprocess.run([str(ACAD), "/i", str(WORK / "plan.dxf"), "/s", str(WORK / "vypusk.scr"), "/l", "ru-RU"],
-                   capture_output=True, timeout=600)
-log = r.stdout.decode("utf-16-le", errors="replace").replace("\x00", "")
-(WORK / "accore.log").write_text(log, encoding="utf-8")
+(WORK / "vypusk.scr").write_text("\n".join(SCR), encoding="ascii")
 
-pdfs = [WORK / f"list{k}.pdf" for k in range(1, SHEETS + 1)]
-missing = [p.name for p in pdfs + [WORK / "plan.dwg"] if not p.exists()]
-if missing:
-    raise SystemExit(f"AutoCAD не выпустил {missing}, журнал: {WORK / 'accore.log'}")
-audit = re.findall(r"найдено ошибок: (\d+)", log)
-if audit != ["0"]:
-    raise SystemExit(f"AUDIT AutoCAD: ошибок {audit or '?'}, журнал: {WORK / 'accore.log'}")
-if re.search(r"[Шш]рифт.*(не найден|замен)", log):
-    raise SystemExit(f"AutoCAD подменил шрифт, журнал: {WORK / 'accore.log'}")
-
-out = pymupdf.open()
-for p in pdfs:
-    out.insert_pdf(pymupdf.open(p))
-# AutoCAD молча подставляет Arial, если шрифта нет в C:\Windows\Fonts
-# (установленные только для пользователя он не видит) - проверяем сам PDF
-fonts = {fn[3] for page in out for fn in page.get_fonts()}
-if not fonts or any("typeb" not in fn.replace(" ", "").replace("-", "").lower() for fn in fonts):
-    raise SystemExit(f"в PDF не GOST type B, а {sorted(fonts)}: шрифт GOST_B.TTF должен быть "
-                     "установлен для всех пользователей (C:\\Windows\\Fonts)")
-out.save(HERE / f"{STEM}.pdf")
-for k, page in enumerate(pymupdf.open(HERE / f"{STEM}.pdf"), start=1):
-    png = HERE / (f"{STEM}_preview.png" if k == 1 else f"{STEM}_list{k}_preview.png")
-    page.get_pixmap(dpi=150).save(png)
-try:
-    shutil.copy(WORK / "plan.dwg", HERE / f"{STEM}.dwg")
-except PermissionError:
-    raise SystemExit(f"{STEM}.dwg открыт в AutoCAD - закройте его и запустите снова (PDF и PNG уже обновлены)")
-print("AutoCAD:", f"{STEM}.dwg,", f"{STEM}.pdf ({len(pdfs)} листа), PNG по листам")
+for k, (layout, title) in enumerate(SHEETS.items(), start=1):
+    doc = ezdxf.readfile(SRC)
+    for name in [n for n in doc.layouts.names() if n not in ("Model", layout)]:
+        doc.layouts.delete(name)
+    doc.saveas(WORK / "sheet.dxf")
+    for ext in ("pdf", "dwg"):
+        (WORK / f"sheet.{ext}").unlink(missing_ok=True)
+    r = subprocess.run([str(ACAD), "/i", str(WORK / "sheet.dxf"), "/s", str(WORK / "vypusk.scr"), "/l", "ru-RU"],
+                       capture_output=True, timeout=600)
+    log = r.stdout.decode("utf-16-le", errors="replace").replace("\x00", "")
+    (WORK / f"accore_{k}.log").write_text(log, encoding="utf-8")
+    missing = [p.name for p in (WORK / "sheet.pdf", WORK / "sheet.dwg") if not p.exists()]
+    if missing:
+        raise SystemExit(f"{layout}: AutoCAD не выпустил {missing}, журнал: {WORK / f'accore_{k}.log'}")
+    audit = re.findall(r"найдено ошибок: (\d+)", log)
+    if audit != ["0"]:
+        raise SystemExit(f"{layout}: AUDIT AutoCAD - ошибок {audit or '?'}, журнал: {WORK / f'accore_{k}.log'}")
+    pdf = pymupdf.open(WORK / "sheet.pdf")
+    fonts = {fn[3] for page in pdf for fn in page.get_fonts()}
+    if not fonts or any("typeb" not in fn.replace(" ", "").replace("-", "").lower() for fn in fonts):
+        raise SystemExit(f"{layout}: в PDF не GOST type B, а {sorted(fonts)}: шрифт GOST_B.TTF должен быть "
+                         "установлен для всех пользователей (C:\\Windows\\Fonts)")
+    pdf[0].get_pixmap(dpi=150).save(HERE / f"preview_list{k}.png")
+    pdf.close()
+    try:
+        shutil.copy(WORK / "sheet.pdf", OUT / f"{title}.pdf")
+        shutil.copy(WORK / "sheet.dwg", OUT / f"{title}.dwg")
+    except PermissionError:
+        raise SystemExit(f"«{title}» открыт в AutoCAD или просмотрщике - закройте и запустите снова")
+    print(f"{layout}: DWG и PDF -> Чертежи/{title}")

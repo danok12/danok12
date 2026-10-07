@@ -22,8 +22,11 @@ def vnum(i, j):
     return j * (NX + 1) + i + 1
 
 
+_HS = [H]                    # набор отметок, по которому сейчас считают функции ниже
+
+
 def h(i, j):
-    return H[vnum(i, j) - 1]
+    return _HS[0][vnum(i, j) - 1]
 
 
 def xy(i, j):
@@ -110,8 +113,58 @@ def all_zero_points():
     return pts
 
 
-FIGS = [f for n in range(1, NX * NY + 1) for f in split_square(n)]
-ZP = all_zero_points()
+M_OTK = Fr("0.25")           # откосы по контуру площадки: супесь, глубина до 1,5 м - 1:0,25 (прил. 3)
+
+
+def perimeter():
+    """Обход контура площадки по часовой от левого верхнего угла:
+    [(узел (i, j), рабочая отметка)] - вершины сетки на границе."""
+    nodes = ([(i, 0) for i in range(NX + 1)] + [(NX, j) for j in range(1, NY + 1)] +
+             [(i, NY) for i in range(NX - 1, -1, -1)] + [(0, j) for j in range(NY - 1, 0, -1)])
+    return [(p, h(*p)) for p in nodes]
+
+
+def slopes():
+    """Откосы по контуру планируемой площадки (п. 2.2.1, с. 10):
+    ΣVв(н) = (Σhв(н) / n)² · Σlв(н) · m / 2,
+    Σh - сумма рабочих отметок по периметру выемки (насыпи), n - их количество,
+    Σl - длина основания откосов выемки (насыпи) по контуру."""
+    per = perimeter()
+    res = {}
+    for sgn in (-1, 1):
+        marks = [abs(hv) for _, hv in per if hv * sgn > 0]
+        length = Fr(0)
+        for k in range(len(per)):
+            (p1, h1), (p2, h2) = per[k], per[(k + 1) % len(per)]
+            if h1 * sgn >= 0 and h2 * sgn >= 0:          # вся сторона в этой зоне
+                length += A
+            elif h1 * sgn > 0 or h2 * sgn > 0:            # сторону пересекает ЛНР
+                z = zero_point(p1, p2)
+                length += z["x1"] if h1 * sgn > 0 else z["x2"]
+        n = len(marks)
+        V = (sum(marks) / n) ** 2 * length * M_OTK / 2 if n else Fr(0)
+        res[sgn] = {"marks": marks, "n": n, "sum_h": sum(marks), "L": length, "m": M_OTK, "V": V}
+    return res
+
+
+def compute(hs):
+    """Вся планировка для набора рабочих отметок hs (24 значения):
+    фигуры, точки нулевых работ, откосы, итоги."""
+    _HS[0] = hs
+    try:
+        figs = [f for n in range(1, NX * NY + 1) for f in split_square(n)]
+        zp = all_zero_points()
+        sl = slopes()
+    finally:
+        _HS[0] = H
+    VV = sum(f["V"] for f in figs if f["sign"] < 0) + sl[-1]["V"]
+    VN = sum(f["V"] for f in figs if f["sign"] > 0) + sl[1]["V"]
+    return {"H": hs, "h": lambda i, j: hs[vnum(i, j) - 1], "FIGS": figs, "ZP": zp,
+            "SLOPES": sl, "VV": VV, "VN": VN}
+
+
+P0 = compute(H)                   # черновик: рабочие отметки по заданию
+FIGS, ZP, SLOPES = P0["FIGS"], P0["ZP"], P0["SLOPES"]
 
 if __name__ == "__main__":
     K_OR = Fr("1.04")
@@ -130,6 +183,10 @@ if __name__ == "__main__":
                   f"  V={round(float(f['V']), 6)}")
         print(f"  ΣF={round(float(tot[sgn][0]), 6)} ΣV={round(float(tot[sgn][1]), 6)}")
     assert tot[1][0] + tot[-1][0] == A * A * NX * NY
-    Vc, Vf = tot[-1][1], tot[1][1]
+    for sgn, title in ((-1, "выемки"), (1, "насыпи")):
+        s = SLOPES[sgn]
+        print(f"Откосы {title}: Σh = {float(s['sum_h']):.2f}, n = {s['n']}, Σl = {float(s['L']):.2f} м,"
+              f" m = {float(s['m'])}  V = {float(s['V']):.2f} м3")
+    Vc, Vf = P0["VV"], P0["VN"]
     print(f"ΣVпв={float(Vc):.2f}  ΣVпн={float(Vf):.2f}  ΣVпн/Kор={float(Vf / K_OR):.2f}"
           f"  разница={float(Vf / K_OR - Vc):.2f} ({float((Vf / K_OR - Vc) / Vc * 100):.2f} %)")
