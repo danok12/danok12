@@ -197,6 +197,35 @@ def obrezka_3d(v, pref, log, zx=5.0, zy=2.5, zx_lev=7.0):
                                                              (mx[1] - mn[1]) / M + 2 * zy))
 
 
+def sploshnye_steny(v, log):
+    """Стены на плане — сплошным телом, как в образце: детализация «Грубая» (без слоёв штукатурки и утеплителя)
+    и «Отображение соединения стен» = очищать все соединения (линия стыка пропадает и между разными типами).
+    Задаётся и в шаблоне вида (если он управляет этими свойствами), и в самом виде."""
+    obekty = [v]
+    if v.ViewTemplateId != DB.ElementId.InvalidElementId:
+        obekty.insert(0, doc.GetElement(v.ViewTemplateId))
+    for o in obekty:
+        p = o.get_Parameter(DB.BuiltInParameter.VIEW_DETAIL_LEVEL)
+        if p is not None and not p.IsReadOnly:
+            p.Set(int(DB.ViewDetailLevel.Coarse))
+    doc.Regenerate()
+    for o in obekty:
+        for q in o.Parameters:
+            nm = q.Definition.Name.lower()
+            if not (u'соединен' in nm and u'стен' in nm) or q.IsReadOnly or q.StorageType != DB.StorageType.Integer:
+                continue
+            bylo = q.AsValueString()
+            for znach in (0, 1, 2):
+                try:
+                    q.Set(znach)
+                except Exception:
+                    continue
+                if u'все' in (q.AsValueString() or u'').lower() or u'all' in (q.AsValueString() or u'').lower():
+                    break
+            log(u'   %s: «%s» %s → %s' % (DB.Element.Name.GetValue(o), q.Definition.Name, bylo, q.AsValueString()))
+    log(u'   детализация', DB.Element.Name.GetValue(v), v.DetailLevel)
+
+
 def obrezka(v, x0, y0, x1, y1):
     bb = DB.BoundingBoxXYZ()
     bb.Min = DB.XYZ(x0 * M, y0 * M, -100)
@@ -234,6 +263,10 @@ def main(log):
             obrezka(v, X0 - 4.0, -6.0 if ur == u'Подвал' else -4.5, X1 + 4.0, 12.8 + 5.0)
             doc.Regenerate()
             marki_osey(v, log)
+            try:
+                sploshnye_steny(v, log)
+            except Exception as ex:
+                log(u'   стыки стен на плане не настроены:', ex)
             log(u'план', nm, u'| шаблон', shab if t else u'-', u'| тип', DB.Element.Name.GetValue(vft))
         vft3 = tip_vida(None, DB.ViewFamily.ThreeDimensional)
         for nm, shab, sist in SHEMY:

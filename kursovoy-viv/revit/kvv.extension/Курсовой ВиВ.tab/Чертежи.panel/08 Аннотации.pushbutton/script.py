@@ -198,17 +198,24 @@ def razvesti_pomescheniya(log):
             continue
         k = v.Scale / 100.0
         r_ = R_OKR_POM * kvv.MM * v.Scale
-        # текст марки стояка (две строки над и под полкой); голова марки — левый конец полки длиной ≈ 1,35 доли
+        # габарит текста марки стояка на виде: габарит марки по X, по Y — от нижней строки (на 0,4 доли масштаба ниже
+        # полки) до верха габарита; ниже — только выноска к стояку
         pr = []
         for m in DB.FilteredElementCollector(doc, v.Id).OfClass(DB.IndependentTag):
-            if m.GetTypeId() == sym.Id:
-                h = m.TagHeadPosition
-                pr.append((h.X + 0.67 * k * M, h.Y, 0.7 * k * M + r_, 0.32 * k * M + r_))
+            if m.GetTypeId() != sym.Id:
+                continue
+            bb = m.get_BoundingBox(v)
+            if bb is None:
+                continue
+            niz = max(bb.Min.Y, m.TagHeadPosition.Y - 0.4 * k * M)
+            pr.append((bb.Min.X - r_, niz - r_, bb.Max.X + r_, bb.Max.Y + r_))
         marki = [t for t in DB.FilteredElementCollector(doc, v.Id).OfCategory(DB.BuiltInCategory.OST_RoomTags)
                  .WhereElementIsNotElementType()]
 
         def pod_markoy(x, y):
-            return any(abs(x - cx) < hx and abs(y - cy) < hy for cx, cy, hx, hy in pr)
+            return any(x0 < x < x1 and y0 < y < y1 for x0, y0, x1, y1 in pr)
+        log(u'  ', nm, u': марок стояков', len(pr), u'| номеров помещений', len(marki), u'| под марками',
+            len([t for t in marki if pod_markoy(t.Location.Point.X, t.Location.Point.Y)]))
         for t in marki:
             p = t.Location.Point
             if not pod_markoy(p.X, p.Y):

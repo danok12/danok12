@@ -5,6 +5,8 @@
 
 Повторный запуск удаляет построенное этим скриптом (метка «КВВ-здание» в «Комментариях») и строит заново.
 """
+import io
+import os
 from pyrevit import HOST_APP
 from Autodesk.Revit import DB
 from Autodesk.Revit.DB import Architecture as A
@@ -94,13 +96,15 @@ def tip_korob(tipy, log):
         log(u'создан тип стены', tipy['korob'])
 
 
-def steny(g, lv, log):
+def steny(g, lv, log, tolko=None):
     tipy = g['tipy']
     tip_korob(tipy, log)
     imena = [u['imya'] for u in sorted(g['urovni'], key=lambda u: u['z'])]
     etazhi = [u for u in imena if u.startswith(u'Этаж')]
     sozd = []            # (уровень, стена, p1, p2, толщина)
     for s in g['steny']:
+        if tolko is not None and s['gde'] not in (u'podval', u'vse', tolko):
+            continue
         wt = kvv.po_imeni(doc, DB.WallType, tipy[s['tip']])
         if wt is None:
             log(u'НЕТ типа стены', tipy[s['tip']])
@@ -112,6 +116,8 @@ def steny(g, lv, log):
             gde.append(u'Подвал')
         if s['gde'] in imena:                 # стена только на одном уровне (например, «Этаж 01»)
             gde.append(s['gde'])
+        if tolko is not None:
+            gde = [u for u in gde if u == tolko]
         line = DB.Line.CreateBound(kvv.xyz(*s['p1']), kvv.xyz(*s['p2']))
         for u in gde:
             niz, verh = lv[u], lv[imena[imena.index(u) + 1]]
@@ -138,11 +144,13 @@ def najti_stenu(sozd, u, x, y):
     return best
 
 
-def proemy(g, lv, sozd, log):
+def proemy(g, lv, sozd, log, tolko=None):
     etazhi = [u['imya'] for u in g['urovni'] if u['imya'].startswith(u'Этаж')]
     n, net = 0, 0
     razvorot = []                 # (дверь, куда открывается)
     for o, is_okno in [(o, True) for o in g['okna']] + [(d, False) for d in g['dveri']]:
+        if tolko is not None and o['gde'] != tolko:
+            continue
         fam, tip = o['tip']
         sym = kvv.simvol(doc, fam, tip)
         if sym is None:
@@ -369,8 +377,84 @@ def proverka_proemov(log, n_prob=30):
         log(u'  проём НЕ вырезан:', o)
 
 
+def udalit_uroven(lv, uroven, log):
+    """Стены, двери и окна здания (метка КВВ-здание) одного уровня — для перестройки только подвала."""
+    lid = lv[uroven].Id
+    ids = []
+    for cls in (DB.Wall, DB.FamilyInstance):
+        for e in DB.FilteredElementCollector(doc).OfClass(cls).WhereElementIsNotElementType():
+            p = e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+            if p and p.AsString() == METKA and e.LevelId == lid:
+                ids.append(e.Id)
+    if ids:
+        doc.Delete(List[DB.ElementId](ids))
+    log(u'удалено стен, дверей и окон уровня', uroven, len(ids))
+
+
+def soedinit_steny(log):
+    """Стыки стен — сплошным телом: касающиеся стены одного уровня соединяются (JoinGeometry); у стен одного
+    материала линия стыка на плане пропадает, у разных материалов остаётся граница (как положено)."""
+    po_ur = {}
+    for w in DB.FilteredElementCollector(doc).OfClass(DB.Wall).WhereElementIsNotElementType():
+        p = w.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+        if p and p.AsString() == METKA:
+            bb = w.get_BoundingBox(None)
+            if bb is not None:
+                po_ur.setdefault(w.LevelId.IntegerValue, []).append((w, bb))
+    d = 0.02 * M
+    n, osh = 0, 0
+    for spisok in po_ur.values():
+        for i in range(len(spisok)):
+            a, ba = spisok[i]
+            for j in range(i + 1, len(spisok)):
+                b, bb = spisok[j]
+                if ba.Max.X + d < bb.Min.X or bb.Max.X + d < ba.Min.X or ba.Max.Y + d < bb.Min.Y \
+                        or bb.Max.Y + d < ba.Min.Y:
+                    continue
+                if DB.JoinGeometryUtils.AreElementsJoined(doc, a, b):
+                    continue
+                try:
+                    DB.JoinGeometryUtils.JoinGeometry(doc, a, b)
+                    n += 1
+                except Exception:
+                    osh += 1
+    log(u'стыки стен: соединено пар', n, u'| не соединилось', osh)
+
+
+def rezhim_zapuska():
+    """revit/03_rezhim.txt: «podval» — перестроить только подвал (стены и двери) и соединить стыки стен;
+    «styki» — только соединить стыки; иначе — всё здание. Файл после чтения удаляется."""
+    put = os.path.join(kvv.REVIT, u'03_rezhim.txt')
+    if not os.path.isfile(put):
+        return u''
+    with io.open(put, encoding='utf-8') as f:
+        r = f.read().strip()
+    os.remove(put)
+    return r
+
+
 def main(log):
     g = kvv.load_json('revit', 'geometriya_v3.json')
+    rezhim = rezhim_zapuska()
+    if rezhim in (u'podval', u'styki'):
+        log(u'режим:', rezhim)
+        lv = kvv.urovni(doc)
+        if rezhim == u'podval':
+            with kvv.Tranzakciya(doc, u'КВВ: подвал', log):
+                udalit_uroven(lv, u'Подвал', log)
+                doc.Regenerate()
+                sozd = steny(g, lv, log, tolko=u'Подвал')
+            sozd = [(u, doc.GetElement(w.Id), p1, p2, t) for (u, w, p1, p2, t) in sozd]
+            with kvv.Tranzakciya(doc, u'КВВ: проёмы подвала', log):
+                proemy(g, lv, sozd, log, tolko=u'Подвал')
+            with kvv.Tranzakciya(doc, u'КВВ: открывание дверей', log):
+                razvernut_dveri(g, log)
+            with kvv.Tranzakciya(doc, u'КВВ: проверка открывания', log):
+                razvernut_dveri(g, log)
+            proverka_proemov(log)
+        with kvv.Tranzakciya(doc, u'КВВ: стыки стен', log):
+            soedinit_steny(log)
+        return
     try:
         strelki_razvorota(g, log)
     except Exception as ex:
@@ -394,6 +478,8 @@ def main(log):
         razvernut_dveri(g, log)          # повторно: должно быть «исправлено 0, не исправлено 0»
     proverka_proemov(log)
     lestnicy(g, lv, log)
+    with kvv.Tranzakciya(doc, u'КВВ: стыки стен', log):
+        soedinit_steny(log)
 
 
 kvv.run('03_zdanie', main)

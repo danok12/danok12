@@ -297,3 +297,121 @@ def kollizii(doc, log):
         for s in sp[:15]:
             log(u'   ', s)
     return itogi
+
+
+# ---------------- 3D-виды для осмотра модели ----------------
+VID_3D = u'КВВ_3D_Здание и сети'
+VID_3D_PODVAL = u'КВВ_3D_Подвал'
+KAT_SETI = (DB.BuiltInCategory.OST_PipeCurves, DB.BuiltInCategory.OST_PipeFitting,
+            DB.BuiltInCategory.OST_PipeAccessory, DB.BuiltInCategory.OST_MechanicalEquipment)
+KAT_ZDANIE = (DB.BuiltInCategory.OST_Walls, DB.BuiltInCategory.OST_Floors, DB.BuiltInCategory.OST_Roofs,
+              DB.BuiltInCategory.OST_Stairs)
+KAT_SKRYT = (DB.BuiltInCategory.OST_Levels, DB.BuiltInCategory.OST_Grids, DB.BuiltInCategory.OST_Rooms,
+             DB.BuiltInCategory.OST_Doors, DB.BuiltInCategory.OST_Windows, DB.BuiltInCategory.OST_StairsRailing)
+
+
+def _sploshnaya_zalivka(doc):
+    for f in DB.FilteredElementCollector(doc).OfClass(DB.FillPatternElement):
+        fp = f.GetFillPattern()
+        if fp.IsSolidFill and fp.Target == DB.FillPatternTarget.Drafting:
+            return f.Id
+    return DB.ElementId.InvalidElementId
+
+
+def _filtr_sistemy(doc, imya, metka_):
+    """Фильтр вида: элементы сетей с «Комментарием», начинающимся с метки системы (КВВ-В1 / КВВ-К1)."""
+    for f in DB.FilteredElementCollector(doc).OfClass(DB.ParameterFilterElement):
+        if f.Name == imya:
+            return f
+    kat = List[DB.ElementId]([DB.ElementId(c) for c in KAT_SETI])
+    pravilo = DB.ParameterFilterRuleFactory.CreateBeginsWithRule(
+        DB.ElementId(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS), metka_)
+    return DB.ParameterFilterElement.Create(doc, imya, kat, DB.ElementParameterFilter(pravilo))
+
+
+def vidy_3d(doc, log):
+    """Рабочие 3D-виды для осмотра (не для листов): всё здание и подвал с первым этажом. Стены и перекрытия —
+    прозрачные, сети — цветом своей системы (В1 синий, К1 коричневый), детализация «Высокая» (видны фитинги,
+    арматура, переходы), стиль «Тонированный с кромками». В транзакции. Возвращает (вид здания, вид подвала)."""
+    vft = [t for t in DB.FilteredElementCollector(doc).OfClass(DB.ViewFamilyType)
+           if t.ViewFamily == DB.ViewFamily.ThreeDimensional][0]
+    zaliv = _sploshnaya_zalivka(doc)
+    filtry = [(_filtr_sistemy(doc, u'КВВ_3D_В1', u'КВВ-В1'), DB.Color(0, 127, 255)),
+              (_filtr_sistemy(doc, u'КВВ_3D_К1', u'КВВ-К1'), DB.Color(165, 41, 0)),
+              (_filtr_sistemy(doc, u'КВВ_3D_оборудование', u'КВВ-О'), DB.Color(0, 160, 80))]
+    vidy = []
+    for imya in (VID_3D, VID_3D_PODVAL):
+        v = None
+        for e in DB.FilteredElementCollector(doc).OfClass(DB.View3D):
+            if not e.IsTemplate and e.Name == imya:
+                v = e
+        if v is None:
+            v = DB.View3D.CreateIsometric(doc, vft.Id)
+            v.Name = imya
+        v.ViewTemplateId = DB.ElementId.InvalidElementId
+        if v.IsLocked:
+            v.Unlock()
+        v.DetailLevel = DB.ViewDetailLevel.Fine
+        v.DisplayStyle = DB.DisplayStyle.Shading
+        try:
+            v.Scale = 50
+        except Exception:
+            pass
+        # в диспетчере проекта — среди вспомогательных видов, а не в группе «???»
+        for p in v.Parameters:
+            nm = p.Definition.Name
+            if p.StorageType == DB.StorageType.String and not p.IsReadOnly:
+                if u'Назначение' in nm:
+                    p.Set(u'Вспомогательные виды')
+                elif u'Раздел' in nm:
+                    p.Set(u'3D для осмотра')
+        prozr = DB.OverrideGraphicSettings()
+        prozr.SetSurfaceTransparency(85)
+        prozr.SetProjectionLineColor(DB.Color(190, 190, 190))
+        for c in KAT_ZDANIE:
+            cid = DB.ElementId(c)
+            try:
+                if v.CanCategoryBeHidden(cid):
+                    v.SetCategoryHidden(cid, False)
+                v.SetCategoryOverrides(cid, prozr)
+            except Exception:
+                pass
+        for c in KAT_SETI + (DB.BuiltInCategory.OST_PlumbingFixtures, DB.BuiltInCategory.OST_GenericModel):
+            cid = DB.ElementId(c)
+            try:
+                if v.CanCategoryBeHidden(cid):
+                    v.SetCategoryHidden(cid, False)
+            except Exception:
+                pass
+        for c in KAT_SKRYT:
+            cid = DB.ElementId(c)
+            try:
+                if v.CanCategoryBeHidden(cid):
+                    v.SetCategoryHidden(cid, True)
+            except Exception:
+                pass
+        for f, cvet in filtry:
+            if not v.IsFilterApplied(f.Id):
+                v.AddFilter(f.Id)
+            o = DB.OverrideGraphicSettings()
+            o.SetProjectionLineColor(cvet)
+            o.SetSurfaceForegroundPatternColor(cvet)
+            if zaliv != DB.ElementId.InvalidElementId:
+                o.SetSurfaceForegroundPatternId(zaliv)
+            v.SetFilterOverrides(f.Id, o)
+            v.SetFilterVisibility(f.Id, True)
+        vidy.append(v)
+    # подвал и первый этаж: секущий параллелепипед по зданию от низа подвала до +1,5 м
+    zd = [w.get_BoundingBox(None) for w in DB.FilteredElementCollector(doc).OfClass(DB.Wall)]
+    zd = [b for b in zd if b is not None]
+    x0, y0 = min(b.Min.X for b in zd), min(b.Min.Y for b in zd)
+    x1, y1 = max(b.Max.X for b in zd), max(b.Max.Y for b in zd)
+    sb = DB.BoundingBoxXYZ()
+    sb.Min = DB.XYZ(x0 - 3 * kvv.M, y0 - 3 * kvv.M, -3.6 * kvv.M)
+    sb.Max = DB.XYZ(x1 + 3 * kvv.M, y1 + 3 * kvv.M, 1.5 * kvv.M)
+    vidy[1].IsSectionBoxActive = True
+    vidy[1].SetSectionBox(sb)
+    vidy[0].IsSectionBoxActive = False
+    log(u'3D-виды для осмотра:', VID_3D, u'и', VID_3D_PODVAL, u'| детализация высокая, стены прозрачные, '
+        u'сети по системам')
+    return vidy

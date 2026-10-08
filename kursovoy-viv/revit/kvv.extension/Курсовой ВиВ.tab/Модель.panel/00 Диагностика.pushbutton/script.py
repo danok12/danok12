@@ -28,6 +28,15 @@ def main(log):
     with kvv.Tranzakciya(doc, u'КВВ: шрифт ГОСТ', log):
         kvv_proverka.shrift_v_proekte(doc, log)
     kvv_proverka.kollizii(doc, log)
+    # рабочие 3D-виды для осмотра модели (не на листах) — после проверки открывается вид здания
+    vidy = []
+    with kvv.Tranzakciya(doc, u'КВВ: 3D-виды для осмотра', log):
+        vidy = kvv_proverka.vidy_3d(doc, log)
+    if vidy:
+        try:
+            HOST_APP.uidoc.ActiveView = vidy[0]
+        except Exception as ex:
+            log(u'3D-вид не открыт:', ex)
 
 
 kvv.run('00_proverka', main)
