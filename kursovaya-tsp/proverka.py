@@ -1,5 +1,6 @@
 """Сквозная проверка: Excel и DXF против точного расчёта raschet.py, kotlovan.py, balans.py."""
 import ezdxf, openpyxl
+from fractions import Fraction as Fr
 import raschet as R
 import kotlovan as KT
 import balans as B
@@ -141,27 +142,49 @@ print(f"П. 2.3: сверено {n7} значений; принят вариан
 # 3. DXF: ЛНР проходит ровно через все точки нулевых работ, подписи на месте -
 #    на черновике (лист 1, y как есть) и на окончательном плане (лист 2, сдвиг OY2)
 class MC:                       # как в make_dxf.py: сдвиг окончательного плана в модели, Мв на разрезах
-    OY2, VS = -1000.0, 20.0
+    OY2, VS, OY0 = -1000.0, 20.0, -4000.0
 
 
 doc = ezdxf.readfile("План_ЛНР_вариант2.dxf")
 msp = doc.modelspace()
 texts = [e.plain_text() for e in msp if e.dxftype() == "MTEXT"]
 pt = lambda x, y: (round(float(x), 6), round(float(y), 6))
-for tag, P, oy, fmt in (("черновик", R.P0, 0.0, lambda v: ("+" if v > 0 else "-") + f"{abs(float(v)):.2f}".replace(".", ",")),
-                        ("окончательный", B.P1, MC.OY2, lambda v: ("+" if v > 0 else "-") + f"{abs(float(v)):.4f}".replace(".", ","))):
+
+
+def fmt(v):
+    """Отметка на чертеже - до 0,01 м, половина вверх (как fmt в make_dxf.py)."""
+    q = int(abs(Fr(v)) * 100 + Fr(1, 2))
+    return ("+" if v > 0 else "-") + f"{q // 100},{q % 100:02d}"
+
+
+in_plan = lambda y, oy: oy - 60 <= y <= oy + 360
+for tag, P, oy, extra in (("черновик", R.P0, 0.0, [500.0, 300.0]), ("окончательный", B.P1, MC.OY2, []),
+                         ("первый чертёж", R.P0, MC.OY0, [500.0, 300.0])):
     zp = {pt(z["pt"][0], float(z["pt"][1]) + oy) for z in P["ZP"]}
     if not any({pt(x, y) for x, y, *_ in e.get_points()} == zp for e in msp if e.dxf.layer == "ЛНР"):
         bad(tag, "ЛНР в DXF не совпадает с точками нуля")
+    plan_texts = [e.plain_text() for e in msp if e.dxftype() == "MTEXT" and in_plan(e.dxf.insert.y, oy)]
     for v in P["H"]:
-        if fmt(v) not in texts: bad(tag, "нет отметки", fmt(v))
+        if fmt(v) not in plan_texts: bad(tag, "нет отметки", fmt(v))
+    # размеры: до каждой точки нуля - один (x1 или x2), на черновике ещё габариты 500 и 300
+    meas = sorted(round(d.get_measurement(), 6) for d in msp.query("DIMENSION")
+                  if d.dxf.dimstyle == "М1-2000" and in_plan(d.dxf.defpoint.y, oy))
+    for v in extra:
+        if v in meas: meas.remove(v)
+        else: bad(tag, "нет габаритного размера", v)
+    want = [{round(float(z["x1"]), 6), round(float(z["x2"]), 6)} for z in P["ZP"]]
+    for w in want:
+        hit = next((m for m in meas if m in w), None)
+        if hit is None: bad(tag, "нет размера до точки нуля", w)
+        else: meas.remove(hit)
+    if meas: bad(tag, "лишние размеры на плане:", meas)
 for g in R.FIGS:
     if g["name"] not in texts: bad("нет подписи фигуры", g["name"])
 hk = f"hк = {round(float(B.K1['HK']) * 1000)}"
 if sum(1 for e in msp if e.dxftype() == "DIMENSION" and e.dxf.get("text", "").replace("<>", "") == "hк = "
        and abs(e.get_measurement() * 1000 / MC.VS - float(B.K1["HK"]) * 1000) < 0.5) != 2:
     bad("на разрезах нет двух размеров", hk)
-LAYOUT_NAMES = ("Лист 1", "Лист 2", "Лист 3", "Лист 4")
+LAYOUT_NAMES = ("Лист 1", "Лист 2", "Лист 3", "Лист 4", "Лист 1 (первый)")
 bad_styles = {e.dxf.style for L in (msp, *(doc.paperspace(n) for n in LAYOUT_NAMES), *doc.blocks)
               for e in L if e.dxftype() in ("TEXT", "MTEXT")} - {"ГОСТ тип Б"}
 if bad_styles: bad("текст не ГОСТ тип Б:", bad_styles)
@@ -207,5 +230,8 @@ for tag, k, oy in (("черновик", KT.K0, 0.0), ("окончательны�
              and e.dxf.layer in ("Котлован", "Котлован_низ")]
     if niz not in polys: bad(tag, "подошва котлована на плане не совпадает с расчётом")
     if not any(verh <= p_ for p_ in polys): bad(tag, "бровка котлована на плане не совпадает с расчётом")
+if any(e.dxf.layer in ("Котлован", "Котлован_низ") and in_plan(e.get_points()[0][1], MC.OY0)
+       for e in msp.query("LWPOLYLINE")):
+    bad("на первом чертеже не должно быть котлована")
 print("Котлован: контуры на обоих планах и hк на разрезах совпадают с расчётом" if ok else "")
 print("ВСЁ СХОДИТСЯ" if ok else "ЕСТЬ РАСХОЖДЕНИЯ")

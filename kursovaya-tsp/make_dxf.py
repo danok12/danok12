@@ -2,7 +2,9 @@
   Лист 1 - черновик: план площадки с рабочими отметками и ЛНР, М 1:2000;
   Лист 2 - план площадки с окончательными рабочими отметками (после Δh), ЛНР
            и обводами, Мг 1:2000, Мв 1:100;
-  Лист 3 - продольный 1-1 и поперечный 2-2 разрезы площадки по котловану, Мг 1:2000, Мв 1:100.
+  Лист 3 - продольный 1-1 и поперечный 2-2 разрезы площадки по котловану, Мг 1:2000, Мв 1:100;
+  Лист 4 - картограмма перемещения земляных масс, М 1:2000;
+  «Лист 1 (первый)» - первый чертёж: черновик до котлована, только отметки и ЛНР (вне комплекта).
 
 Модель - в метрах в натуральную величину (площадка 500 x 300 м, начало
 в левом нижнем углу); окончательный план и разрезы - копии ниже по y.
@@ -99,8 +101,10 @@ f = float
 
 
 def fmt(v, sign=True):
-    s = f"{abs(f(v)):.2f}".replace(".", ",")
-    if not sign or v == 0:
+    """Рабочая отметка до 0,01 м (половина - вверх), на всех листах одинаково; расчёт - точный."""
+    q = int(abs(Fr(v)) * 100 + Fr(1, 2))
+    s = f"{q // 100},{q % 100:02d}"
+    if not sign or q == 0:
         return s
     return ("+" if v > 0 else "-") + s        # дефис: в шрифте ГОСТ нет знака «минус»
 
@@ -112,6 +116,57 @@ def mtext(text, pos, h_mm, layer, align=MA.MIDDLE_CENTER, mask=True, rot=0, sc=S
     if mask:
         mt.set_bg_color("canvas", scale=1.2)    # маска цветом фона: штриховка не идёт сквозь текст
     return mt
+
+
+def text_w(s_, h_mm):
+    """Ширина надписи шрифтом ГОСТ тип Б, м модели (прописные и цифры - 0,7 h с интервалом)."""
+    return len(s_.replace(M3, "м3")) * 0.7 * h_mm * SC
+
+
+def box(cx, cy, w, h, ang=0.0):
+    """Повёрнутый прямоугольник w x h с центром (cx, cy) -> его четыре угла."""
+    from math import cos, sin, radians
+    c, s_ = cos(radians(ang)), sin(radians(ang))
+    return [(cx + u * c - v * s_, cy + u * s_ + v * c) for u, v in
+            ((-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2))]
+
+
+def rect(x0, y0, x1, y1):
+    return [(min(x0, x1), min(y0, y1)), (max(x0, x1), min(y0, y1)), (max(x0, x1), max(y0, y1)),
+            (min(x0, x1), max(y0, y1))]
+
+
+def overlap(a, b):
+    """Пересечение выпуклых многоугольников - теорема о разделяющей оси."""
+    for poly in (a, b):
+        for k in range(len(poly)):
+            (x1, y1), (x2, y2) = poly[k], poly[(k + 1) % len(poly)]
+            ax, ay = y1 - y2, x2 - x1
+            if abs(ax) + abs(ay) < 1e-12:           # вырожденная сторона (треугольник)
+                continue
+            pa = [ax * x + ay * y for x, y in a]
+            pb = [ax * x + ay * y for x, y in b]
+            if max(pa) <= min(pb) or max(pb) <= min(pa):
+                return False
+    return True
+
+
+def cost(bb, obstacles, me="-"):
+    """Наложение: надпись на надписи - вес 10, на чужой линии - 1 (маска её аккуратно прервёт).
+    me - владелец рамки: свои препятствия не считаются (у общих владелец None)."""
+    return sum(w_ for o, w_, own in obstacles if own != me and overlap(bb, o))
+
+
+def along(pts, w_, step=4.0, r=0.6, own=None):
+    """Линия как препятствие: квадратики через step м вдоль ломаной pts."""
+    from math import hypot
+    res = []
+    for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
+        n = max(1, int(hypot(x2 - x1, y2 - y1) / step))
+        for k in range(n + 1):
+            x, y = x1 + (x2 - x1) * k / n, y1 + (y2 - y1) * k / n
+            res.append((rect(x - r, y - r, x + r, y + r), w_, own))
+    return res
 
 
 # ================= план площадки: общий для черновика (лист 1) и окончательного (лист 2) =================
@@ -201,7 +256,7 @@ def site_plan(P, k, oy=0.0, kind="draft"):
                 hat.paths.add_polyline_path([O(x, y) for x, y in fig["poly"]], is_closed=True)
     msp.add_lwpolyline([O(*p) for p in lnr_chain(P)], dxfattribs={"layer": "ЛНР", "const_width": 0.6 * SC})
     if draft:                                       # номера фигур
-        shift = {"8'": (34, 28)}                    # ручные сдвиги подписи (м): 8' закрыта котлованом
+        shift = {"8'": (34, 28)} if k else {}       # ручные сдвиги подписи (м): 8' закрыта котлованом
         for fig in P["FIGS"]:
             cx, cy = map(f, fig["c"])
             dx, dy = shift.get(fig["name"], (0, 0))
@@ -210,58 +265,117 @@ def site_plan(P, k, oy=0.0, kind="draft"):
         if kind != "carto":
             mtext(t, O(*p), H_BIG, "ПВ_ПН")
 
-    # размеры до точек нулевых работ (на картограмме их нет - с. 18)
-    border_off = {"top": 7.0 * SC, "other": 2.0 * SC}
-    for z in (P["ZP"] if kind != "carto" else []):
-        a, b = z["p1"], z["p2"]
-        ia, ja = (a - 1) % (R.NX + 1), (a - 1) // (R.NX + 1)
-        ib, jb = (b - 1) % (R.NX + 1), (b - 1) // (R.NX + 1)
-        pa, pb = tuple(map(f, R.xy(ia, ja))), tuple(map(f, R.xy(ib, jb)))
-        pz = tuple(map(f, z["pt"]))
-        horiz = ja == jb
-        for q1, q2 in ((pa, pz), (pz, pb)):
-            adj = adjacent(P, q1, q2)
-            if len(adj) == 1:                 # граница площадки - размер снаружи
-                side = -adj[0][1]
-                top = horiz and q1[1] == Hh
-                off = border_off["top"] if top or final else border_off["other"]   # окончательный - за обводами
-            else:                             # внутри - со стороны большей фигуры
-                side = max(adj, key=lambda t: t[0]["F"])[1]
-                off = border_off["other"]
+    # размер до точки нулевых работ - один, от угла квадрата (рис. 4, рис. 11, прил. 10): от вершины 1
+    # (как x1 в книге Excel), если там тесно - от вершины 2; на картограмме их нет (с. 18)
+    TH, GAP = H_TEXT * SC, 0.8 * SC
+    marks = [(O(*map(f, R.xy(i, j))), fmt(P["h"](i, j))) for j in range(R.NY + 1) for i in range(R.NX + 1)]
+
+    def mark_box(p, s_, q, shift=(0.0, 0.0)):
+        """Отметка у вершины p: q = 0 - вверх-вправо (основное место), 1 - вниз-вправо, 2 - вверх-влево,
+        3 - вниз-влево. -> (точка вставки, выравнивание, рамка)."""
+        w_ = text_w(s_, H_TEXT)
+        right, up = q in (0, 1), q in (0, 2)
+        x = p[0] + shift[0] + (1.8 * SC if right else -1.8 * SC)
+        y = p[1] + shift[1] + (0.8 * SC if up else -0.8 * SC)
+        al = {(1, 1): MA.BOTTOM_LEFT, (1, 0): MA.TOP_LEFT, (0, 1): MA.BOTTOM_RIGHT, (0, 0): MA.TOP_RIGHT}
+        return (x, y), al[(right, up)], rect(x, y, x + (w_ if right else -w_), y + (TH if up else -TH))
+
+    obst = along([O(*q) for q in lnr_chain(P)], 1)
+    if k:
+        pit_v = [O(*map(f, v)) for v in k["VERH"]]
+        obst.append((rect(min(x for x, _ in pit_v) - 2, min(y for _, y in pit_v) - 2,
+                          max(x for x, _ in pit_v) + 2 * SC + 12, max(y for _, y in pit_v) + 2), 10, None))
+    band = [(q_, 10, None) for q_ in band_quads(P, oy)] if final else []
+    # рабочие отметки: основное место - вверх-вправо от вершины. На окончательном плане у края
+    # площадки там обводы - отметка встаёт внутрь квадрата (как в прил. 10), а если внутри
+    # тесно - за обводы
+    placed = []
+    for p, s_ in marks:
+        if final:
+            top, right = p[1] == Hh + oy, p[0] == W
+            bottom = p[1] == oy
+            inside = ([1, 3] if top and not right else [3] if top else [2] if right and bottom
+                      else [2, 3] if right else [])
+            cands = [mark_box(p, s_, q) for q in inside] + [mark_box(p, s_, 0)]
+            out = (0.0, 1.0) if top else (1.0, 0.0) if right else None
+            if out:
+                for t in range(1, 81):                # за обводы - до первого свободного места
+                    c = mark_box(p, s_, 0, (out[0] * 0.5 * t, out[1] * 0.5 * t))
+                    if not cost(c[2], band):
+                        cands.append(c)
+                        break
+            cands += [mark_box(p, s_, q) for q in (1, 2, 3) if q not in inside]
+            obs = band + obst + [(b_, 10, None) for _, _, b_ in placed]
+            placed.append(min(cands, key=lambda c: cost(c[2], obs) + 0.01 * cands.index(c)))
+        else:
+            placed.append(mark_box(p, s_, 0))
+    dims_obst = []
+    if kind != "carto":
+        default = [(bb, 10, None) for _, _, bb in placed]
+        border_off = {"top": 7.0 * SC, "other": 2.0 * SC}
+        for z in P["ZP"]:
+            a, b = z["p1"], z["p2"]
+            ia, ja = (a - 1) % (R.NX + 1), (a - 1) // (R.NX + 1)
+            ib, jb = (b - 1) % (R.NX + 1), (b - 1) // (R.NX + 1)
+            pa, pb = tuple(map(f, R.xy(ia, ja))), tuple(map(f, R.xy(ib, jb)))
+            pz = tuple(map(f, z["pt"]))
+            horiz = ja == jb
+            cands = []
+            for q1, q2 in ((pa, pz), (pb, pz)):           # от вершины 1, затем от вершины 2
+                adj = adjacent(P, q1, q2)
+                if len(adj) == 1:                         # граница площадки - размер снаружи
+                    top = horiz and q1[1] == Hh
+                    sides = [(-adj[0][1], border_off["top"] if top or final else border_off["other"])]
+                else:                                     # внутри - со стороны большей фигуры, затем другой
+                    s0 = max(adj, key=lambda t: t[0]["F"])[1]
+                    sides = [(s0, border_off["other"]), (-s0, border_off["other"])]
+                cands += [(q1, q2, side, off) for side, off in sides]
+            best = None
+            for rank, (q1, q2, side, off) in enumerate(cands):
+                L = abs(q2[0] - q1[0]) if horiz else abs(q2[1] - q1[1])
+                w_ = text_w(f"{L:.2f}".rstrip("0").rstrip("."), H_TEXT)
+                (x1, y1), (x2, y2) = O(*q1), O(*q2)
+                if horiz:
+                    yd = y1 + side * off
+                    xm = (x1 + x2) / 2
+                    ty = yd + GAP if side > 0 else yd - GAP - TH
+                    tb = rect(xm - w_ / 2, ty, xm + w_ / 2, ty + TH)
+                    lines_ = [rect(x1, yd - 0.3, x2, yd + 0.3), rect(x1 - 0.3, y1, x1 + 0.3, yd + side * 1.5 * SC),
+                              rect(x2 - 0.3, y2, x2 + 0.3, yd + side * 1.5 * SC)]
+                else:
+                    xd = x1 + side * off
+                    ym = (y1 + y2) / 2
+                    tx = xd + GAP if side > 0 else xd - GAP - TH
+                    tb = rect(tx, ym - w_ / 2, tx + TH, ym + w_ / 2)
+                    lines_ = [rect(xd - 0.3, y1, xd + 0.3, y2), rect(x1, y1 - 0.3, xd + side * 1.5 * SC, y1 + 0.3),
+                              rect(x2, y2 - 0.3, xd + side * 1.5 * SC, y2 + 0.3)]
+                texts_ = [(o, 10, None) for o, w__, _ in dims_obst if w__ == 10]
+                c_ = (cost(tb, default + band + obst + texts_)
+                      + sum(cost(l_, [(o, 5, None) for o, _, _ in default + texts_]) for l_ in lines_)
+                      + 0.01 * rank)
+                if best is None or c_ < best[0]:
+                    best = (c_, q1, q2, side, off, tb, lines_)
+            _, q1, q2, side, off, tb, lines_ = best
+            dims_obst += [(tb, 10, None)] + [(l_, 5, None) for l_ in lines_]
             if horiz:
                 dim(O(*q1), O(*q2), O(q1[0], q1[1] + side * off), 0, {"dimtad": 1 if side > 0 else 4})
             else:
-                lo, hi = sorted((q1, q2), key=lambda p: p[1])
+                lo, hi = sorted((q1, q2), key=lambda q: q[1])
                 dim(O(*lo), O(*hi), O(q1[0] + side * off, q1[1]), 90, {"dimtad": 4 if side > 0 else 1})
-    if draft:                                       # габаритные размеры
-        for i in range(R.NX):
-            dim(O(i * R.A, 0), O((i + 1) * R.A, 0), O(0, -11 * SC), 0)
-        dim(O(0, 0), O(W, 0), O(0, -18 * SC), 0)
-        for j in range(R.NY):
-            dim(O(0, j * R.A), O(0, (j + 1) * R.A), O(-6 * SC, 0), 90)
-        dim(O(0, 0), O(0, Hh), O(-13 * SC, 0), 90)
-    draw_pit(k, dy=oy)
+    if draft:                                       # габаритные размеры площадки
+        dim(O(0, 0), O(W, 0), O(0, -10 * SC), 0)
+        dim(O(0, 0), O(0, Hh), O(-10 * SC, 0), 90)
+    if k:
+        draw_pit(k, dy=oy)
     if final:
         obvody(P, oy)                               # до отметок: маска отметки ложится поверх штрихов
 
-    # рабочие отметки в вершинах - после размеров: маска ложится поверх концов размерных
-    # линий у вершины, сдвиг 1,8 мм выводит её из-под засечки
-    for j in range(R.NY + 1):
-        for i in range(R.NX + 1):
-            x, y = map(f, R.xy(i, j))
-            hv = P["h"](i, j)
-            mtext(fmt(hv) if draft else fmt4(hv), O(x + 1.8 * SC, y + 0.8 * SC), H_TEXT, "Отметки",
-                  MA.BOTTOM_LEFT)
-            msp.add_circle(O(x, y), 0.5 * SC, dxfattribs={"layer": "Отметки"})
+    for (pos, al, bb), (p, s_) in zip(placed, marks):   # отметки - поверх размеров (маска)
+        mtext(s_, pos, H_TEXT, "Отметки", al)
+        msp.add_circle(p, 0.5 * SC, dxfattribs={"layer": "Отметки"})
+    return [bb for _, _, bb in placed]
 
 
-def fmt4(v):
-    """Окончательная рабочая отметка: h + Δh, четыре знака."""
-    s = f"{abs(f(v)):.4f}".replace(".", ",")
-    return s if v == 0 else ("+" if v > 0 else "-") + s
-
-
-site_plan(R.P0, K.K0)                               # лист 1: черновик
 
 # ================= листы 2 и 3: окончательный план с обводами, разрезы по котловану =================
 TICK = 5.0               # шаг бергштрихов, м модели (2,5 мм листа)
@@ -291,6 +405,24 @@ def perimeter_points(P):
                     pts.append((x + (x2 - x) * f(tt), y + (y2 - y) * f(tt), Fr(0)))
         sides.append((normals[s], pts))
     return sides
+
+
+def band_quads(P, oy):
+    """Полоса обводов как выпуклые многоугольники: по участкам сторон и в углах."""
+    sides = perimeter_points(P)
+    res = []
+    for (nx, ny), pts in sides:
+        o = [(x + nx * f(abs(h)) * VS, y + ny * f(abs(h)) * VS + oy) for x, y, h in pts]
+        for (x1, y1, _), (x2, y2, _), a, b in zip(pts, pts[1:], o, o[1:]):
+            res.append([(x1, y1 + oy), (x2, y2 + oy), b, a])
+    for s_ in range(4):
+        (nx1, ny1), _ = sides[s_ - 1]
+        (nx2, ny2), pts2 = sides[s_]
+        x, y, h = pts2[0]
+        d = f(abs(h)) * VS
+        res.append([(x, y + oy), (x + nx1 * d, y + ny1 * d + oy), (x + (nx1 + nx2) * d, y + (ny1 + ny2) * d + oy),
+                    (x + nx2 * d, y + ny2 * d + oy)])
+    return res
 
 
 def obvody(P, oy):
@@ -456,10 +588,9 @@ def section(P, k, along):
         if h == 0 or s % R.A:
             continue
         p = M(s, 0)
-        mtext(fmt4(h), (p[0] + 0.6 * SC, p[1] + 0.6 * SC), H_TEXT, "Отметки", MA.BOTTOM_LEFT)
-    # отметки уровней (выносные от углов котлована) и глубина котлована
+        mtext(fmt(h), (p[0] + 0.6 * SC, p[1] + 0.6 * SC), H_TEXT, "Отметки", MA.BOTTOM_LEFT)
+    # отметки уровней верха и дна котлована (выносные от углов) и глубина котлована
     sm = lo_t - 30.0                                 # знаки отметок - левее котлована, полка к нему
-    level_mark(M(L - (60.0 if along == "x" else 70.0), 0), "0,000")   # между отметками узлов
     for s_from, h_lev, val, down in ((lo_t, top, lev(-top), True), (lo_b, K.NK, lev(-K.NK), False)):
         if h_lev:
             line(M(s_from, h_lev), M(sm - 3.0, h_lev), "Отметки")
@@ -481,6 +612,9 @@ def section_mark(p, d, look, label):
     mtext(label, (tip[0] + lx * 2.5 * SC + dx * 0.0, tip[1] + ly * 2.5 * SC), H_BIG, "Надписи", mask=False)
 
 
+site_plan(R.P0, K.K0)                               # лист 1: черновик
+OY0 = -4000.0                                       # первый чертёж: тот же черновик без котлована
+site_plan(R.P0, None, OY0)
 site_plan(B.P1, B.K1, OY2, "final")                 # лист 2: окончательный план
 cx_, cy_ = map(f, K.CENTER)
 OUT_L, OUT_R, OUT_B, OUT_T = -32.0, W + 40.0, -34.0, Hh + 38.0      # за обводами и размерами
@@ -511,36 +645,6 @@ def zigzag(p, q, step=1.25, amp=0.6, sc=SC):
         pts.append((x1 + ux * t - uy * a, y1 + uy * t + ux * a))
     pts.append(q)
     return pts
-
-
-def text_w(s_, h_mm):
-    """Ширина надписи шрифтом ГОСТ тип Б, м модели (прописные и цифры - 0,7 h с интервалом)."""
-    return len(s_.replace(M3, "м3")) * 0.7 * h_mm * SC
-
-
-def box(cx, cy, w, h, ang=0.0):
-    """Повёрнутый прямоугольник w x h с центром (cx, cy) -> его четыре угла."""
-    from math import cos, sin, radians
-    c, s_ = cos(radians(ang)), sin(radians(ang))
-    return [(cx + u * c - v * s_, cy + u * s_ + v * c) for u, v in
-            ((-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2))]
-
-
-def rect(x0, y0, x1, y1):
-    return [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
-
-
-def overlap(a, b):
-    """Пересечение выпуклых четырёхугольников - теорема о разделяющей оси."""
-    for poly in (a, b):
-        for k in range(4):
-            (x1, y1), (x2, y2) = poly[k], poly[(k + 1) % 4]
-            ax, ay = y1 - y2, x2 - x1
-            pa = [ax * x + ay * y for x, y in a]
-            pb = [ax * x + ay * y for x, y in b]
-            if max(pa) <= min(pb) or max(pb) <= min(pa):
-                return False
-    return True
 
 
 def move_line(p, q, kind):
@@ -579,11 +683,6 @@ def label_frame(p, q, v, l):
     return {"s1": s1, "s2": s2, "ang": ang, "n": (nx, ny), "cands": cands}
 
 
-def cost(bb, obstacles, me):
-    """Наложение: надпись на надписи - вес 10, на чужой линии - 1 (маска её аккуратно прервёт)."""
-    return sum(w_ for o, w_, own in obstacles if own != me and overlap(bb, o))
-
-
 def kartogramma(oy):
     """Объёмы в фигурах (выемка - плотное тело, насыпь - с kо.р), номера фигур,
     стрелки перемещений из табл. 4, грунт котлована, недостача. Сначала все линии,
@@ -605,12 +704,7 @@ def kartogramma(oy):
         for k in range(n + 1):
             x, y = x1 + (x2 - x1) * k / n, y1 + (y2 - y1) * k / n
             lines_.append((rect(x - 0.6, y - 0.6, x + 0.6, y + 0.6), 1, own))
-    fixed = []                                       # рабочие отметки в вершинах (site_plan)
-    for j in range(R.NY + 1):
-        for i in range(R.NX + 1):
-            x, y = map(f, R.xy(i, j))
-            w = text_w(fmt4(RS.P["h"](i, j)), H_TEXT)
-            fixed.append(T(rect(x + 1.8 * SC, y + oy + 0.8 * SC, x + 1.8 * SC + w, y + oy + (0.8 + H_TEXT) * SC)))
+    fixed = [T(b_) for b_ in MARKS4]                 # рабочие отметки в вершинах (site_plan)
     px, py = RS.PIT_C
     s_pit = f"{vol(RS.V_PIT_FILL)} {M3}"
     wp = text_w(s_pit, H_TEXT)
@@ -685,7 +779,7 @@ def kartogramma(oy):
     mtext(s_pit, O(px, py - 1.2 * SC), H_TEXT, "Номера_фигур", MA.TOP_CENTER)
 
 
-site_plan(RS.P, RS.KT, OY4, "carto")                 # лист 4: картограмма
+MARKS4 = site_plan(RS.P, RS.KT, OY4, "carto")        # лист 4: картограмма
 kartogramma(OY4)
 
 
@@ -827,56 +921,63 @@ vp = psp.add_viewport(center=vc, size=(vw, vh),
 vp.dxf.layer = "Видовой_экран"
 vp.dxf.flags = vp.dxf.flags | 16384              # экран заблокирован: масштаб 1:2000 не собьётся
 
-# ---------- условные обозначения ----------
+# ---------- условные обозначения, сводка объёмов ----------
 LX, LY = 26, 64
-txt("Условные обозначения", (LX, LY), H_HEAD, TA.BOTTOM_LEFT, "Надписи", NARROW)
-items = [
-    ("lnr", "линия нулевых работ (ЛНР)"),
-    ("hatch", "ПВ - планировочная выемка"),
-    ("box", "ПН - планировочная насыпь"),
-    ("mark", "рабочая отметка, м (+ насыпь, - выемка)"),
-    ("fig", "номер фигуры; со штрихом - насыпная часть квадрата"),
-    ("dim", "расстояние до точки нулевых работ, м"),
-    ("pit", "контур котлована"),
-]
-for k, (kind, label) in enumerate(items):
-    y = LY - 7 - 7.5 * k
-    sx0, sx1 = LX, LX + 14
-    if kind == "lnr":
-        psp.add_lwpolyline([(sx0, y), (sx1, y)], dxfattribs={"layer": "ЛНР", "const_width": 0.6})
-    elif kind in ("hatch", "box"):
-        pts = [(sx0, y - 2.5), (sx1, y - 2.5), (sx1, y + 2.5), (sx0, y + 2.5)]
-        pl(pts, "Сетка", True)
-        if kind == "hatch":
-            hat = psp.add_hatch(color=8, dxfattribs={"layer": "ПВ_штриховка"})
-            hat.set_pattern_fill("ANSI31", scale=1.2, color=8)
-            hat.paths.add_polyline_path(pts, is_closed=True)
-    elif kind == "mark":
-        psp.add_circle((sx0 + 1, y - 1.5), 0.5, dxfattribs={"layer": "Отметки"})
-        txt("+0,15", (sx0 + 2.8, y - 0.7), H_TEXT, TA.BOTTOM_LEFT, "Отметки")
-    elif kind == "fig":
-        txt("7'", (sx0 + 7, y), H_HEAD, TA.MIDDLE_CENTER, "Номера_фигур")
-    elif kind == "dim":
-        psp.add_line((sx0, y - 1.5), (sx1, y - 1.5), dxfattribs={"layer": "Размеры"})
-        for xx in (sx0, sx1):
-            psp.add_line((xx - 0.9, y - 2.4), (xx + 0.9, y - 0.6), dxfattribs={"layer": "Размеры"})
-        txt("37,5", ((sx0 + sx1) / 2, y - 0.7), H_TEXT, TA.BOTTOM_CENTER, "Размеры")
-    elif kind == "pit":
-        pl([(sx0, y - 2.5), (sx1, y - 2.5), (sx1, y + 2.5), (sx0, y + 2.5)], "Котлован", True)
-        pl([(sx0 + 0.8, y - 1.7), (sx1 - 0.8, y - 1.7), (sx1 - 0.8, y + 1.7), (sx0 + 0.8, y + 1.7)],
-           "Котлован_низ", True)
-    txt("- " + label, (sx1 + 3, y), H_TEXT, TA.MIDDLE_LEFT, "Надписи", NARROW)
 
-# ---------- сводка объёмов ----------
-Vc, Vf = R.P0["VV"], R.P0["VN"]                    # с откосами по контуру площадки (с. 10)
-Fc = sum(g["F"] for g in R.FIGS if g["sign"] < 0)
-Ff = sum(g["F"] for g in R.FIGS if g["sign"] > 0)
-volume_table("Объемы планировочных работ",
-             [("", f"F, {M2}", f"V, {M3}"),
-              ("Выемка ПВ", num(Fc), num(Vc)),
-              ("Насыпь ПН", num(Ff), num(Vf)),
-              (f"ПН / Kор, Kор = {K_OR:.2f}".replace(".", ","), "", num(f(Vf) / K_OR))],
-             [34, 32, 30])
+
+def legend_and_volumes(pit=True):
+    """Условные обозначения и таблица объёмов черновика (лист 1 и первый чертёж)."""
+    txt("Условные обозначения", (LX, LY), H_HEAD, TA.BOTTOM_LEFT, "Надписи", NARROW)
+    items = [
+        ("lnr", "линия нулевых работ (ЛНР)"),
+        ("hatch", "ПВ - планировочная выемка"),
+        ("box", "ПН - планировочная насыпь"),
+        ("mark", "рабочая отметка, м (+ насыпь, - выемка)"),
+        ("fig", "номер фигуры; со штрихом - насыпная часть квадрата"),
+        ("dim", "расстояние до точки нулевых работ, м"),
+        ("pit", "контур котлована"),
+    ][:None if pit else -1]
+    for k, (kind, label) in enumerate(items):
+        y = LY - 7 - 7.5 * k
+        sx0, sx1 = LX, LX + 14
+        if kind == "lnr":
+            psp.add_lwpolyline([(sx0, y), (sx1, y)], dxfattribs={"layer": "ЛНР", "const_width": 0.6})
+        elif kind in ("hatch", "box"):
+            pts = [(sx0, y - 2.5), (sx1, y - 2.5), (sx1, y + 2.5), (sx0, y + 2.5)]
+            pl(pts, "Сетка", True)
+            if kind == "hatch":
+                hat = psp.add_hatch(color=8, dxfattribs={"layer": "ПВ_штриховка"})
+                hat.set_pattern_fill("ANSI31", scale=1.2, color=8)
+                hat.paths.add_polyline_path(pts, is_closed=True)
+        elif kind == "mark":
+            psp.add_circle((sx0 + 1, y - 1.5), 0.5, dxfattribs={"layer": "Отметки"})
+            txt("+0,15", (sx0 + 2.8, y - 0.7), H_TEXT, TA.BOTTOM_LEFT, "Отметки")
+        elif kind == "fig":
+            txt("7'", (sx0 + 7, y), H_HEAD, TA.MIDDLE_CENTER, "Номера_фигур")
+        elif kind == "dim":
+            psp.add_line((sx0, y - 1.5), (sx1, y - 1.5), dxfattribs={"layer": "Размеры"})
+            for xx in (sx0, sx1):
+                psp.add_line((xx - 0.9, y - 2.4), (xx + 0.9, y - 0.6), dxfattribs={"layer": "Размеры"})
+            txt("37,5", ((sx0 + sx1) / 2, y - 0.7), H_TEXT, TA.BOTTOM_CENTER, "Размеры")
+        elif kind == "pit":
+            pl([(sx0, y - 2.5), (sx1, y - 2.5), (sx1, y + 2.5), (sx0, y + 2.5)], "Котлован", True)
+            pl([(sx0 + 0.8, y - 1.7), (sx1 - 0.8, y - 1.7), (sx1 - 0.8, y + 1.7), (sx0 + 0.8, y + 1.7)],
+               "Котлован_низ", True)
+        txt("- " + label, (sx1 + 3, y), H_TEXT, TA.MIDDLE_LEFT, "Надписи", NARROW)
+
+    # сводка объёмов
+    Vc, Vf = R.P0["VV"], R.P0["VN"]                    # с откосами по контуру площадки (с. 10)
+    Fc = sum(g["F"] for g in R.FIGS if g["sign"] < 0)
+    Ff = sum(g["F"] for g in R.FIGS if g["sign"] > 0)
+    volume_table("Объемы планировочных работ",
+                 [("", f"F, {M2}", f"V, {M3}"),
+                  ("Выемка ПВ", num(Fc), num(Vc)),
+                  ("Насыпь ПН", num(Ff), num(Vf)),
+                  (f"ПН / Kор, Kор = {K_OR:.2f}".replace(".", ","), "", num(f(Vf) / K_OR))],
+                 [34, 32, 30])
+
+
+legend_and_volumes()
 
 # ================= лист 2: окончательный план с обводами (разд. 3, п. 2) =================
 def viewport(px0, py0, px1, py1, mx0, my0):
@@ -911,8 +1012,7 @@ psp = doc.layouts.new("Лист 4")
 a3(psp)
 frame_and_stamp(4, None, "Картограмма перемещения\\Pземляных масс\\PМ 1:2000",
                 "Картограмма перемещения земляных масс  М 1:2000")
-vw4 = vw + 2 * 6.0                                                # +6 мм с каждой стороны: отметки h + Δh длиннее
-vp = psp.add_viewport(center=vc, size=(vw4, vh),                 # план - на том же месте, что на листе 1
+vp = psp.add_viewport(center=vc, size=(vw, vh),                  # план - на том же месте, что на листе 1
                       view_center_point=((VX0_1 + VX1_1) / 2, (VY0_1 + VY1_1) / 2 + OY4), view_height=vh * SC)
 vp.dxf.layer = "Видовой_экран"
 vp.dxf.flags = vp.dxf.flags | 16384
@@ -931,6 +1031,18 @@ for k, (kind, label) in enumerate((("скрепер", "скрепером"), ("�
         psp.add_line((sx0, y), e, dxfattribs=at)
     psp.add_lwpolyline([(e[0], e[1], 1.0, 0.0), (sx1, y)], format="xyse", dxfattribs={"layer": "Перемещения"})
     txt("- " + label, (sx1 + 3, y), H_TEXT, TA.MIDDLE_LEFT, "Надписи", NARROW)
+
+# ================= первый чертёж: черновик до котлована - только рабочие отметки и ЛНР =================
+# не входит в комплект листов по разд. 3 методички; оформление - как у листа 1
+psp = doc.layouts.new("Лист 1 (первый)")
+a3(psp)
+frame_and_stamp(1, None, "План строительной площадки\\Pс рабочими отметками и ЛНР\\PМ 1:2000",
+                "План строительной площадки с рабочими отметками и линией нулевых работ  М 1:2000")
+vp = psp.add_viewport(center=vc, size=(vw, vh),
+                      view_center_point=((VX0_1 + VX1_1) / 2, (VY0_1 + VY1_1) / 2 + OY0), view_height=vh * SC)
+vp.dxf.layer = "Видовой_экран"
+vp.dxf.flags = vp.dxf.flags | 16384
+legend_and_volumes(pit=False)
 
 if "VIEWPORTS" in doc.layers:                   # слой ezdxf для главных экранов - больше не нужен
     doc.layers.remove("VIEWPORTS")
