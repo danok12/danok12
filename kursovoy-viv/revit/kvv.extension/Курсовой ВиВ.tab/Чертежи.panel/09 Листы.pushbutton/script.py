@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """Листы графической части (по образцу преподавателя): листы А3 с основной надписью, по одному виду на лист,
 с заголовком вида и масштабом над видом и примечаниями; последний лист — экспликация помещений.
-Повторный запуск пересоздаёт листы с этими номерами.
+Повторный запуск пересоздаёт листы с этими номерами. В конце листы выгружаются в PNG и векторный PDF
+(revit/log/listy, revit/log/listy_pdf). revit/09_rezhim.txt = «vygruzka» — только выгрузка, без пересборки листов.
 """
+import io
+import os
 from pyrevit import HOST_APP
 from Autodesk.Revit import DB
 from Autodesk.Revit.DB import Plumbing
@@ -28,7 +31,8 @@ PRIM_K1 = u'''Примечания:
 4. Отметки трубопроводов и оборудования даны относительно нуля здания.
 5. Привязки и отметки трубопроводов уточнять по месту.'''
 
-# листы А3, каждый вид на своём листе: номер, имя, вид, примечания
+# каждый вид на своём листе, М 1:100 как в образце: номер, имя, вид, примечания. Формат (ГОСТ 2.301) — наименьший,
+# в который вид входит: план 46 м (~550 x 260 мм) — А2, схема (~530 x 530 мм) — А1, таблицы экспликации — А3
 LISTY = [
     (u'1', u'План типового этажа. Система В1', u'В1_План типового этажа', PRIM_V1),
     (u'2', u'План подвала. Система В1', u'В1_План подвала', PRIM_V1),
@@ -38,6 +42,7 @@ LISTY = [
     (u'6', u'Аксонометрическая схема. Система К1', u'К1_Аксонометрическая схема', PRIM_K1),
     (u'7', u'Экспликация помещений', None, None),
 ]
+FORMAT_PLANA, FORMAT_SHEMY, FORMAT_TABLIC = 2, 1, 3      # «Формат А» основной надписи ADSK
 LISTOV_VSEGO = len(LISTY) + 1          # лист 8 — генплан (AutoCAD, kursovoy-viv/genplan)
 EKSPL = [  # имя таблицы, фильтр номера (от, до) — секция 1; секция 2 зеркальная, номера групп 05-08 / 00.02
     (u'Экспликация помещений типового этажа (секция 1)', u'02.01', u'02.05'),
@@ -289,7 +294,23 @@ def parametry(e, log, zag):
     log(zag, u'; '.join(sorted(vals)))
 
 
+def rezhim_zapuska():
+    """revit/09_rezhim.txt: «vygruzka» — только выгрузить листы. Файл после чтения удаляется."""
+    put = os.path.join(kvv.REVIT, u'09_rezhim.txt')
+    if not os.path.isfile(put):
+        return u''
+    with io.open(put, encoding='utf-8') as f:
+        r = f.read().strip()
+    os.remove(put)
+    return r
+
+
 def main(log):
+    if rezhim_zapuska() == u'vygruzka':
+        log(u'режим: только выгрузка листов')
+        eksport_png(log)
+        eksport_pdf(log)
+        return
     tb = osnovnaya_nadpis()
     if tb is None:
         log(u'НЕТ основной надписи ADSK_ОсновнаяНадпись : Форма 3')
@@ -339,7 +360,9 @@ def main(log):
             doc.Regenerate()
             rama = [e for e in DB.FilteredElementCollector(doc, sh.Id).OfCategory(
                 DB.BuiltInCategory.OST_TitleBlocks)][0]
-            ustanovit(rama, u'Формат А', 3, log)
+            v_ = vid_po_imeni(vn) if vn else None
+            ustanovit(rama, u'Формат А', FORMAT_TABLIC if v_ is None else
+                      (FORMAT_SHEMY if isinstance(v_, DB.View3D) else FORMAT_PLANA), log)
             ustanovit(sh, u'ADSK_Штамп_Наименование объекта', u'Жилой дом. Вариант 3', log)
             ustanovit(sh, u'ADSK_Штамп Раздел проекта', u'ВК', log)
             ustanovit(rama, u'Организация Заказчик', 0, log)
@@ -366,6 +389,7 @@ def main(log):
                 log(u'  НЕТ вида', vn)
                 continue
             shema = isinstance(v, DB.View3D)
+            cw = 0.0                             # ширина рамки подрезки схемы на листе
             if shema:
                 # схема высокая — в левой части листа на всю высоту, примечания справа над штампом
                 p = DB.XYZ(bb.Min.X + 137 * MM, bb.Min.Y + h / 2, 0)
@@ -429,14 +453,16 @@ def main(log):
                 opt = DB.TextNoteOptions(tnt.Id)
                 opt.HorizontalAlignment = DB.HorizontalTextAlignment.Left
                 if shema:
-                    # справа от схемы, над основной надписью (схема занимает левые ~265 мм)
-                    DB.TextNote.Create(doc, sh.Id, DB.XYZ(bb.Min.X + 293 * MM, bb.Min.Y + 150 * MM, 0), 117 * MM, prim,
-                                       opt)
+                    # справа от схемы, над основной надписью: не левее штампа и не ближе 10 мм к схеме
+                    x_pr = max(bb.Min.X + 25 * MM + cw + 10 * MM, bb.Max.X - 190 * MM)
+                    DB.TextNote.Create(doc, sh.Id, DB.XYZ(x_pr, bb.Min.Y + 150 * MM, 0),
+                                       min(185 * MM, bb.Max.X - 8 * MM - x_pr), prim, opt)
                 else:
                     DB.TextNote.Create(doc, sh.Id, DB.XYZ(bb.Min.X + 25 * MM, bb.Min.Y + 52 * MM, 0), 200 * MM, prim,
                                        opt)
     log(u'листов', len(LISTY))
     eksport_png(log)
+    eksport_pdf(log)
 
 
 def eksport_png(log):
@@ -462,6 +488,50 @@ def eksport_png(log):
         log(u'листы выгружены в PNG:', papka)
     except Exception as ex:
         log(u'PNG не выгружены:', ex)
+
+
+def eksport_pdf(log):
+    """Листы — векторный PDF для печати, по файлу на лист (revit/log/listy_pdf/list_<номер>.pdf). Размер бумаги
+    берётся по листу (А3 420 x 297, ГОСТ 2.301), масштаб 100 % — масштабы видов (ГОСТ 2.302) и рамка
+    (поля 20/5 мм, основная надпись 185 x 55, ГОСТ Р 21.101) печатаются без искажения.
+    Имена латиницей, без точек — Revit сам добавляет расширение."""
+    papka = os.path.join(kvv.LOG_DIR, u'listy_pdf')
+    if not os.path.isdir(papka):
+        os.makedirs(papka)
+    listy = dict((s.SheetNumber, s) for s in DB.FilteredElementCollector(doc).OfClass(DB.ViewSheet))
+    nastroyki = [
+        ('PaperFormat', lambda: DB.ExportPaperFormat.Default),
+        ('PaperPlacement', lambda: DB.PaperPlacementType.Center),
+        ('ZoomType', lambda: DB.ZoomType.Zoom),
+        ('ZoomPercentage', lambda: 100),
+        ('ColorDepth', lambda: DB.ColorDepthType.Color),
+        ('ExportQuality', lambda: DB.PDFExportQualityType.DPI1200),
+        ('RasterQuality', lambda: DB.RasterQualityType.High),
+        ('AlwaysUseRaster', lambda: False),
+        ('HideCropBoundaries', lambda: True),
+        ('HideScopeBoxes', lambda: True),
+        ('HideReferencePlane', lambda: True),
+        ('HideUnreferencedViewTags', lambda: True),
+    ]
+    for nom, imya, _, _ in LISTY:
+        sh = listy.get(nom)
+        if sh is None:
+            log(u'  PDF: нет листа', nom)
+            continue
+        o = DB.PDFExportOptions()
+        o.Combine = True
+        o.FileName = u'list_%s' % nom
+        for svoystvo, znach in nastroyki:
+            try:
+                setattr(o, svoystvo, znach())
+            except Exception as ex:
+                log(u'  PDF: настройка', svoystvo, u'не задана:', ex)
+        try:
+            ok = doc.Export(papka, List[DB.ElementId]([sh.Id]), o)
+            log(u'  PDF лист', nom, imya, u'— выгружен' if ok else u'— НЕ выгружен')
+        except Exception as ex:
+            log(u'  PDF лист', nom, u'не выгружен:', ex)
+    log(u'листы выгружены в PDF:', papka)
 
 
 kvv.run('09_listy', main)

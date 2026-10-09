@@ -508,6 +508,49 @@ def otmetki_stoyakov(doc, g, ot, sist, log):
                 ot.postavit(t, DB.XYZ(x * M, y * M, verh * M), storona * 1.6, 0.35)
 
 
+def privyazki_stoyakov(doc, v, g, sist, log):
+    """Привязки стояков к ближайшим осям на плане подвала (как в образце — размеры от осей до стояков): у каждого
+    стояка — от ближайшей оси по X; два стояка у одной оси — второй от соседней оси, иначе тексты «375» налезают.
+    Стояки в коридоре — размер ниже оси В, в помещениях за стеной (как в образце; в коридоре над стояками марки).
+    Опорные линии — невидимые линии детализации в центрах стояков."""
+    osi = list(DB.FilteredElementCollector(doc).OfClass(DB.Grid))
+    ver = [gr for gr in osi if abs(gr.Curve.Direction.Y) > 0.9]
+    gor_v = [gr for gr in osi if abs(gr.Curve.Direction.X) > 0.9 and gr.Name == u'В']
+    y_v = gor_v[0].Curve.GetEndPoint(0).Y if gor_v else 6.8 * M
+    zanyaty = set()
+    nevid = None
+    for gs in DB.FilteredElementCollector(doc).OfClass(DB.GraphicsStyle):
+        if gs.GraphicsStyleCategory is not None and gs.GraphicsStyleCategory.Name in (u'<Невидимые линии>',
+                                                                                         u'<Invisible lines>'):
+            nevid = gs
+    zl = v.GenLevel.Elevation
+    k = v.Scale / 100.0
+    n = 0
+    stoyaki = [s_ for s_ in g['stoyaki'] if s_['sys'] == (u'V1' if sist == u'В1' else u'K1')]
+    for s_ in stoyaki:
+        x, y = s_['x'] * M, s_['y'] * M
+        po_bl = sorted(ver, key=lambda gr: abs(gr.Curve.GetEndPoint(0).X - x))
+        gx = po_bl[0]
+        if gx.Id in zanyaty and len(po_bl) > 1 and abs(po_bl[1].Curve.GetEndPoint(0).X - x) < 1.0 * M:
+            gx = po_bl[1]
+        zanyaty.add(gx.Id)
+        try:
+            ln = doc.Create.NewDetailCurve(v, DB.Line.CreateBound(DB.XYZ(x, y - 0.3 * M, zl), DB.XYZ(x, y + 0.3 * M, zl)))
+            if nevid is not None:
+                ln.LineStyle = nevid
+            ra = DB.ReferenceArray()
+            ra.Append(DB.Reference(gx))
+            ra.Append(ln.GeometryCurve.Reference)
+            # размерная линия: у стояка в коридоре — на 0,5·k ниже оси В (за стеной коридора), у крайних стояков
+            # южнее оси В — на 1,0·k ниже стояка
+            yd = y - 1.0 * k * M if y < y_v else y_v - 0.5 * k * M
+            doc.Create.NewDimension(v, DB.Line.CreateBound(DB.XYZ(0, yd, zl), DB.XYZ(M, yd, zl)), ra)
+            n += 1
+        except Exception as ex:
+            log(u'  привязка стояка не встала:', s_['imya'], ex)
+    log(u'  привязок стояков на', v.Name, n)
+
+
 def oformit_plan(doc, g, v, sist, tipy, tnt, zan, vvody, vypuski, tr, log):
     """План: размеры по осям, марки ввода/выпусков и выноски (подвал), марки диаметров."""
     podval = v.GenLevel.Elevation < -1e-6
@@ -534,7 +577,9 @@ def oformit_plan(doc, g, v, sist, tipy, tnt, zan, vvody, vypuski, tr, log):
                         (u'\r' + u'на фундаменте ' + fund if fund else u''),
                         e.Location.Point, 0, 0, log, gol=DB.XYZ(8.6 * M, -4.4 * M, 0))     # три строки — выше
         krany_podpisi(doc, v, tnt, g, tr, None, log)
-    # привязки стояков к осям (365…435 мм) при 1:200 не читаются и ложатся на марки стояков — не ставятся
+    # привязки стояков к осям (365…435 мм) — как в образце, только в 1:100: в 1:200 не читаются и ложатся на марки
+    if podval and v.Scale <= 100:
+        privyazki_stoyakov(doc, v, g, sist, log)
     if podval and sist == u'К1':
         prochistki_revizii_podpisi(doc, v, tnt, tr, True, log)
         for t in vypuski:
@@ -576,7 +621,9 @@ def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
         for t in vypuski:
             p = tochka_na_y(t, 13.12)
             ot.postavit(t, p, -1.4, -0.8, lotok=True)          # влево-вниз: вверху подписи «2 этаж»
-            marka_s_vynoskoy(doc, v, tipy['vypusk'], t, tochka_na_y(t, 13.12 + 0.6), 1.6, -1.2, log)
+            # у западного выпуска — ниже: на -1,2 марка ложилась на подпись «1 этаж» крайнего стояка
+            q = tochka_na_y(t, 13.12 + 0.6)
+            marka_s_vynoskoy(doc, v, tipy['vypusk'], t, q, 1.6, -2.0 if q.X < 23 * M else -1.2, log)
     log(u'  отметок на', v.Name, ot.n, u'| способ:', ot.sposob, u'| не встало', ot.oshibki)
 
 
@@ -694,19 +741,20 @@ def krany_podpisi(doc, v, tnt, g, tr, ot, log):
         p = DB.XYZ(k_['x'] * M, k_['y'] * M, k_['z'] * M)
         lev = k_['x'] < zerk / 2
         if ot is None:
+            # знак диаметра — «⌀» (U+2300), как в марках труб: «Ø» (U+00D8) в GOST Common печатается как «Ý»
             # план подвала (как у преподавателя): «Подъем В1 Ø25» — у подъёма у внутренней грани торцевой стены,
             # «Кран водоразборный…» — к наружной грани стены, где кран выходит на фасад
             s_ = 1.0 if lev else -1.0
             x_pod = 0.25 if lev else zerk - 0.25
             p_pod = DB.XYZ(x_pod * M, k_['y'] * M, -0.6 * M)
-            vynoska(doc, v, tnt, u'Подъем В1\rØ%d' % g_dn_pol(g), p_pod, s_, 0, log,
+            vynoska(doc, v, tnt, u'Подъем В1\r⌀%d' % g_dn_pol(g), p_pod, s_, 0, log,
                     gol=DB.XYZ((x_pod + s_ * 0.35) * M, (k_['y'] + 2.5) * M, 0))
             vynoska(doc, v, tnt, KRAN_POL.replace(u'\r', u' '), p, s_, 0, log,
                     gol=DB.XYZ((-3.9 if lev else zerk + 3.9) * M, 15.6 * M, 0))
         else:
             vynoska(doc, v, tnt, KRAN_POL, p, 0.3 if lev else 0.6, -2.4 if lev else -3.2, log)
             x_pod = 0.25 if lev else zerk - 0.25
-            vynoska(doc, v, tnt, u'Подъем В1\rØ%d' % g_dn_pol(g),
+            vynoska(doc, v, tnt, u'Подъем В1\r⌀%d' % g_dn_pol(g),
                     DB.XYZ(x_pod * M, k_['y'] * M, -0.05 * M), -1.6 if lev else 2.2, -1.0, log)
             t = None
             for tt in truby_sistemy(doc, u'КВВ-В1'):
@@ -718,7 +766,8 @@ def krany_podpisi(doc, v, tnt, g, tr, ot, log):
                 a, b = koncy(t)
                 kon, dr = (a, b) if a.DistanceTo(p) < b.DistanceTo(p) else (b, a)
                 q = kon + (dr - kon).Normalize().Multiply(0.15 * M)
-                ot.postavit(t, q, -1.2 if lev else 1.2, -0.6)
+                # у восточного крана — над краном: ниже стоит отметка пола «+0.000» крайнего стояка
+                ot.postavit(t, q, -1.2 if lev else 1.2, -0.6 if lev else 0.3)
 
 
 TEKST_TOCHKI = u'КВВ_Расчётная точка'
