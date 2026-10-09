@@ -243,7 +243,7 @@ def site_plan(P, k, oy=0.0, kind="draft"):
     габаритные размеры; "final" - окончательный (лист 2, прил. 10): обводы, размеры до
     точек нуля на границе - за обводами; "carto" - основа картограммы (лист 4): номера
     и объёмы фигур рисует kartogramma()."""
-    final, draft = kind == "final", kind == "draft"
+    final, draft, scheme = kind == "final", kind == "draft", kind == "scheme"
     O = lambda x, y: (f(x), f(y) + oy)
     for j in range(R.NY + 1):
         line(O(0, j * R.A), O(W, j * R.A), "Сетка")
@@ -311,7 +311,7 @@ def site_plan(P, k, oy=0.0, kind="draft"):
         else:
             placed.append(mark_box(p, s_, 0))
     dims_obst = []
-    if kind != "carto":
+    if draft or final:                              # на картограмме и техсхеме размеров до точек нуля нет
         default = [(bb, 10, None) for _, _, bb in placed]
         border_off = {"top": 7.0 * SC, "other": 2.0 * SC}
         for z in P["ZP"]:
@@ -363,7 +363,7 @@ def site_plan(P, k, oy=0.0, kind="draft"):
             else:
                 lo, hi = sorted((q1, q2), key=lambda q: q[1])
                 dim(O(*lo), O(*hi), O(q1[0] + side * off, q1[1]), 90, {"dimtad": 4 if side > 0 else 1})
-    if draft:                                       # габаритные размеры площадки
+    if draft or scheme:                             # габаритные размеры площадки
         dim(O(0, 0), O(W, 0), O(0, -10 * SC), 0)
         dim(O(0, 0), O(0, Hh), O(-10 * SC, 0), 90)
     if k:
@@ -788,6 +788,109 @@ def kartogramma(oy):
 MARKS4 = site_plan(RS.P, RS.KT, OY4, "carto")        # лист 4: картограмма
 kartogramma(OY4)
 
+# ================= лист 5: схема производства работ по вертикальной планировке (разд. 3, п. 5; прил. 9) =================
+import mashiny as MS
+from math import sin, cos, pi
+
+OY5 = -5000.0            # техсхема - в модели ниже картограммы
+W08 = "\\W0.8;"        # сжатие надписей, как на листах
+
+
+def glyph(p, ang, w=3.0, h=1.6, blade=True):
+    """Машина в плане: прямоугольник w x h мм, у бульдозера - отвал спереди; ang - курс, град."""
+    c, s_ = cos(ang * pi / 180), sin(ang * pi / 180)
+    T = lambda u, v: (p[0] + (u * c - v * s_) * SC, p[1] + (u * s_ + v * c) * SC)
+    msp.add_lwpolyline([T(-w / 2, -h / 2), T(w / 2, -h / 2), T(w / 2, h / 2), T(-w / 2, h / 2)], close=True,
+                       dxfattribs={"layer": "Перемещения"})
+    if blade:
+        line(T(w / 2 + 0.4, -h / 2 - 0.4), T(w / 2 + 0.4, h / 2 + 0.4), "Перемещения")
+
+
+def arrow_head(p, ang, L=1.8, wd=1.0):
+    """Наконечник стрелки (мм листа) в точке p, направление ang, град."""
+    c, s_ = cos(ang * pi / 180), sin(ang * pi / 180)
+    b = (p[0] - c * L * SC, p[1] - s_ * L * SC)
+    msp.add_lwpolyline([(b[0], b[1], wd * SC, 0.0), p], format="xyse", dxfattribs={"layer": "Перемещения"})
+
+
+def shuttle(c, w=16.0, h=6.0, n=4):
+    """Челночная схема бульдозера (прил. 9): рабочие ходы - сплошные, холостые - штриховые,
+    машина со стрелкой - в начале верхнего хода; мм листа."""
+    x0, x1 = c[0] - w / 2 * SC, c[0] + w / 2 * SC
+    ys = [c[1] + (h / 2 - h * k / (n - 1)) * SC for k in range(n)]
+    for k, y in enumerate(ys):
+        line((x0, y), (x1, y), "Перемещения")
+        if k + 1 < n:
+            line((x1, y), (x0, ys[k + 1]), "Перемещения", linetype=DASH)
+    arrow_head((x1 + 3.4 * SC, ys[0]), 0)
+    line((x1, ys[0]), (x1 + 1.6 * SC, ys[0]), "Перемещения")
+    glyph((x0 + 1.8 * SC, ys[0] + 1.4 * SC), 0)
+
+
+def racetrack(c, w=20.0, h=6.0, n=3, gap=1.0):
+    """Укатка катком «по замкнутой схеме» (прил. 9): вложенные овалы, каток на верхней прямой."""
+    for k in range(n):
+        ww, hh = w - 2 * k * gap, h - 2 * k * gap
+        r = hh / 2
+        pts = []
+        for t in range(0, 181, 15):                      # правый полукруг
+            a = -pi / 2 + t * pi / 180
+            pts.append((c[0] + (ww / 2 - r + r * cos(a)) * SC, c[1] + r * sin(a) * SC))
+        for t in range(0, 181, 15):                      # левый полукруг
+            a = pi / 2 + t * pi / 180
+            pts.append((c[0] + (-ww / 2 + r + r * cos(a)) * SC, c[1] + r * sin(a) * SC))
+        msp.add_lwpolyline(pts, close=True, dxfattribs={"layer": "Перемещения"})
+    arrow_head((c[0] + 3.0 * SC, c[1] + h / 2 * SC), 0)
+    glyph((c[0] - 1.5 * SC, c[1] + h / 2 * SC), 0, w=2.6, h=2.0, blade=False)
+
+
+def eight(a, b, B=14.0):
+    """Скрепер «восьмёркой» (прил. 9) из выемки a в насыпь b через ЛНР; B - ширина петли, мм."""
+    from math import atan2, degrees, hypot
+    L = hypot(b[0] - a[0], b[1] - a[1])
+    ux, uy = (b[0] - a[0]) / L, (b[1] - a[1]) / L
+    vx, vy = -uy, ux
+    cx, cy = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
+    ang = degrees(atan2(uy, ux))
+    for k, (AA, BB) in enumerate(((L / 2, B * SC), (L / 2 - 2.0 * SC, (B - 3.0) * SC))):
+        pts = []
+        for i in range(0, 361, 6):
+            t = i * pi / 180
+            x_, y_ = AA * sin(t), BB * sin(t) * cos(t)
+            pts.append((cx + ux * x_ + vx * y_, cy + uy * x_ + vy * y_))
+        msp.add_lwpolyline(pts, close=True, dxfattribs={"layer": "Перемещения"})
+    A_, B_ = L / 2, B * SC
+    P = lambda t: (cx + ux * A_ * sin(t) + vx * B_ * sin(t) * cos(t), cy + uy * A_ * sin(t) + vy * B_ * sin(t) * cos(t))
+    D = lambda t: degrees(atan2(uy * A_ * cos(t) + vy * B_ * cos(2 * t), ux * A_ * cos(t) + vx * B_ * cos(2 * t)))
+    for t in (7 * pi / 4 + 0.35, pi / 4, 3 * pi / 4, 5 * pi / 4):   # гружёный ход вправо, порожний - обратно
+        arrow_head(P(t), D(t))
+    glyph(P(7 * pi / 4 - 0.2), D(7 * pi / 4 - 0.2), w=4.0, h=2.0, blade=False)   # скрепер у забоя
+    glyph(P(7 * pi / 4 - 0.55), D(7 * pi / 4 - 0.55), w=3.0, h=1.6)               # толкач за ним
+
+
+O5 = lambda x, y: (float(x), float(y) + OY5)
+OPS = [  # (подпись, вид схемы, центр схемы в модели, м) - машины комплекта п. 2.3 (вариант 2)
+    (f"Срезка растительного слоя\\Pбульдозером {MS.BUL_RAZ[1].split(',')[0]}", "shuttle", (50, 55)),
+    (f"Рыхление грунта бульдозером-\\Pрыхлителем {MS.RYKHL[1].split(' на')[0]}", "shuttle", (50, 150)),
+    (f"Окончательная планировка\\Pбульдозером {MS.BUL_RAZ[1].split(',')[0]}", "shuttle", (45, 240)),
+    (f"Разравнивание грунта\\Pбульдозером {MS.BUL_RAZ[1].split(',')[0]}", "shuttle", (350, 245)),
+    (f"Уплотнение грунта насыпи\\Pкатком {MS.KATOK[1].split(',')[0]}", "track", (250, 245)),
+]
+EIGHT = ((130, 130), (230, 225))                       # поперёк ЛНР у кв. 7 и 3, в стороне от котлована
+# сначала схемы движения машин, затем план (сетка, ЛНР, отметки с маской - поверх линий схем), затем подписи
+for text, kind, (x, y) in OPS:
+    (shuttle if kind == "shuttle" else racetrack)(O5(x, y))
+eight(O5(*EIGHT[0]), O5(*EIGHT[1]))
+SCH = site_plan(B.P1, B.K1, OY5, "scheme")           # основа: окончательные отметки, ЛНР, котлован
+# привязка котлована (бровка, левый нижний угол) к сетке - как в прил. 9
+kx, ky = (float(v) for v in B.K1["VERH"][0])
+dim(O5(200, ky), O5(kx, ky), O5(200, ky - 6.0 * SC), 0, {"dimtad": 4})
+dim(O5(kx, 100), O5(kx, ky), O5(kx + 4.0 * SC, 100), 90, {"dimtad": 4})
+for text, kind, (x, y) in OPS:
+    mtext(W08 + text, O5(x, y + 6.0 * SC), H_TEXT, "Надписи", MA.BOTTOM_CENTER)
+mtext(W08 + f"Разработка и перемещение\\Pгрунта скреперами {MS.SKR_VED[1].split(',')[0]},"
+      f"\\Pтолкач {MS.TOLKACH[1]}", O5(150, 75), H_TEXT, "Надписи", MA.MIDDLE_CENTER)
+
 
 # ================= лист A3 =================
 def a3(psp):
@@ -914,7 +1017,7 @@ def frame_and_stamp(sheet, sheets, name, title):
         image_title(title, (217.5, TITLE_Y))
 
 
-frame_and_stamp(1, 4, "План строительной площадки\\Pс рабочими отметками и ЛНР\\PМ 1:2000",
+frame_and_stamp(1, 5, "План строительной площадки\\Pс рабочими отметками и ЛНР\\PМ 1:2000",
                 "План строительной площадки с рабочими отметками и линией нулевых работ  М 1:2000")
 
 # видовой экран: модель x -34..524, y -44..326 м
@@ -1037,6 +1140,36 @@ for k, (kind, label) in enumerate((("скрепер", "скрепером"), ("�
         psp.add_line((sx0, y), e, dxfattribs=at)
     psp.add_lwpolyline([(e[0], e[1], 1.0, 0.0), (sx1, y)], format="xyse", dxfattribs={"layer": "Перемещения"})
     txt("- " + label, (sx1 + 3, y), H_TEXT, TA.MIDDLE_LEFT, "Надписи", NARROW)
+
+# ================= лист 5: схема производства работ по вертикальной планировке =================
+psp = doc.layouts.new("Лист 5")
+a3(psp)
+frame_and_stamp(5, None, "Схема производства работ\\Pпо вертикальной планировке\\PМ 1:2000",
+                "Схема производства работ по вертикальной планировке строительной площадки  М 1:2000")
+vp = psp.add_viewport(center=vc, size=(vw, vh),                  # план - на том же месте, что на листе 1
+                      view_center_point=((VX0_1 + VX1_1) / 2, (VY0_1 + VY1_1) / 2 + OY5), view_height=vh * SC)
+vp.dxf.layer = "Видовой_экран"
+vp.dxf.flags = vp.dxf.flags | 16384
+MACH = [  # ведомость применяемой техники (п. 2.3, вариант 2); характеристики - ЕНиР Е2-1, табл. 1 параграфов
+    ("Скрепер прицепной", "ДЗ-20 (Д-498), Т-100", 3, f"ковш 6,7 {M3}, захват 2,59 м, резание 0,3 м, слой 0,35 м, 79 кВт, 7 т"),
+    ("Трактор-толкач", "Т-180", 1, "мощность 132 кВт (180 л.с.)"),
+    ("Бульдозер-рыхлитель", "ДП-22С на ДЗ-35С, Т-180", 1, "3 зуба, рыхление до 0,5 м, ширина 1,67 м, 132 кВт"),
+    ("Бульдозер", "ДЗ-35С (Д-575С), Т-180", 1, "отвал неповоротный 3,64 х 1,29 м, 132 кВт, оборудование 3,4 т"),
+    ("Каток на пневмошинах", "ДУ-16В (Д-551В)", 1, "полуприцепной, полоса 2,6 м, слой до 0,35 м, 177 кВт, 25 т"),
+]
+assert [m[2] for m in MACH] == [MS.VAR2["rows"][0]["n"], MS.VAR2["rows"][4]["n"], MS.VAR2["rows"][1]["n"],
+                                MS.VAR2["rows"][2]["n"], MS.VAR2["rows"][3]["n"]], "количество машин - из табл. 7"
+txt("Ведомость применяемой техники", (LX, LY), H_HEAD, TA.BOTTOM_LEFT, "Надписи", NARROW)
+CW5 = [38, 42, 13, 106]
+for r, row in enumerate([("Наименование", "Марка", "Кол.", "Технические характеристики")] + MACH):
+    y = LY - 3 - 7 * r
+    x = LX
+    for c, v in enumerate(row):
+        pl([(x, y), (x + CW5[c], y), (x + CW5[c], y - 7), (x, y - 7)], "Штамп", True)
+        left = r > 0 and c in (0, 1, 3)
+        txt(str(v), (x + 1.5 if left else x + CW5[c] / 2, y - 3.5), H_TEXT,
+            TA.MIDDLE_LEFT if left else TA.MIDDLE_CENTER, "Надписи", NARROW)
+        x += CW5[c]
 
 # ================= первый чертёж: черновик до котлована - только рабочие отметки и ЛНР =================
 # не входит в комплект листов по разд. 3 методички; оформление - как у листа 1

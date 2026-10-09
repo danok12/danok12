@@ -145,7 +145,7 @@ print(f"П. 2.3: сверено {n7} значений; принят вариан
 # 3. DXF: ЛНР проходит ровно через все точки нулевых работ, подписи на месте -
 #    на черновике (лист 1, y как есть) и на окончательном плане (лист 2, сдвиг OY2)
 class MC:                       # как в make_dxf.py: сдвиг окончательного плана в модели, Мв на разрезах
-    OY2, VS, OY0 = -1000.0, 20.0, -4000.0
+    OY2, VS, OY0, OY5 = -1000.0, 20.0, -4000.0, -5000.0
 
 
 doc = ezdxf.readfile("План_ЛНР_вариант2.dxf")
@@ -187,7 +187,7 @@ hk = f"hк = {round(float(B.K1['HK']) * 1000)}"
 if sum(1 for e in msp if e.dxftype() == "DIMENSION" and e.dxf.get("text", "").replace("<>", "") == "hк = "
        and abs(e.get_measurement() * 1000 / MC.VS - float(B.K1["HK"]) * 1000) < 0.5) != 2:
     bad("на разрезах нет двух размеров", hk)
-LAYOUT_NAMES = ("Лист 1", "Лист 2", "Лист 3", "Лист 4", "Лист 1 (первый)")
+LAYOUT_NAMES = ("Лист 1", "Лист 2", "Лист 3", "Лист 4", "Лист 5", "Лист 1 (первый)")
 bad_styles = {e.dxf.style for L in (msp, *(doc.paperspace(n) for n in LAYOUT_NAMES), *doc.blocks)
               for e in L if e.dxftype() in ("TEXT", "MTEXT")} - {"ГОСТ тип Б"}
 if bad_styles: bad("текст не ГОСТ тип Б:", bad_styles)
@@ -236,5 +236,18 @@ for tag, k, oy in (("черновик", KT.K0, 0.0), ("окончательны�
 if any(e.dxf.layer in ("Котлован", "Котлован_низ") and in_plan(e.get_points()[0][1], MC.OY0)
        for e in msp.query("LWPOLYLINE")):
     bad("на первом чертеже не должно быть котлована")
+# 5а. Лист 5 - техсхема планировки на окончательном плане: ЛНР, отметки, все операции и машины п. 2.3
+zp5 = {pt(z["pt"][0], float(z["pt"][1]) + MC.OY5) for z in B.P1["ZP"]}
+if not any({pt(x, y) for x, y, *_ in e.get_points()} == zp5 for e in msp if e.dxf.layer == "ЛНР"):
+    bad("лист 5: ЛНР не совпадает с окончательными точками нуля")
+t5 = [e.plain_text().replace("\n", " ") for e in msp if e.dxftype() == "MTEXT" and in_plan(e.dxf.insert.y, MC.OY5)]
+for v in B.P1["H"]:
+    if fmt(v) not in t5: bad("лист 5: нет отметки", fmt(v))
+for op in ("Срезка растительного слоя", "Рыхление грунта", "Разработка и перемещение грунта", "Разравнивание грунта",
+           "Уплотнение грунта насыпи", "Окончательная планировка"):
+    if not any(op in t for t in t5): bad("лист 5: нет операции", op)
+p5 = " ".join(e.plain_text() for e in doc.paperspace("Лист 5") if e.dxftype() == "MTEXT")
+for brand in ("ДЗ-20", "Т-180", "ДП-22С", "ДЗ-35С", "ДУ-16В"):
+    if brand not in p5: bad("лист 5: в ведомости техники нет", brand)
 print("Котлован: контуры на обоих планах и hк на разрезах совпадают с расчётом" if ok else "")
 print("ВСЁ СХОДИТСЯ" if ok else "ЕСТЬ РАСХОЖДЕНИЯ")
