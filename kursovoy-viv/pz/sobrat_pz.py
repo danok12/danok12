@@ -1,0 +1,901 @@
+# -*- coding: utf-8 -*-
+"""Пояснительная записка курсового «Водоснабжение и водоотведение жилого здания», вариант 3.
+
+Все числа — из расчёта (calc/rezultaty_v3.json, calc/nasos_v3.json, PODBOR_NASOSA.md, genplan/genplan_v3.json),
+рисунки — из выгруженных листов (revit/log/listy_pdf, genplan/genplan_v3.pdf). Оформление — СК о ПВД 14-200-2020
+НИУ МГСУ: А4, Times New Roman 14, интервал 1,5, поля 25/10/20/20 мм, абзац 12,5 мм, номер страницы сверху по центру.
+
+Запуск: python sobrat_pz.py  ->  pz/_sborka/osnova.docx и zadanie.docx; затем sobrat_pz.ps1 (Word) вставляет
+задание после титульного листа, обновляет оглавление и сохраняет «Пояснительная записка ….docx/.pdf».
+Новый материал (требования преподавателя, профиль) — править тексты здесь и пересобрать.
+"""
+import bisect
+import io
+import json
+import os
+import re
+import sys
+
+import fitz
+from docx import Document
+from docx.enum.section import WD_SECTION
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_TAB_ALIGNMENT, WD_TAB_LEADER
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Mm, Pt, RGBColor
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+KURS = os.path.dirname(HERE)
+SB = os.path.join(HERE, "_sborka")
+os.makedirs(SB, exist_ok=True)
+ISHODNYE = r"C:\Kursovoy\ishodnya"
+
+REZ = json.load(open(os.path.join(KURS, "calc", "rezultaty_v3.json"), encoding="utf-8"))
+NAS = json.load(open(os.path.join(KURS, "calc", "nasos_v3.json"), encoding="utf-8"))
+GP = json.load(open(os.path.join(KURS, "genplan", "genplan_v3.json"), encoding="utf-8"))
+B2 = sorted((float(k), v) for k, v in json.load(open(os.path.join(KURS, "calc", "sp30_pril_B.json"),
+                                                     encoding="utf-8"))["b2"].items())
+sys.path.insert(0, os.path.join(KURS, "calc"))
+from normy import A2_ZHILYE  # noqa: E402
+
+NORMA = A2_ZHILYE["ванны от 1500 мм с душами"]
+IZ = REZ["iznach"]
+RASX = REZ["rasx"]
+FIO, FIO_KR, GRUPPA, KURS_N = "Буев Даниил Романович", "Буев Д.Р.", "ИГЭС 3-8", 3
+FUNDAMENT = "800×1000×270(h) мм"              # по габариту установки (05, kvv_seti.fundament_nasosa)
+
+
+def F(v, n=2):
+    return ("{:.%df}" % n).format(v).replace(".", ",").replace("-", "−")
+
+
+def b2_sosedi(np_):
+    xs = [x for x, _ in B2]
+    i = bisect.bisect_right(xs, np_) - 1
+    return B2[i], B2[i + 1]
+
+
+# ---------------- литература: номера — по порядку первой ссылки ----------------
+LIT = {
+    "sp30": "СП 30.13330.2020. Внутренний водопровод и канализация зданий. Актуализированная редакция СНиП 2.04.01-85* "
+            ": утв. приказом М-ва стр-ва и жилищ.-коммун. хоз-ва Рос. Федерации от 30 дек. 2020 г. № 920/пр : "
+            "введ. 2021-07-01 : с изм. № 1, 2, 3. — Изд. офиц.",
+    "metod": "Проектирование систем внутреннего водоснабжения и водоотведения жилого здания [Электронный ресурс] : "
+             "методические указания к выполнению курсовой работы/проекта для обучающихся по направлениям подготовки "
+             "08.03.01 Строительство, 38.03.10 Жилищное хозяйство и коммунальная инфраструктура, 08.05.01 "
+             "Строительство уникальных зданий и сооружений / сост.: И.А. Гульшин, Р.В. Ефремов, Р.Е. Хургин ; "
+             "М-во науки и высш. образования Рос. Федерации, Нац. исследоват. Моск. гос. строит. ун-т, каф. "
+             "водоснабжения и водоотведения. — Электрон. дан. и прогр. (1,0 Мб). — Москва : Издательство МИСИ – "
+             "МГСУ, 2024. — Режим доступа: http://lib.mgsu.ru. — Загл. с титул. экрана.",
+    "gost21601": "ГОСТ 21.601-2011. Система проектной документации для строительства. Правила выполнения рабочей "
+                 "документации внутренних систем водоснабжения и канализации. — Изд. офиц.",
+    "gost21205": "ГОСТ 21.205-2016. Система проектной документации для строительства. Условные обозначения "
+                 "элементов санитарно-технических систем. — Изд. офиц.",
+    "sp31": "СП 31.13330.2021. Водоснабжение. Наружные сети и сооружения. Актуализированная редакция "
+            "СНиП 2.04.02-84*. — Изд. офиц.",
+    "gost3262": "ГОСТ 3262-75. Трубы стальные водогазопроводные. Технические условия. — Изд. офиц.",
+    "gost18599": "ГОСТ 18599-2001. Трубы напорные из полиэтилена. Технические условия. — Изд. офиц.",
+    "shevelev": "Шевелев, Ф.А. Таблицы для гидравлического расчета водопроводных труб : справочное пособие / "
+                "Ф.А. Шевелев, А.Ф. Шевелев. — 6-е изд., доп. и перераб. — Москва : Стройиздат, 1984.",
+    "wilo": "Многоступенчатый насос вертикального исполнения серии MVL : каталог / WILO. — Режим доступа: "
+            "https://dn.ru/storage/certificates/wilo/nasosnye-stancii/katalog_wilo_nasos_mvl.pdf "
+            "(дата обращения: 09.10.2026).",
+    "gost32414": "ГОСТ 32414-2013. Трубы и фасонные части из полимерных материалов для систем внутренней "
+                 "канализации. Общие технические условия. — Изд. офиц.",
+    "gost54475": "ГОСТ Р 54475-2011. Трубы полимерные со структурированной стенкой и фасонные части к ним для систем "
+                 "наружной канализации. Технические условия. — Изд. офиц.",
+    "sp32": "СП 32.13330.2018. Канализация. Наружные сети и сооружения. Актуализированная редакция СНиП 2.04.03-85. "
+            "— Изд. офиц.",
+    "lukinyh": "Лукиных, А.А. Таблицы для гидравлического расчета канализационных сетей и дюкеров по формуле акад. "
+               "Н.Н. Павловского : справочное пособие / А.А. Лукиных, Н.А. Лукиных. — 4-е изд., доп. — Москва : "
+               "Стройиздат, 1974. — 156 с.",
+}
+PORYADOK = []
+
+
+def L(key):
+    if key not in PORYADOK:
+        PORYADOK.append(key)
+    return "[%d]" % (PORYADOK.index(key) + 1)
+
+
+# ---------------- документ и стили ----------------
+doc = Document()
+TNR = "Times New Roman"
+
+
+def shrift(style_or_run, size=14, bold=None):
+    f = style_or_run.font
+    f.name = TNR
+    f.size = Pt(size)
+    if bold is not None:
+        f.bold = bold
+    f.color.rgb = RGBColor(0, 0, 0)
+    rpr = style_or_run.element.get_or_add_rPr()
+    rf = rpr.find(qn("w:rFonts"))
+    if rf is None:
+        rf = OxmlElement("w:rFonts")
+        rpr.append(rf)
+    for a in ("w:ascii", "w:hAnsi", "w:cs", "w:eastAsia"):
+        rf.set(qn(a), TNR)
+    for a in ("w:asciiTheme", "w:hAnsiTheme", "w:eastAsiaTheme", "w:cstheme"):   # тема шаблона перебивает шрифт
+        if rf.get(qn(a)) is not None:
+            del rf.attrib[qn(a)]
+
+
+st = doc.styles["Normal"]
+shrift(st)
+pf = st.paragraph_format
+pf.line_spacing = 1.5
+pf.first_line_indent = Mm(12.5)
+pf.space_before = Pt(0)
+pf.space_after = Pt(0)
+pf.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+pf.widow_control = True
+for nm, sa in (("Heading 1", 21), ("Heading 2", 21)):
+    s = doc.styles[nm]
+    shrift(s, 14, True)
+    s.font.italic = False
+    p_ = s.paragraph_format
+    p_.first_line_indent = Mm(12.5)
+    p_.left_indent = Mm(0)
+    p_.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_.space_before = Pt(21 if nm == "Heading 2" else 0)
+    p_.space_after = Pt(sa)
+    p_.line_spacing = 1.5
+    p_.keep_with_next = True
+
+TEXT_W = 175.0                                      # мм: 210 − 25 − 10
+
+
+
+def polya(sec, l=25, r=10, t=20, b=20):
+    sec.page_width, sec.page_height = Mm(210), Mm(297)
+    sec.left_margin, sec.right_margin = Mm(l), Mm(r)
+    sec.top_margin, sec.bottom_margin = Mm(t), Mm(b)
+    sec.header_distance = Mm(10)
+    sec.footer_distance = Mm(10)
+
+
+polya(doc.sections[0])
+
+TOKEN = re.compile(r"_\{([^}]*)\}|\^\{([^}]*)\}|\*\*([^*]+)\*\*")
+
+
+def tekst(par, s, size=None, bold=False, italic=False):
+    """Текст с разметкой: _{нижний индекс}, ^{верхний индекс}, **жирный**."""
+    pos = 0
+    for m in TOKEN.finditer(s):
+        if m.start() > pos:
+            _run(par, s[pos:m.start()], size, bold, italic)
+        if m.group(1) is not None:
+            _run(par, m.group(1), size, bold, italic).font.subscript = True
+        elif m.group(2) is not None:
+            _run(par, m.group(2), size, bold, italic).font.superscript = True
+        else:
+            _run(par, m.group(3), size, True, italic)
+        pos = m.end()
+    if pos < len(s):
+        _run(par, s[pos:], size, bold, italic)
+    return par
+
+
+def _run(par, t, size, bold, italic):
+    r = par.add_run(t)
+    if size:
+        r.font.size = Pt(size)
+    if bold:
+        r.font.bold = True
+    if italic:
+        r.font.italic = True
+    return r
+
+
+def abzac(s, indent=True, align=None, keep=False, size=None, before=0, after=0):
+    p = doc.add_paragraph()
+    pf_ = p.paragraph_format
+    if not indent:
+        pf_.first_line_indent = Mm(0)
+    if align is not None:
+        p.alignment = align
+    if keep:
+        pf_.keep_with_next = True
+    if before:
+        pf_.space_before = Pt(before)
+    if after:
+        pf_.space_after = Pt(after)
+    tekst(p, s, size)
+    return p
+
+
+ZAG = []                                            # (уровень, текст) — для оглавления
+
+
+def strukt(s):
+    """Заголовок структурного элемента: прописными, по центру, с новой страницы, в оглавлении."""
+    ZAG.append((1, s.upper()))
+    p = doc.add_paragraph(style="Heading 1")
+    p.paragraph_format.page_break_before = True
+    p.paragraph_format.first_line_indent = Mm(0)
+    p.paragraph_format.space_after = Pt(42)
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    tekst(p, s.upper())
+    return p
+
+
+def razdel(s):
+    ZAG.append((1, s))
+    p = doc.add_paragraph(style="Heading 1")
+    p.paragraph_format.page_break_before = True
+    tekst(p, s)
+    return p
+
+
+def podrazdel(s):
+    ZAG.append((2, s))
+    p = doc.add_paragraph(style="Heading 2")
+    tekst(p, s)
+    return p
+
+
+NOM = {"f": 0, "t": 0, "r": 0, "sec": 1}
+
+
+def novyi_razdel(n):
+    NOM.update(f=0, t=0, r=0, sec=n)
+
+
+def formula(s, gde=None):
+    """Формула на отдельной строке по центру, номер (р.н) справа; gde — расшифровка новых обозначений."""
+    NOM["f"] += 1
+    nom = "%d.%d" % (NOM["sec"], NOM["f"])
+    p = doc.add_paragraph()
+    pf_ = p.paragraph_format
+    pf_.first_line_indent = Mm(0)
+    pf_.tab_stops.add_tab_stop(Mm(TEXT_W / 2), WD_TAB_ALIGNMENT.CENTER)
+    pf_.tab_stops.add_tab_stop(Mm(TEXT_W), WD_TAB_ALIGNMENT.RIGHT)
+    pf_.keep_with_next = bool(gde)
+    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    tekst(p, "\t" + s + ("," if gde else "") + "\t(" + nom + ")")
+    if gde:
+        for k, g in enumerate(gde):
+            q = abzac(("где " if k == 0 else "") + g + (";" if k < len(gde) - 1 else "."), indent=False)
+            q.paragraph_format.keep_with_next = k < len(gde) - 1
+    return nom
+
+
+def ssylka_f(k=0):
+    return "%d.%d" % (NOM["sec"], NOM["f"] + 1 + k)
+
+
+def _cell(c, s, size, bold=False, align=WD_ALIGN_PARAGRAPH.CENTER):
+    c.text = ""
+    p = c.paragraphs[0]
+    p.paragraph_format.first_line_indent = Mm(0)
+    p.paragraph_format.line_spacing = 1.0
+    p.alignment = align
+    tekst(p, str(s), size, bold)
+    c.vertical_alignment = 1
+
+
+def _xml_bool(el, tag):
+    e = OxmlElement(tag)
+    el.append(e)
+    return e
+
+
+def tablica(nazv, shapka, stroki, shir, size=12, levyi=(0,), itog=None):
+    """Таблица: «Таблица р.н. Название» над ней; шапка повторяется; строки не рвутся; таблица держится целиком."""
+    NOM["t"] += 1
+    nom = "%d.%d" % (NOM["sec"], NOM["t"])
+    cap = abzac("Таблица %s. %s" % (nom, nazv), indent=False, keep=True)
+    cap.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    t = doc.add_table(rows=1 + len(stroki), cols=len(shapka))
+    t.style = "Table Grid"
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    t.autofit = False
+    for j, (h, w) in enumerate(zip(shapka, shir)):
+        _cell(t.rows[0].cells[j], h, size, True)
+    for i, row in enumerate(stroki):
+        for j, v in enumerate(row):
+            _cell(t.rows[1 + i].cells[j], v, size, bool(itog and i == len(stroki) - 1),
+                  WD_ALIGN_PARAGRAPH.LEFT if j in levyi else WD_ALIGN_PARAGRAPH.CENTER)
+    for row in t.rows:
+        for j, w in enumerate(shir):
+            row.cells[j].width = Mm(w)
+        trpr = row._tr.get_or_add_trPr()
+        _xml_bool(trpr, "w:cantSplit")
+    _xml_bool(t.rows[0]._tr.get_or_add_trPr(), "w:tblHeader")
+    # держать таблицу на одной странице: «не отрывать от следующего» во всех строках, кроме последней
+    for row in list(t.rows)[:-1]:
+        for c in row.cells:
+            for p in c.paragraphs:
+                p.paragraph_format.keep_with_next = True
+    doc.add_paragraph().paragraph_format.line_spacing = 1.0
+    return nom
+
+
+def ris(png, nazv, shir=160):
+    NOM["r"] += 1
+    nom = "%d.%d" % (NOM["sec"], NOM["r"])
+    p = doc.add_paragraph()
+    p.paragraph_format.first_line_indent = Mm(0)
+    p.paragraph_format.keep_with_next = True
+    p.paragraph_format.line_spacing = 1.0
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.add_run().add_picture(png, width=Mm(shir))
+    c = abzac("Рисунок %s – %s" % (nom, nazv), indent=False, align=WD_ALIGN_PARAGRAPH.CENTER, after=10)
+    return nom
+
+
+def sled_ris():
+    return "%d.%d" % (NOM["sec"], NOM["r"] + 1)
+
+
+def sled_tab():
+    return "%d.%d" % (NOM["sec"], NOM["t"] + 1)
+
+
+def pole(par, kod, zaglushka=""):
+    """Поле Word (PAGE, TOC …)."""
+    r = par.add_run()
+    b = OxmlElement("w:fldChar")
+    b.set(qn("w:fldCharType"), "begin")
+    r._r.append(b)
+    r2 = par.add_run()
+    it = OxmlElement("w:instrText")
+    it.set(qn("xml:space"), "preserve")
+    it.text = kod
+    r2._r.append(it)
+    r3 = par.add_run()
+    s_ = OxmlElement("w:fldChar")
+    s_.set(qn("w:fldCharType"), "separate")
+    r3._r.append(s_)
+    par.add_run(zaglushka)
+    r4 = par.add_run()
+    e = OxmlElement("w:fldChar")
+    e.set(qn("w:fldCharType"), "end")
+    r4._r.append(e)
+
+
+# ---------------- рисунки из листов ----------------
+def vyrez(pdf, x0, y0, x1, y1, imya, dpi=220):
+    MMP = 72 / 25.4
+    put = os.path.join(SB, imya)
+    p = fitz.open(pdf)[0]
+    p.get_pixmap(dpi=dpi, clip=fitz.Rect(x0 * MMP, y0 * MMP, x1 * MMP, y1 * MMP)).save(put)
+    return put
+
+
+LP = os.path.join(KURS, "revit", "log", "listy_pdf")
+RIS_GP = vyrez(os.path.join(KURS, "genplan", "genplan_v3.pdf"), 62, 112, 262, 236, "ris_genplan.png")
+RIS_POD = vyrez(os.path.join(LP, "list_2.pdf"), 28, 78, 232, 306, "ris_podval_v1.png")
+RIS_SH_V = vyrez(os.path.join(LP, "list_3.pdf"), 22, 12, 568, 548, "ris_shema_v1.png", dpi=170)
+RIS_SH_K = vyrez(os.path.join(LP, "list_6.pdf"), 22, 12, 580, 548, "ris_shema_k1.png", dpi=170)
+
+# ---------------- 1. титульный лист ----------------
+def tit(s, size=14, bold=False, before=0, after=0, align=WD_ALIGN_PARAGRAPH.CENTER):
+    p = doc.add_paragraph()
+    p.paragraph_format.first_line_indent = Mm(0)
+    p.paragraph_format.line_spacing = 1.0
+    p.paragraph_format.space_before = Pt(before)
+    p.paragraph_format.space_after = Pt(after)
+    p.alignment = align
+    tekst(p, s, size, bold)
+    return p
+
+
+tit("МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ", 12)
+tit("Федеральное государственное бюджетное образовательное учреждение высшего образования", 12, before=4)
+tit("«НАЦИОНАЛЬНЫЙ ИССЛЕДОВАТЕЛЬСКИЙ МОСКОВСКИЙ", 12, True, before=4)
+tit("ГОСУДАРСТВЕННЫЙ СТРОИТЕЛЬНЫЙ УНИВЕРСИТЕТ»", 12, True)
+tit("Институт инженерно-экологического строительства и механизации", 14, before=30)
+tit("Кафедра «Водоснабжение и водоотведение»", 14, before=6)
+tit("КУРСОВОЙ ПРОЕКТ", 18, True, before=80)
+tit("по дисциплине «Водоснабжение и водоотведение»", 14, before=10)
+tit("на тему: «Водоснабжение и водоотведение жилого здания»", 14, True, before=10)
+tit("Вариант 3", 14, before=6)
+tit("ПОЯСНИТЕЛЬНАЯ ЗАПИСКА", 16, True, before=24)
+for s, b in ((f"Выполнил: обучающийся {KURS_N} курса,", 60), (f"группа {GRUPPA}", 0), (FIO, 4),
+             ("Подпись ______________", 4),
+             ("Руководитель: доцент, к.т.н.", 24), ("В.А. Курочкина", 0),
+             ("Преподаватель: Я.А. Глушков", 4), ("Подпись ______________", 4),
+             ("Оценка ______________", 24), ("«___» ______________ 2026 г.", 4)):
+    tit(s, 14, before=b, align=WD_ALIGN_PARAGRAPH.LEFT).paragraph_format.left_indent = Mm(70)
+tit("Москва 2026", 14, before=50)
+
+# ---------------- 2. задание (вставит Word) ----------------
+s2 = doc.add_section(WD_SECTION.NEW_PAGE)
+polya(s2, 12.7, 12.7, 7.5, 5.0)
+tit("[[ZADANIE]]", 12)
+
+# ---------------- 3. основная часть ----------------
+s3 = doc.add_section(WD_SECTION.NEW_PAGE)
+polya(s3)
+s3.header.is_linked_to_previous = False
+hp = s3.header.paragraphs[0]
+hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+hp.paragraph_format.first_line_indent = Mm(0)
+pole(hp, " PAGE ", "3")
+# у первых разделов колонтитул пустой (титульный лист и задание — без номера, но в общей нумерации)
+
+p = tit("ОГЛАВЛЕНИЕ", 14, True, after=42)
+# оглавление — статичное: номера страниц берутся из PDF прошлой сборки (sobrat_vse.py делает два прохода; поле TOC
+# обновлять средствами Word нельзя — невидимый Word подвисал при сохранении после обновления оглавления)
+METKA_OGL = doc.add_paragraph("[[OGLAVLENIE]]")
+
+# ---------------- ВВЕДЕНИЕ ----------------
+strukt("Введение")
+abzac("Системы внутреннего водопровода и канализации обеспечивают жителей здания водой питьевого качества в "
+      "необходимом количестве и под требуемым напором и отводят образующиеся сточные воды в наружную "
+      "канализационную сеть. От правильного выбора схем, материалов и диаметров трубопроводов зависят надёжность "
+      "подачи воды, отсутствие шума и засоров, а также расход электроэнергии на повышение давления.")
+abzac(f"Объект проектирования — {IZ['N_ET']}-этажный двухсекционный жилой дом (вариант 3 задания). В каждой "
+      f"секции на этаже по {REZ['N_KV']} квартиры, всего {REZ['n_kv']} квартир; заселённость "
+      f"{F(REZ['U0'], 1)} чел./кв. Высота этажа {F(IZ['H_ET'], 1)} м, высота подвала {F(IZ['H_PODVAL'], 1)} м, "
+      f"гарантийный напор в городском водопроводе {F(IZ['H_GAR'], 0)} м, диаметры городских сетей водопровода "
+      f"и канализации {IZ['D_GOR_V']} и {IZ['D_GOR_K']} мм.")
+abzac("В соответствии с заданием в проекте разработаны система холодного хозяйственно-питьевого водопровода В1 и "
+      "система бытовой канализации К1 здания с дворовой канализационной сетью. Горячее водоснабжение в объём "
+      "проекта не входит, поэтому ввод, водомерный узел и повысительная насосная установка рассчитаны на расход "
+      f"холодной воды; канализация — на общий расход воды. Расчёты выполнены по СП 30.13330.2020 {L('sp30')} и "
+      f"методическим указаниям кафедры {L('metod')}.")
+abzac("Графическая часть выполнена в Revit 2025 (листы 1–6) и AutoCAD 2026 (лист 7) по ГОСТ 21.601-2011 "
+      f"{L('gost21601')} с условными обозначениями по ГОСТ 21.205-2016 {L('gost21205')}: планы типового этажа и "
+      "подвала с сетями В1 и К1 (М 1:100, формат А2), аксонометрические схемы систем В1 и К1 (М 1:100, А1), "
+      "генеральный план участка с наружными сетями (М 1:500, А2).")
+
+# ---------------- 1. ВОДОСНАБЖЕНИЕ ----------------
+novyi_razdel(1)
+razdel("1 Водоснабжение здания")
+podrazdel("1.1 Исходные данные")
+abzac(f"Исходные данные приняты по заданию на курсовой проект и приведены в таблице {sled_tab()}.")
+tablica("Исходные данные (вариант 3)", ["№", "Показатель", "Значение"], [
+    (1, "Назначение здания / количество зданий / секций", "жилой дом / 1 / 2"),
+    (2, "Этажность", str(IZ["N_ET"])),
+    (3, "Высота этажа, м", F(IZ["H_ET"], 1)),
+    (4, "Заселённость, чел./кв.", F(REZ["U0"], 1)),
+    (5, "Высота подвала, м", F(IZ["H_PODVAL"], 1)),
+    (6, "Высота пола 1-го этажа над планировкой, м", F(IZ["DH_POL"], 1)),
+    (7, "Толщина перекрытий, м", F(IZ["T_PEREKR"], 1)),
+    (8, "Глубина промерзания грунта, м", F(IZ["H_PROMERZ"], 1)),
+    (9, "Гарантийный напор в наружной сети, м", F(IZ["H_GAR"], 0)),
+    (10, "Диаметр городского водопровода, мм", str(IZ["D_GOR_V"])),
+    (11, "Диаметр городской канализации, мм", str(IZ["D_GOR_K"])),
+    (12, "Отметка лотка в колодце городской канализации", "по месту"),
+], (12, 120, 43), levyi=(1,))
+abzac(f"По плану типового этажа в каждой секции три квартиры (по одному санузлу с ванной на квартиру), вторая "
+      f"секция зеркальна первой; между секциями — деформационный шов шириной 450 мм. Каждая квартира оборудована "
+      f"мойкой со смесителем, умывальником со смесителем, ванной со смесителем длиной 1500–1700 мм с душевой сеткой "
+      f"и унитазом со смывным бачком — 4 прибора. Абсолютная отметка чистого пола 1-го этажа (0,000) принята "
+      f"{F(REZ['Z0_ABS'], 2)} м. Генплан участка с городскими сетями задан произвольно (у торца здания по оси 1).")
+
+podrazdel("1.2 Выбор системы и схемы водоснабжения. Конструирование")
+abzac(f"Здание оборудуется хозяйственно-питьевым водопроводом холодной воды В1. Требуемый напор "
+      f"(подраздел 1.8) составляет {F(REZ['H_tr'], 2)} м и превышает гарантийный {F(IZ['H_GAR'], 0)} м, поэтому "
+      "принята схема с повысительной насосной установкой: ввод — водомерный узел — насосная установка — "
+      "магистраль — стояки — поквартирные разводки. Сеть тупиковая с нижней разводкой: при одном вводе и числе "
+      f"квартир {REZ['n_kv']} < 400 и отсутствии внутреннего пожаротушения второй ввод и кольцевание не требуются "
+      f"{L('sp30')}.")
+abzac(f"Ввод В1-1 прокладывается от колодца ГВК на городском водопроводе Ø{IZ['D_GOR_V']} мм к торцу здания "
+      f"по оси 1 через колодец ВК-1 (рисунок {sled_ris()}). Длина ввода до наружной стены — "
+      f"{F(GP['vvod']['L_gvk'], 1)} + {F(GP['vvod']['L_vk'], 1)} = {F(GP['vvod']['L_gvk'] + GP['vvod']['L_vk'], 1)} м, "
+      f"по подвалу до насосной ещё 2,0 м; глубина заложения — не менее глубины промерзания плюс 0,5 м "
+      f"{L('sp31')}: у стены ось ввода на отметке {F(GP['vvod']['z_stena'], 2)} "
+      f"({F(GP['vvod']['z_stena'] - REZ['Z0_ABS'], 3).replace(',', ',')}), у ГВК — {F(GP['vvod']['z_gvk'], 2)}.")
+ris(RIS_GP, "Генеральный план участка с сетями В1 и К1 (лист 7)", 160)
+abzac(f"В подвале секции 1 (рисунок {sled_ris()}) за вводом расположены водомерный узел с общедомовым счётчиком "
+      "и обводной линией с опломбированной задвижкой и помещение насосной с повысительной установкой "
+      f"Wilo {NAS['tip']} на фундаменте {FUNDAMENT}. От установки магистраль В1 прокладывается под потолком "
+      "подвала вдоль оси В по коридору на отметке −0,600 с уклоном 0,002 в сторону спускной арматуры; у "
+      "деформационного шва на ней "
+      "установлена гибкая вставка. От магистрали отходят подводки к стоякам.")
+ris(RIS_POD, "Фрагмент плана подвала: ввод В1-1, водомерный узел, насосная (лист 2, М 1:100)", 150)
+abzac(f"У каждой квартиры свой стояк, всего шесть стояков Ст.В1-1…Ст.В1-6 (по три в секции). На каждом этаже от "
+      "стояка выполнено ответвление в квартиру с поквартирным узлом: запорный кран, фильтр, квартирный счётчик "
+      f"DN15 и, на этажах {REZ['et_reg'][0]}–{REZ['et_reg'][-1]}, регулятор давления (подраздел 1.8). "
+      "Разводка к приборам — открытая, у стен санузла и кухни. На торцах здания предусмотрены два поливочных крана "
+      "Ø25 (1\") на отметке +0,500 с подъёмом от магистрали. Все трубопроводы, кроме подводок к приборам, "
+      "покрываются теплоизоляцией от образования конденсата.")
+
+podrazdel("1.3 Материал трубопроводов")
+abzac(f"Магистраль, стояки и поквартирные разводки В1 выполняются из стальных водогазопроводных оцинкованных труб "
+      f"по ГОСТ 3262-75 {L('gost3262')}: они прочны, выдерживают рабочее давление нижних этажей (до 0,7 МПа с учётом "
+      "повысительной установки), имеют малое температурное удлинение и не требуют частых опор; соединения — на "
+      "резьбе с фитингами из ковкого чугуна, у счётчика — муфты переходные 50×25. Ввод выполняется из напорных "
+      f"полиэтиленовых труб ПЭ100 SDR17 по ГОСТ 18599-2001 {L('gost18599')}: они не подвержены коррозии в грунте, "
+      "поставляются длинными отрезками и соединяются сваркой.")
+
+podrazdel("1.4 Определение расчётных расходов воды")
+abzac(f"Число водопотребителей определено по заселённости по формуле ({ssylka_f()}):")
+formula("U = U_{0}·n_{кв} = %s·%d = %s ≈ %d чел." % (F(REZ["U0"], 1), REZ["n_kv"], F(REZ["U0"] * REZ["n_kv"], 1),
+                                                    REZ["U"]),
+        ["U_{0} – заселённость, чел./кв.", "n_{кв} – число квартир в здании"])
+abzac(f"Число санитарно-технических приборов — по формуле ({ssylka_f()}):")
+formula("N = n_{пр}·n_{кв} = 4·%d = %d шт." % (REZ["n_kv"], REZ["N"]),
+        ["n_{пр} – число приборов в квартире"])
+abzac(f"Нормы расхода воды по табл. А.2 СП 30.13330.2020 {L('sp30')} для жилых домов с ваннами длиной от 1500 до "
+      f"1700 мм, оборудованными душами, приведены в таблице {sled_tab()}.")
+tablica("Нормы расхода воды (табл. А.2 СП 30.13330.2020)", ["Норма", "общая (tot)", "горячей (h)", "холодной (c)"], [
+    ("q_{u} – в сутки наибольшего водопотребления, л/сут на 1 жителя", F(NORMA["q_u_tot"], 0), F(NORMA["q_u_h"], 0),
+     F(NORMA["q_u_tot"] - NORMA["q_u_h"], 0)),
+    ("q_{hr,u} – в час наибольшего водопотребления, л/ч на 1 жителя", F(NORMA["q_hr_tot"], 1), F(NORMA["q_hr_h"], 1),
+     F(NORMA["q_hr_tot"] - NORMA["q_hr_h"], 1)),
+    ("q_{0} – секундный расход прибором, л/с", F(NORMA["q0_tot"], 1), F(NORMA["q0_c"], 1), F(NORMA["q0_c"], 1)),
+    ("q_{0,hr} – часовой расход прибором, л/ч", F(NORMA["q0hr_tot"], 0), F(NORMA["q0hr_c"], 0), F(NORMA["q0hr_c"], 0)),
+    ("T – время водопотребления, ч", "24", "24", "24"),
+], (100, 25, 25, 25), size=12)
+abzac(f"Суточные расходы воды определяются по формулам ({ssylka_f()}) и ({ssylka_f(1)}):")
+formula("Q_{сут}^{tot} = q_{u}^{tot}·U/1000 = %s·%d/1000 = %s м³/сут" % (F(NORMA["q_u_tot"], 0), REZ["U"],
+                                                                         F(RASX["Q_sut_tot"], 2)),
+        ["q_{u}^{tot} – норма общего расхода воды в сутки наибольшего водопотребления, л/сут"])
+formula("Q_{сут}^{c} = (q_{u}^{tot} − q_{u}^{h})·U/1000 = (%s − %s)·%d/1000 = %s м³/сут"
+        % (F(NORMA["q_u_tot"], 0), F(NORMA["q_u_h"], 0), REZ["U"], F(RASX["Q_sut_c"], 2)),
+        ["q_{u}^{h} – норма расхода горячей воды, л/сут"])
+abzac(f"Среднечасовые расходы — по формуле ({ssylka_f()}):")
+formula("q_{T}^{tot} = Q_{сут}^{tot}/T = %s/24 = %s м³/ч;   q_{T}^{c} = %s/24 = %s м³/ч"
+        % (F(RASX["Q_sut_tot"], 2), F(RASX["q_T_tot"], 3), F(RASX["Q_sut_c"], 2), F(RASX["q_T_c"], 3)),
+        ["T – период водопотребления, ч"])
+abzac(f"Вероятность действия санитарно-технических приборов (п. 5 СП 30.13330.2020) — по формулам ({ssylka_f()}) "
+      f"и ({ssylka_f(1)}):")
+P = REZ["P"]
+formula("P^{tot} = q_{hr,u}^{tot}·U/(3600·q_{0}^{tot}·N) = %s·%d/(3600·%s·%d) = %s"
+        % (F(NORMA["q_hr_tot"], 1), REZ["U"], F(NORMA["q0_tot"], 1), REZ["N"], F(P["tot"], 5)),
+        ["q_{hr,u}^{tot} – норма общего расхода воды потребителем в час наибольшего водопотребления, л/ч",
+         "q_{0}^{tot} – общий секундный расход воды прибором, л/с"])
+formula("P^{c} = (q_{hr,u}^{tot} − q_{hr,u}^{h})·U/(3600·q_{0}^{c}·N) = %s·%d/(3600·%s·%d) = %s"
+        % (F(NORMA["q_hr_tot"] - NORMA["q_hr_h"], 1), REZ["U"], F(NORMA["q0_c"], 1), REZ["N"], F(P["c"], 5)))
+(n1, a1), (n2, a2) = b2_sosedi(REZ["N"] * P["tot"])
+abzac(f"Коэффициент α = f(NP) принят по табл. Б.2 СП 30.13330.2020 (P < 0,1) линейной интерполяцией между "
+      f"соседними табличными значениями, например для NP^{{tot}} = {REZ['N']}·{F(P['tot'], 5)} = "
+      f"{F(REZ['N'] * P['tot'], 3)} — по формуле ({ssylka_f()}):")
+formula("α = α_{1} + (NP − NP_{1})·(α_{2} − α_{1})/(NP_{2} − NP_{1})",
+        ["NP_{1}, NP_{2}, α_{1}, α_{2} – соседние значения табл. Б.2"])
+abzac("α^{tot} = %s + (%s − %s)·(%s − %s)/(%s − %s) = %s."
+      % (F(a1, 3), F(REZ["N"] * P["tot"], 3), F(n1, 2), F(a2, 3), F(a1, 3), F(n2, 2), F(n1, 2), F(RASX["a_tot"], 3)),
+      indent=False, align=WD_ALIGN_PARAGRAPH.CENTER)
+abzac(f"Максимальные секундные расходы — по формулам ({ssylka_f()}) и ({ssylka_f(1)}):")
+formula("q^{tot} = 5·q_{0}^{tot}·α^{tot} = 5·%s·%s = %s л/с" % (F(NORMA["q0_tot"], 1), F(RASX["a_tot"], 3),
+                                                              F(RASX["q_tot"], 3)))
+formula("q^{c} = 5·q_{0}^{c}·α^{c} = 5·%s·%s = %s л/с   (NP^{c} = %s)"
+        % (F(NORMA["q0_c"], 1), F(RASX["a_c"], 3), F(RASX["q_c"], 3), F(REZ["N"] * P["c"], 3)))
+abzac(f"Часовая вероятность действия приборов и максимальные часовые расходы — по формулам ({ssylka_f()}) и "
+      f"({ssylka_f(1)}):")
+formula("P_{hr} = 3600·P·q_{0}/q_{0,hr}", ["q_{0,hr} – часовой расход воды прибором, л/ч"])
+abzac("P_{hr}^{tot} = 3600·%s·%s/%s = %s;   P_{hr}^{c} = 3600·%s·%s/%s = %s."
+      % (F(P["tot"], 5), F(NORMA["q0_tot"], 1), F(NORMA["q0hr_tot"], 0), F(P["hr_tot"], 5),
+         F(P["c"], 5), F(NORMA["q0_c"], 1), F(NORMA["q0hr_c"], 0), F(P["hr_c"], 5)),
+      indent=False, align=WD_ALIGN_PARAGRAPH.CENTER)
+formula("q_{hr} = 0,005·q_{0,hr}·α_{hr}", ["α_{hr} – коэффициент по табл. Б.2 при NP_{hr}"])
+abzac("q_{hr}^{tot} = 0,005·%s·%s = %s м³/ч   (NP_{hr}^{tot} = %s);"
+      % (F(NORMA["q0hr_tot"], 0), F(RASX["a_hr_tot"], 3), F(RASX["q_hr_tot"], 3), F(REZ["N"] * P["hr_tot"], 3)),
+      indent=False, align=WD_ALIGN_PARAGRAPH.CENTER)
+abzac("q_{hr}^{c} = 0,005·%s·%s = %s м³/ч   (NP_{hr}^{c} = %s)."
+      % (F(NORMA["q0hr_c"], 0), F(RASX["a_hr_c"], 3), F(RASX["q_hr_c"], 3), F(REZ["N"] * P["hr_c"], 3)),
+      indent=False, align=WD_ALIGN_PARAGRAPH.CENTER)
+abzac(f"Результаты сведены в таблицу {sled_tab()}.")
+tablica("Расчётные расходы воды", ["Расход", "общий (tot)", "холодной (c)"], [
+    ("Суточный Q_{сут}, м³/сут", F(RASX["Q_sut_tot"], 2), F(RASX["Q_sut_c"], 2)),
+    ("Среднечасовой q_{T}, м³/ч", F(RASX["q_T_tot"], 3), F(RASX["q_T_c"], 3)),
+    ("Вероятность действия P", F(P["tot"], 5), F(P["c"], 5)),
+    ("NP / α", "%s / %s" % (F(REZ["N"] * P["tot"], 3), F(RASX["a_tot"], 3)),
+     "%s / %s" % (F(REZ["N"] * P["c"], 3), F(RASX["a_c"], 3))),
+    ("Максимальный секундный q, л/с", F(RASX["q_tot"], 3), F(RASX["q_c"], 3)),
+    ("Часовая вероятность P_{hr}", F(P["hr_tot"], 5), F(P["hr_c"], 5)),
+    ("NP_{hr} / α_{hr}", "%s / %s" % (F(REZ["N"] * P["hr_tot"], 3), F(RASX["a_hr_tot"], 3)),
+     "%s / %s" % (F(REZ["N"] * P["hr_c"], 3), F(RASX["a_hr_c"], 3))),
+    ("Максимальный часовой q_{hr}, м³/ч", F(RASX["q_hr_tot"], 3), F(RASX["q_hr_c"], 3)),
+], (95, 40, 40))
+
+podrazdel("1.5 Гидравлический расчёт внутренней водопроводной сети")
+st_d = REZ["st_dikt"]
+pot = REZ["poteri_st"]
+abzac(f"Расчёт выполнен по диктующему направлению — от диктующего прибора до насосной установки "
+      f"(рисунок {sled_ris()}). Диктующий стояк — {st_d}: потери напора от насосной до верхнего прибора на нём "
+      f"наибольшие ({', '.join('%s – %s м' % (k.replace('Ст.', ''), F(v, 2)) for k, v in sorted(pot.items()))}). "
+      f"Диктующий прибор — душевая сетка над ванной квартиры 11-го этажа (высота 1,95 м над полом): для неё "
+      f"сумма отметки и потерь напора больше, чем для мойки.")
+ris(RIS_SH_V, "Аксонометрическая схема системы В1 с расчётными точками 1–20 диктующего направления (лист 3)", 165)
+abzac(f"Сеть разбита на участки между расчётными точками; на каждом участке по числу приборов N определены NP, α "
+      f"и расчётный расход q = 5·q_{{0}}^{{c}}·α. Диаметр подобран по экономичным скоростям (не более 1,5 м/с в "
+      f"подводках и 1,2 м/с в стояках и магистралях), удельные потери i — по таблицам Ф.А. и А.Ф. Шевелевых "
+      f"{L('shevelev')} для неновых стальных труб (формулы {ssylka_f()}, {NOM['sec']}.{NOM['f'] + 2}):")
+formula("i = 0,000912·v^{2}/d_{р}^{1,3}·(1 + 0,867/v)^{0,3}   при v < 1,2 м/с",
+        ["v – скорость воды, м/с", "d_{р} – расчётный внутренний диаметр трубы, м (внутренний диаметр − 1 мм)"])
+formula("i = 0,00107·v^{2}/d_{р}^{1,3}   при v ≥ 1,2 м/с")
+abzac(f"Потери напора на участке с учётом местных сопротивлений — по формуле ({ssylka_f()}):")
+formula("h = i·L·(1 + K_{l})",
+        ["L – длина участка, м", "K_{l} = 0,3 – коэффициент местных сопротивлений для сетей хозяйственно-питьевого "
+                                 "водопровода жилых зданий " + L("sp30")])
+rows = []
+for u in REZ["v1"]:
+    n = u["n"]
+    uch = "%d–%s" % (n, "НС" if n == len(REZ["v1"]) else str(n + 1))
+    im = u["imya"].replace("кв. разводка", "разводка").replace("стояк ", "").replace(", эт. ", " эт. ")
+    im = im.replace("магистраль x = ", "магистраль ").replace("напорная линия: установка - тройник магистрали",
+                                                              "напорная линия")
+    rows.append((uch, im, F(u["L"], 2), u["N"], F(u["NP"], 4), F(u["a"], 3), F(u["q"], 3), u["dn"], F(u["v"], 2),
+                 F(u["i"], 4), F(u["h"], 3)))
+rows.append(("", "Итого Σh", "", "", "", "", "", "", "", "", F(REZ["sum_h_v1"], 2)))
+abzac(f"Результаты расчёта приведены в таблице {sled_tab()}. Сумма потерь напора по диктующему направлению "
+      f"Σh = {F(REZ['sum_h_v1'], 2)} м.")
+tablica("Гидравлический расчёт сети В1 по диктующему направлению", [
+    "Уча-сток", "Наименование", "L, м", "N", "NP", "α", "q, л/с", "DN", "v, м/с", "i", "h, м"], rows,
+    (13, 46, 12, 9, 15, 13, 14, 10, 13, 15, 15), size=10, levyi=(1,), itog=True)
+
+podrazdel("1.6 Расчёт ввода")
+vv = REZ["vvod"]
+abzac(f"Ввод рассчитан на максимальный секундный расход холодной воды q^{{c}} = {F(RASX['q_c'], 3)} л/с (горячая "
+      f"вода в здании не готовится {L('metod')}). Принят ввод из ПЭ100 SDR17 Ø{vv['dn']} мм (внутренний диаметр "
+      f"55,4 мм): скорость v = {F(vv['v'], 2)} м/с, удельные потери i = {F(vv['i'], 4)} (по формуле "
+      f"Колбрука–Уайта для полиэтиленовых труб). Потери напора на вводе длиной L = {F(REZ['L_vvod'], 1)} м — по "
+      f"формуле ({ssylka_f(-1 + 0)}) с учётом K_{{l}}:")
+formula("h_{ввод} = i·L·(1 + K_{l}) = %s·%s·1,3 = %s м" % (F(vv["i"], 4), F(REZ["L_vvod"], 1), F(vv["h"], 2)))
+
+podrazdel("1.7 Подбор счётчиков воды")
+sd, sk = REZ["schetchik_dom"], REZ["sch_kv"]
+abzac(f"Общедомовой счётчик подбирается по среднечасовому расходу холодной воды q_{{T}}^{{c}} = "
+      f"{F(RASX['q_T_c'], 3)} м³/ч, который не должен превышать эксплуатационный расход счётчика (табл. 12.1 "
+      f"СП 30.13330.2020 {L('sp30')}), и проверяется по потерям напора при максимальном секундном расходе по "
+      f"формуле ({ssylka_f()}):")
+formula("h_{сч} = S·q^{2}", ["S – гидравлическое сопротивление счётчика, м/(л/с)^{2}",
+                             "q – расчётный секундный расход через счётчик, л/с"])
+abzac(f"Потери напора не должны превышать 5 м для крыльчатых счётчиков. Подбор приведён в таблице {sled_tab()}. "
+      "Принят крыльчатый счётчик холодной воды ВСХН-25 «Тепловодомер»; водомерный узел — с обводной линией.")
+tablica("Подбор счётчиков воды", ["Узел", "DN", "q_{экспл}, м³/ч", "S, м/(л/с)²", "q, л/с", "h_{сч}, м",
+                                  "Допустимо, м"], [
+    ("Общедомовой (ввод)", sd[0], F(sd[1], 1), F(sd[2], 2), F(RASX["q_c"], 3), F(sd[3], 2), F(sd[4], 1)),
+    ("Квартирный (4 прибора)", sk[0], F(sk[1], 1), F(sk[2], 1), F(REZ["q_kv"], 3), F(sk[3], 2), F(sk[4], 1)),
+], (45, 14, 25, 25, 20, 20, 26), size=12)
+
+podrazdel("1.8 Определение требуемого напора")
+abzac(f"Требуемый напор на вводе определяется по формуле ({ssylka_f()})")
+formula("H_{тр} = H_{geom} + Σh + H_{f} + Σh_{сч} + h_{ввод}",
+        ["H_{geom} – геометрическая высота подачи воды от верха трубы городского водопровода до диктующего прибора, м",
+         "H_{f} = 20 м – свободный напор у наиболее высоко расположенного прибора (п. 8.21 СП 30.13330.2020)",
+         "Σh_{сч} – потери напора в общедомовом и квартирном счётчиках, м"])
+abzac(f"Верх городской трубы находится на глубине H_{{пр}} + 0,5 = {F(IZ['H_PROMERZ'], 1)} + 0,5 = "
+      f"{F(IZ['H_PROMERZ'] + 0.5, 1)} м от поверхности земли у ГВК (отметка земли −0,500): z = "
+      f"{F(REZ['z_gor_verh'], 2)} м. Диктующий прибор — на отметке 10·{F(IZ['H_ET'], 1)} + 1,95 = "
+      f"{F(REZ['z_dikt'], 2)} м. Тогда H_{{geom}} = {F(REZ['z_dikt'], 2)} − ({F(REZ['z_gor_verh'], 2)}) = "
+      f"{F(REZ['H_geom'], 2)} м и по формуле ({ssylka_f(-1)})")
+formula("H_{тр} = %s + %s + 20,0 + %s + %s = %s м" % (F(REZ["H_geom"], 2), F(REZ["sum_h_v1"], 2), F(REZ["H_vod"], 2),
+                                                     F(vv["h"], 2), F(REZ["H_tr"], 2)))
+abzac(f"Так как H_{{тр}} = {F(REZ['H_tr'], 2)} м > H_{{гар}} = {F(IZ['H_GAR'], 0)} м, необходима повысительная "
+      f"насосная установка. Гидростатический напор у нижних приборов при её работе достигает "
+      f"{F(REZ['H_st_niz'], 1)} м > 45 м, поэтому на поквартирных вводах этажей {REZ['et_reg'][0]}–"
+      f"{REZ['et_reg'][-1]} устанавливаются регуляторы давления (п. 8.22 СП 30.13330.2020).")
+
+podrazdel("1.9 Подбор повысительной насосной установки")
+abzac(f"Напор, развиваемый установкой, определяется с учётом гарантийного напора в наружной сети "
+      f"{L('metod')} по формуле ({ssylka_f()}):")
+formula("H_{р} = H_{тр} − H_{гар} = %s − %s = %s м" % (F(REZ["H_tr"], 2), F(IZ["H_GAR"], 0), F(REZ["H_nas"], 2)),
+        ["H_{гар} – гарантийный напор в наружной водопроводной сети, м"])
+Q = RASX["q_c"] * 3.6
+N_g = 1000 * 9.81 * Q / 3600 * REZ["H_nas"] / 1000
+abzac(f"Расчётная подача — максимальный секундный расход холодной воды Q = {F(RASX['q_c'], 3)} л/с = {F(Q, 2)} м³/ч "
+      f"(установка питает только систему В1). Полезная мощность — по формуле ({ssylka_f()}):")
+formula("N_{п} = ρ·g·Q·H_{р} = 1000·9,81·%s·%s/1000 = %s кВт" % (F(Q / 3600, 5), F(REZ["H_nas"], 2), F(N_g, 2)),
+        ["ρ = 1000 кг/м³ – плотность воды", "g = 9,81 м/с² – ускорение свободного падения", "Q – подача, м³/с"])
+kand = []
+for line in io.open(os.path.join(KURS, "PODBOR_NASOSA.md"), encoding="utf-8"):
+    m = re.match(r"\| (MVL \d+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \|", line)
+    if m:
+        kand.append(tuple(c.strip().replace("**", "") for c in m.groups()))
+abzac(f"Насос подбирается по каталогу производителя на расчётные параметры {L('metod')} {L('wilo')}. "
+      f"Сравнение типоразмеров серии Wilo MVL 4 (рабочая зона 1,5–7 м³/ч) приведено в таблице {sled_tab()}.")
+tablica("Подбор насоса (Q = %s м³/ч, H_{р} = %s м)" % (F(Q, 2), F(REZ["H_nas"], 2)),
+        ["Насос", "H при 50 Гц, м", "Запас, м", "В рабочей зоне", "КПД, %", "Мотор, кВт", "Вывод"],
+        [(k[0], k[1], k[2], k[3], k[4], k[6], k[7]) for k in kand], (27, 25, 21, 25, 18, 22, 37), size=12)
+abzac(f"Принята установка повышения давления Wilo {NAS['tip']} с частотным регулированием: два насоса "
+      f"{NAS['nasos']} (один рабочий, один резервный), мотор {F(NAS['motor'], 1)} кВт. При Q = {F(Q, 2)} м³/ч насос "
+      f"развивает {F(NAS['H50'], 1)} м ≥ H_{{р}} = {F(REZ['H_nas'], 2)} м; частотный преобразователь поддерживает "
+      f"постоянное давление на выходе. Установка размещается в насосной в подвале на фундаменте {FUNDAMENT}, "
+      "на напорной линии — гибкие вставки и обратные клапаны.")
+
+# ---------------- 2. ВОДООТВЕДЕНИЕ ----------------
+novyi_razdel(2)
+razdel("2 Водоотведение здания")
+podrazdel("2.1 Выбор системы и схемы водоотведения. Конструирование")
+abzac("Здание оборудуется системой бытовой канализации К1 с отводом стоков самотёком в дворовую сеть и далее в "
+      f"городской коллектор Ø{IZ['D_GOR_K']} мм. Стояки — вентилируемые: каждый стояк выводится выше кровли на "
+      "0,2 м (п. 18.18 СП 30.13330.2020) с тем же диаметром, что и рабочая часть.")
+abzac(f"У каждой квартиры свой стояк, всего шесть стояков Ст.К1-1…Ст.К1-6 Ø110 мм (рисунок {sled_ris()}). "
+      "Приборы присоединяются поэтажными отводами Ø50 мм (унитаз — Ø110 мм) косыми тройниками под углом 45° с "
+      "уклоном 0,02–0,03 к стояку. Ревизии на стояках установлены на высоте 1,0 м от пола на 1, 4, 7, 10 и 11-м "
+      "этажах. В подвале стояки переходят в сборные трубопроводы двумя отводами 45°; в начале каждого участка — "
+      "прочистка. Сборные трубопроводы каждой секции объединяются в выпуск (К1-1, К1-2) Ø100 мм, выходящий "
+      "через наружную стену с лотком на отметке −2,000 в колодец дворовой сети.")
+ris(RIS_SH_K, "Аксонометрическая схема системы К1 (лист 6)", 165)
+abzac("Дворовая сеть прокладывается вдоль фасада по оси Д в 5 м от стены: колодцы КК-1 и КК-3 у выпусков, "
+      "промежуточный КК-2 у деформационного шва (расстояние между колодцами не более 35 м при d = 150 мм), "
+      "контрольный колодец ККК в 1,2 м от красной линии внутри участка и колодец ГКК на городском коллекторе "
+      "(рисунок 1.1).")
+
+podrazdel("2.2 Материал трубопроводов")
+abzac(f"Стояки и поэтажные отводы выполняются из полипропиленовых канализационных труб по ГОСТ 32414-2013 "
+      f"{L('gost32414')}: они лёгкие, гладкие, коррозионностойкие и монтируются на раструбах с уплотнительными "
+      "кольцами. Сборные трубопроводы в подвале и выпуски — из чугунных безраструбных труб SML DN100 на хомутах: "
+      "негорючие, прочные и бесшумные. Дворовая сеть — из полиэтиленовых гофрированных труб Ø160 мм кольцевой "
+      f"жёсткости SN8 по ГОСТ Р 54475-2011 {L('gost54475')}, на песчаном основании.")
+
+podrazdel("2.3 Расчёт канализационных стояков")
+abzac(f"Расчётный расход сточных вод в стояке (при q^{{tot}} ≤ 8 л/с) определяется по формуле ({ssylka_f()})")
+formula("q^{s} = q^{tot} + q_{0}^{s}",
+        ["q^{tot} – общий максимальный секундный расход воды приборами, присоединёнными к стояку, л/с",
+         "q_{0}^{s} = 1,6 л/с – расход стоков от прибора с наибольшим водоотведением (унитаз со смывным бачком, "
+         "табл. А.1 СП 30.13330.2020)"])
+k1s = REZ["k1_stoyaki"][0]
+abzac(f"На каждый стояк приходится N = 4·11 = {k1s['N']} прибора; NP = {F(k1s['NP'], 4)}, α = {F(k1s['a'], 3)}, "
+      f"q^{{tot}} = 5·0,3·{F(k1s['a'], 3)} = {F(k1s['q_tot'], 3)} л/с, q^{{s}} = {F(k1s['q_s'], 3)} л/с. Пропускная "
+      f"способность вентилируемого полипропиленового стояка Ø110 мм с поэтажными отводами Ø110 мм под углом 45° "
+      f"по прил. К СП 30.13330.2020 — {F(k1s['q_dop'], 2)} л/с, то есть обеспечена (таблица {sled_tab()}).")
+tablica("Пропускная способность стояков К1", ["Стояк", "N", "NP", "α", "q^{tot}, л/с", "q^{s}, л/с",
+                                              "Допустимо, л/с", "Вывод"],
+        [(s_["st"], s_["N"], F(s_["NP"], 4), F(s_["a"], 3), F(s_["q_tot"], 3), F(s_["q_s"], 3), F(s_["q_dop"], 2),
+          "обеспечена" if s_["ok"] else "нет") for s_ in REZ["k1_stoyaki"]], (22, 12, 20, 18, 22, 22, 26, 33),
+        size=12)
+
+podrazdel("2.4 Расчёт горизонтальных трубопроводов, выпусков и дворовой сети")
+abzac(f"Расчётный расход сточных вод на горизонтальных участках определяется по формуле ({ssylka_f()})")
+formula("q^{sL} = q_{hr}^{tot}/3,6 + K_{s}·q_{0}^{s1}",
+        ["q_{hr}^{tot} = 0,005·q_{0,hr}^{tot}·α_{hr} – максимальный часовой общий расход воды приборами участка, м³/ч",
+         "K_{s} – коэффициент по табл. 5.1 СП 30.13330.2020 в зависимости от числа приборов и длины участка",
+         "q_{0}^{s1} = 1,1 л/с – расход стоков от прибора с наибольшей ёмкостью (ванна)"])
+abzac(f"Диаметр и уклон подобраны по таблицам А.А. и Н.А. Лукиных {L('lukinyh')} (формула Н.Н. Павловского, "
+      f"n = 0,014) из условия незаиляемости ({ssylka_f()})")
+formula("V·(h/d)^{0,5} ≥ K",
+        ["V – скорость, м/с (не менее 0,7 м/с)", "h/d – наполнение (не менее 0,3)",
+         "K = 0,6 – для чугунных труб, K = 0,5 – для пластмассовых"])
+abzac(f"При малых расходах условие выполнить нельзя; такие участки безрасчётные — уклон принимается не менее 1/d "
+      f"{L('sp30')}: 0,02 для d = 100 мм внутри здания и 0,008 для дворовой сети d = 150 мм {L('sp32')}. Результаты — "
+      f"в таблице {sled_tab()}.")
+rows = []
+for u in REZ["k1"]:
+    nm = u["imya"].replace(" (чугун SML)", "").replace(" (ПЭ гофр. Ø160)", "").replace("сборный: ", "сборный ")
+    nm = nm.replace("ст. кв. ", "ст.").replace(" - ", "–")
+    rows.append((nm, F(u["L"], 2), u["N"], F(u["a"], 3), F(u["q_hr"], 3), F(u["Ks"], 2), F(u["q"], 2), u["d"],
+                 F(u["i"], 3), F(u["hd"], 2), F(u["v"], 2), F(u["K"], 2)))
+vse_bezr = all("безрасч" in u["tip"] for u in REZ["k1"])
+tablica("Расчёт горизонтальных участков К1 и дворовой сети", [
+    "Участок", "L, м", "N", "α_{hr}", "q_{hr}, м³/ч", "K_{s}", "q^{sL}, л/с", "d, мм", "i", "h/d", "V, м/с",
+    "V·√(h/d)"], rows, (41, 12, 9, 13, 15, 11, 14, 12, 13, 11, 12, 12), size=9, levyi=(0,))
+if vse_bezr:
+    abzac("Все участки безрасчётные: при малых расходах условие незаиляемости выполнить нельзя (V < 0,7 м/с), "
+          "уклон принят не менее 1/d.")
+
+podrazdel("2.5 Отметки лотков и глубина заложения дворовой сети")
+abzac("Наименьшая глубина заложения лотка труб d ≤ 500 мм принимается на 0,3 м меньше глубины промерзания, но не "
+      f"менее 0,7 м до верха трубы {L('sp32')}, формула ({ssylka_f()}):")
+formula("H_{0} = max(H_{пр} − 0,3; 0,7 + d) = max(%s − 0,3; 0,7 + 0,15) = %s м"
+        % (F(IZ["H_PROMERZ"], 1), F(REZ["min_glub"], 2)))
+abzac("Отметки лотков вычислены от выпуска вниз по течению: z_{кон} = z_{нач} − i·L; трубы разных диаметров "
+      f"соединяются «шелыга в шелыгу». Результаты — в таблице {sled_tab()}.")
+lot, zem, gl = REZ["lotok"], REZ["zeml"], REZ["glub"]
+tablica("Отметки дворовой сети К1 (абсолютные), м", ["Точка", "Земля", "Лоток", "Глубина лотка"], [
+    ("Выпуск у стены (−2,000)", "—", F(lot["выпуск у стены"], 2), "—")] + [
+    (k, F(zem[k], 2), F(lot[k], 2), F(gl[k], 2)) for k in ("КК-1", "КК-2", "КК-3", "ККК", "ГКК")],
+    (60, 35, 35, 45), size=12)
+abzac(f"Наименьшая глубина {F(min(gl.values()), 2)} м ≥ H_{{0}} = {F(REZ['min_glub'], 2)} м во всех колодцах. Лоток "
+      f"городского коллектора Ø{IZ['D_GOR_K']} мм в ГКК («по месту») принят {F(REZ['Z_GKK_GOR'], 2)}, шелыга "
+      f"{F(REZ['Z_GKK_GOR'] + 0.4, 2)}; дворовая труба входит выше шелыги коллектора на {F(REZ['perepad_gkk'], 2)} м. "
+      "Продольный профиль дворовой сети вычерчивается на листе 7 (М_{г} 1:500, М_{в} 1:100).")
+
+# ---------------- ЗАКЛЮЧЕНИЕ ----------------
+strukt("Заключение")
+abzac(f"В курсовом проекте разработаны системы холодного водопровода В1 и бытовой канализации К1 "
+      f"{IZ['N_ET']}-этажного двухсекционного жилого дома на {REZ['n_kv']} квартир ({REZ['U']} жителей, "
+      f"{REZ['N']} санитарно-технических прибора).")
+for s in (
+        f"Расчётные расходы воды: суточный общий {F(RASX['Q_sut_tot'], 2)} м³/сут, холодной "
+        f"{F(RASX['Q_sut_c'], 2)} м³/сут; максимальный секундный общий {F(RASX['q_tot'], 3)} л/с, холодной "
+        f"{F(RASX['q_c'], 3)} л/с; максимальный часовой общий {F(RASX['q_hr_tot'], 3)} м³/ч.",
+        f"Сеть В1 — тупиковая с нижней разводкой, из стальных оцинкованных труб; потери напора по диктующему "
+        f"направлению {F(REZ['sum_h_v1'], 2)} м. Ввод — ПЭ100 Ø{vv['dn']} мм, общедомовой счётчик ВСХН-25 "
+        f"(h = {F(sd[3], 2)} м ≤ 5 м).",
+        f"Требуемый напор {F(REZ['H_tr'], 2)} м больше гарантийного {F(IZ['H_GAR'], 0)} м; принята установка "
+        f"Wilo {NAS['tip']} (Q = {F(Q, 2)} м³/ч, H_{{р}} = {F(REZ['H_nas'], 2)} м), на этажах "
+        f"{REZ['et_reg'][0]}–{REZ['et_reg'][-1]} — регуляторы давления.",
+        f"Система К1 — шесть вентилируемых стояков Ø110 мм из полипропилена (q^{{s}} = {F(k1s['q_s'], 2)} л/с при "
+        f"допустимых {F(k1s['q_dop'], 2)} л/с), выпуски и сборные трубопроводы из чугуна SML DN100 с уклоном 0,02, "
+        f"дворовая сеть из гофрированных ПЭ-труб Ø160 мм с уклоном 0,008, глубина колодцев "
+        f"{F(min(gl.values()), 2)}–{F(max(gl.values()), 2)} м."):
+    abzac("– " + s)
+
+# ---------------- БИБЛИОГРАФИЧЕСКИЙ СПИСОК ----------------
+strukt("Библиографический список")
+neispolz = [k for k in LIT if k not in PORYADOK]
+assert not neispolz, ("источники без ссылок в тексте", neispolz)
+for k, key in enumerate(PORYADOK, 1):
+    abzac("%d. %s" % (k, LIT[key]))
+norm = sum(1 for k in PORYADOK if k.startswith(("sp", "gost")))
+print("источников:", len(PORYADOK), "| нормативных:", norm, "(%.0f %%)" % (100 * norm / len(PORYADOK)))
+
+# задание с заполненными ФИО и группой
+zd = Document(os.path.join(ISHODNYE, "Вариант 3.docx"))
+pars = zd.paragraphs
+
+
+def zapolnit(p, nachalo, znach):
+    assert p.text.startswith(nachalo), p.text
+    r = [r for r in p.runs if "___" in r.text][-1]
+    r.text = re.sub(r"_+", znach, r.text, count=1)
+    r.underline = True
+
+
+zapolnit(pars[7], "ФИО обучающегося", FIO)
+zapolnit(pars[8], "Курс, группа", f"{KURS_N} курс, {GRUPPA}")
+r = pars[26].runs[-1]
+assert pars[26].text.startswith("Обучающийся") and "/" in r.text, pars[26].text
+r.text = re.sub(r"/\s+/", "/ %s /" % FIO_KR, r.text)
+zd.save(os.path.join(SB, "zadanie.docx"))
+
+# вставить задание на место метки [[ZADANIE]] (вставка средствами Word — InsertFile — подвешивала сохранение)
+import copy  # noqa: E402
+
+metka = [p for p in doc.paragraphs if p.text == "[[ZADANIE]]"][0]._p
+st_osn = doc.styles.element
+est_id = {s.get(qn("w:styleId")) for s in st_osn.findall(qn("w:style"))}
+st_zd = {s.get(qn("w:styleId")): s for s in zd.styles.element.findall(qn("w:style"))}
+DEF_P = next(s.get(qn("w:styleId")) for s in st_zd.values()
+             if s.get(qn("w:type")) == "paragraph" and s.get(qn("w:default")) == "1")
+
+
+def stil_zadaniya(sid):
+    """Копия стиля задания под своим именем («Z…»): текст задания сохраняет свои 12 пт и одинарный интервал,
+    а не берёт стили записки (14 пт, интервал 1,5) с тем же идентификатором."""
+    nid = "Z" + sid
+    if nid in est_id:
+        return nid
+    el = copy.deepcopy(st_zd[sid])
+    el.set(qn("w:styleId"), nid)
+    if el.get(qn("w:default")) is not None:
+        del el.attrib[qn("w:default")]
+    nm_ = el.find(qn("w:name"))
+    nm_.set(qn("w:val"), "Задание: " + nm_.get(qn("w:val")))
+    for tag in ("w:link", "w:next"):
+        for x in el.findall(qn(tag)):
+            el.remove(x)
+    est_id.add(nid)
+    b = el.find(qn("w:basedOn"))
+    if b is not None and b.get(qn("w:val")) in st_zd:
+        b.set(qn("w:val"), stil_zadaniya(b.get(qn("w:val"))))
+    st_osn.append(el)
+    return nid
+
+
+for el in list(zd.element.body):
+    if el.tag == qn("w:sectPr"):
+        continue
+    nov = copy.deepcopy(el)
+    for tag in ("w:pStyle", "w:tblStyle", "w:rStyle"):
+        for s_ in nov.iter(qn(tag)):
+            if s_.get(qn("w:val")) in st_zd:
+                s_.set(qn("w:val"), stil_zadaniya(s_.get(qn("w:val"))))
+    # абзацы без стиля — «Обычный» задания
+    for p_ in ([nov] if nov.tag == qn("w:p") else []) + list(nov.iter(qn("w:p"))):
+        ppr = p_.get_or_add_pPr()
+        if ppr.find(qn("w:pStyle")) is None:
+            ps_ = OxmlElement("w:pStyle")
+            ps_.set(qn("w:val"), stil_zadaniya(DEF_P))
+            ppr.insert(0, ps_)
+    metka.addprevious(nov)
+metka.getparent().remove(metka)
+
+put_str = os.path.join(SB, "stranicy.json")
+STR = json.load(open(put_str, encoding="utf-8")) if os.path.exists(put_str) else {}
+for lev, t_ in ZAG:
+    q = doc.add_paragraph()
+    q.paragraph_format.first_line_indent = Mm(0)
+    q.paragraph_format.left_indent = Mm(0 if lev == 1 else 6)
+    q.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    q.paragraph_format.tab_stops.add_tab_stop(Mm(TEXT_W), WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
+    tekst(q, t_ + "	" + str(STR.get(t_, "")))
+    METKA_OGL._p.addprevious(q._p)
+METKA_OGL._p.getparent().remove(METKA_OGL._p)
+json.dump([t_ for _, t_ in ZAG], open(os.path.join(SB, "zagolovki.json"), "w", encoding="utf-8"), ensure_ascii=False)
+
+OSNOVA = os.path.join(SB, "osnova.docx")
+doc.save(OSNOVA)
+print(OSNOVA)
