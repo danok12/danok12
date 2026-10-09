@@ -25,7 +25,11 @@ $out
 if (-not $ok) {
     'HUNG'
     Stop-Job $job
-    $ids = ($out | Where-Object { $_ -like 'pid *' }) -replace 'pid ', ''
-    foreach ($i in ($ids -split ',')) { if ($i) { Stop-Process -Id ([int]$i) -Force -ErrorAction SilentlyContinue } }
+}
+# the hidden Word started here sometimes stays alive after Quit: stop it (only the process this script started)
+Start-Sleep -Seconds 2
+$ids = ($out | Where-Object { $_ -like 'pid *' }) -replace 'pid ', ''
+foreach ($i in ($ids -split ',')) {
+    if ($i) { Get-Process -Id ([int]$i) -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -eq '' } | Stop-Process -Force }
 }
 Remove-Job $job -Force
