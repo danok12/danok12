@@ -85,6 +85,7 @@ SHIFR = u'НИУ МГСУ 08.03.01*-КП-2026'
 TEMA = u'Системы холодного водоснабжения и водоотведения здания'
 ORG = u'НИУ МГСУ ИИЭСМ'
 KAFEDRA = u'Кафедра «Водоснабжение и водоотведение»'
+RAZRAB = u'Буев'                     # Буев Даниил Романович, гр. ИГЭС 3-8 — графа «Разраб.» основной надписи
 
 
 def ustanovit(e, imya, znach, log):
@@ -345,7 +346,12 @@ def main(log):
             ustanovit(sh, u'ADSK_Штамп_Количество листов', LISTOV_VSEGO, log)
             ustanovit(rama, u'Количество листов', LISTOV_VSEGO, log)
             ustanovit(sh, u'ADSK_Штамп_1 должность', u'Разраб.', log)
+            ustanovit(sh, u'ADSK_Штамп_1 фамилия', RAZRAB, log)
             ustanovit(sh, u'ADSK_Штамп_2 должность', u'Пров.', log)
+            if nom == LISTY[0][0]:
+                log(u'параметры штампа листа:', u'; '.join(sorted(
+                    u'%s=%s' % (p.Definition.Name, p.AsString() or u'') for p in sh.Parameters
+                    if u'Штамп' in p.Definition.Name and p.StorageType == DB.StorageType.String)))
             doc.Regenerate()
             bb = rama.get_BoundingBox(sh)
             w, h = bb.Max.X - bb.Min.X, bb.Max.Y - bb.Min.Y
