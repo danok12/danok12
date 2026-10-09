@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Листы графической части (по образцу преподавателя): листы А3 с основной надписью, по одному виду на лист,
-с заголовком вида и масштабом над видом и примечаниями; последний лист — экспликация помещений.
+"""Листы графической части (по образцу преподавателя): листы А2/А1 с основной надписью, по одному виду на лист,
+с заголовком вида и масштабом над видом и примечаниями (лист 7 — генплан, AutoCAD).
 Повторный запуск пересоздаёт листы с этими номерами. В конце листы выгружаются в PNG и векторный PDF
 (revit/log/listy, revit/log/listy_pdf). revit/09_rezhim.txt = «vygruzka» — только выгрузка, без пересборки листов.
 """
@@ -32,7 +32,7 @@ PRIM_K1 = u'''Примечания:
 5. Привязки и отметки трубопроводов уточнять по месту.'''
 
 # каждый вид на своём листе, М 1:100 как в образце: номер, имя, вид, примечания. Формат (ГОСТ 2.301) — наименьший,
-# в который вид входит: план 46 м (~550 x 260 мм) — А2, схема (~530 x 530 мм) — А1, таблицы экспликации — А3
+# в который вид входит: план 46 м (~550 x 260 мм) — А2, схема (~530 x 530 мм) — А1
 LISTY = [
     (u'1', u'План типового этажа. Система В1', u'В1_План типового этажа', PRIM_V1),
     (u'2', u'План подвала. Система В1', u'В1_План подвала', PRIM_V1),
@@ -40,14 +40,12 @@ LISTY = [
     (u'4', u'План типового этажа. Система К1', u'К1_План типового этажа', PRIM_K1),
     (u'5', u'План подвала. Система К1', u'К1_План подвала', PRIM_K1),
     (u'6', u'Аксонометрическая схема. Система К1', u'К1_Аксонометрическая схема', PRIM_K1),
-    (u'7', u'Экспликация помещений', None, None),
 ]
-FORMAT_PLANA, FORMAT_SHEMY, FORMAT_TABLIC = 2, 1, 3      # «Формат А» основной надписи ADSK
-LISTOV_VSEGO = len(LISTY) + 1          # лист 8 — генплан (AutoCAD, kursovoy-viv/genplan)
-EKSPL = [  # имя таблицы, фильтр номера (от, до) — секция 1; секция 2 зеркальная, номера групп 05-08 / 00.02
-    (u'Экспликация помещений типового этажа (секция 1)', u'02.01', u'02.05'),
-    (u'Экспликация помещений подвала (секция 1)', u'00.01', u'00.02'),
-]
+FORMAT_PLANA, FORMAT_SHEMY = 2, 1      # «Формат А» основной надписи ADSK
+LISTOV_VSEGO = len(LISTY) + 1          # лист 7 — генплан (AutoCAD, kursovoy-viv/genplan)
+# лист 7 «Экспликация помещений» убран по просьбе пользователя (08.10.2026): лист удаляется как лишний номер,
+# его таблицы — по именам
+UDALIT_TABLICY = [u'Экспликация помещений типового этажа (секция 1)', u'Экспликация помещений подвала (секция 1)']
 
 
 class Zagruzka(DB.IFamilyLoadOptions):
@@ -80,33 +78,6 @@ def bez_logotipa(tb, log):
             fd.Close(False)
         except Exception:
             pass
-
-
-def ekspl(nm, ot, do, log):
-    """Спецификация помещений: номер, наименование, площадь; фильтр по номеру [ot, do)."""
-    for v in DB.FilteredElementCollector(doc).OfClass(DB.ViewSchedule):
-        if v.Name == nm:
-            doc.Delete(v.Id)
-            break
-    vs = DB.ViewSchedule.CreateSchedule(doc, DB.ElementId(DB.BuiltInCategory.OST_Rooms))
-    vs.Name = nm
-    d = vs.Definition
-    polya = {}
-    for sf in d.GetSchedulableFields():
-        polya[sf.GetName(doc)] = sf
-    out = {}
-    for imya, zag in ((u'Номер', u'Номер'), (u'Имя', u'Наименование'), (u'Площадь', u'Площадь, м²')):
-        if imya in polya:
-            f = d.AddField(polya[imya])
-            f.ColumnHeading = zag
-            out[imya] = f
-        else:
-            log(u'  нет поля', imya)
-    fn = out[u'Номер']
-    d.AddFilter(DB.ScheduleFilter(fn.FieldId, DB.ScheduleFilterType.GreaterThanOrEqual, ot))
-    d.AddFilter(DB.ScheduleFilter(fn.FieldId, DB.ScheduleFilterType.LessThan, do))
-    d.AddSortGroupField(DB.ScheduleSortGroupField(fn.FieldId))
-    return vs
 
 
 
@@ -344,9 +315,15 @@ def main(log):
         lishnie = [s.Id for n, s in est.items() if n.isdigit() and n not in nomera and int(n) < 10]
         for sid in lishnie:
             try:
+                nm_ = doc.GetElement(sid).SheetNumber
                 doc.Delete(sid)
-            except Exception:
-                pass
+                log(u'удалён лишний лист', nm_)
+            except Exception as ex:
+                log(u'лишний лист не удалён:', ex)
+        for vs in list(DB.FilteredElementCollector(doc).OfClass(DB.ViewSchedule)):
+            if vs.Name in UDALIT_TABLICY:
+                log(u'удалена таблица', vs.Name)
+                doc.Delete(vs.Id)
         for nom, imya, vn, prim in LISTY:
             sh = est.get(nom)
             if sh is None:
@@ -360,9 +337,8 @@ def main(log):
             doc.Regenerate()
             rama = [e for e in DB.FilteredElementCollector(doc, sh.Id).OfCategory(
                 DB.BuiltInCategory.OST_TitleBlocks)][0]
-            v_ = vid_po_imeni(vn) if vn else None
-            ustanovit(rama, u'Формат А', FORMAT_TABLIC if v_ is None else
-                      (FORMAT_SHEMY if isinstance(v_, DB.View3D) else FORMAT_PLANA), log)
+            ustanovit(rama, u'Формат А', FORMAT_SHEMY if isinstance(vid_po_imeni(vn), DB.View3D) else FORMAT_PLANA,
+                      log)
             ustanovit(sh, u'ADSK_Штамп_Наименование объекта', u'Жилой дом. Вариант 3', log)
             ustanovit(sh, u'ADSK_Штамп Раздел проекта', u'ВК', log)
             ustanovit(rama, u'Организация Заказчик', 0, log)
@@ -373,17 +349,6 @@ def main(log):
             doc.Regenerate()
             bb = rama.get_BoundingBox(sh)
             w, h = bb.Max.X - bb.Min.X, bb.Max.Y - bb.Min.Y
-            if vn is None:                       # лист экспликации: таблицы помещений
-                for k_, (nm_, ot, do) in enumerate(EKSPL):     # две таблицы рядом, сверху
-                    vs = ekspl(nm_, ot, do, log)
-                    doc.Regenerate()
-                    ssi = DB.ScheduleSheetInstance.Create(doc, sh.Id, vs.Id,
-                                                          DB.XYZ(bb.Min.X + (30 + 190 * k_) * MM, bb.Max.Y - 12 * MM, 0))
-                    doc.Regenerate()
-                    b2 = ssi.get_BoundingBox(sh)
-                    log(u'лист', nom, u'| таблица', nm_, u'| %d x %d мм' % (round((b2.Max.X - b2.Min.X) / MM),
-                                                                         round((b2.Max.Y - b2.Min.Y) / MM)))
-                continue
             v = vid_po_imeni(vn)
             if v is None:
                 log(u'  НЕТ вида', vn)
