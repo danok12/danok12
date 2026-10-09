@@ -38,16 +38,24 @@ X0 = SQ_CENTER[0] - Fr(BX, 2)    # левая ось здания
 Y0 = SQ_CENTER[1] - Fr(BY, 2)    # нижняя ось здания
 CENTER = SQ_CENTER
 
-# пандус (принято: однополосный въезд автосамосвалов)
-B_PAN = Fr(3)        # ширина, м (методичка: 3 м - односторонний проезд)
-I_PAN = Fr("0.1")    # уклон 0,10-0,15 при вывозе самосвалами
-N_PAN = 1 / I_PAN
+# съезд (пандус): один, с двусторонним движением - ширина 6 м и по методичке (с. 14: 6 м -
+# двусторонний проезд), и по лекции (один съезд - 6 м; два съезда - по 3,5-4 м)
+B_PAN = Fr(6)        # ширина съезда bп, м
+I_PAN = Fr("0.1")    # уклон: методичка 0,10-0,15 при вывозе самосвалами; лекция m' = 8...15
+N_PAN = 1 / I_PAN    # n = m' = 1 / i = 10
+# со стороны съезда - место для крана на дне: c = 1 + 2r + 1 (лекция, r - радиус поворотной
+# платформы крана 2,5 м) от фундаментной плиты до низа откоса; с остальных сторон - по схеме задания
+R_KRAN = Fr("2.5")
+C_PAN = 1 + 2 * R_KRAN + 1                      # 7 м
+D_PAN = D_FP + C_PAN                            # ось -> низ откоса со стороны съезда = 7,7
 
 
-def contour(d):
-    """Контур, смещённый от осей здания наружу на d (координаты площадки, м)."""
-    pts = [(-d, -d), (BX - CUT_X + d, -d), (BX - CUT_X + d, CUT_Y - d), (BX + d, CUT_Y - d),
-           (BX + d, BY + d), (-d, BY + d)]
+def contour(d, de=None):
+    """Контур, смещённый от осей здания наружу на d, правая сторона (со съездом) - на de
+    (координаты площадки, м)."""
+    de = d if de is None else de
+    pts = [(-d, -d), (BX - CUT_X + d, -d), (BX - CUT_X + d, CUT_Y - d), (BX + de, CUT_Y - d),
+           (BX + de, BY + d), (-d, BY + d)]
     return [(X0 + x, Y0 + y) for x, y in pts]
 
 
@@ -84,7 +92,7 @@ def pit(P):
     hf = P["h"]
     k = {}
     # расположение относительно ЛНР: предварительно - по глубине задания
-    k["VERH0"] = contour(D_NIZ + NK * slope_m(NK))
+    k["VERH0"] = contour(D_NIZ + NK * slope_m(NK), D_PAN + NK * slope_m(NK))
     k["H_CORNERS"] = [h_work(hf, *p) for p in k["VERH0"]]
     k["H_MEAN"] = sum(k["H_CORNERS"]) / len(k["H_CORNERS"])
     k["CROSSED"] = min(k["H_CORNERS"]) < 0 < max(k["H_CORNERS"])     # ЛНР пересекает котлован
@@ -94,16 +102,17 @@ def pit(P):
     k["M"] = M = slope_m(HK)
     k["L_OTK"] = L_OTK = HK * M                                         # заложение откоса l = hк·m
     k["OSI"], k["ST"], k["FP"], k["BP"] = contour(Fr(0)), contour(D_ST), contour(D_FP), contour(D_BP)
-    k["NIZ"], k["VERH"] = contour(D_NIZ), contour(D_NIZ + L_OTK)
+    k["NIZ"], k["VERH"] = contour(D_NIZ, D_PAN), contour(D_NIZ + L_OTK, D_PAN + L_OTK)
     k["H_CORNERS_F"] = [h_work(hf, *p) for p in k["VERH"]]
     assert (sum(k["H_CORNERS_F"]) > 0) == k["IN_FILL"]                  # зона не меняется после уточнения
     for key, poly in (("F_OSI", "OSI"), ("F_ST", "ST"), ("F_FP", "FP"), ("F_BP", "BP"),
                       ("F_KN", "NIZ"), ("F_KV", "VERH")):
         k[key] = area(k[poly])
-    # пандус
-    k["L_PAN"] = HK * N_PAN                                             # длина в плане
-    k["V_PAN"] = N_PAN * (B_PAN * HK ** 2 / 2 + M * HK ** 3 / 3)       # методичка, с. 14
-    k["PAN_X"] = k["NIZ"][3][0]                                         # правая сторона (ось 3 + 1,4)
+    # съезд: длина в плане от низа откоса - hк·m'; объём сверх откоса котлована (лекция):
+    # Vс = hк²/6 · (3bп + 2m·hк·(m' - m)/m') · (m' - m)
+    k["L_PAN"] = HK * N_PAN
+    k["V_PAN"] = HK ** 2 / 6 * (3 * B_PAN + 2 * M * HK * (N_PAN - M) / N_PAN) * (N_PAN - M)
+    k["PAN_X"] = k["NIZ"][3][0]                                         # правая сторона (ось + 7,7)
     k["PAN_Y"] = Y0 + Fr(BY + CUT_Y, 2) - B_PAN / 2                     # середина правой стороны
     # объёмы (с. 13-14)
     k["V_OSN"] = float(HK) / 3 * (float(k["F_KN"]) + float(k["F_KV"]) + sqrt(float(k["F_KN"] * k["F_KV"])))
@@ -115,7 +124,10 @@ def pit(P):
     k["V_KSP"] = k["F_ST"] * k["H_STEN"]
     k["V_PCH"] = k["V_FP"] + k["V_KSP"]
     k["V_GI"] = k["V_ST"] = Fr(0)               # гидроизоляция (2 слоя рулонной) и стяжка - в задании без толщин
-    k["V_OZ"] = k["V_K"] - float(k["V_PCH"] + k["V_PODS"] + k["V_BP"] + k["V_GI"] + k["V_ST"])
+    # обратная засыпка (с. 14): пазухи - привозным песком (лекция: грунт не песок), съезд - местным грунтом
+    k["V_PAZ"] = k["V_OSN"] - float(k["V_PCH"] + k["V_PODS"] + k["V_BP"] + k["V_GI"] + k["V_ST"])
+    k["V_S"] = k["V_PAN"]
+    k["V_OZ"] = k["V_PAZ"] + float(k["V_S"])      # Vо.з = Vк - Vп.ч - Vподс - Vб.п - Vг.и - Vст
     return k
 
 
@@ -154,7 +166,9 @@ def report(k, title):
         print(f"  {name}: стороны {[f(s, 4) for s in sides(p)]}  F = {f(F, 4)} м2")
     print(f"  Vосн = {f(k['V_OSN'])}  Vпан = {f(k['V_PAN'])} (L = {f(k['L_PAN'])} м)  Vк = {f(k['V_K'])}")
     print(f"  Vподс = {f(k['V_PODS'])}  Vб.п = {f(k['V_BP'])}  Vф.п = {f(k['V_FP'])}"
-          f"  Vк.с.п = {f(k['V_KSP'])} (h = {f(k['H_STEN'], 4)})  Vп.ч = {f(k['V_PCH'])}  Vо.з = {f(k['V_OZ'])}")
+          f"  Vк.с.п = {f(k['V_KSP'])} (h = {f(k['H_STEN'], 4)})  Vп.ч = {f(k['V_PCH'])}")
+    print(f"  Обратная засыпка: пазухи (песок) Vп.с = {f(k['V_PAZ'])}, съезд (местный грунт) Vс = {f(k['V_S'])},"
+          f" всего Vо.з = {f(k['V_OZ'])}")
 
 
 if __name__ == "__main__":

@@ -170,6 +170,7 @@ def along(pts, w_, step=4.0, r=0.6, own=None):
 
 
 # ================= план площадки: общий для черновика (лист 1) и окончательного (лист 2) =================
+LABEL_SHIFT = {"8'": (34, 28)}     # подпись фигуры 8' - в свободный угол квадрата: центр фигуры закрыт котлованом
 W, Hh = R.A * R.NX, R.A * R.NY
 DOFF = 2.0 * SC          # отступ размерной линии от стороны квадрата, м
 OY2 = -1000.0            # окончательный план - копия в модели ниже черновика
@@ -256,7 +257,7 @@ def site_plan(P, k, oy=0.0, kind="draft"):
                 hat.paths.add_polyline_path([O(x, y) for x, y in fig["poly"]], is_closed=True)
     msp.add_lwpolyline([O(*p) for p in lnr_chain(P)], dxfattribs={"layer": "ЛНР", "const_width": 0.6 * SC})
     if draft:                                       # номера фигур
-        shift = {"8'": (34, 28)} if k else {}       # ручные сдвиги подписи (м): 8' закрыта котлованом
+        shift = LABEL_SHIFT if k else {}
         for fig in P["FIGS"]:
             cx, cy = map(f, fig["c"])
             dx, dy = shift.get(fig["name"], (0, 0))
@@ -544,8 +545,9 @@ def section(P, k, along):
     prof = profile(P, along, along, cy if along == "x" else cx)
     # котлован по линии разреза: верх (бровка) и низ (подошва)
     dt, dn = K.D_NIZ + k["L_OTK"], K.D_NIZ
-    if along == "x":
-        lo_t, hi_t, lo_b, hi_b = K.X0 - dt, K.X0 + K.BX + dt, K.X0 - dn, K.X0 + K.BX + dn
+    if along == "x":                                 # справа - сторона съезда (c = 7 м от плиты)
+        lo_t, hi_t = K.X0 - dt, K.X0 + K.BX + K.D_PAN + k["L_OTK"]
+        lo_b, hi_b = K.X0 - dn, K.X0 + K.BX + K.D_PAN
     else:
         y_lo = K.Y0 + K.CUT_Y                        # x центра - в пределах выреза
         lo_t, hi_t, lo_b, hi_b = y_lo - dt, K.Y0 + K.BY + dt, y_lo - dn, K.Y0 + K.BY + dn
@@ -704,6 +706,8 @@ def kartogramma(oy):
         for k in range(n + 1):
             x, y = x1 + (x2 - x1) * k / n, y1 + (y2 - y1) * k / n
             lines_.append((rect(x - 0.6, y - 0.6, x + 0.6, y + 0.6), 1, own))
+    for poly in (RS.KT["VERH"], RS.KT["NIZ"]):                 # контур котлована - тоже линия
+        lines_ += along([O(*map(f, q)) for q in poly + poly[:1]], 1)
     fixed = [T(b_) for b_ in MARKS4]                 # рабочие отметки в вершинах (site_plan)
     px, py = RS.PIT_C
     s_pit = f"{vol(RS.V_PIT_FILL)} {M3}"
@@ -719,6 +723,8 @@ def kartogramma(oy):
     figlab = []
     for g in RS.P["FIGS"]:
         cx, cy = map(f, g["c"])
+        dx, dy = LABEL_SHIFT.get(g["name"], (0, 0))      # как на листе 1; кружок - в центре тяжести
+        cx, cy = cx + dx, cy + dy
         v = g["V"] if g["sign"] < 0 else g["V"] / RS.K_OR
         hn = H_HEAD if g["F"] > 2500 else H_TEXT
         s_ = f"{vol(v)} {M3}"
@@ -768,7 +774,7 @@ def kartogramma(oy):
         mtext(fr["s2"], (mx - nx * 0.7 * SC, my - ny * 0.7 * SC), H_TEXT, "Перемещения", MA.TOP_CENTER,
               rot=fr["ang"])
     for g, cx, cy, hn, s_, sv in figlab:             # подписи фигур - поверх линий
-        msp.add_circle(O(cx, cy), 0.4 * SC, dxfattribs={"layer": "Перемещения"})
+        msp.add_circle(O(*map(f, g["c"])), 0.4 * SC, dxfattribs={"layer": "Перемещения"})
         mtext(g["name"], O(cx - 1.2 * SC, cy - sv * 1.2 * SC), hn, "Номера_фигур",
               MA.TOP_RIGHT if sv > 0 else MA.BOTTOM_RIGHT)
         mtext(s_, O(cx, cy + sv * 1.2 * SC), H_TEXT, "Номера_фигур", MA.BOTTOM_CENTER if sv > 0 else MA.TOP_CENTER)

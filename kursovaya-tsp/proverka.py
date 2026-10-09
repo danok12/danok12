@@ -55,7 +55,8 @@ def check_excel(tag, P, k, b, s_lnr, s_vol, s_pit, s_bal):
     w4 = wb[s_pit]
     got = {w4[f"B{r}"].value: w4[f"C{r}"].value for r in range(5, w4.max_row + 1) if w4[f"B{r}"].value}
     want = {"hр": k["HR"], "hр.сл": KT.H_RSL, "hк": k["HK"], "m": k["M"], "l": k["L_OTK"], "Fк.н": k["F_KN"],
-            "Fк.в": k["F_KV"], "Fк.с.п": k["F_ST"], "Fф.п": k["F_FP"], "Fб.п": k["F_BP"], "Vпан": k["V_PAN"],
+            "Fк.в": k["F_KV"], "Fк.с.п": k["F_ST"], "Fф.п": k["F_FP"], "Fб.п": k["F_BP"], "Vс": k["V_PAN"],
+            "c": KT.C_PAN, "m'": KT.N_PAN, "bп": KT.B_PAN, "Vп.с": k["V_PAZ"],
             "Vк": k["V_K"], "Vподс": k["V_PODS"], "Vб.п": k["V_BP"], "Vф.п": k["V_FP"], "Vк.с.п": k["V_KSP"],
             "Vп.ч": k["V_PCH"], "Vо.з": k["V_OZ"], "hср.углов": sum(k["H_CORNERS"]) / 6}
     for key, w in want.items():
@@ -88,10 +89,12 @@ if not B.B1["OK"]: bad("после поправки Δh баланс больш�
 # 2а. Грунт котлована, распределение, средняя дальность (табл. 3-6) = raspredelenie.py
 import raspredelenie as RS
 w7 = wb["Табл. 3 котлован"]
-for ref, w in (("C5", RS.V_K * RS.K_P), ("E5", RS.V_PIT_FILL * RS.K_P), ("F5", RS.V_PIT_FILL * RS.K_OR),
-               ("E7", RS.V_OZ / RS.K_OR * RS.K_P), ("F7", RS.V_OZ), ("F8", RS.V_PODS), ("F9", RS.V_OZ)):
+for ref, w in (("C6", RS.V_OSN), ("C7", RS.V_S), ("I6", RS.V_PAZ), ("J6", RS.V_PAZ / RS.K_OR), ("I7", RS.V_S),
+               ("J7", RS.V_S / RS.K_OR), ("C8", RS.T3_SUM_V), ("J8", RS.T3_SUM_N), ("E6", RS.T3_OTVAL),
+               ("E7", RS.T3_TRANSPORT), ("E12", RS.V_PIT_FILL * RS.K_P), ("E13", RS.V_LISH * RS.K_P),
+               ("E15", RS.V_PODS / RS.K_OR)):
     if not near(w7[ref].value, w, 1e-6): bad("табл. 3 расходится:", ref, w7[ref].value, float(w))
-if not near(w7["C10"].value, w7["E10"].value, 1e-6): bad("табл. 3: Σ с kр по разработке и укладке не равны")
+if not near(w7["E16"].value, 0, 1e-6): bad("табл. 3: отвал + транспорт не равны ΣVв·kр")
 w8 = wb["Табл. 4 распределение"]
 nrow = 7 + len(RS.FILL)
 col_chk = chr(ord("C") + len(RS.CUT) + 2)          # столбец «Σ по строке − объём» - за выемками, котлованом, недостачей

@@ -1,4 +1,5 @@
-"""Курсовая по ТСП, вариант 2: грунт котлована (п. 2.2.4, табл. 3), распределение
+"""Курсовая по ТСП, вариант 2: баланс земляных работ по котловану (п. 2.2.4, табл. 3 -
+в форме с доски), распределение
 земляных масс и картограмма (п. 2.2.5, табл. 4), средняя дальность (п. 2.2.6, табл. 5, 6).
 
 По окончательным рабочим отметкам (после Δh). На картограмме объёмы фигур выемки -
@@ -10,6 +11,10 @@ V·l, l - расстояние между центрами тяжести фиг
 недостача, подвоз из карьера (с. 15). Машина по дальности (с. 22): до 70 м - бульдозер,
 дальше - скрепер.
 Объёмы восстанавливаются точно (Fraction) по опорным перевозкам решения ЛП.
+
+Грунт котлована (с. 16 и лекция): пазухи засыпаются привозным песком (супесь - не песок),
+в отвал у котлована идёт только грунт для засыпки съезда; остальное - в насыпь планировки,
+а если её не хватает - на вывоз.
 """
 from fractions import Fraction as Fr
 from math import hypot
@@ -28,22 +33,14 @@ C = lambda g: (float(g["c"][0]), float(g["c"][1]))
 PIT_C = (float(K.CENTER[0]), float(K.CENTER[1]))
 dist = lambda a, b: hypot(a[0] - b[0], a[1] - b[1])
 
-# ---------- табл. 3: грунт котлована ----------
-V_K = Fr(KT["V_K"])                                  # объём котлована (float с корнем -> точная дробь)
-V_OZ = Fr(KT["V_OZ"])
-V_LISH = Fr(0)                                       # баланс отрицательный - лишнего грунта нет
-V_PIT_FILL = V_K - V_OZ / K_OR - V_LISH              # из котлована в насыпь (плотное тело)
-V_PODS = KT["V_PODS"]
-T3 = [  # место разработки / назначение, плотное, с kр | место укладки, с kр, с kо.р
-    ("Котлован: разрабатываемый грунт", V_K, V_K * K_P, None, None, None),
-    (None, None, None, "Насыпь", V_PIT_FILL * K_P, V_PIT_FILL * K_OR),
-    (None, None, None, "Вывоз", V_LISH * K_P, V_LISH * K_OR),
-    (None, None, None, "Отвал", V_OZ / K_OR * K_P, V_OZ),
-    ("Карьер: щебень для подсыпки", V_PODS / K_OR, V_PODS / K_OR * K_P, "Котлован: подсыпка",
-     V_PODS / K_OR * K_P, V_PODS),
-    ("Отвал: грунт обратной засыпки", V_OZ / K_OR, V_OZ / K_OR * K_P, "Обратная засыпка",
-     V_OZ / K_OR * K_P, V_OZ),
-]
+# ---------- грунт котлована ----------
+V_K = Fr(KT["V_K"])                                  # котлован со съездом, плотное тело
+V_OSN = Fr(KT["V_OSN"])                              # котлован без съезда
+V_S = Fr(KT["V_S"])                                  # съезд (разработка = засыпка, местный грунт)
+V_PAZ = Fr(KT["V_PAZ"])                              # пазухи - привозной песок
+V_PODS = Fr(KT["V_PODS"])                            # подсыпка - привозной щебень
+V_OTVAL = V_S / K_OR                                 # в отвал: на засыпку съезда (ΣVн местного грунта)
+V_AVAIL = V_K - V_OTVAL                              # остальной грунт котлована - в транспортные средства
 
 
 def transport(sup, dem, cost):
@@ -94,9 +91,21 @@ DEM = [g["V"] / K_OR for g in FILL]                  # насыпь - грунт
 SUP = [g["V"] for g in CUT]                          # выемка - плотное тело (ст. 3)
 ZTM = transport(SUP, DEM, [[dist(C(a), C(b)) for b in FILL] for a in CUT])
 rest = [DEM[j] - sum(v for (i, jj), v in ZTM.items() if jj == j) for j in range(len(FILL))]
+V_PIT_FILL = min(V_AVAIL, sum(rest))                 # из котлована в насыпь планировки
+V_LISH = V_AVAIL - V_PIT_FILL                        # лишний грунт - вывоз (при положительном балансе)
 PIT = transport([V_PIT_FILL], rest, [[dist(PIT_C, C(b)) for b in FILL]])
 SHORT = {j: rest[j] - sum(v for (i, jj), v in PIT.items() if jj == j) for j in range(len(FILL))}
 SHORT = {j: v for j, v in SHORT.items() if v > 0}    # недостача по фигурам - подвоз из карьера
+
+# ---------- табл. 3: баланс земляных работ по котловану (форма с доски) ----------
+T3_V = [("Котлован", V_OSN), ("Съезд", V_S)]                          # выемка, плотное тело
+T3_N = [("Пазухи сооружения - песок из карьера", V_PAZ, V_PAZ / K_OR),  # насыпь: геом., потребный V/kо.р
+        ("Съезд - грунт котлована из отвала", V_S, V_S / K_OR)]
+T3_SUM_V = V_OSN + V_S
+T3_SUM_N = V_S / K_OR                                                   # ΣVн местного грунта
+T3_OTVAL = T3_SUM_N * K_P                                               # в отвал, с kр
+T3_TRANSPORT = (T3_SUM_V - T3_SUM_N) * K_P                              # в транспортные средства, с kр
+T3_PRIVOZ = [("Песок для засыпки пазух", V_PAZ / K_OR), ("Щебень для подсыпки", V_PODS / K_OR)]
 
 MOVES = []                                           # (откуда, куда, V, l, машина)
 for (i, j), v in sorted(ZTM.items()):
@@ -144,10 +153,15 @@ L_ANALYT = {t: sum(float(v) * l for _, _, v, l, m in MOVES if (m == "самос�
 
 if __name__ == "__main__":
     f2 = lambda v: f"{float(v):,.2f}".replace(",", " ").replace(".", ",")
-    print("Табл. 3: котлован")
-    for row in T3:
-        print("  ", " | ".join("" if v is None else (v if isinstance(v, str) else f2(v)) for v in row))
-    print(f"Из котлована в насыпь: {f2(V_PIT_FILL)} м3; в отвал: {f2(V_OZ / K_OR)} м3")
+    print("Табл. 3: баланс земляных работ по котловану")
+    for nm, v in T3_V:
+        print(f"   выемка  {nm:<38} {f2(v):>10}")
+    for nm, g, v in T3_N:
+        print(f"   насыпь  {nm:<38} {f2(g):>10}  потребный {f2(v)}")
+    print(f"   ΣVв = {f2(T3_SUM_V)};  ΣVн местного грунта = {f2(T3_SUM_N)};  в отвал {f2(T3_OTVAL)} (с kр);"
+          f"  в транспорт {f2(T3_TRANSPORT)} (с kр)")
+    print(f"Из котлована в насыпь: {f2(V_PIT_FILL)} м3; вывоз: {f2(V_LISH)} м3; в отвал: {f2(V_OTVAL)} м3")
+    print("Привозное:", {nm: f2(v) for nm, v in T3_PRIVOZ})
     print("Перемещения (табл. 4):")
     for a, b, v, l, m in MOVES:
         print(f"   {a:>9} -> {b:<4} {f2(v):>10} м3  {l:7.1f} м  {m}")
