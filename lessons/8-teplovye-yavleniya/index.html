@@ -1,0 +1,615 @@
+<title>Тепловые явления</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;1,500&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Серия занятий: петролевая палитра, Spectral / Source Sans 3 / JetBrains Mono.
+   Одна колонка чтения; теория карточками, решения — выкладками, ответы в раскрывающихся блоках. */
+:root{
+  --ground:#F4F7F8; --surface:#FFFFFF; --surface-2:#EAF0F2;
+  --ink:#111D22; --ink-soft:#40565E; --muted:#6E858D;
+  --rule:#D3DFE3; --rule-soft:#E3EBEE;
+  --primary:#0F5A6E; --primary-soft:#DCEEF2;
+  --coral:#B4423A; --coral-soft:#FAE7E4;
+  --moss:#33734A; --moss-soft:#E1F0E5;
+  --amber:#8F5D09; --amber-soft:#FBEED6;
+  --shadow:0 1px 2px rgba(17,29,34,.05);
+  --display:"Spectral",Georgia,"Times New Roman",serif;
+  --body:"Source Sans 3","Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,"DejaVu Sans Mono",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C1417; --surface:#131F23; --surface-2:#18272C;
+    --ink:#E6EFF1; --ink-soft:#B4C7CD; --muted:#8AA3AB;
+    --rule:#27383E; --rule-soft:#1E2E33;
+    --primary:#59B7CC; --primary-soft:#12313A;
+    --coral:#E8887E; --coral-soft:#33201E;
+    --moss:#7CBE92; --moss-soft:#172C1F;
+    --amber:#E3B466; --amber-soft:#352810;
+    --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C1417; --surface:#131F23; --surface-2:#18272C;
+  --ink:#E6EFF1; --ink-soft:#B4C7CD; --muted:#8AA3AB;
+  --rule:#27383E; --rule-soft:#1E2E33;
+  --primary:#59B7CC; --primary-soft:#12313A;
+  --coral:#E8887E; --coral-soft:#33201E;
+  --moss:#7CBE92; --moss-soft:#172C1F;
+  --amber:#E3B466; --amber-soft:#352810;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.62;margin:0;padding-inline:20px;padding-block:0 64px;-webkit-text-size-adjust:100%}
+.wrap{max-width:820px;margin:0 auto}
+p{margin:0 0 .85em}
+a{color:var(--primary)}
+strong{font-weight:600}
+sup{font-size:.68em;line-height:0;vertical-align:.55em}
+
+.masthead{border-bottom:2px solid var(--ink);padding-block:44px 18px;margin-bottom:34px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--primary);margin:0 0 14px}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(32px,6.4vw,50px);line-height:1.08;letter-spacing:-.015em;margin:0 0 14px;text-wrap:balance}
+.standfirst{font-family:var(--display);font-style:italic;font-size:clamp(17px,2.4vw,20px);color:var(--ink-soft);max-width:60ch;margin:0 0 22px}
+.facts{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0}
+.facts li{font-family:var(--mono);font-size:12px;border:1px solid var(--rule);background:var(--surface);color:var(--ink-soft);border-radius:2px;padding:4px 9px;margin:0}
+
+.toc{list-style:none;margin:0 0 44px;padding:0}
+.toc li{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:baseline;padding-block:8px;border-bottom:1px solid var(--rule-soft);margin:0}
+.toc li:first-child{border-top:1px solid var(--rule-soft)}
+.toc .n{font-family:var(--mono);font-size:13px;color:var(--primary)}
+.toc a{text-decoration:none;color:var(--ink)}
+.toc a:hover{text-decoration:underline;text-decoration-color:var(--primary)}
+.toc small{color:var(--muted);font-size:14px}
+
+section.block{margin-block:0 46px;scroll-margin-top:16px}
+.blockhead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-top:2px solid var(--ink);padding-top:12px;margin-bottom:18px}
+.badge{font-family:var(--mono);font-size:12px;color:var(--surface);background:var(--primary);border-radius:2px;padding:3px 8px;white-space:nowrap}
+.badge.hard{background:var(--coral)}
+h2{font-family:var(--display);font-weight:600;font-size:clamp(24px,3.6vw,31px);line-height:1.18;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:21px;margin:30px 0 10px;text-wrap:balance;scroll-margin-top:16px}
+h4{font-family:var(--body);font-weight:600;font-size:15px;letter-spacing:.02em;margin:18px 0 6px;color:var(--ink-soft)}
+ul,ol{padding-left:1.25em;margin:0 0 .9em}
+li{margin-bottom:.3em}
+.lvl{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:var(--surface);background:var(--primary);border-radius:2px;padding:2px 7px;margin-right:10px;vertical-align:3px}
+
+.m,code{font-family:var(--mono);font-size:.9em}
+.eq{font-family:var(--mono);font-size:15px;background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--primary);border-radius:2px;padding:12px 14px;margin:0 0 16px;overflow-x:auto;white-space:pre;line-height:1.75;box-shadow:var(--shadow)}
+
+/* выкладки с настоящими дробями */
+.calc{font-family:var(--mono);font-size:15px;background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--primary);border-radius:2px;padding:10px 14px;margin:0 0 16px;overflow-x:auto;box-shadow:var(--shadow);display:grid;gap:6px}
+.ln{display:block;line-height:2.5;min-height:2.6em}
+.ln .c{display:inline-block;font-family:var(--body);font-size:13.5px;line-height:1.4;color:var(--muted);margin-left:14px;vertical-align:middle;max-width:100%}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;vertical-align:middle;line-height:1.3;margin-inline:2px;white-space:nowrap}
+.frac>.nu{border-bottom:1.4px solid currentColor;padding:0 5px}
+.frac>.de{padding:0 5px}
+.dm{display:inline-block;vertical-align:1.05em;font-size:11.5px;color:var(--coral);border-bottom:1.2px solid var(--coral);border-right:1.2px solid var(--coral);padding:0 3px 0 2px;line-height:1.2;margin-right:-2px;transform:skewX(-14deg)}
+p .frac,li .frac,td .frac,.cond .frac{font-family:var(--mono);font-size:.82em}
+.drill .frac,.anslist .frac,.ans .frac,.wrong .calc .frac{font-size:1em}
+.res{color:var(--moss);font-weight:600}
+.bad{color:var(--coral);text-decoration:line-through;text-decoration-thickness:1.5px}
+
+.callout{border:1px solid var(--rule);background:var(--surface);border-radius:3px;padding:15px 17px;margin:0 0 18px;box-shadow:var(--shadow)}
+.callout>:last-child{margin-bottom:0}
+.tag{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;margin-bottom:8px;color:var(--primary)}
+.theorem{border-left:3px solid var(--primary)}
+.theorem .body{font-family:var(--display);font-size:18.5px;line-height:1.5}
+.trap{border-left:3px solid var(--coral);background:var(--coral-soft)}
+.trap .tag{color:var(--coral)}
+.check{border-left:3px solid var(--moss);background:var(--moss-soft)}
+.check .tag{color:var(--moss)}
+.trap .calc,.check .calc,.trap .eq,.check .eq{box-shadow:none}
+
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:16px 18px;margin:0 0 18px;box-shadow:var(--shadow)}
+.card>:last-child{margin-bottom:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;align-items:start}
+.grid2>*{margin:0;min-width:0}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}}
+
+/* условие задачи */
+.cond{font-family:var(--display);font-size:18.5px;line-height:1.5;border-left:3px solid var(--ink);padding-left:14px;margin:0 0 16px}
+.no{font-family:var(--mono);font-size:13px;color:var(--primary);margin-right:6px;white-space:nowrap}
+
+.tablewrap{overflow-x:auto;margin:0 0 18px}
+table.plain{border-collapse:collapse;width:100%;font-size:15.5px;min-width:460px}
+table.plain th,table.plain td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+table.plain thead th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule);font-weight:400}
+table.plain td.m{font-family:var(--mono);font-size:14.5px;white-space:nowrap}
+
+/* «найди ошибку» */
+.wrong{border:1px solid var(--rule);border-left:3px solid var(--coral);border-radius:3px;background:var(--surface);padding:15px 17px;margin:0 0 16px;box-shadow:var(--shadow)}
+.wrong>:last-child{margin-bottom:0}
+.wrong .tag{color:var(--coral)}
+.wrong .calc{border-left-color:var(--coral);box-shadow:none}
+.stamp{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);border:1.5px solid var(--coral);border-radius:2px;padding:1px 6px;transform:rotate(-3deg);margin-left:6px}
+
+details{margin-top:10px;border-top:1px solid var(--rule-soft);padding-top:10px}
+summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ "}
+details[open] summary::before{content:"▾ "}
+summary:focus-visible{outline:2px solid var(--primary);outline-offset:3px;border-radius:2px}
+details>:nth-child(2){margin-top:12px}
+details>:last-child{margin-bottom:0}
+.ans{font-family:var(--mono);font-size:14px;line-height:1.9;background:var(--moss-soft);border:1px solid var(--rule);border-left:3px solid var(--moss);border-radius:2px;padding:10px 14px;margin:0 0 10px}
+.ans b{font-weight:600;color:var(--moss)}
+
+/* банк примеров */
+.drill{list-style:none;padding:0;margin:0 0 14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 22px}
+.drill li{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:15px;padding-block:6px;border-bottom:1px solid var(--rule-soft);margin:0;min-height:3.2em;overflow-x:auto;flex-wrap:wrap}
+.drill li.wide{grid-column:1/-1}
+.drill .no{min-width:2.4em}
+.drill .q{font-family:var(--body);font-size:15px;color:var(--ink-soft);flex:1 1 0;min-width:0}
+.drill .q+.ex{flex-basis:100%;padding-left:calc(2.4em + 8px)}
+@media (max-width:560px){.drill{grid-template-columns:minmax(0,1fr)}}
+.anslist{list-style:none;padding:0;margin:0 0 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px 20px;font-family:var(--mono);font-size:14.5px}
+.anslist li{display:flex;align-items:center;gap:4px;min-height:2.9em;border-bottom:1px solid var(--rule-soft);margin:0;overflow-x:auto}
+.hints{font-size:15px;color:var(--ink-soft);margin-top:8px}
+
+/* чертёж */
+.fig{margin:0 0 16px;background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:10px;overflow-x:auto}
+.fig svg{display:block;width:100%;max-width:560px;height:auto;margin:0 auto}
+.fig figcaption{font-size:14px;color:var(--muted);text-align:center;margin-top:4px}
+
+/* задачи текстом и решения к ним */
+.plist{list-style:none;padding:0;margin:0 0 14px}
+.plist>li{display:grid;grid-template-columns:2.4em minmax(0,1fr);gap:4px;padding-block:10px;border-bottom:1px solid var(--rule-soft);margin:0}
+.plist>li:first-child{border-top:1px solid var(--rule-soft)}
+.plist>li>.no{padding-top:3px}
+.plist p{margin:0}
+.plist .fig{margin:12px 0 0}
+.solve{list-style:none;padding:0;margin:0 0 10px}
+.solve>li{display:grid;grid-template-columns:2.4em minmax(0,1fr);gap:4px;padding-block:7px;border-bottom:1px solid var(--rule-soft);margin:0;font-size:15.5px}
+.solve b{font-weight:600;color:var(--moss)}
+.solve .sol{display:block;font-family:var(--mono);font-size:13.5px;color:var(--ink-soft);line-height:1.9;margin-top:2px}
+.solve .frac{font-size:.95em}
+
+/* «Дано — СИ — Решение» */
+.dano{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.8fr) minmax(0,2.3fr);background:var(--surface);border:1px solid var(--rule);border-radius:3px;margin:0 0 16px;box-shadow:var(--shadow)}
+.dano.two{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.dano>div{padding:12px 14px;min-width:0}
+.dano>div+div{border-left:1px solid var(--rule)}
+.dano .h{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.dano .v{font-family:var(--mono);font-size:14.5px;line-height:1.95}
+.dano .find{border-top:1.5px solid var(--ink);margin-top:6px;padding-top:4px}
+.dano .frac{font-size:.95em}
+@media (max-width:640px){.dano,.dano.two{grid-template-columns:1fr}.dano>div+div{border-left:none;border-top:1px solid var(--rule)}}
+.steps{counter-reset:st;list-style:none;padding:0;margin:0 0 16px}
+.steps>li{counter-increment:st;display:grid;grid-template-columns:2em minmax(0,1fr);gap:6px;margin:0 0 10px}
+.steps>li::before{content:counter(st);font-family:var(--mono);font-size:12px;color:var(--surface);background:var(--primary);border-radius:50%;width:1.7em;height:1.7em;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.steps .calc{margin:6px 0 0}
+table.ref{min-width:0;font-size:15px}
+table.ref td{padding:5px 12px}
+table.ref td.num{font-family:var(--mono);font-size:14px;text-align:right;white-space:nowrap}
+table.ref th:last-child{text-align:right}
+table.ref thead th{text-transform:none;letter-spacing:.02em;font-size:12.5px}
+.tables .tablewrap{margin:0}
+
+/* график */
+.fig .gr{stroke:var(--rule);stroke-width:1}
+.fig .ax{stroke:var(--ink);stroke-width:1.6}
+.fig .tk{fill:var(--ink-soft);font-family:var(--mono);font-size:13px}
+.fig .al{fill:var(--ink);font-family:var(--body);font-size:14px;font-weight:600}
+.fig .l1{stroke:var(--primary);stroke-width:2.6}
+.fig .l2{stroke:var(--coral);stroke-width:2.6}
+.fig .l1d{fill:var(--primary)}
+.fig .l2d{fill:var(--coral)}
+.fig .lb{font-family:var(--mono);font-size:16px;font-weight:600}
+.fig .l1t{fill:var(--primary)}
+.fig .l2t{fill:var(--coral)}
+
+footer{border-top:1px solid var(--rule);margin-top:8px;padding-top:18px;font-size:14px;color:var(--muted)}
+@media (max-width:520px){body{font-size:16px;padding-inline:16px}.calc{font-size:13.5px}.eq{font-size:13px}.cond{font-size:17px}.drill .q+.ex{padding-left:0}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Физика · 8 класс · домашнее задание</p>
+  <h1>Тепловые явления</h1>
+  <p class="standfirst">Нагревание, охлаждение, сгорание топлива и тепловой баланс. Две части: лёгкая с теорией и двумя разборами, сложная с теорией и тремя разборами. Всего 29 задач и пять готовых решений с ошибкой. Ответы с решениями — под «Ответ», заметки преподавателю — в конце.</p>
+  
+  <ul class="facts">
+    <li>Q = cm(t₂ − t₁)</li>
+    <li>Q = qm</li>
+    <li>5 разборов</li>
+    <li>29 задач</li>
+    <li>5 решений с ошибкой</li>
+  </ul>
+</header>
+
+<ol class="toc">
+  <li><span class="n">1</span><a href="#teoriya1">Часть 1. Теория <small>теплопередача, количество теплоты, топливо</small></a></li>
+  <li><span class="n">2</span><a href="#legkie">Лёгкие задачи <small>18 задач</small></a></li>
+  <li><span class="n">3</span><a href="#teoriya2">Часть 2. Теория <small>тепловой баланс, несколько тел, потери</small></a></li>
+  <li><span class="n">4</span><a href="#slozhnye">Сложные задачи <small>11 задач</small></a></li>
+  <li><span class="n">5</span><a href="#oshibki">Найди ошибку</a></li>
+  <li><span class="n">6</span><a href="#zametki">Заметки преподавателю</a></li>
+</ol>
+
+<!-- ============================ ТЕОРИЯ 1 ============================ -->
+<section class="block" id="teoriya1">
+  <div class="blockhead"><span class="badge">Часть 1</span><h2>Теория для лёгких задач</h2></div>
+
+  <h3>1. Внутренняя энергия</h3>
+  <p>Все тела состоят из частиц, которые непрерывно движутся и взаимодействуют. Энергия этого движения и взаимодействия — <strong>внутренняя энергия</strong> тела. Чем выше температура, тем быстрее движутся частицы и тем больше внутренняя энергия.</p>
+  <div class="grid2">
+    <div class="card">
+      <span class="tag">Способ 1 · совершить работу</span>
+      <p>Потереть, ударить, согнуть: ладони трут друг о друга — они нагреваются; гвоздь после ударов молотком тёплый. Работа над телом увеличивает его внутреннюю энергию.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Способ 2 · теплопередача</span>
+      <p>Энергия сама переходит от горячего тела к холодному, без совершения работы. Ложка в горячем чае нагревается, чай остывает. Идёт, пока температуры не сравняются.</p>
+    </div>
+  </div>
+
+  <h3>2. Три вида теплопередачи</h3>
+  <div class="tablewrap"><table class="plain">
+    <thead><tr><th>Вид</th><th>Как передаётся тепло</th><th>Где встречается</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Теплопроводность</strong></td><td>от частицы к частице внутри тела, само вещество никуда не перемещается</td><td>нагревается ручка ложки; металлы проводят тепло хорошо, дерево, воздух, шерсть — плохо</td></tr>
+      <tr><td><strong>Конвекция</strong></td><td>переносится потоками жидкости или газа: тёплые слои поднимаются, холодные опускаются</td><td>батарея отопления, ветер, вода в кастрюле; в твёрдых телах конвекции нет</td></tr>
+      <tr><td><strong>Излучение</strong></td><td>невидимыми лучами, даже через пустоту</td><td>Солнце греет Землю, тепло от костра; тёмные тела поглощают лучи сильнее светлых</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>3. Количество теплоты</h3>
+  <p><strong>Количество теплоты Q</strong> — энергия, которую тело получает или отдаёт при теплопередаче. Измеряется в джоулях: 1 кДж = 1000 Дж, 1 МДж = 1 000 000 Дж.</p>
+  <div class="callout theorem">
+    <span class="tag">Нагревание и охлаждение</span>
+    <div class="calc"><div class="ln">Q = c · m · (t₂ − t₁)</div></div>
+    <p>Q — количество теплоты, Дж · c — удельная теплоёмкость вещества, Дж/(кг·°С) · m — масса, кг · t₁ — начальная температура, t₂ — конечная, °С.</p>
+    <p>При <strong>охлаждении</strong> тело отдаёт теплоту по той же формуле, только из большей температуры вычитают меньшую: Q = cm(t₁ − t₂). Количество теплоты всегда положительное.</p>
+  </div>
+  <div class="card">
+    <span class="tag">Что такое удельная теплоёмкость c</span>
+    <p>Это сколько джоулей нужно, чтобы нагреть <strong>1 кг</strong> вещества на <strong>1 °С</strong>. У воды c = 4200 Дж/(кг·°С): на нагревание 1 кг воды на 1 °С уходит 4200 Дж. У меди всего 400 — поэтому медная кастрюля нагревается гораздо быстрее, чем вода в ней.</p>
+    <p>Q растёт, если тело тяжелее, если нагреваем на большее число градусов и если у вещества больше c. Поэтому все три множителя стоят в формуле.</p>
+  </div>
+
+  <h3>4. Энергия топлива</h3>
+  <div class="callout theorem">
+    <span class="tag">Сгорание топлива</span>
+    <div class="calc"><div class="ln">Q = q · m</div></div>
+    <p>q — удельная теплота сгорания, Дж/кг: сколько теплоты выделяется при полном сгорании 1 кг топлива. m — масса сгоревшего топлива, кг.</p>
+  </div>
+  <p>Запись 4,4·10<sup>7</sup> означает 4,4 · 10 000 000 = 44 000 000. Множитель 10<sup>7</sup> — это единица и семь нулей.</p>
+
+  <h3>5. Справочные таблицы</h3>
+  <div class="grid2 tables"><div class="tablewrap"><table class="plain ref"><thead><tr><th>Вещество</th><th>c, Дж/(кг·°С)</th></tr></thead><tbody><tr><td>вода</td><td class="num">4200</td></tr><tr><td>спирт</td><td class="num">2500</td></tr><tr><td>керосин</td><td class="num">2100</td></tr><tr><td>лёд</td><td class="num">2100</td></tr><tr><td>масло подсолнечное</td><td class="num">1700</td></tr><tr><td>алюминий</td><td class="num">920</td></tr><tr><td>кирпич</td><td class="num">880</td></tr><tr><td>стекло</td><td class="num">840</td></tr><tr><td>чугун</td><td class="num">540</td></tr><tr><td>сталь</td><td class="num">500</td></tr><tr><td>железо</td><td class="num">460</td></tr><tr><td>медь</td><td class="num">400</td></tr><tr><td>серебро</td><td class="num">250</td></tr><tr><td>олово</td><td class="num">230</td></tr><tr><td>свинец</td><td class="num">140</td></tr></tbody></table></div><div class="tablewrap"><table class="plain ref"><thead><tr><th>Топливо</th><th>q, Дж/кг</th></tr></thead><tbody><tr><td>дрова сухие</td><td class="num">1,0·10<sup>7</sup></td></tr><tr><td>торф</td><td class="num">1,4·10<sup>7</sup></td></tr><tr><td>каменный уголь</td><td class="num">2,7·10<sup>7</sup></td></tr><tr><td>спирт</td><td class="num">2,7·10<sup>7</sup></td></tr><tr><td>природный газ</td><td class="num">4,4·10<sup>7</sup></td></tr><tr><td>керосин</td><td class="num">4,6·10<sup>7</sup></td></tr><tr><td>бензин</td><td class="num">4,6·10<sup>7</sup></td></tr></tbody></table></div></div>
+  <p>Литр воды весит 1 кг, поэтому «3 л воды» в задаче — это m = 3 кг. Для других жидкостей так считать нельзя.</p>
+
+  <h3>6. Единицы — главная ловушка</h3>
+  <div class="callout trap">
+    <span class="tag">Перед подстановкой — всё в СИ</span>
+    <div class="eq">масса:      граммы → килограммы    500 г = 0,5 кг     20 г = 0,02 кг
+теплота:    кДж, МДж → Дж          63 кДж = 63 000 Дж  1,05 МДж = 1 050 000 Дж
+температура: °С оставляем как есть, в формулу идёт разность</div>
+    <p>Подставили граммы — ответ в 1000 раз больше верного. Такую ошибку ловит прикидка: если на стакан воды ушли миллионы джоулей, что-то не так.</p>
+  </div>
+
+  <h3>7. Обозначения</h3>
+  <div class="tablewrap"><table class="plain">
+    <thead><tr><th>Здесь</th><th>Что означает</th><th>Бывает и так</th></tr></thead>
+    <tbody>
+      <tr><td class="m">t₁, t₂</td><td>начальная и конечная температура</td><td class="m">t<sub>нач</sub>, t<sub>кон</sub></td></tr>
+      <tr><td class="m">t₂ − t₁</td><td>на сколько градусов изменилась температура</td><td class="m">Δt («дельта t»)</td></tr>
+      <tr><td class="m">c</td><td>удельная теплоёмкость, Дж/(кг·°С)</td><td>—</td></tr>
+      <tr><td class="m">q</td><td>удельная теплота сгорания топлива, Дж/кг</td><td>—</td></tr>
+      <tr><td class="m">η</td><td>какая часть теплоты пошла на дело (часть 2)</td><td>КПД, в процентах</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>8. Как оформлять задачу</h3>
+  <p>Слева — «Дано» (все величины из условия и из таблицы), под чертой — что найти. Посередине — перевод в СИ. Справа — решение: сначала формула буквами, потом числа.</p>
+
+  <h4>Разбор 1. Прямая задача</h4>
+  <p class="cond">Сколько теплоты нужно, чтобы нагреть на сковороде 250 г подсолнечного масла от 20 до 180 °С?</p>
+  <div class="dano">
+    <div><span class="h">Дано</span><div class="v">m = 250 г<br>t₁ = 20 °С<br>t₂ = 180 °С<br>c = 1700 Дж/(кг·°С)<div class="find">Q — ?</div></div></div>
+    <div><span class="h">СИ</span><div class="v">0,25 кг</div></div>
+    <div><span class="h">Решение</span><div class="v">Q = cm(t₂ − t₁)<br>Q = 1700 · 0,25 · (180 − 20) =<br>= 1700 · 0,25 · 160 = 68 000 Дж<br>68 000 Дж = 68 кДж<br><strong>Ответ:</strong> 68 кДж</div></div>
+  </div>
+  <p>c взяли из таблицы. Удобно считать в таком порядке: 1700 · 0,25 = 425, потом 425 · 160.</p>
+
+  <h4>Разбор 2. Обратная задача: найти массу</h4>
+  <p class="cond">Какую массу воды можно нагреть от 10 до 60 °С, затратив 1,05 МДж теплоты?</p>
+  <div class="dano">
+    <div><span class="h">Дано</span><div class="v">Q = 1,05 МДж<br>t₁ = 10 °С<br>t₂ = 60 °С<br>c = 4200 Дж/(кг·°С)<div class="find">m — ?</div></div></div>
+    <div><span class="h">СИ</span><div class="v">1 050 000 Дж</div></div>
+    <div><span class="h">Решение</span><div class="v">Q = cm(t₂ − t₁) ⇒ m = <span class="frac"><span class="nu">Q</span><span class="de">c(t₂ − t₁)</span></span><br>c(t₂ − t₁) = 4200 · 50 = 210 000<br>m = <span class="frac"><span class="nu">1 050 000</span><span class="de">210 000</span></span> = 5 кг<br><strong>Ответ:</strong> 5 кг</div></div>
+  </div>
+  <div class="callout check">
+    <span class="tag">Как выразить неизвестное</span>
+    <p>В формуле Q = c · m · (t₂ − t₁) справа произведение. Неизвестный множитель = Q, делённое на остальные множители:</p>
+    <div class="calc"><div class="ln">m = <span class="frac"><span class="nu">Q</span><span class="de">c(t₂ − t₁)</span></span>      c = <span class="frac"><span class="nu">Q</span><span class="de">m(t₂ − t₁)</span></span>      t₂ − t₁ = <span class="frac"><span class="nu">Q</span><span class="de">cm</span></span></div></div>
+    <p>Если нужна конечная температура, сначала находим разность t₂ − t₁, потом прибавляем её к начальной. Для топлива так же: m = <span class="frac"><span class="nu">Q</span><span class="de">q</span></span>.</p>
+  </div>
+</section>
+
+<!-- ============================ ЛЁГКИЕ ============================ -->
+<section class="block" id="legkie">
+  <div class="blockhead"><span class="badge">Часть 1</span><h2>Лёгкие задачи</h2></div>
+  <h3>Вопросы на понимание</h3>
+  <p>Ответь своими словами, в два-три предложения. Назови вид теплопередачи или способ изменения внутренней энергии.</p>
+  <ol class="plist">
+<li><span class="no">1.</span><div><p>Почему ручка металлической ложки в стакане с горячим чаем быстро становится горячей, а у деревянной — нет?</p></div></li>
+<li><span class="no">2.</span><div><p>Почему батарею отопления ставят внизу, под окном, а не под потолком?</p></div></li>
+<li><span class="no">3.</span><div><p>Каким способом тепло от Солнца доходит до Земли? Почему не двумя другими?</p></div></li>
+<li><span class="no">4.</span><div><p>Почему летом в жару лучше носить светлую одежду, а не тёмную?</p></div></li>
+<li><span class="no">5.</span><div><p>Монету сильно потёрли о лист бумаги, и она нагрелась. Как изменилась её внутренняя энергия и каким способом?</p></div></li>
+<li><span class="no">6.</span><div><p>Что означает запись «удельная теплоёмкость алюминия 920 Дж/(кг·°С)»?</p></div></li>
+</ol>
+<details><summary>Ответ · вопросы</summary>
+<ol class="solve"><li><span class="no">1.</span><div>Теплопроводность: металл хорошо проводит тепло, дерево — плохо.</div></li>
+<li><span class="no">2.</span><div>Конвекция: тёплый воздух от батареи поднимается, холодный от окна опускается к батарее, и воздух в комнате перемешивается. Под потолком тёплый воздух там бы и остался.</div></li>
+<li><span class="no">3.</span><div>Излучением. Между Солнцем и Землёй почти пустое пространство, а теплопроводность и конвекция без вещества невозможны.</div></li>
+<li><span class="no">4.</span><div>Тёмные поверхности сильнее поглощают излучение и сильнее нагреваются, светлые больше отражают.</div></li>
+<li><span class="no">5.</span><div>Увеличилась за счёт совершения работы (против силы трения), а не теплопередачи.</div></li>
+<li><span class="no">6.</span><div>Чтобы нагреть 1 кг алюминия на 1 °С, нужно 920 Дж; остывая на 1 °С, 1 кг алюминия отдаёт 920 Дж.</div></li></ol></details>
+
+  <h3>Расчётные задачи</h3>
+  <p>Оформляй как в разборах: Дано, СИ, решение. Значения c и q бери из таблицы. Задачи 1–6 — по формуле напрямую, 7–12 — нужно выразить неизвестное.</p>
+  <ol class="plist">
+<li><span class="no">1.</span><div><p>Сколько теплоты нужно, чтобы нагреть 2 кг воды на 10 °С?</p></div></li>
+<li><span class="no">2.</span><div><p>Медную деталь массой 500 г нагрели от 20 до 220 °С. Сколько теплоты она получила?</p></div></li>
+<li><span class="no">3.</span><div><p>Чугунный утюг массой 1,5 кг остыл от 120 до 20 °С. Сколько теплоты он отдал?</p></div></li>
+<li><span class="no">4.</span><div><p>Сколько теплоты нужно, чтобы 3 л воды нагреть от 20 °С до кипения (100 °С)?</p></div></li>
+<li><span class="no">5.</span><div><p>Сколько теплоты выделится при полном сгорании 5 кг сухих дров?</p></div></li>
+<li><span class="no">6.</span><div><p>Сколько теплоты выделится при полном сгорании 20 г бензина?</p></div></li>
+<li><span class="no">7.</span><div><p>Какую массу воды можно нагреть на 50 °С, передав ей 420 кДж теплоты?</p></div></li>
+<li><span class="no">8.</span><div><p>На сколько градусов нагреются 4 кг воды, если передать им 168 кДж теплоты?</p></div></li>
+<li><span class="no">9.</span><div><p>Чтобы нагреть 2 кг вещества на 5 °С, понадобилось 9,2 кДж теплоты. Найдите удельную теплоёмкость вещества. Что это за вещество (по таблице)?</p></div></li>
+<li><span class="no">10.</span><div><p>До какой температуры нагреется 0,5 кг воды, взятой при 20 °С, если передать ей 63 кДж теплоты?</p></div></li>
+<li><span class="no">11.</span><div><p>Сколько каменного угля нужно сжечь, чтобы получить 54 МДж теплоты?</p></div></li>
+<li><span class="no">12.</span><div><p>Кусок меди и кусок алюминия одинаковой массы получили одинаковое количество теплоты. Какой из них нагреется сильнее и во сколько раз?</p></div></li>
+</ol>
+<details><summary>Ответ · расчётные задачи</summary>
+<ol class="solve"><li><span class="no">1.</span><div><b>84 кДж</b><span class="sol">Q = cm(t₂ − t₁) = 4200 · 2 · 10 = 84 000 Дж</span></div></li>
+<li><span class="no">2.</span><div><b>40 кДж</b><span class="sol">500 г = 0,5 кг; Q = 400 · 0,5 · (220 − 20) = 40 000 Дж</span></div></li>
+<li><span class="no">3.</span><div><b>81 кДж</b><span class="sol">Q = 540 · 1,5 · (120 − 20) = 81 000 Дж — при остывании из большей температуры вычитаем меньшую</span></div></li>
+<li><span class="no">4.</span><div><b>1 008 000 Дж ≈ 1,01 МДж</b><span class="sol">3 л воды = 3 кг; Q = 4200 · 3 · (100 − 20) = 1 008 000 Дж</span></div></li>
+<li><span class="no">5.</span><div><b>50 МДж</b><span class="sol">Q = qm = 1,0·10<sup>7</sup> · 5 = 5·10<sup>7</sup> Дж</span></div></li>
+<li><span class="no">6.</span><div><b>920 кДж</b><span class="sol">20 г = 0,02 кг; Q = qm = 4,6·10<sup>7</sup> · 0,02 = 920 000 Дж</span></div></li>
+<li><span class="no">7.</span><div><b>2 кг</b><span class="sol">m = <span class="frac"><span class="nu">Q</span><span class="de">c(t₂ − t₁)</span></span> = <span class="frac"><span class="nu">420 000</span><span class="de">4200 · 50</span></span> = 2 кг</span></div></li>
+<li><span class="no">8.</span><div><b>на 10 °С</b><span class="sol">t₂ − t₁ = <span class="frac"><span class="nu">Q</span><span class="de">cm</span></span> = <span class="frac"><span class="nu">168 000</span><span class="de">4200 · 4</span></span> = 10 °С</span></div></li>
+<li><span class="no">9.</span><div><b>920 Дж/(кг·°С), алюминий</b><span class="sol">c = <span class="frac"><span class="nu">Q</span><span class="de">m(t₂ − t₁)</span></span> = <span class="frac"><span class="nu">9200</span><span class="de">2 · 5</span></span> = 920 Дж/(кг·°С)</span></div></li>
+<li><span class="no">10.</span><div><b>до 50 °С</b><span class="sol">t₂ − t₁ = <span class="frac"><span class="nu">Q</span><span class="de">cm</span></span> = <span class="frac"><span class="nu">63 000</span><span class="de">4200 · 0,5</span></span> = 30 °С; t₂ = 20 + 30 = 50 °С</span></div></li>
+<li><span class="no">11.</span><div><b>2 кг</b><span class="sol">m = <span class="frac"><span class="nu">Q</span><span class="de">q</span></span> = <span class="frac"><span class="nu">54 000 000</span><span class="de">2,7·10<sup>7</sup></span></span> = 2 кг</span></div></li>
+<li><span class="no">12.</span><div><b>медь, в 2,3 раза</b><span class="sol">t₂ − t₁ = <span class="frac"><span class="nu">Q</span><span class="de">cm</span></span>: чем меньше c, тем сильнее нагрев; <span class="frac"><span class="nu">920</span><span class="de">400</span></span> = 2,3</span></div></li></ol></details>
+
+</section>
+
+<!-- ============================ ТЕОРИЯ 2 ============================ -->
+<section class="block" id="teoriya2">
+  <div class="blockhead"><span class="badge hard">Часть 2</span><h2>Теория для сложных задач</h2></div>
+
+  <h3>1. Тепловой баланс</h3>
+  <div class="callout theorem">
+    <span class="tag">Закон сохранения энергии при теплообмене</span>
+    <p class="body">Если теплота не уходит наружу, то сколько теплоты отдали горячие тела, столько же получили холодные.</p>
+    <div class="calc"><div class="ln">Q<sub>отданное</sub> = Q<sub>полученное</sub></div></div>
+    <p>Это уравнение теплового баланса. В конце у всех тел одна и та же температура t — она обязательно <strong>между</strong> начальными.</p>
+  </div>
+  <div class="card">
+    <span class="tag">Алгоритм · пять шагов</span>
+    <ol>
+      <li>Кто остывает (отдаёт теплоту), а кто нагревается (получает)?</li>
+      <li>Для каждого записать Q по формуле. У остывающего: c·m·(t<sub>нач</sub> − t), у нагревающегося: c·m·(t − t<sub>нач</sub>). Так обе скобки положительные.</li>
+      <li>Приравнять: Q<sub>отд</sub> = Q<sub>пол</sub>.</li>
+      <li>Решить уравнение относительно неизвестного — обычное линейное уравнение.</li>
+      <li>Проверить: t между начальными температурами? Ближе к той, где масса больше?</li>
+    </ol>
+  </div>
+
+  <h3>2. Нагреваем несколько тел сразу</h3>
+  <p>Когда греют воду в кастрюле, нагревается и кастрюля. Теплоты нужно на обоих, и считается она отдельно для каждого — со своим c и своей m. Разность температур у них общая.</p>
+  <div class="calc"><div class="ln">Q = c₁m₁(t₂ − t₁) + c₂m₂(t₂ − t₁)</div></div>
+
+  <h3>3. Потери: не вся теплота идёт на дело</h3>
+  <p>Пламя спиртовки или газовой плиты греет и воздух вокруг. До воды доходит только часть теплоты топлива. Эту часть называют КПД и обозначают η («эта»). Если на нагрев идёт 30 % теплоты, то η = 0,3:</p>
+  <div class="calc"><div class="ln">Q<sub>полезное</sub> = η · Q<sub>топлива</sub>      ⇒      Q<sub>топлива</sub> = <span class="frac"><span class="nu">Q<sub>полезное</sub></span><span class="de">η</span></span></div></div>
+  <div class="callout trap">
+    <span class="tag">Умножить или разделить?</span>
+    <p>Топливо выделяет теплоты <strong>больше</strong>, чем получает вода. Значит, чтобы найти теплоту топлива, полезную теплоту <strong>делят</strong> на 0,3 — и число растёт. Если вышло меньше, перепутали действие.</p>
+  </div>
+
+  <h3>4. Графики нагревания</h3>
+  <p>По горизонтали — время, по вертикали — температура. Чем круче идёт линия, тем быстрее нагревается тело. Одинаковые нагреватели за одинаковое время передают одинаковое количество теплоты. Значит, при равных массах медленнее нагревается то вещество, у которого c больше.</p>
+
+  <h3>Разбор А. Смешивание воды</h3>
+  <p class="cond">Смешали 3 кг воды при 20 °С и 2 кг воды при 70 °С. Какой станет температура смеси? Потерями теплоты пренебречь.</p>
+  <div class="dano two">
+    <div><span class="h">Дано</span><div class="v">m₁ = 3 кг, t₁ = 20 °С (холодная)<br>m₂ = 2 кг, t₂ = 70 °С (горячая)<br>c = 4200 Дж/(кг·°С)<div class="find">t — ?</div></div></div>
+    <div><span class="h">Идея</span><div class="v" style="font-family:var(--body);font-size:15px;line-height:1.5">Горячая вода остывает от 70 °С до t, холодная нагревается от 20 °С до t. Теплота, отданная горячей, равна теплоте, полученной холодной.</div></div>
+  </div>
+  <ol class="steps">
+    <li><div>Холодная вода получила: Q₁ = c·m₁·(t − t₁) = c · 3 · (t − 20).</div></li>
+    <li><div>Горячая вода отдала: Q₂ = c·m₂·(t₂ − t) = c · 2 · (70 − t).</div></li>
+    <li><div>Тепловой баланс Q₁ = Q₂. Удельная теплоёмкость с обеих сторон одна и та же — на неё можно сократить:
+      <div class="calc"><div class="ln">c · 3 · (t − 20) = c · 2 · (70 − t)</div><div class="ln">3t − 60 = 140 − 2t</div><div class="ln">5t = 200,   t = 40 °С</div></div></div></li>
+    <li><div>Проверка: 40 °С лежит между 20 и 70 и ближе к 20 — холодной воды больше. Теплотой: Q₁ = 4200 · 3 · 20 = 252 000 Дж, Q₂ = 4200 · 2 · 30 = 252 000 Дж — сходится.</div></li>
+  </ol>
+  <p class="ans"><b>Ответ:</b> 40 °С</p>
+
+  <h3>Разбор Б. Кастрюля, вода и газ с потерями</h3>
+  <p class="cond">В алюминиевой кастрюле массой 600 г — 1 л воды при 25 °С. Сколько природного газа нужно сжечь, чтобы вода закипела (нагрелась до 100 °С)? На нагревание кастрюли с водой идёт 30 % теплоты газа.</p>
+  <div class="dano two">
+    <div><span class="h">Дано</span><div class="v">m₁ = 600 г, c₁ = 920 Дж/(кг·°С)<br>m₂ = 1 кг (1 л воды), c₂ = 4200 Дж/(кг·°С)<br>t₁ = 25 °С, t₂ = 100 °С<br>η = 30 %, q = 4,4·10<sup>7</sup> Дж/кг<div class="find">m<sub>газа</sub> — ?</div></div></div>
+    <div><span class="h">СИ</span><div class="v">m₁ = 0,6 кг<br><br><br>η = 0,3</div></div>
+  </div>
+  <ol class="steps">
+    <li><div>Нагреваются и кастрюля, и вода — на 100 − 25 = 75 °С:
+      <div class="calc"><div class="ln">Q = c₁m₁(t₂ − t₁) + c₂m₂(t₂ − t₁) = 920 · 0,6 · 75 + 4200 · 1 · 75</div><div class="ln">= 41 400 + 315 000 = 356 400 Дж</div></div></div></li>
+    <li><div>Это только 30 % теплоты газа. Вся теплота газа больше, поэтому делим:
+      <div class="calc"><div class="ln">Q<sub>газа</sub> = <span class="frac"><span class="nu">Q</span><span class="de">η</span></span> = <span class="frac"><span class="nu">356 400</span><span class="de">0,3</span></span> = 1 188 000 Дж</div></div></div></li>
+    <li><div>Масса газа по формуле Q = qm:
+      <div class="calc"><div class="ln">m<sub>газа</sub> = <span class="frac"><span class="nu">Q<sub>газа</sub></span><span class="de">q</span></span> = <span class="frac"><span class="nu">1 188 000</span><span class="de">44 000 000</span></span> = 0,027 кг = 27 г</div></div></div></li>
+  </ol>
+  <p>Обрати внимание: кастрюля забрала 41 400 Дж — заметную долю. Если про неё забыть, ответ выйдет меньше верного.</p>
+  <p class="ans"><b>Ответ:</b> 27 г</p>
+
+  <h3>Разбор В. Нагретый брусок в воде: найти c</h3>
+  <p class="cond">Металлический брусок массой 600 г нагрели в кипящей воде до 100 °С и опустили в 500 г воды при 20 °С. Температура воды поднялась до 30 °С. Найдите удельную теплоёмкость металла. Что это за металл?</p>
+  <div class="dano two">
+    <div><span class="h">Дано</span><div class="v">m₁ = 600 г, t₁ = 100 °С (брусок)<br>m₂ = 500 г, t₂ = 20 °С (вода)<br>c₂ = 4200 Дж/(кг·°С), t = 30 °С<div class="find">c₁ — ?</div></div></div>
+    <div><span class="h">СИ</span><div class="v">m₁ = 0,6 кг<br>m₂ = 0,5 кг</div></div>
+  </div>
+  <ol class="steps">
+    <li><div>Брусок остывает от 100 до 30 °С и отдаёт Q₁ = c₁ · 0,6 · (100 − 30) = 42 · c₁.</div></li>
+    <li><div>Вода нагревается от 20 до 30 °С и получает Q₂ = 4200 · 0,5 · (30 − 20) = 21 000 Дж.</div></li>
+    <li><div>Тепловой баланс: 42 · c₁ = 21 000, значит c₁ = 500 Дж/(кг·°С).</div></li>
+    <li><div>По таблице 500 Дж/(кг·°С) — это сталь.</div></li>
+  </ol>
+  <p class="ans"><b>Ответ:</b> 500 Дж/(кг·°С), сталь</p>
+</section>
+
+<!-- ============================ СЛОЖНЫЕ ============================ -->
+<section class="block" id="slozhnye">
+  <div class="blockhead"><span class="badge hard">Часть 2</span><h2>Сложные задачи</h2></div>
+  <p>Задачи сгруппированы по типам, к каждому типу есть разбор выше. Удельную теплоёмкость воды и другие значения бери из таблицы в части 1. Если не сказано иное, потерями теплоты пренебречь.</p>
+  <h3>Тип 1. Смешивание: тепловой баланс (как в разборе А)</h3>
+<ol class="plist">
+<li><span class="no">1.</span><div><p>Смешали 2 л воды при 15 °С и 3 л воды при 65 °С. Какой станет температура смеси?</p></div></li>
+<li><span class="no">2.</span><div><p>В ванне 60 л воды при 20 °С. Сколько литров кипятка (100 °С) нужно долить, чтобы температура воды стала 36 °С?</p></div></li>
+<li><span class="no">3.</span><div><p>Горячую воду при 90 °С смешали с холодной при 10 °С и получили 5 кг воды при 42 °С. Сколько взяли горячей воды и сколько холодной?</p></div></li>
+<li><span class="no">4.★</span><div><p>В сосуд по очереди налили 1 кг воды при 10 °С, 2 кг при 40 °С и 3 кг при 70 °С. Какой станет температура воды? Подсказка: смешивай порции по очереди.</p></div></li>
+</ol>
+<details><summary>Ответ · тип 1</summary>
+<ol class="solve"><li><span class="no">1.</span><div><b>45 °С</b><span class="sol">c·2·(t − 15) = c·3·(65 − t); 5t = 225; t = 45 °С</span></div></li>
+<li><span class="no">2.</span><div><b>15 л</b><span class="sol">c·60·(36 − 20) = c·x·(100 − 36); 960 = 64x; x = 15 л</span></div></li>
+<li><span class="no">3.</span><div><b>горячей 2 кг, холодной 3 кг</b><span class="sol">горячей x кг, холодной (5 − x) кг: x·(90 − 42) = (5 − x)·(42 − 10); 48x = 160 − 32x; 80x = 160; x = 2</span></div></li>
+<li><span class="no">4.</span><div><b>50 °С</b><span class="sol">первые две порции: 1(t′ − 10) = 2(40 − t′), t′ = 30 °С; затем 3 кг при 30 °С и 3 кг при 70 °С: t = 50 °С</span></div></li></ol></details>
+
+<h3>Тип 2. Несколько тел и топливо (как в разборе Б)</h3>
+<ol class="plist">
+<li><span class="no">5.</span><div><p>Сколько теплоты нужно, чтобы в стальной кастрюле массой 1,5 кг нагреть 4 л воды от 20 до 100 °С?</p></div></li>
+<li><span class="no">6.</span><div><p>На спиртовке нагрели 300 г воды от 20 до 80 °С и сожгли при этом 7 г спирта. Какая часть теплоты сгоревшего спирта пошла на нагревание воды?</p></div></li>
+<li><span class="no">7.</span><div><p>В бане нужно нагреть 100 л воды от 10 до 60 °С. Печь передаёт воде 30 % теплоты сгорающих дров. Сколько сухих дров нужно сжечь?</p></div></li>
+</ol>
+<details><summary>Ответ · тип 2</summary>
+<ol class="solve"><li><span class="no">5.</span><div><b>1 404 000 Дж ≈ 1,4 МДж</b><span class="sol">Q = c₁m₁(t₂ − t₁) + c₂m₂(t₂ − t₁) = 60 000 + 1 344 000 = 1 404 000 Дж</span></div></li>
+<li><span class="no">6.</span><div><b>0,4, то есть 40 %</b><span class="sol">Q<sub>воды</sub> = 4200 · 0,3 · 60 = 75 600 Дж; Q<sub>спирта</sub> = qm = 2,7·10<sup>7</sup> · 0,007 = 189 000 Дж; <span class="frac"><span class="nu">75 600</span><span class="de">189 000</span></span> = 0,4</span></div></li>
+<li><span class="no">7.</span><div><b>7 кг</b><span class="sol">Q<sub>воды</sub> = 4200 · 100 · 50 = 21 000 000 Дж; Q<sub>дров</sub> = 21 000 000 : 0,3 = 70 000 000 Дж; m = <span class="frac"><span class="nu">Q<sub>дров</sub></span><span class="de">q</span></span> = <span class="frac"><span class="nu">70 000 000</span><span class="de">1,0·10<sup>7</sup></span></span> = 7 кг</span></div></li></ol></details>
+
+<h3>Тип 3. Нагретое тело в воде (как в разборе В)</h3>
+<ol class="plist">
+<li><span class="no">8.</span><div><p>Металлическую гирю массой 500 г нагрели в кипящей воде до 100 °С и опустили в 300 г воды при 15 °С. Температура воды и гири стала 30 °С. Найдите удельную теплоёмкость металла. Из чего, судя по таблице, сделана гиря?</p></div></li>
+<li><span class="no">9.</span><div><p>Раскалённую стальную деталь массой 0,5 кг опустили для закалки в 5 л воды при 15 °С. Вода нагрелась до 25 °С. До какой температуры была нагрета деталь? Теплообменом с воздухом и испарением воды пренебречь.</p></div></li>
+</ol>
+<details><summary>Ответ · тип 3</summary>
+<ol class="solve"><li><span class="no">8.</span><div><b>540 Дж/(кг·°С), чугун</b><span class="sol">c · 0,5 · (100 − 30) = 4200 · 0,3 · (30 − 15); 35c = 18 900; c = 540 Дж/(кг·°С)</span></div></li>
+<li><span class="no">9.</span><div><b>865 °С</b><span class="sol">вода получила 4200 · 5 · (25 − 15) = 210 000 Дж; деталь отдала столько же: 500 · 0,5 · (t₁ − 25) = 210 000; t₁ − 25 = 840; t₁ = 865 °С</span></div></li></ol></details>
+
+<h3>Тип 4. График и рассуждение</h3>
+<ol class="plist">
+<li><span class="no">10.</span><div><p>На графике — нагревание воды (1) и неизвестной жидкости (2) на двух одинаковых нагревателях. Масса каждой жидкости 0,5 кг. <br>а) У какой жидкости удельная теплоёмкость больше? Объясните по графику, без вычислений. <br>б) Сколько теплоты получала вода от нагревателя за каждую минуту? <br>в) Найдите удельную теплоёмкость жидкости 2. Что это может быть за жидкость?</p><figure class="fig"><svg viewBox="0 0 560 344" role="img" aria-label="График температуры воды и жидкости 2 от времени">
+<line class="gr" x1="64" y1="286.0" x2="530" y2="286.0"/>
+<text class="tk" x="56" y="291.0" text-anchor="end">0</text>
+<line class="gr" x1="64" y1="260.0" x2="530" y2="260.0"/>
+<line class="gr" x1="64" y1="234.0" x2="530" y2="234.0"/>
+<text class="tk" x="56" y="239.0" text-anchor="end">20</text>
+<line class="gr" x1="64" y1="208.0" x2="530" y2="208.0"/>
+<line class="gr" x1="64" y1="182.0" x2="530" y2="182.0"/>
+<text class="tk" x="56" y="187.0" text-anchor="end">40</text>
+<line class="gr" x1="64" y1="156.0" x2="530" y2="156.0"/>
+<line class="gr" x1="64" y1="130.0" x2="530" y2="130.0"/>
+<text class="tk" x="56" y="135.0" text-anchor="end">60</text>
+<line class="gr" x1="64" y1="104.0" x2="530" y2="104.0"/>
+<line class="gr" x1="64" y1="78.0" x2="530" y2="78.0"/>
+<text class="tk" x="56" y="83.0" text-anchor="end">80</text>
+<line class="gr" x1="64" y1="52.0" x2="530" y2="52.0"/>
+<line class="gr" x1="64" y1="26.0" x2="530" y2="26.0"/>
+<text class="tk" x="56" y="31.0" text-anchor="end">100</text>
+<line class="gr" x1="64.0" y1="286" x2="64.0" y2="26"/>
+<text class="tk" x="64.0" y="308" text-anchor="middle">0</text>
+<line class="gr" x1="157.2" y1="286" x2="157.2" y2="26"/>
+<text class="tk" x="157.2" y="308" text-anchor="middle">1</text>
+<line class="gr" x1="250.4" y1="286" x2="250.4" y2="26"/>
+<text class="tk" x="250.4" y="308" text-anchor="middle">2</text>
+<line class="gr" x1="343.6" y1="286" x2="343.6" y2="26"/>
+<text class="tk" x="343.6" y="308" text-anchor="middle">3</text>
+<line class="gr" x1="436.8" y1="286" x2="436.8" y2="26"/>
+<text class="tk" x="436.8" y="308" text-anchor="middle">4</text>
+<line class="gr" x1="530.0" y1="286" x2="530.0" y2="26"/>
+<text class="tk" x="530.0" y="308" text-anchor="middle">5</text>
+<line class="ax" x1="64" y1="286" x2="544" y2="286"/>
+<line class="ax" x1="64" y1="286" x2="64" y2="12"/>
+<text class="al" x="544" y="332" text-anchor="end">время, мин</text>
+<text class="al" x="72" y="22">t, °С</text>
+<line class="l1" x1="64.0" y1="234.0" x2="530.0" y2="104.0"/>
+<circle class="l1d" cx="64.0" cy="234.0" r="3.5"/>
+<circle class="l1d" cx="157.2" cy="208.0" r="3.5"/>
+<circle class="l1d" cx="250.4" cy="182.0" r="3.5"/>
+<circle class="l1d" cx="343.6" cy="156.0" r="3.5"/>
+<circle class="l1d" cx="436.8" cy="130.0" r="3.5"/>
+<circle class="l1d" cx="530.0" cy="104.0" r="3.5"/>
+<text class="lb l1t" x="540.0" y="109.0">1</text>
+<line class="l2" x1="64.0" y1="234.0" x2="436.8" y2="26.0"/>
+<circle class="l2d" cx="64.0" cy="234.0" r="3.5"/>
+<circle class="l2d" cx="157.2" cy="182.0" r="3.5"/>
+<circle class="l2d" cx="250.4" cy="130.0" r="3.5"/>
+<circle class="l2d" cx="343.6" cy="78.0" r="3.5"/>
+<circle class="l2d" cx="436.8" cy="26.0" r="3.5"/>
+<text class="lb l2t" x="446.8" y="31.0">2</text>
+</svg><figcaption>1 — вода, 2 — неизвестная жидкость; нагреватели одинаковые</figcaption></figure></div></li>
+<li><span class="no">11.</span><div><p>Почему в городах на берегу моря летом не так жарко, а зимой не так холодно, как в городах вдали от моря?</p></div></li>
+</ol>
+<details><summary>Ответ · тип 4</summary>
+<ol class="solve"><li><span class="no">10.</span><div><b>а) у воды; б) 21 кДж; в) 2100 Дж/(кг·°С), керосин</b><span class="sol">а) у воды: за одно и то же время обе получают одинаковую теплоту, а вода нагревается медленнее. б) за 4 мин вода нагрелась с 20 до 60 °С: Q = 4200 · 0,5 · (60 − 20) = 84 000 Дж, за минуту 21 000 Дж. в) за 3 мин жидкость 2 получила 3 · 21 000 = 63 000 Дж и нагрелась с 20 до 80 °С: c = <span class="frac"><span class="nu">63 000</span><span class="de">0,5 · 60</span></span> = 2100 Дж/(кг·°С). Можно и без расчёта теплоты: жидкость 2 нагревается вдвое быстрее, значит, её c вдвое меньше, чем у воды</span></div></li>
+<li><span class="no">11.</span><div><b>У воды очень большая удельная теплоёмкость. Летом море нагревается медленно и забирает много теплоты, зимой медленно остывает и отдаёт эту теплоту воздуху.</b></div></li></ol></details>
+
+</section>
+
+<!-- ============================ ОШИБКИ ============================ -->
+<section class="block" id="oshibki">
+  <div class="blockhead"><h2>Найди ошибку</h2></div>
+  <p>Каждое решение неверное. Найди ошибку, объясни, откуда она, и реши правильно. Подсказка: в половине случаев хватает прикидки — правдоподобен ли ответ.</p>
+  <div class="wrong"><span class="tag">Решение 1 <span class="stamp">неверно</span></span>
+<p class="cond">Сколько теплоты нужно, чтобы нагреть 200 г воды от 20 до 50 °С?</p>
+<div class="calc"><div class="ln">Q = cm(t₂ − t₁) = 4200 · 200 · 30 = 25 200 000 Дж</div></div>
+<details><summary>Где ошибка</summary><p>Масса подставлена в граммах. 200 г = 0,2 кг, и Q = 4200 · 0,2 · 30 = 25 200 Дж. Прикидка поймала бы ошибку сразу: 25 МДж выделяется при сгорании больше чем полкилограмма бензина — для стакана воды абсурд.</p><p class="ans"><b>Верный ответ:</b> 25 200 Дж = 25,2 кДж</p></details>
+</div>
+<div class="wrong"><span class="tag">Решение 2 <span class="stamp">неверно</span></span>
+<p class="cond">Сколько теплоты нужно, чтобы нагреть 2 кг воды от 30 до 80 °С?</p>
+<div class="calc"><div class="ln">Q = cmt = 4200 · 2 · 80 = 672 000 Дж</div></div>
+<details><summary>Где ошибка</summary><p>Вместо изменения температуры подставлена конечная температура. Вода нагрелась на 80 − 30 = 50 °С: Q = 4200 · 2 · 50 = 420 000 Дж.</p><p class="ans"><b>Верный ответ:</b> 420 000 Дж = 420 кДж</p></details>
+</div>
+<div class="wrong"><span class="tag">Решение 3 <span class="stamp">неверно</span></span>
+<p class="cond">Смешали 1 кг воды при 10 °С и 3 кг воды при 50 °С. Найдите температуру смеси.</p>
+<div class="calc"><div class="ln">c · 1 · (t − 10) = c · 3 · (t − 50)</div><div class="ln">t − 10 = 3t − 150</div><div class="ln">2t = 140,  t = 70 °С</div></div>
+<details><summary>Где ошибка</summary><p>Для горячей воды разность записана наоборот: она остывает от 50 °С до t и отдаёт c · 3 · (50 − t). Тогда t − 10 = 150 − 3t, 4t = 160, t = 40 °С. Подозрительно было и так: 70 °С горячее обеих порций — при смешивании так не бывает.</p><p class="ans"><b>Верный ответ:</b> 40 °С</p></details>
+</div>
+<div class="wrong"><span class="tag">Решение 4 <span class="stamp">неверно</span></span>
+<p class="cond">Смешали 4 кг воды при 20 °С и 1 кг воды при 70 °С. Найдите температуру смеси.</p>
+<div class="calc"><div class="ln">t = (20 + 70) : 2 = 45 °С</div></div>
+<details><summary>Где ошибка</summary><p>Среднее арифметическое годится только для равных масс. Холодной воды вчетверо больше, поэтому температура ближе к 20 °С: 4 · (t − 20) = 1 · (70 − t), 5t = 150, t = 30 °С.</p><p class="ans"><b>Верный ответ:</b> 30 °С</p></details>
+</div>
+<div class="wrong"><span class="tag">Решение 5 <span class="stamp">неверно</span></span>
+<p class="cond">На нагревание воды пошло 81 кДж теплоты, а это 30 % теплоты сгоревшего спирта. Сколько спирта сгорело?</p>
+<div class="calc"><div class="ln">Q<sub>спирта</sub> = 0,3 · 81 000 = 24 300 Дж</div><div class="ln">m = 24 300 : 2,7·10<sup>7</sup> = 0,0009 кг = 0,9 г</div></div>
+<details><summary>Где ошибка</summary><p>Умножили на 0,3, а надо делить: спирт выделил <strong>больше</strong> теплоты, чем досталось воде. Q<sub>спирта</sub> = 81 000 : 0,3 = 270 000 Дж, m = 270 000 : 2,7·10<sup>7</sup> = 0,01 кг = 10 г. Проверка смыслом: без потерь хватило бы 3 г спирта, с потерями не может выйти меньше.</p><p class="ans"><b>Верный ответ:</b> 10 г</p></details>
+</div>
+</section>
+
+
+<section class="block" id="zametki">
+  <div class="blockhead"><h2>Заметки преподавателю</h2></div>
+  <ul>
+<li><strong>Порядок.</strong> Часть 1 — теория и 18 лёгких задач (6 вопросов и 12 расчётных), часть 2 — теория теплового баланса, три разбора и 11 задач. Лёгкие задачи 1–6 — прямая формула, 7–12 — выразить неизвестное. Если на неделю это много, минимум: вопросы 1–3, лёгкие 1–8, сложные 1, 2, 5, 6, 8 и 10.</li>
+<li><strong>Плавления и кипения в листе нет.</strong> Только нагревание, охлаждение, сгорание топлива и теплообмен — Q = cm(t₂ − t₁) и Q = qm. Удельная теплота плавления λ и парообразования L не нужны.</li>
+<li><strong>Сверьте таблицу с учебником.</strong> Значения c и q взяты как в учебнике Пёрышкина. В других учебниках бывают расхождения (у стали встречается 460 вместо 500) — тогда ответы задач со сталью немного сдвинутся. Задачи «что это за вещество» рассчитаны на таблицу из этого листа.</li>
+<li><strong>Где ждать ошибок.</strong> Граммы не переведены в килограммы; вместо разности температур — одна температура; в тепловом балансе обе разности записаны как (t − tᵢ); среднее арифметическое при разных массах; умножение на долю вместо деления. Каждой ошибке соответствует решение в «Найди ошибку».</li>
+<li><strong>Прикидка.</strong> Приучайте после каждой задачи спрашивать: правдоподобен ли ответ? Температура смеси между начальными, топлива с потерями больше, чем без потерь, мегаджоули на стакан воды — повод искать ошибку.</li>
+<li><strong>Оформление.</strong> Требуйте «Дано — СИ — Решение» и формулу в буквах до подстановки чисел. В задачах на тепловой баланс без этого легко перепутать, какая масса и какая температура к какому телу относятся.</li>
+  </ul>
+</section>
+
+
+<footer>
+  <p>Все задачи составлены для этого листа. Числа в условиях, решениях и ответах подставлены из одних и тех же параметров и посчитаны программой точной арифметикой; числа в разборах сверены с расчётом (скрипт build.py в папке занятия).</p>
+  
+</footer>
+</div>
