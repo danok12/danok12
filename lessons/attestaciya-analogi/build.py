@@ -524,45 +524,41 @@ TASKS.append(dict(
 # ───────────────────────── вёрстка ─────────────────────────
 
 CSS = """
-:root{--paper:#fbfaf7;--ink:#14272b;--petrol:#1f5f6b;--petrol-2:#2a7f8e;--muted:#5b6f73;--line:#d3e0e1;--soft:#eef4f4;--warn:#8a4b12;--warn-bg:#fbf1e6}
 *{box-sizing:border-box}
-html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 "Source Sans 3","Liberation Sans","DejaVu Sans",sans-serif}
-.wrap{max-width:860px;margin:0 auto;padding:28px 16px 40px}
-h1,h2{font-family:Spectral,"Liberation Serif","DejaVu Serif",Georgia,serif;color:var(--petrol);font-weight:600;line-height:1.2}
-h1{font-size:28px;margin:0 0 4px}
-.sub{color:var(--muted);margin:0 0 18px}
-.intro{background:var(--soft);border-left:4px solid var(--petrol-2);padding:10px 14px;border-radius:0 8px 8px 0;margin:0 0 22px}
-.intro p{margin:4px 0}
-.card{border:1px solid var(--line);border-radius:10px;padding:14px 16px 10px;margin:0 0 16px;background:#fff}
-.card h2{font-size:19px;margin:0 0 8px;display:flex;gap:10px;align-items:baseline}
-.card h2 .no{display:inline-block;min-width:30px;height:30px;line-height:30px;text-align:center;border-radius:50%;background:var(--petrol);color:#fff;font-family:"Source Sans 3","Liberation Sans",sans-serif;font-size:15px}
-.hint{font-size:13.5px;color:var(--muted);background:var(--soft);border-radius:6px;padding:6px 10px;margin:0 0 10px}
-.hint b.lbl{color:var(--petrol);font-weight:600}
-.var{display:grid;grid-template-columns:30px 1fr;gap:4px 8px;margin:0 0 10px}
-.var .lt{font-weight:700;color:var(--petrol-2);font-family:Spectral,"Liberation Serif",serif;font-size:17px}
-.ans{margin:6px 0 0;padding:6px 10px;border-left:3px solid var(--petrol-2);background:var(--soft);border-radius:0 6px 6px 0}
-.ans .k{font-weight:600;color:var(--petrol)}
-.sol{font-size:13.5px;color:var(--muted);margin:4px 0 0}
-.trap{font-size:13.5px;background:var(--warn-bg);color:var(--warn);border-radius:6px;padding:6px 10px;margin:4px 0 6px}
-.trap b{font-weight:600}
-.mx{display:inline-grid;position:relative;vertical-align:middle;column-gap:12px;row-gap:1px;padding:2px 10px;margin:2px 3px;text-align:center;font-family:"JetBrains Mono","DejaVu Sans Mono",monospace;font-size:14px;line-height:1.35}
-.mx::before,.mx::after{content:"";position:absolute;top:1px;bottom:1px;width:6px;border:1.4px solid currentColor}
+body{margin:0;background:#fff;color:#000;font:15px/1.5 "Liberation Serif","Times New Roman","DejaVu Serif",serif}
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px 40px}
+h1,h2{font-weight:bold;line-height:1.25}
+h1{font-size:20px;margin:0 0 4px;text-align:center}
+.sub{margin:0 0 14px;text-align:center}
+.intro{margin:0 0 16px}
+.intro p{margin:3px 0}
+.card{margin:0 0 14px}
+.card h2{font-size:16px;margin:0 0 4px}
+.hint{font-style:italic;margin:0 0 6px}
+.hint b.lbl{font-weight:bold}
+.var{display:grid;grid-template-columns:28px 1fr;gap:2px 6px;margin:0 0 8px}
+.var .lt{font-weight:bold}
+.ans{margin:4px 0 0}
+.ans .k{font-weight:bold}
+.sol{margin:2px 0 0}
+.trap{margin:2px 0 6px}
+.trap b{font-weight:bold}
+.mx{display:inline-grid;position:relative;vertical-align:middle;column-gap:12px;row-gap:1px;padding:2px 10px;margin:2px 3px;text-align:center;line-height:1.35}
+.mx::before,.mx::after{content:"";position:absolute;top:1px;bottom:1px;width:6px;border:1.2px solid currentColor}
 .mx::before{left:0;border-right:none;border-radius:7px 0 0 7px}
 .mx::after{right:0;border-left:none;border-radius:0 7px 7px 0}
-.mx .fr{font-size:13px}
 .fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 2px;font-size:.92em;line-height:1.15}
 .fr>span:first-child{border-bottom:1px solid currentColor;padding:0 2px}
 .fr>span:last-child{padding:0 2px}
 .sq{white-space:nowrap}.sq>span{border-top:1px solid currentColor;padding:0 1px;margin-left:1px}
 .ov{text-decoration:overline}
-.sys{display:inline-flex;flex-direction:column;vertical-align:middle;border-left:2px solid currentColor;border-radius:10px 0 0 10px;padding:1px 0 1px 10px;margin:4px 4px}
-.int{white-space:nowrap;font-size:1.3em;font-family:"DejaVu Serif",serif}
+.sys{display:inline-flex;flex-direction:column;vertical-align:middle;border-left:1.5px solid currentColor;border-radius:10px 0 0 10px;padding:1px 0 1px 10px;margin:4px 4px}
+.int{white-space:nowrap;font-size:1.3em}
 .int .lim{display:inline-flex;flex-direction:column;font-size:.5em;vertical-align:middle;line-height:1.05;margin:0 2px 0 -1px}
-.foot{color:var(--muted);font-size:12.5px;margin-top:22px;border-top:1px solid var(--line);padding-top:8px}
+.foot{font-size:13px;margin-top:18px}
 @page{margin:14mm 12mm}
 @media print{
-  body{font-size:13.5px;background:#fff}
+  body{font-size:13.5px}
   .wrap{padding:0;max-width:none}
   .card{break-inside:avoid;page-break-inside:avoid}
   .var,.mx,.ans,.sys{break-inside:avoid}
@@ -585,19 +581,19 @@ def page(teacher):
     if teacher:
         parts.append('<div class="intro"><p>Все ответы пересчитаны программой (<code>build.py</code>, точная арифметика sympy). '
                      'Под каждым вариантом — ключевые промежуточные числа, по которым удобно найти, где ученик сбился. '
-                     'Оранжевым — типичная ошибка в этом типе задач.</p></div>')
+                     'После вариантов — типичная ошибка в этом типе задач.</p></div>')
     else:
         parts.append('<div class="intro"><p>К каждой задаче экзамена — два варианта того же типа (к задаче 3 — три). '
                      'Решай в тетради с полной записью, как на экзамене.</p>'
-                     '<p>В серой плашке — напоминание, <b>как</b> решать, а не ответ. Сначала попробуй без неё.</p>'
+                     '<p>Курсивом под заголовком — напоминание, <b>как</b> решать, а не ответ. Сначала попробуй без него.</p>'
                      '<p>Каждый ответ, где это возможно, проверь сам: подставь найденный вектор в систему, умножь матрицу на вектор, '
                      'убедись, что |cos<i>φ</i>| ≤ 1.</p></div>')
     for t in TASKS:
-        parts.append(f'<section class="card"><h2><span class="no">{t["n"]}</span>{t["title"]}</h2>')
+        parts.append(f'<section class="card"><h2>{t["n"]}. {t["title"]}</h2>')
         if not teacher:
             parts.append(hint_block(t))
         for lt, cond, ans, sol in t["variants"]:
-            parts.append(f'<div class="var"><div class="lt">{lt}</div><div>{R(cond)}')
+            parts.append(f'<div class="var"><div class="lt">{lt})</div><div>{R(cond)}')
             if teacher:
                 parts.append(f'<div class="ans"><span class="k">Ответ:</span> {R(ans)}</div>')
                 parts.append(f'<div class="sol">{R(sol)}</div>')
