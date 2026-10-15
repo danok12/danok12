@@ -649,9 +649,14 @@ for M in SEKCII:
         kv_A(M, zf, ur, k, st[M.s])
         kv_BC(M, zf, ur, k, st[M.s], "B")
         kv_BC(M, zf, ur, k, st[M.s], "C")
-        for kv in "ABC":
-            xk, yk = ST_K[kv]
-            mufty.append(dict(x=round(M.x(xk), 4), y=yk, z=round(zf + H_ET - IZ["T_PEREKR"] - 0.05, 3), ur=ur))
+    # противопожарные муфты на полипропиленовых стояках К1 — под каждым междуэтажным перекрытием и под покрытием,
+    # вплотную к низу плиты. Под перекрытием над подвалом муфты нет: ниже плиты стояк чугунный (переход SML — ПП
+    # на Z_PP = −0,35 уходит в толщу плиты, полипропилен начинается внутри неё)
+    for kv in "ABC":
+        xk, yk = ST_K[kv]
+        for k in range(1, N_ET + 1):
+            z = round(k * H_ET - IZ["T_PEREKR"] - 0.05, 3)
+            mufty.append(dict(x=round(M.x(xk), 4), y=yk, z=z, ur=ur_po_z(z)))
 
 
 # нумерация стояков по часовой стрелке от северо-запада: северные (Б, В) слева направо, затем южные (А) справа налево

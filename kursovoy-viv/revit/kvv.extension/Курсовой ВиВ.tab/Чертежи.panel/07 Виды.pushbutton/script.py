@@ -83,6 +83,8 @@ def tolko_sistema(v, metka_svoya, log):
         chuzhoe = (s_.startswith(u'КВВ-В1') or s_.startswith(u'КВВ-К1')) and not s_.startswith(metka_svoya)
         if metka_svoya == u'КВВ-К1' and (s_.startswith(u'КВВ-О') or s_.startswith(u'КВВ-Ф')):   # установка — только на В1
             chuzhoe = True
+        if metka_svoya == u'КВВ-В1' and s_.startswith(u'КВВ-М'):       # противопожарные муфты — на стояках К1
+            chuzhoe = True
         if chuzhoe and e.CanBeHidden(v):
             chuzhie.append(e.Id)
     if chuzhie:
@@ -92,6 +94,8 @@ def tolko_sistema(v, metka_svoya, log):
         if v.CanCategoryBeHidden(c.Id):
             v.SetCategoryHidden(c.Id, True)
     log(u'   скрыто категорий', n, u'| элементов другой системы', len(chuzhie))
+    if metka_svoya == u'КВВ-К1':
+        kvv.armatura_detalno(doc, v, log)             # противопожарные муфты на стояках видны объёмом
 
 
 def gruppirovka_kak_u(v, obrazec, log):

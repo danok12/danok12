@@ -506,6 +506,14 @@ def otmetki_stoyakov(doc, g, ot, sist, log):
             t, p = truba_v_tochke(doc, pref, (x, y, verh - 0.02), gor=False)
             if t is not None:
                 ot.postavit(t, DB.XYZ(x * M, y * M, verh * M), storona * 1.6, 0.35)
+            # кровля — с другой стороны стояка, как в образце («+39.800 Кровля» напротив верха «+39.999»):
+            # по двум отметкам видно, что вытяжная часть выведена на 0,2 м (п. 18.18 СП 30)
+            z_kr = [u_['z'] for u_ in g['urovni'] if u_['imya'] == u'Кровля'][0]
+            t, p = truba_v_tochke(doc, pref, (x, y, z_kr), gor=False)
+            if t is not None:
+                sd = ot.postavit(t, p, -storona * 1.2, 0.35)
+                if sd is not None:
+                    ot.podpis(sd, u'Кровля')
 
 
 def privyazki_stoyakov(doc, v, g, sist, log):

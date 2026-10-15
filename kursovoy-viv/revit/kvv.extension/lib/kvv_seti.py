@@ -136,11 +136,18 @@ class Stroitel(object):
             komment(e, u'КВВ-О%d' % i)
             self.ob[i] = e
             self.log(u'оборудование', o['tip'])
+        self.mufty()
+
+    def mufty(self):
+        """Противопожарные муфты на стояках К1 — под каждым перекрытием (соосно стояку, вплотную к низу плиты)."""
         sym = kvv.simvol(self.doc, u'ADSK_Противопожарная муфта')
+        out = []
         for m in self.g['mufty']:
             e = postavit(self.doc, sym, self.lv[m['ur']], m['x'], m['y'], m['z'], 0)
             komment(e, u'КВВ-М')
-        self.log(u'противопожарных муфт', len(self.g['mufty']))
+            out.append(e)
+        self.log(u'противопожарных муфт', len(out))
+        return out
 
     # ---------- трубопроводы ----------
     def sistema(self, sys_):

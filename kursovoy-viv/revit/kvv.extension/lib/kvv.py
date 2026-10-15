@@ -161,6 +161,19 @@ class Tranzakciya(object):
         return False
 
 
+def armatura_detalno(doc, v, log=None):
+    """Арматура трубопроводов на виде — с высокой детализацией (остальное по виду): у противопожарной муфты
+    объёмная геометрия есть только в «Высокой», при «Средней» семейство рисует лишь плоское кольцо для планов.
+    В транзакции."""
+    from Autodesk.Revit.DB import OverrideGraphicSettings, ElementId, BuiltInCategory, ViewDetailLevel
+    cat = ElementId(BuiltInCategory.OST_PipeAccessory)
+    o = v.GetCategoryOverrides(cat)
+    o.SetDetailLevel(ViewDetailLevel.Fine)
+    v.SetCategoryOverrides(cat, o)
+    if log is not None:
+        log(u'   арматура трубопроводов — высокая детализация на виде', v.Name)
+
+
 def run(name, fun):
     """Выполнить fun(log) с журналом и перехватом ошибок."""
     log = Log(name)
