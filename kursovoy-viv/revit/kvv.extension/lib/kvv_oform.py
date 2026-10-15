@@ -61,7 +61,9 @@ def ochistit(doc, vidy, tipy_marok, log):
     for m in DB.FilteredElementCollector(doc).OfClass(DB.IndependentTag):
         if m.GetTypeId().IntegerValue in tipy:
             ud.add(m.Id.IntegerValue)
-    tipy_teksta = set(t.Id.IntegerValue for t in (tt, kvv.po_imeni(doc, DB.TextNoteType, u'КВВ_Расчётная точка'))
+    tipy_teksta = set(t.Id.IntegerValue for t in (tt, kvv.po_imeni(doc, DB.TextNoteType, u'КВВ_Расчётная точка'),
+                                                   kvv.po_imeni(doc, DB.TextNoteType, TEKST_STRELKI),
+                                                   kvv.po_imeni(doc, DB.TextNoteType, u'КВВ_Стрелка уклона_3.5'))
                       if t is not None)
     for tn in DB.FilteredElementCollector(doc).OfClass(DB.TextNote):
         if tn.GetTypeId().IntegerValue in tipy_teksta:
@@ -596,6 +598,262 @@ def oformit_plan(doc, g, v, sist, tipy, tnt, zan, vvody, vypuski, tr, log):
     marki_diametrov(doc, v, sist, tipy['truba'], zan, log, iskl=list(vypuski) if sist == u'К1' else [])
 
 
+TEKST_STRELKI = u'КВВ_Стрелка уклона'
+
+
+def tip_strelki(doc, tnt, log):
+    """Тип текста для стрелки уклона «>»: в GOST Common стрелок нет, знак «>» занимает 40 % высоты прописной и
+    0,5 её ширины. Высота 2,5 мм и ширина 1,6 дают уголок 2,0 x 1,0 мм — как у отметки уклона в образце."""
+    t = kvv.po_imeni(doc, DB.TextNoteType, TEKST_STRELKI)
+    if t is None:
+        t = tnt.Duplicate(TEKST_STRELKI)
+        log(u'создан тип текста', TEKST_STRELKI)
+    t.get_Parameter(DB.BuiltInParameter.TEXT_SIZE).Set(2.5 * MM)
+    t.get_Parameter(DB.BuiltInParameter.TEXT_WIDTH_SCALE).Set(1.6)
+    return t
+
+
+def _ugol_chitaemyi(sx, sy):
+    """Угол направления на экране, приведённый к (−90°; 90°] — текст не вверх ногами."""
+    ang = math.atan2(sy, sx)
+    if ang > math.pi / 2 + 1e-6:
+        ang -= math.pi
+    elif ang <= -math.pi / 2 + 1e-6:
+        ang += math.pi
+    return ang
+
+
+def _pryam(c, td, nd, hl, hh):
+    """Углы повёрнутого прямоугольника: центр c, оси td/nd, полуразмеры hl/hh (экранные координаты)."""
+    return [(c[0] + a_ * hl * td[0] + b_ * hh * nd[0], c[1] + a_ * hl * td[1] + b_ * hh * nd[1])
+            for a_, b_ in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+
+
+def _peresekayutsya(m1, m2):
+    """Два выпуклых многоугольника (или многоугольник и отрезок) пересекаются — теорема о разделяющей оси."""
+    osi = []
+    for m in (m1, m2):
+        for i in range(len(m)):
+            a, b = m[i], m[(i + 1) % len(m)]
+            dx, dy = b[0] - a[0], b[1] - a[1]
+            if abs(dx) + abs(dy) > 1e-12:
+                osi.append((-dy, dx))
+    for ax in osi:
+        p1 = [q[0] * ax[0] + q[1] * ax[1] for q in m1]
+        p2 = [q[0] * ax[0] + q[1] * ax[1] for q in m2]
+        if max(p1) < min(p2) or max(p2) < min(p1):
+            return False
+    return True
+
+
+def zanyatye_mesta(doc, v, ekr, MMv, log):
+    """Что уже стоит на виде, в экранных координатах: тексты — повёрнутые прямоугольники (точка вставки, ширина,
+    высота, направления), их выноски — отрезки; отметки — выноска, полка и текст над полкой; марки — прямоугольник
+    у головы марки и выноска. Габарит элемента (BoundingBox) не годится: на аксонометрии он втрое больше надписи."""
+    # сборщик по всему документу (с проверкой вида-владельца): сборщик «по виду» не видит элементы, созданные в
+    # этой же транзакции до перерисовки, — «R», «Пр.» и подписи этажей ставятся прямо перед подписями уклонов
+    mesta = []
+    for tn in DB.FilteredElementCollector(doc).OfClass(DB.TextNote):
+        if tn.OwnerViewId != v.Id:
+            continue
+        bd, ud = tn.BaseDirection, tn.UpDirection
+        w, h = tn.Width * v.Scale, tn.Height * v.Scale
+        # у коротких надписей («R», «Пр.») поле текста уже самих букв — не меньше 2 мм на знак и 2,8 мм на строку
+        stroki = tn.Text.strip().split(u'\r')
+        w = max(w, max(len(s_) for s_ in stroki) * 2.0 * MMv)
+        h = max(h, len(stroki) * 2.8 * MMv)
+        ha, va = tn.HorizontalAlignment, tn.VerticalAlignment
+        sl = {DB.HorizontalTextAlignment.Left: 0.0, DB.HorizontalTextAlignment.Center: 0.5,
+              DB.HorizontalTextAlignment.Right: 1.0}.get(ha, 0.0)
+        sv = {DB.VerticalTextAlignment.Top: 0.0, DB.VerticalTextAlignment.Middle: 0.5,
+              DB.VerticalTextAlignment.Bottom: 1.0}.get(va, 0.0)
+        zp = 0.8 * MMv                                                      # запас вокруг текста
+        lv = tn.Coord - bd.Multiply(sl * w + zp) + ud.Multiply(sv * h + zp)   # левый верхний угол с запасом
+        w, h = w + 2 * zp, h + 2 * zp
+        mesta.append([ekr(lv), ekr(lv + bd.Multiply(w)), ekr(lv + bd.Multiply(w) - ud.Multiply(h)),
+                      ekr(lv - ud.Multiply(h))])
+        if max(len(s_) for s_ in stroki) <= 3:
+            # «R», «Пр.»: где именно рисуется буква относительно точки вставки, зависит от выноски —
+            # квадрат ±3,5 мм вокруг точки вставки покрывает её при любом выравнивании
+            c_ = ekr(tn.Coord)
+            q_ = 3.5 * MMv
+            mesta.append([(c_[0] - q_, c_[1] - q_), (c_[0] + q_, c_[1] - q_), (c_[0] + q_, c_[1] + q_),
+                          (c_[0] - q_, c_[1] + q_)])
+        try:
+            for ld in tn.GetLeaders():
+                pts = [ld.Anchor, ld.Elbow, ld.End] if ld.Elbow is not None else [ld.Anchor, ld.End]
+                for a, b in zip(pts[:-1], pts[1:]):
+                    mesta.append([ekr(a), ekr(b)])
+        except Exception:
+            pass
+    for sd in DB.FilteredElementCollector(doc).OfClass(DB.SpotDimension):
+        if sd.OwnerViewId != v.Id:
+            continue
+        try:
+            o, pl = ekr(sd.Origin), ekr(sd.LeaderShoulderPosition)
+            kon = ekr(sd.LeaderEndPosition)
+        except Exception:
+            continue
+        mesta.append([o, pl])
+        mesta.append([pl, kon])
+        x0, x1 = min(pl[0], kon[0]), max(pl[0], kon[0])
+        y0 = min(pl[1], kon[1])
+        mesta.append([(x0, y0), (x1, y0), (x1, y0 + 3.2 * MMv), (x0, y0 + 3.2 * MMv)])   # текст над полкой
+    for m in DB.FilteredElementCollector(doc).OfClass(DB.IndependentTag):
+        if m.OwnerViewId != v.Id:
+            continue
+        gp = ekr(m.TagHeadPosition)
+        mesta.append([(gp[0] - 9 * MMv, gp[1] - 4.5 * MMv), (gp[0] + 9 * MMv, gp[1] - 4.5 * MMv),
+                      (gp[0] + 9 * MMv, gp[1] + 4.5 * MMv), (gp[0] - 9 * MMv, gp[1] + 4.5 * MMv)])
+        try:
+            for rf in m.GetTaggedReferences():
+                mesta.append([gp, ekr(m.GetLeaderEnd(rf))])
+        except Exception:
+            pass
+    log(u'  занятых мест на', v.Name, len(mesta))
+    return mesta
+
+
+def podpisi_uklonov(doc, v, tnt, g, log):
+    """Уклоны на схеме К1, как в образце: «0,03» со стрелкой по течению — вдоль каждого поэтажного отвода Ø50,
+    «0,02» — вдоль самого длинного сборного трубопровода подвала каждой секции. Текст повёрнут вдоль трубы;
+    место — первое свободное из вариантов (середина отвода и сдвиги вдоль него, под трубой и над ней): подпись не
+    задевает трубы К1 и уже стоящие на виде надписи, выноски, марки и отметки."""
+    k = v.Scale / 100.0
+    MMv = 0.1 * k * M                                   # 1 мм листа в футах модели
+    r, u = napravleniya(v)
+    tst = tip_strelki(doc, tnt, log)
+    ur = dict((u_['imya'], u_['z']) for u_ in g['urovni'])
+    h_et = ur[u'Этаж 02'] - ur[u'Этаж 01']
+    xs = [s_['x'] for s_ in g['stoyaki']]
+    zerk = max(xs) + min(xs)                            # секция 2 — зеркало секции 1: x' = zerk − x
+
+    def ekr(p):
+        return p.DotProduct(r), p.DotProduct(u)
+
+    otvody, podval, truby = {}, {}, []
+    for t in truby_sistemy(doc, u'КВВ-К1'):
+        a, b = koncy(t)
+        truby.append([ekr(a), ekr(b)])
+        h = math.hypot(b.X - a.X, b.Y - a.Y)
+        if h < 0.05 * M:
+            continue
+        i = abs(b.Z - a.Z) / h
+        d = t.get_Parameter(DB.BuiltInParameter.RBS_PIPE_DIAMETER_PARAM).AsDouble() / MM
+        if max(a.Z, b.Z) < -0.05 * M:
+            if abs(i - 0.02) < 0.003:
+                sek = 0 if (a.X + b.X) / 2 < zerk / 2 * M else 1
+                if sek not in podval or h > podval[sek][0]:
+                    podval[sek] = (h, a, b)
+        elif 40 < d < 60 and abs(i - 0.03) < 0.003 and abs(b.X - a.X) < 0.002 * M:
+            et = int(round(((a.Z + b.Z) / 2 / M) / h_et))
+            otvody.setdefault((round(a.X / M, 2), et), []).extend([a, b])
+    nadpisi = zanyatye_mesta(doc, v, ekr, MMv, log)        # и уже поставленные подписи уклонов
+
+    W_CIF, ZAZOR, W_STR = 5.6, 1.0, 2.0                 # ширина «0,03», зазор, ширина стрелки — мм листа
+    POD_STR = 0.375                                     # стрелку поднять до середины цифр (центр «>» — 0,35 высоты)
+    DL = W_CIF + ZAZOR + W_STR
+    HL, HH = (DL / 2 + 0.3) * MMv, (1.25 + 0.2) * MMv   # полуразмеры подписи с запасом
+
+    def variant(verh, niz, t_, storona, otstup):
+        """Центр подписи на экране и оси для доли t_ вдоль участка (от верхнего конца), стороны (+1 — под) и
+        зазора от оси трубы до края подписи (мм листа)."""
+        sx, sy = ekr(niz - verh)
+        ang = _ugol_chitaemyi(sx, sy)
+        td = (math.cos(ang), math.sin(ang))
+        nd = (-td[1], td[0])                             # «вверх» от текста
+        po_tech = 1 if sx * td[0] + sy * td[1] > 0 else -1
+        p = verh + (niz - verh).Multiply(t_)
+        c0 = ekr(p)
+        off = -(otstup + 1.25) * MMv * storona           # под трубой — против nd
+        c = (c0[0] + nd[0] * off, c0[1] + nd[1] * off)
+        return c, td, nd, ang, po_tech, p
+
+    def stolknoveniya(c, td, nd):
+        """Штраф места: задеть трубу (опуск от прибора) — 1, надпись, выноску, марку, отметку или другую подпись
+        уклона — 100: подпись может лечь на тонкую линию, но не на текст."""
+        m = _pryam(c, td, nd, HL, HH)
+        return (sum(1 for q in truby if _peresekayutsya(m, q)) +
+                100 * sum(1 for q in nadpisi if _peresekayutsya(m, q)))
+
+    def postavit(verh, niz, tekst, storona0, doli):
+        """Лучший вариант по оценке: штраф пересечений + 3 за другую сторону, 2 за больший зазор, сдвиг от середины.
+        Своя сторона — снаружи пары отводов: подпись рядом со своей трубой, промежуток между отводами чист."""
+        luchshii = None
+        for otstup in (0.8, 1.8):
+            for t_ in doli:
+                for st_ in (storona0, -storona0):
+                    c, td, nd, ang, po_tech, p = variant(verh, niz, t_, st_, otstup)
+                    n_ = stolknoveniya(c, td, nd)
+                    ocenka = n_ + (0 if st_ == storona0 else 3) + (0 if otstup < 1 else 2) + abs(t_ - 0.5) * 4
+                    if luchshii is None or ocenka < luchshii[0]:
+                        luchshii = (ocenka, n_, c, td, nd, ang, po_tech, p)
+        _, n_, c, td, nd, ang, po_tech, p = luchshii
+        c0 = ekr(p)
+
+        def v_model(sx_, sy_):
+            """Экранная точка -> модель: смещение вдоль r и u от точки на трубе."""
+            return p + r.Multiply(sx_ - c0[0]) + u.Multiply(sy_ - c0[1])
+        s_cif = (-DL / 2 + W_CIF / 2) * MMv * po_tech       # центры цифр и стрелки вдоль подписи
+        s_str = (DL / 2 - W_STR / 2) * MMv * po_tech
+        for tekst_, s_, h_, tip_ in ((tekst, s_cif, 0.0, tnt), (u'>' if po_tech > 0 else u'<', s_str, POD_STR, tst)):
+            opt = DB.TextNoteOptions(tip_.Id)
+            opt.HorizontalAlignment = DB.HorizontalTextAlignment.Center
+            try:
+                opt.VerticalAlignment = DB.VerticalTextAlignment.Middle
+            except Exception:
+                pass
+            opt.Rotation = ang
+            cel = (c[0] + td[0] * s_ + nd[0] * h_ * MMv, c[1] + td[1] * s_ + nd[1] * h_ * MMv)
+            DB.TextNote.Create(doc, v.Id, v_model(*cel), tekst_, opt)
+        nadpisi.append(_pryam(c, td, nd, HL, HH))
+        return n_
+
+    n, so_stolkn, na_trubah, oshibki = 0, 0, 0, 0
+    koncy_otv = {}
+    for kk, pts in otvody.items():
+        a = min(pts, key=lambda q: q.Y)
+        b = max(pts, key=lambda q: q.Y)
+        koncy_otv[kk] = (a, b) if a.Z > b.Z else (b, a)          # (выше по течению, ниже)
+    for (x, et) in sorted(otvody):
+        verh, niz = koncy_otv[(x, et)]
+        # своя сторона: снаружи пары соседних отводов (кв. Б и В — 0,75 м по X), иначе под трубой
+        storona = 1
+        sosed = [kk for kk in koncy_otv if kk[1] == et and kk[0] != x and abs(kk[0] - x) < 1.5]
+        if sosed:
+            sx, sy = ekr(niz - verh)
+            ang = _ugol_chitaemyi(sx, sy)
+            nd = (-math.sin(ang), math.cos(ang))
+            q = (koncy_otv[sosed[0]][0] + koncy_otv[sosed[0]][1]) / 2.0
+            mid = (verh + niz) / 2.0
+            rel = ekr(q - mid)
+            storona = 1 if rel[0] * nd[0] + rel[1] * nd[1] > 0 else -1     # сосед сверху — подпись снизу
+        try:
+            shtraf = postavit(verh, niz, u'0,03', storona, (0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2))
+            if shtraf >= 100:
+                so_stolkn += 1
+            elif shtraf > 0:
+                na_trubah += 1
+            n += 1
+        except Exception as ex:
+            oshibki += 1
+            if oshibki <= 3:
+                log(u'  подпись уклона не встала:', x, et, ex)
+    for sek, (h, a, b) in sorted(podval.items()):
+        verh, niz = (a, b) if a.Z > b.Z else (b, a)
+        try:
+            shtraf = postavit(verh, niz, u'0,02', 1, (0.5, 0.4, 0.6, 0.3, 0.7))
+            if shtraf >= 100:
+                so_stolkn += 1
+            elif shtraf > 0:
+                na_trubah += 1
+            n += 1
+        except Exception as ex:
+            log(u'  подпись уклона в подвале не встала:', sek, ex)
+    log(u'  подписей уклонов на', v.Name, n, u'| поэтажных отводов', len(otvody), u'| в подвале', len(podval),
+        u'| задевают надписи', so_stolkn, u'| задевают только трубы', na_trubah, u'| не встало', oshibki)
+
+
 def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
     """Аксонометрическая схема: отметки, марки ввода/выпусков, выноски."""
     ot = Otmetki(doc, v, tip_ot, log)
@@ -626,6 +884,7 @@ def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
         raschetnye_tochki(doc, g, kvv.load_json('calc', 'rezultaty_v3.json'), tr, v, tnt, log)
     else:
         prochistki_revizii_podpisi(doc, v, tnt, tr, False, log)
+        podpisi_uklonov(doc, v, tnt, g, log)
         for t in vypuski:
             p = tochka_na_y(t, 13.12)
             ot.postavit(t, p, -1.4, -0.8, lotok=True)          # влево-вниз: вверху подписи «2 этаж»

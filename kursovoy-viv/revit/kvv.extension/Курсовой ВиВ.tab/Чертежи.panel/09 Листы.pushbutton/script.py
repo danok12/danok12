@@ -278,10 +278,18 @@ def rezhim_zapuska():
 
 
 def main(log):
-    if rezhim_zapuska() == u'vygruzka':
+    rezhim = rezhim_zapuska()
+    if rezhim == u'vygruzka':
         log(u'режим: только выгрузка листов')
         eksport_png(log)
         eksport_pdf(log)
+        return
+    if rezhim.startswith(u'pdf'):
+        # «pdf» или «pdf 6» / «pdf 3 6» — только векторный PDF (без PNG: выгрузка картинок нагружает видеокарту,
+        # при нехватке памяти Revit падал с ошибкой видеодрайвера), при номерах — только эти листы
+        tolko = rezhim.split()[1:]
+        log(u'режим: только PDF', u' '.join(tolko) or u'всех листов')
+        eksport_pdf(log, tolko)
         return
     tb = osnovnaya_nadpis()
     if tb is None:
@@ -461,7 +469,7 @@ def eksport_png(log):
         log(u'PNG не выгружены:', ex)
 
 
-def eksport_pdf(log):
+def eksport_pdf(log, tolko=None):
     """Листы — векторный PDF для печати, по файлу на лист (revit/log/listy_pdf/list_<номер>.pdf). Размер бумаги
     берётся по листу (А3 420 x 297, ГОСТ 2.301), масштаб 100 % — масштабы видов (ГОСТ 2.302) и рамка
     (поля 20/5 мм, основная надпись 185 x 55, ГОСТ Р 21.101) печатаются без искажения.
@@ -485,6 +493,8 @@ def eksport_pdf(log):
         ('HideUnreferencedViewTags', lambda: True),
     ]
     for nom, imya, _, _ in LISTY:
+        if tolko and nom not in tolko:
+            continue
         sh = listy.get(nom)
         if sh is None:
             log(u'  PDF: нет листа', nom)
