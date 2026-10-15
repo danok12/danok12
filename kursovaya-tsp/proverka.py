@@ -187,8 +187,8 @@ hk = f"hк = {round(float(B.K1['HK']) * 1000)}"
 if sum(1 for e in msp if e.dxftype() == "DIMENSION" and e.dxf.get("text", "").replace("<>", "") == "hк = "
        and abs(e.get_measurement() * 1000 / MC.VS - float(B.K1["HK"]) * 1000) < 0.5) != 2:
     bad("на разрезах нет двух размеров", hk)
-LAYOUT_NAMES = ("Лист 1", "Лист 2", "Лист 3", "Лист 4", "Лист 5", "Лист 6", "Лист 1 (первый)")
-SCHEMES = ("Лист 6",)            # техсхемы без масштаба - целиком в пространстве листа, без видового экрана
+LAYOUT_NAMES = ("Лист 1", "Лист 2", "Лист 3", "Лист 4", "Лист 5", "Лист 6", "Лист 7", "Лист 1 (первый)")
+SCHEMES = ("Лист 6", "Лист 7")            # техсхемы без масштаба - целиком в пространстве листа, без видового экрана
 bad_styles = {e.dxf.style for L in (msp, *(doc.paperspace(n) for n in LAYOUT_NAMES), *doc.blocks)
               for e in L if e.dxftype() in ("TEXT", "MTEXT")} - {"ГОСТ тип Б"}
 if bad_styles: bad("текст не ГОСТ тип Б:", bad_styles)
@@ -270,5 +270,17 @@ for w in (MS.EX_NAME, MS.TR["name"], "ДЗ-35С", MS.KATOK_POD[1].split(" ")[0],
     if w not in t6: bad("лист 6: нет надписи", w)
 if str(MS.TR["N"]) not in {e.plain_text() for e in p6 if e.dxftype() == "MTEXT"}:
     bad("лист 6: число автосамосвалов в ведомости не", MS.TR["N"])
+# 5в. Лист 7 - обратная засыпка (прил. 9): средства уплотнения, слои, марки - из mashiny.py
+p7 = doc.paperspace("Лист 7")
+t7 = " ".join(e.plain_text().replace(chr(10), " ") for e in p7 if e.dxftype() == "MTEXT")
+d7 = [e.dxf.get("text", "") for e in p7.query("DIMENSION")]
+if MS.H_SL > MS.H_UPL or MS.N_SL * MS.H_SL != B.K1["HK"]:
+    bad("лист 7: слои засыпки толще глубины уплотнения или не укладываются в hк")
+for w in (MS.TR["name"], "ДЗ-35С", MS.TRAMB[1], MS.KATOK_POD[1].split(" ")[0], f"hсл = {n2(MS.H_SL)} м ({MS.N_SL} слоев)",
+          f"не ближе {float(MS.KATOK_MIN):.1f}".replace(".", ","), "резерв песка"):
+    if w not in t7: bad("лист 7: нет надписи", w)
+if n2(B.K1["HK"]) not in d7: bad("лист 7: нет глубины котлована на разрезе")
+if str(MS.N_TRAMB) not in {e.plain_text() for e in p7 if e.dxftype() == "MTEXT"}:
+    bad("лист 7: число трамбовок в ведомости не", MS.N_TRAMB)
 print("Котлован: контуры на обоих планах и hк на разрезах совпадают с расчётом" if ok else "")
 print("ВСЁ СХОДИТСЯ" if ok else "ЕСТЬ РАСХОЖДЕНИЯ")
