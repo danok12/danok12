@@ -79,6 +79,9 @@ LAYERS = {  # имя: (цвет ACI, вес линии в сотых мм, пе�
     "Профиль": (7, 50, True),            # поверхность грунта на разрезах
     "Проектная": (1, 25, True),          # проектная плоскость на разрезах
     "Штриховка": (8, 18, True),
+    "Машины": (7, 25, True),             # машины на технологических схемах
+    "Оси_движения": (7, 18, True),       # оси движения экскаватора, границы проходок и захваток
+    "Транспорт": (1, 25, True),          # оси движения автосамосвалов
 }
 for name, (color, lw, plot) in LAYERS.items():
     lay = doc.layers.add(name, color=color, lineweight=lw)
@@ -95,6 +98,8 @@ VS = 20.0          # разрезы и обводы: Мв 1:100 на плане 
 d2 = doc.dimstyles.duplicate_entry("М1-2000", "Мв1-100")   # высоты на разрезах - в мм
 d2.dxf.dimlfac = 1000 / VS
 d2.dxf.dimdec = 0
+d3 = doc.dimstyles.duplicate_entry("М1-2000", "Схема")    # схемы без масштаба: размеры в мм листа,
+d3.dxf.dimscale = 1.0                                      # текст размера задаётся явно
 
 msp = doc.modelspace()
 f = float
@@ -1017,7 +1022,7 @@ def frame_and_stamp(sheet, sheets, name, title):
         image_title(title, (217.5, TITLE_Y))
 
 
-frame_and_stamp(1, 5, "План строительной площадки\\Pс рабочими отметками и ЛНР\\PМ 1:2000",
+frame_and_stamp(1, 8, "План строительной площадки\\Pс рабочими отметками и ЛНР\\PМ 1:2000",
                 "План строительной площадки с рабочими отметками и линией нулевых работ  М 1:2000")
 
 # видовой экран: модель x -34..524, y -44..326 м
@@ -1170,6 +1175,604 @@ for r, row in enumerate([("Наименование", "Марка", "Кол.", "
         txt(str(v), (x + 1.5 if left else x + CW5[c] / 2, y - 3.5), H_TEXT,
             TA.MIDDLE_LEFT if left else TA.MIDDLE_CENTER, "Надписи", NARROW)
         x += CW5[c]
+
+# ================= лист 6: схема разработки грунта и устройства дна котлована (разд. 3, п. 5; прил. 9) =================
+# Как в прил. 9: план котлована с проходками экскаватора и разрез по забою; подчистка дна
+# бульдозером - план и разрез; устройство подсыпки - план захваток и разрез. Без масштаба
+# (планы котлована - в пропорциях его размеров); всё - в пространстве листа, мм.
+# Котлован - по окончательным отметкам (B.K1), машины - п. 2.3.2 и ЕНиР Е2-1.
+from math import asin, sqrt, radians, atan2, degrees, hypot
+KK = B.K1
+HK6, M6 = f(KK["HK"]), f(KK["M"])
+R6 = f(MS.EX_R)                                      # наибольший радиус копания ЭО-4121А, м
+NED6 = MS.NEDOBOR / 100                              # недобор, м (прил. 7)
+HD6 = HK6 - NED6                                     # глубина копания экскаватором, м
+V6 = [tuple(map(f, p)) for p in KK["VERH"]]
+N6 = [tuple(map(f, p)) for p in KK["NIZ"]]
+RG6 = K.ramp_geometry(KK)
+XL6, XN6, XR6 = V6[0][0], V6[1][0], V6[3][0]         # бровка: левая сторона, край левого крыла, правая
+YB6, YN6, YT6 = V6[0][1], V6[2][1], V6[4][1]         # бровка: низ крыла, низ правой части, верх
+XE6 = f(RG6["end"][0][0])                            # конец съезда
+YP1, YP2 = map(f, RG6["gap"])                        # разрыв бровки у съезда
+YPC = f(KK["PAN_Y"] + K.B_PAN / 2)                   # ось съезда
+B6 = 1.5 * R6                                        # торцевая проходка - не шире 1,5·Rmax (прил. 9)
+Y12 = YT6 - B6                                       # граница проходок I и II
+assert YN6 < Y12 and Y12 - YN6 <= B6 and YN6 - YB6 <= B6
+PASSES = [  # (номер, x начала, x конца, y низа, y верха, ось автосамосвалов) - в м площадки
+    ("I", XL6, XR6, Y12, YT6, YT6 + 3.0),
+    ("II", XR6, XL6, YN6, Y12, YN6 - 3.0),
+    ("III", XL6, XN6, YB6, YN6, YB6 - 3.0),
+    ("IV", XR6, XE6, YPC - 3.0, YPC + 3.0, YP2 + 3.0),          # съезд
+]
+B_DOZ = 3.64                                         # отвал ДЗ-35С, м - ширина полосы подчистки
+BUL6 = MS.BUL_RAZ[1].split(" ")[0]                   # бульдозер комплекта - подчистка и разравнивание подсыпки
+KAT6 = MS.KATOK_POD[1].split(" ")[0]                 # каток для подсыпки (самоходный, въезжает по съезду)
+EXT = 0.3 / NED6                                     # недобор и подсыпка на разрезах - утолщены (0,3 м)
+
+psp = doc.layouts.new("Лист 6")
+a3(psp)
+frame_and_stamp(6, None, "Технологическая схема разработки\\Pгрунта и устройства дна котлована", None)
+
+
+def pp(pts, layer, closed=False, lt=None, w=None):
+    at = {"layer": layer}
+    if lt:
+        at["linetype"] = lt
+    e = psp.add_lwpolyline(pts, close=closed, dxfattribs=at)
+    if w:
+        e.dxf.const_width = w
+    return e
+
+
+def arr(p, ang, L=2.5, wd=1.0, layer="Перемещения"):
+    """Наконечник стрелки на листе: острие в p, направление ang, град."""
+    c, s_ = cos(radians(ang)), sin(radians(ang))
+    psp.add_lwpolyline([(p[0] - c * L, p[1] - s_ * L, wd, 0.0), (p[0], p[1], 0.0, 0.0)], format="xyse",
+                       dxfattribs={"layer": layer})
+
+
+def pdim(p1, p2, base, text, angle=0):
+    d = psp.add_linear_dim(base=base, p1=p1, p2=p2, angle=angle, dimstyle="Схема", text=text,
+                           dxfattribs={"layer": "Размеры"})
+    d.render()
+
+
+def lbl(s, pos, align=MA.MIDDLE_CENTER, h=H_TEXT, rot=0):
+    m = psp.add_mtext(W08 + s, dxfattribs={"layer": "Надписи", "style": TXT, "char_height": h, "rotation": rot})
+    m.set_location(pos, attachment_point=align)
+    return m
+
+
+def callout(p, q, s, right=True):
+    """Выноска: от точки p к полке в q, надпись над полкой."""
+    e = (q[0] + (1 if right else -1) * (len(s) * 1.45 + 1), q[1])
+    pp([p, q, e], "Надписи")
+    lbl(s, ((q[0] + e[0]) / 2, q[1] + 0.6), MA.BOTTOM_CENTER)
+
+
+def hatch6(pts, pattern, scale):
+    h = psp.add_hatch(dxfattribs={"layer": "Штриховка"})
+    h.set_pattern_fill(pattern, scale=scale)
+    h.paths.add_polyline_path(pts, is_closed=True)
+
+
+def soil_p(points, step=5.0, n=3, gap=0.7, ln_=1.6):
+    """Грунт естественный (ГОСТ 2.306) вдоль линии, со стороны грунта - справа по ходу; мм листа."""
+    for (x1, y1), (x2, y2) in zip(points, points[1:]):
+        L = hypot(x2 - x1, y2 - y1)
+        if L < 1e-9:
+            continue
+        ux, uy = (x2 - x1) / L, (y2 - y1) / L
+        dx, dy = (uy - ux) / 2 ** 0.5, (-ux - uy) / 2 ** 0.5
+        t = 1.0
+        while t + (n - 1) * gap <= L - 0.5:
+            for kk in range(n):
+                px, py = x1 + ux * (t + kk * gap), y1 + uy * (t + kk * gap)
+                pp([(px, py), (px + dx * ln_, py + dy * ln_)], "Штриховка")
+            t += step
+
+
+def brk(p, q):
+    """Линия обрыва (сплошная тонкая с изломом, ГОСТ 2.303) от p к q."""
+    mx, my = (p[0] + q[0]) / 2, (p[1] + q[1]) / 2
+    L = hypot(q[0] - p[0], q[1] - p[1])
+    ux, uy = (q[0] - p[0]) / L, (q[1] - p[1]) / L
+    pp([p, (mx - ux * 1.5, my - uy * 1.5), (mx - uy * 1.6 - ux * 0.5, my + ux * 1.6 - uy * 0.5),
+        (mx + uy * 1.6 + ux * 0.5, my - ux * 1.6 + uy * 0.5), (mx + ux * 1.5, my + uy * 1.5), q], "Штриховка")
+
+
+def cut6(p, d, look, label, L=6.0):
+    """Положение разреза (ГОСТ 2.305): штрих L мм от p наружу по d, стрелка взгляда look, обозначение."""
+    e = (p[0] + d[0] * L, p[1] + d[1] * L)
+    pp([p, e], "Профиль", w=0.7)
+    a = (p[0] + d[0] * (L - 2.0), p[1] + d[1] * (L - 2.0))
+    tip = (a[0] + look[0] * 4.5, a[1] + look[1] * 4.5)
+    pp([a, (a[0] + look[0] * 2.0, a[1] + look[1] * 2.0)], "Надписи")
+    arr(tip, degrees(atan2(look[1], look[0])), L=2.5, wd=1.0, layer="Надписи")
+    lbl(label, (tip[0] + look[0] * 2.2 + d[0] * 1.2, tip[1] + look[1] * 2.2 + d[1] * 1.2), h=H_HEAD)
+
+
+# ---------- машины: в плане и сбоку (размеры - м, на листе - s мм на 1 м) ----------
+def glyph6(p, ang, s, kind):
+    """Машина в плане; ang - курс (у экскаватора - к забою), град."""
+    c, s_ = cos(radians(ang)), sin(radians(ang))
+    T = lambda u, v: (p[0] + (u * c - v * s_) * s, p[1] + (u * s_ + v * c) * s)
+    box_ = lambda u0, v0, u1, v1: pp([T(u0, v0), T(u1, v0), T(u1, v1), T(u0, v1)], "Машины", True)
+    if kind == "exc":                                    # гусеничная тележка 4,2 x 3,0, платформа, стрела, ковш
+        box_(-2.1, -1.5, 2.1, 1.5)
+        box_(-1.7, -1.1, 1.1, 1.1)
+        pp([T(1.1, 0), T(5.2, 0)], "Машины", w=0.4)
+        box_(5.2, -0.5, 6.1, 0.5)
+    elif kind == "truck":                                # 7,0 x 2,5, кабина впереди
+        box_(-3.5, -1.25, 3.5, 1.25)
+        pp([T(1.8, -1.25), T(1.8, 1.25)], "Машины")
+    elif kind == "dozer":                                # трактор 4,0 x 2,5, отвал 3,64
+        box_(-2.4, -1.25, 1.6, 1.25)
+        pp([T(2.2, -B_DOZ / 2), T(2.2, B_DOZ / 2)], "Машины", w=0.35)
+        pp([T(1.6, -1.0), T(2.2, -1.0)], "Машины")
+        pp([T(1.6, 1.0), T(2.2, 1.0)], "Машины")
+    elif kind == "roller":                               # 4,8 x 1,9, оси колёс
+        box_(-2.4, -0.95, 2.4, 0.95)
+        for u in (-1.6, 1.6):
+            pp([T(u, -0.95), T(u, 0.95)], "Машины")
+
+
+def two_link(p, w, l1, l2):
+    """Колено стрелы: окружности l1 вокруг p и l2 вокруг w, верхнее пересечение."""
+    dx, dy = w[0] - p[0], w[1] - p[1]
+    D = min(hypot(dx, dy), l1 + l2 - 1e-6)
+    a = (l1 * l1 - l2 * l2 + D * D) / (2 * D)
+    h = sqrt(max(l1 * l1 - a * a, 0.0))
+    ux, uy = dx / hypot(dx, dy), dy / hypot(dx, dy)
+    mx, my = p[0] + a * ux, p[1] + a * uy
+    c1, c2 = (mx - h * uy, my + h * ux), (mx + h * uy, my - h * ux)
+    return c1 if c1[1] > c2[1] else c2
+
+
+def bar(X, p, q, w1, w2):
+    """Звено стрелы: полоса от p до q (м) шириной w1 -> w2."""
+    L_ = hypot(q[0] - p[0], q[1] - p[1])
+    nx, ny = -(q[1] - p[1]) / L_, (q[0] - p[0]) / L_
+    pp([X(p[0] + nx * w1 / 2, p[1] + ny * w1 / 2), X(q[0] + nx * w2 / 2, q[1] + ny * w2 / 2),
+        X(q[0] - nx * w2 / 2, q[1] - ny * w2 / 2), X(p[0] - nx * w1 / 2, p[1] - ny * w1 / 2)], "Машины", True)
+
+
+def exc_side(g, k, fwd, teeth, end_view=False):
+    """Экскаватор-обратная лопата сбоку: g - ось на уровне стоянки (мм листа), k - мм на 1 м,
+    fwd = ±1 - к забою, teeth - зубья ковша (м от оси); end_view - тележка видна с торца."""
+    X = lambda u, v: (g[0] + fwd * u * k, g[1] + v * k)
+    if end_view:                                         # гусеницы с торца: 2 x 0,6 м, колея 2,4 м
+        for u0 in (-1.5, 0.9):
+            pp([X(u0, 0), X(u0 + 0.6, 0), X(u0 + 0.6, 0.9), X(u0, 0.9)], "Машины", True)
+        pp([X(-0.9, 0.35), X(0.9, 0.35), X(0.9, 0.8), X(-0.9, 0.8)], "Машины", True)
+    else:
+        pp([X(-2.1, 0), X(2.1, 0), X(2.45, 0.45), X(2.1, 0.9), X(-2.1, 0.9), X(-2.45, 0.45)], "Машины", True)
+        for u in (-1.5, -0.5, 0.5, 1.5):
+            psp.add_circle(X(u, 0.45), 0.28 * k, dxfattribs={"layer": "Машины"})
+    pp([X(-2.7, 1.0), X(1.2, 1.0), X(1.2, 2.2), X(-2.7, 2.2)], "Машины", True)        # платформа
+    pp([X(0.1, 2.2), X(1.2, 2.2), X(1.2, 3.0), X(0.85, 3.3), X(0.1, 3.3)], "Машины", True)
+    piv = (1.0, 1.9)
+    wr = (teeth[0] - 0.3, teeth[1] + 1.0)                # шарнир ковша
+    knee = two_link(piv, wr, 5.0, 2.6)
+    L_ = hypot(knee[0] - piv[0], knee[1] - piv[1])
+    nx, ny = -(knee[1] - piv[1]) / L_, (knee[0] - piv[0]) / L_
+    if ny < 0:
+        nx, ny = -nx, -ny
+    bend = (piv[0] + (knee[0] - piv[0]) * 0.45 + nx * 0.9, piv[1] + (knee[1] - piv[1]) * 0.45 + ny * 0.9)
+    bar(X, piv, bend, 0.6, 0.5)                          # стрела с изгибом
+    bar(X, bend, knee, 0.5, 0.35)
+    bar(X, knee, wr, 0.35, 0.3)                          # рукоять
+    tu, tv = teeth
+    pp([X(tu - 0.3, tv + 1.0), X(tu - 0.75, tv + 0.55), X(tu - 0.45, tv), X(tu, tv), X(tu + 0.2, tv + 0.75)],
+       "Машины", True)                                   # ковш
+    return X
+
+
+def bucket6(c, k, lt=None):
+    """Ковш отдельно (положение выгрузки), c - низ ковша."""
+    pp([(c[0] - 0.5 * k, c[1] + 0.9 * k), (c[0] - 0.55 * k, c[1] + 0.3 * k), (c[0] - 0.2 * k, c[1]),
+        (c[0] + 0.45 * k, c[1]), (c[0] + 0.5 * k, c[1] + 0.9 * k)], "Машины", True, lt=lt)
+
+
+def truck_side(g, k, fwd, dump=0.0):
+    """Автосамосвал КамАЗ-55111 сбоку: g - середина базы на дороге; dump - подъём кузова, град."""
+    X = lambda u, v: (g[0] + fwd * u * k, g[1] + v * k)
+    for u in (2.6, -1.3, -2.6):
+        psp.add_circle(X(u, 0.5), 0.5 * k, dxfattribs={"layer": "Машины"})
+        psp.add_circle(X(u, 0.5), 0.2 * k, dxfattribs={"layer": "Машины"})
+    pp([X(-3.5, 1.0), X(3.5, 1.0)], "Машины")
+    pp([X(1.75, 1.0), X(3.5, 1.0), X(3.5, 2.0), X(3.2, 2.9), X(1.75, 2.9)], "Машины", True)
+    a = radians(dump)
+    hu, hv = -3.5, 1.25                                  # шарнир кузова
+    R_ = lambda u, v: X(hu + (u - hu) * cos(a) - (v - hv) * sin(a), hv + (u - hu) * sin(a) + (v - hv) * cos(a))
+    pp([R_(-3.5, 1.25), R_(1.6, 1.25), R_(1.6, 2.85), R_(-3.3, 2.85)], "Машины", True)
+
+
+def truck_rear(g, k):
+    """Автосамосвал сзади (по оси движения): ширина 2,5 м, верх кузова - погрузочная высота 2,85 м."""
+    X = lambda u, v: (g[0] + u * k, g[1] + v * k)
+    for u0 in (-1.25, 0.65):
+        pp([X(u0, 0), X(u0 + 0.6, 0), X(u0 + 0.6, 1.0), X(u0, 1.0)], "Машины", True)
+    pp([X(-1.25, 1.0), X(1.25, 1.0), X(1.25, 2.85), X(-1.25, 2.85)], "Машины", True)
+
+
+def dozer_side(g, k, fwd):
+    """Бульдозер ДЗ-35С (Т-180) сбоку, отвал 1,29 м впереди."""
+    X = lambda u, v: (g[0] + fwd * u * k, g[1] + v * k)
+    pp([X(-1.9, 0), X(1.9, 0), X(2.2, 0.4), X(1.9, 0.85), X(-1.9, 0.85), X(-2.2, 0.4)], "Машины", True)
+    for u in (-1.3, 0, 1.3):
+        psp.add_circle(X(u, 0.42), 0.26 * k, dxfattribs={"layer": "Машины"})
+    pp([X(-0.6, 0.85), X(1.8, 0.85), X(1.8, 1.8), X(-0.6, 1.8)], "Машины", True)
+    pp([X(-1.9, 0.85), X(-0.6, 0.85), X(-0.6, 2.9), X(-1.9, 2.9)], "Машины", True)
+    pp([X(0.0, 0.45), X(2.45, 0.35)], "Машины")
+    pp([X(2.45, 0.0), X(2.85, 0.15), X(2.85, 1.0), X(2.6, 1.29), X(2.45, 1.29)], "Машины", True)
+    return X(2.85, 0.0)
+
+
+def roller_side(g, k, fwd):
+    """Каток ДУ-31А на пневматических шинах сбоку."""
+    X = lambda u, v: (g[0] + fwd * u * k, g[1] + v * k)
+    for u in (-1.6, 1.6):
+        psp.add_circle(X(u, 0.55), 0.55 * k, dxfattribs={"layer": "Машины"})
+    pp([X(-2.4, 0.7), X(2.4, 0.7), X(2.4, 1.5), X(-2.4, 1.5)], "Машины", True)
+    pp([X(-2.0, 1.5), X(-0.6, 1.5), X(-0.6, 3.0), X(-2.0, 3.0)], "Машины", True)
+    pp([X(0.0, 1.5), X(2.2, 1.5), X(2.2, 2.1), X(0.0, 2.1)], "Машины", True)
+
+
+def pit6(T, s):
+    """Котлован на плане схемы: бровка с разрывом у съезда, подошва, съезд, бергштрихи."""
+    P_ = lambda p: T(f(p[0]), f(p[1]))
+    pp([T(XR6, YP2), T(*V6[4]), T(*V6[5]), T(*V6[0]), T(*V6[1]), T(*V6[2]), T(*V6[3]), T(XR6, YP1)], "Котлован")
+    for a, b in RG6["brow"]:
+        pp([P_(a), P_(b)], "Котлован")
+    pp([P_(RG6["end"][0]), P_(RG6["end"][1])], "Котлован")
+    pp([T(*p) for p in N6], "Котлован_низ", closed=True)
+    for a, b in RG6["toe"] + RG6["edge"]:
+        pp([P_(a), P_(b)], "Котлован_низ")
+    step = 1.5                                           # бергштрихи через 1,5 мм, через один - короткие
+    for i in range(6):
+        a, b = T(*V6[i]), T(*V6[(i + 1) % 6])
+        na, nb = T(*N6[i]), T(*N6[(i + 1) % 6])
+        L = hypot(b[0] - a[0], b[1] - a[1])
+        ux, uy = (b[0] - a[0]) / L, (b[1] - a[1]) / L
+        t0 = max(0.0, (na[0] - a[0]) * ux + (na[1] - a[1]) * uy)
+        t1 = min(L, (nb[0] - a[0]) * ux + (nb[1] - a[1]) * uy)
+        nx, ny = -uy, ux
+        d = (na[0] - a[0]) * nx + (na[1] - a[1]) * ny
+        kk, t = 0, t0 + step / 2
+        while t < t1:
+            px, py = a[0] + ux * t, a[1] + uy * t
+            if not (i == 3 and T(0, YP1)[1] - 0.3 < py < T(0, YP2)[1] + 0.3):
+                ln_ = d if kk % 2 == 0 else d / 2
+                pp([(px, py), (px + nx * ln_, py + ny * ln_)], "Бергштрихи")
+            kk, t = kk + 1, t + step
+    for (a, b), ((_, yt), _) in zip(RG6["brow"], RG6["toe"]):     # откосы съезда
+        A, Bp = P_(a), P_(b)
+        ytp = T(0, f(yt))[1]
+        n = int(hypot(Bp[0] - A[0], Bp[1] - A[1]) / step)
+        for kk in range(n):
+            t = (kk + 0.5) / n
+            px, py = A[0] + (Bp[0] - A[0]) * t, A[1] + (Bp[1] - A[1]) * t
+            pp([(px, py), (px, py + (ytp - py) * (1 if kk % 2 == 0 else 0.5))], "Бергштрихи")
+
+
+# ---------- план 1: разработка грунта экскаватором (прил. 9, торцевые проходки обратной лопаты) ----------
+sA = 1.8
+TA6 = lambda x, y: (52 + (x - XL6) * sA, 205 + (y - YB6) * sA)
+image_title(f"Разработка грунта в котловане экскаватором {MS.EX_NAME}", (130, TITLE_Y))
+pit6(TA6, sA)
+pp([TA6(XL6, Y12), TA6(XR6, Y12)], "Оси_движения", lt=DASH)            # границы проходок
+pp([TA6(XL6, YN6), TA6(XN6, YN6)], "Оси_движения", lt=DASH)
+LSTEP = 2.5                                                             # передвижка l на схеме, м
+for name, xs, xe, y0, y1, yt in PASSES:
+    dr = 1 if xe > xs else -1                                           # направление хода экскаватора
+    yc = (y0 + y1) / 2
+    hw = (y1 - y0) / 2
+    pp([TA6(xs + dr * 0.5, yc), TA6(xe - dr * 1.0, yc)], "Оси_движения", lt=DASHDOT)
+    arr(TA6(xe - dr * 1.0, yc), 0 if dr > 0 else 180, layer="Оси_движения")
+    xc = xs + dr * (R6 + 3.0)                                           # стоянка: забой - в сторону начала
+    r = 0.8 * R6
+    al = degrees(asin(min(1.0, hw / r)))
+    a0 = 180 if dr > 0 else 0
+    psp.add_arc(TA6(xc, yc), r * sA, a0 - al, a0 + al, dxfattribs={"layer": "Котлован"})
+    for kk in range(-4, 5):                                             # откос забоя - штрихи к выработке
+        a_ = radians(a0 + al * kk / 4.5)
+        p0 = (TA6(xc, yc)[0] + cos(a_) * r * sA, TA6(xc, yc)[1] + sin(a_) * r * sA)
+        ln_ = (M6 * HD6 * sA) * (1 if kk % 2 == 0 else 0.5)
+        pp([p0, (p0[0] + cos(a_) * ln_, p0[1] + sin(a_) * ln_)], "Бергштрихи")
+    for j in (1, 2):                                                    # следующие стоянки
+        psp.add_circle(TA6(xc + dr * LSTEP * j, yc), 0.45, dxfattribs={"layer": "Оси_движения"})
+    glyph6(TA6(xc, yc), 180 if dr > 0 else 0, sA, "exc")
+    pp([TA6(xs, yt), TA6(xe - dr * 1.0, yt)], "Транспорт", lt=DASH)
+    arr(TA6(xe - dr * 1.0, yt), 0 if dr > 0 else 180, layer="Транспорт")
+    glyph6(TA6(xc + dr * 1.0, yt), 0 if dr > 0 else 180, sA, "truck")
+    if name != "IV":
+        pos = TA6(xe - dr * 4.0, yc)
+        lbl(name, (pos[0], pos[1] + 2.8), h=H_HEAD)
+# передвижка l - на проходке I
+xc1, yc1 = XL6 + R6 + 3.0, (Y12 + YT6) / 2
+pdim(TA6(xc1, yc1), TA6(xc1 + LSTEP, yc1), (0, TA6(0, yc1)[1] + 4.5), "l")
+# размеры: ширины проходок, длина котлована, ширина съезда
+for ya, yb, t_ in ((YT6, Y12, B6), (Y12, YN6, Y12 - YN6), (YN6, YB6, YN6 - YB6)):
+    pdim(TA6(XL6, ya), TA6(XL6, yb), (34, 0), num(t_), angle=90)
+pdim(TA6(XL6, YB6), TA6(XR6, YN6), (0, 194), num(XR6 - XL6))
+pdim(TA6(XE6, f(RG6["end"][0][1])), TA6(XE6, f(RG6["end"][1][1])), (TA6(XE6, 0)[0] + 5, 0), num(K.B_PAN), angle=90)
+lbl(f"проходка IV - съезд, i = {f(K.I_PAN):.1f}".replace(".", ","), TA6((XR6 + XE6) / 2 + 1, YP1 - 4.0))
+yc3 = (YB6 + YN6) / 2                                                   # разрез 1-1 - по оси проходки III
+cut6(TA6(XL6 - 1.0, yc3), (-1, 0), (0, -1), "1")
+cut6(TA6(XN6 + 1.0, yc3), (1, 0), (0, -1), "1")
+
+# ---------- план 2: подчистка дна котлована (прил. 9) ----------
+sC = 1.2
+TC6 = lambda x, y: (52 + (x - XL6) * sC, 129 + (y - YB6) * sC)
+image_title("Подчистка дна котлована", (85, 189.5))
+pit6(TC6, sC)
+YE6, YTR6 = YT6 + 3.5, YT6 + 10.0                    # оси экскаватора и автосамосвалов у северной бровки
+pp([TC6(XR6 - 2.0, YE6), TC6(XL6 + 1.0, YE6)], "Оси_движения", lt=DASHDOT)
+arr(TC6(XL6 + 1.0, YE6), 180, layer="Оси_движения")
+pp([TC6(XR6 + 1.0, YTR6), TC6(XL6 + 1.0, YTR6)], "Транспорт", lt=DASH)
+arr(TC6(XL6 + 1.0, YTR6), 180, layer="Транспорт")
+XST = [XR6 - 6.0 - 11.0 * j for j in range(4)]        # стоянки экскаватора
+for j, x_ in enumerate(XST):
+    psp.add_circle(TC6(x_, YE6), 0.45, dxfattribs={"layer": "Оси_движения"})
+    lbl(f"ст.{j + 1}", (TC6(x_, YE6)[0], TC6(x_, YE6)[1] + 3.0), MA.BOTTOM_CENTER)
+glyph6(TC6(XST[0], YE6), -90, sC, "exc")
+glyph6(TC6(XST[0] - 9.0, YTR6), 180, sC, "truck")
+# полосы бульдозера: рабочий ход - к экскаватору (на север), холостой - назад, со смещением на полосу
+xs_ = []
+x_ = N6[3][0] - B_DOZ / 2
+while x_ > N6[0][0] + B_DOZ / 2 - 0.5:
+    xs_.append(x_)
+    x_ -= B_DOZ - 0.4                                  # перекрытие полос 0,3...0,5 м (прил. 9)
+ytop = N6[4][1] - 2.0
+for j, x_ in enumerate(xs_):
+    ybot = (N6[2][1] if x_ > N6[1][0] else N6[0][1]) + 0.8
+    pp([TC6(x_, ybot), TC6(x_, ytop)], "Перемещения")
+    arr(TC6(x_, ytop), 90, L=1.6, wd=0.8)
+    if j + 1 < len(xs_):
+        nb = (N6[2][1] if xs_[j + 1] > N6[1][0] else N6[0][1]) + 0.8
+        pp([TC6(x_, ytop - 1.5), TC6(xs_[j + 1], nb)], "Перемещения", lt=DASH)
+glyph6(TC6(xs_[4], 152.0), 90, sC, "dozer")
+for i in (0, 1, 3, 4, 5):                             # углы - подчистка вручную
+    c_ = N6[i]
+    pv, nx_ = N6[i - 1], N6[(i + 1) % 6]
+    d1 = ((pv[0] - c_[0]) / hypot(pv[0] - c_[0], pv[1] - c_[1]), (pv[1] - c_[1]) / hypot(pv[0] - c_[0], pv[1] - c_[1]))
+    d2 = ((nx_[0] - c_[0]) / hypot(nx_[0] - c_[0], nx_[1] - c_[1]), (nx_[1] - c_[1]) / hypot(nx_[0] - c_[0], nx_[1] - c_[1]))
+    a_ = 2.2
+    sq = [TC6(*c_), TC6(c_[0] + d1[0] * a_, c_[1] + d1[1] * a_),
+          TC6(c_[0] + (d1[0] + d2[0]) * a_, c_[1] + (d1[1] + d2[1]) * a_), TC6(c_[0] + d2[0] * a_, c_[1] + d2[1] * a_)]
+    pp(sq, "Машины", True)
+    hatch6(sq, "ANSI37", 0.12)
+pp([TC6(XE6 - 1.0, YPC), TC6(XR6 + 1.0, YPC)], "Перемещения", lt=DASH)   # въезд бульдозера по съезду
+arr(TC6(XR6 + 1.0, YPC), 180, L=1.6, wd=0.8)
+pdim(TC6(xs_[-1] - B_DOZ / 2, N6[0][1] + 14.0), TC6(xs_[-1] + B_DOZ / 2, N6[0][1] + 14.0),
+     (0, TC6(0, N6[0][1] + 14.0)[1]), num(B_DOZ))
+x22 = XST[0]                                          # разрез 2-2 - через стоянку 1
+cut6(TC6(x22, YTR6 + 2.5), (0, 1), (1, 0), "2", L=5.0)
+cut6(TC6(x22, YN6 - 1.0), (0, -1), (1, 0), "2", L=5.0)
+
+# ---------- план 3: устройство подсыпки из щебня захватками (прил. 9) ----------
+sD = 1.2
+TD6 = lambda x, y: (52 + (x - XL6) * sD, 64 + (y - YB6) * sD)
+image_title("Устройство подсыпки из щебня", (85, 121))
+pit6(TD6, sD)
+XZ = [N6[0][0], N6[1][0], (N6[1][0] + N6[3][0]) / 2, N6[3][0]]     # захватки 1-3 по низу котлована
+for x_ in XZ[1:3]:
+    pp([TD6(x_, N6[2][1]), TD6(x_, N6[4][1])], "Оси_движения", lt=DASH)
+for (xa, xb), s_ in zip(zip(XZ, XZ[1:]), ("уплотнение", "разравнивание", "укладка")):
+    pdim(TD6(xa, N6[4][1]), TD6(xb, N6[4][1]), (0, TD6(0, YT6 + 2.5)[1]), s_)
+# захватка 1: проходы катка по замкнутой схеме, перекрытие 0,2...0,3 м (прил. 9)
+cx1 = (XZ[0] + XZ[1]) / 2
+for kk in range(3):
+    w_, h_ = 16.0 - 2 * kk * 1.7, 7.0 - 2 * kk * 1.7
+    rr = h_ / 2
+    pts = []
+    for t in range(0, 181, 15):
+        a_ = -pi / 2 + t * pi / 180
+        pts.append(TD6(cx1 + w_ / 2 - rr + rr * cos(a_), YPC + rr * sin(a_)))
+    for t in range(0, 181, 15):
+        a_ = pi / 2 + t * pi / 180
+        pts.append(TD6(cx1 - w_ / 2 + rr + rr * cos(a_), YPC + rr * sin(a_)))
+    pp(pts, "Перемещения", True)
+arr(TD6(cx1 + 3.0, YPC + 3.5), 0, L=1.6, wd=0.8)
+glyph6(TD6(cx1 - 2.0, YPC + 3.5), 0, sD, "roller")
+# захватка 2: разравнивание бульдозером к захватке 1
+for j, y_ in enumerate((148.0, 152.0, 160.0, 164.0)):
+    pp([TD6(XZ[2] - 1.0, y_), TD6(XZ[1] + 1.5, y_)], "Перемещения")
+    arr(TD6(XZ[1] + 1.0, y_), 180, L=1.6, wd=0.8)
+glyph6(TD6((XZ[1] + XZ[2]) / 2 + 3.0, YPC), 180, sD, "dozer")
+# захватка 3: щебень кучами, автосамосвал въезжает по съезду и разгружается задним ходом
+for x_ in (XZ[2] + 2.0, XZ[2] + 5.5, XZ[2] + 9.0, XZ[2] + 12.5):
+    for y_ in (147.5, 150.5, 161.5, 164.5):
+        sq = [TD6(x_ - 1.1, y_ - 1.1), TD6(x_ + 1.1, y_ - 1.1), TD6(x_ + 1.1, y_ + 1.1), TD6(x_ - 1.1, y_ + 1.1)]
+        pp(sq, "Машины", True)
+        pp([sq[0], sq[2]], "Машины")
+        pp([sq[1], sq[3]], "Машины")
+glyph6(TD6(XZ[2] + 15.0, YPC), 0, sD, "truck")
+pp([TD6(XE6 - 0.5, YPC), TD6(XZ[2] + 20.0, YPC)], "Транспорт", lt=DASH)
+arr(TD6(XZ[2] + 19.5, YPC), 180, L=1.6, wd=0.8, layer="Транспорт")
+pp([TD6(XZ[1] + 4.0, YB6 + 4.5), TD6(XZ[3] - 3.0, YB6 + 4.5)], "Перемещения")     # направление работ
+arr(TD6(XZ[3] - 3.0, YB6 + 4.5), 0, L=2.5, wd=1.0)
+lbl("направление работ", TD6((XZ[1] + XZ[3]) / 2, YB6 + 6.5), MA.BOTTOM_CENTER)
+cut6(TD6(XL6 - 1.0, YPC), (-1, 0), (0, 1), "3")
+cut6(TD6(XE6 + 1.0, YPC), (1, 0), (0, 1), "3")
+
+# ---------- разрез 1-1: забой экскаватора (вид на юг - запад справа) ----------
+k1 = 5.2
+U1 = lambda u, v: (285.4 + u * k1, 240 + v * k1)
+image_title("Разрез 1-1", (337, TITLE_Y))
+ub = 2.1 + 1.75                                      # бровка забоя: b = 1,5...2,0 м от гусениц (прил. 9)
+ut = ub + M6 * HD6                                   # низ забоя
+dz = HD6 + EXT * NED6                                # проектное дно на разрезе (недобор утолщён)
+uw = ut + 13.0                                       # низ торцевого откоса котлована (выработка)
+uwb = uw + M6 * dz                                   # бровка котлована
+pp([U1(-4.5, 0), U1(ub, 0), U1(ut, -HD6), U1(uw + M6 * EXT * NED6, -HD6), U1(uwb, 0), U1(uwb + 1.8, 0)], "Профиль")
+strip = [U1(ut, -HD6), U1(uw + M6 * EXT * NED6, -HD6), U1(uw, -dz), U1(ut, -dz)]
+pp(strip, "Котлован_низ", True)
+hatch6(strip, "ANSI31", 0.2)
+soil_p([U1(-4.5, 0), U1(ub, 0), U1(ut, -HD6), U1(ut, -dz)])
+soil_p([U1(ut, -dz), U1(uw, -dz), U1(uwb, 0), U1(uwb + 1.8, 0)])
+X1 = exc_side(U1(0, 0), k1, 1, (ut + 0.9, -HD6))
+pp([U1(0, -0.8), U1(0, 6.6)], "Оси_движения", lt=DASHDOT)
+lbl(MS.EX_NAME, U1(-0.4, 3.5), MA.BOTTOM_RIGHT)
+pdim(U1(0, 6.2), U1(R6, 6.2), U1(0, 6.2), f"Rmax = {num(R6)}")
+pdim(U1(0, -dz), U1(ut, -dz), U1(0, -3.4), "Rн min")
+pdim(U1(ut, -dz), U1(ut + LSTEP, -dz), U1(0, -3.4), "l")
+pdim(U1(0, -dz), U1(ut + LSTEP, -dz), U1(0, -4.6), "Rн max")
+pdim(U1(2.45, 0.45), U1(ub, 0.45), U1(0, 0.45), "b")
+pdim(U1(uwb, 0), U1(uw + M6 * EXT * NED6, -HD6), U1(uwb + 2.0, 0), num(HD6), angle=90)
+pdim(U1(uwb, 0), U1(uw, -dz), U1(uwb + 3.6, 0), num(HK6), angle=90)
+lbl(f"1:{num(M6)}", U1(uw - 0.6, -1.0), MA.MIDDLE_RIGHT)
+callout(U1(ut + 9.0, -(HD6 + dz) / 2), U1(ut + 7.0, -3.9), f"недобор {num(NED6)} м", right=True)
+
+# ---------- разрез 2-2: подчистка недобора бульдозером, погрузка экскаватором (вид на восток) ----------
+k2 = 4.0
+U2 = lambda u, v: (284 + u * k2, 165 + v * k2)
+image_title("Разрез 2-2", (337, 210))
+ue = 5.5                                             # ось экскаватора от оси автосамосвала (Rвыгр)
+ub2 = ue + 1.5 + 1.75                                # бровка
+ut2 = ub2 + M6 * HD6                                 # низ откоса на отметке недобора
+ud2 = ub2 + M6 * dz                                  # низ откоса на проектной отметке
+ux2 = 14.6                                           # отвал бульдозера: левее - недобор, правее - дно зачищено
+pp([U2(-4.5, 0), U2(ub2, 0), U2(ud2, -dz), U2(29.0, -dz)], "Профиль")
+strip = [U2(ut2, -HD6), U2(ux2, -HD6), U2(ux2, -dz), U2(ud2, -dz)]
+pp(strip, "Котлован_низ", True)
+hatch6(strip, "ANSI31", 0.2)
+soil_p([U2(-4.5, 0), U2(ub2, 0), U2(ud2, -dz), U2(29.0, -dz)])
+brk(U2(29.0, 1.0), U2(29.0, -dz - 1.0))
+heap = [U2(ut2 - 0.1, -HD6), U2(ut2 + 0.7, -HD6 + 0.75), U2(ut2 + 1.6, -HD6)]
+pp(heap, "Машины", True)
+hatch6(heap, "DOTS", 0.5)
+truck_rear(U2(0, 0), k2)
+exc_side(U2(ue, 0), k2, 1, (ut2 + 0.5 - ue, -HD6 + 0.3), end_view=True)
+bucket6(U2(0, 3.45), k2, lt=DASH)                    # ковш над кузовом при выгрузке
+P0, P1, P2 = U2(ue + 3.0, 3.4), U2(ue - 0.5, 7.0), U2(0.9, 4.7)     # кривая Безье: поворот ковша к кузову
+bz = [tuple((1 - t) ** 2 * P0[i] + 2 * t * (1 - t) * P1[i] + t * t * P2[i] for i in (0, 1))
+      for t in [j / 16 for j in range(17)]]
+pp(bz, "Машины", lt=DASH)
+arr(bz[-1], degrees(atan2(P2[1] - P1[1], P2[0] - P1[0])), L=1.6, wd=0.8, layer="Машины")
+xb = dozer_side(U2(ux2 + 2.85, -dz), k2, -1)         # бульдозер срезает недобор и толкает к экскаватору
+pile = [U2(ux2 - 1.2, -HD6), U2(ux2 - 0.05, -HD6 + 0.55), U2(ux2 - 0.05, -HD6)]
+pp(pile, "Машины", True)
+for u_ in (0.0, ue):
+    pp([U2(u_, -0.6), U2(u_, 6.8)], "Оси_движения", lt=DASHDOT)
+pdim(U2(0, 6.8), U2(ue, 6.8), U2(0, 6.8), "Rвыгр")
+pdim(U2(0, 0), U2(0, 3.45), U2(-2.4, 0), "Hвыгр", angle=90)
+pdim(U2(-1.25, 0), U2(-1.25, 2.85), U2(-3.6, 0), num(MS.TR["hp"]), angle=90)
+lbl(MS.TR["name"], U2(0, -1.0), MA.TOP_CENTER)
+lbl(MS.EX_NAME, U2(ue - 0.4, 3.5), MA.BOTTOM_RIGHT)
+lbl(BUL6, U2(ux2 + 3.6, -dz + 3.2), MA.BOTTOM_CENTER)
+callout(U2(ux2 - 2.5, -(HD6 + dz) / 2), U2(ux2 + 0.5, -dz - 1.6), f"недобор {num(NED6)} м", right=True)
+
+# ---------- разрез 3-3: подсыпка по захваткам (вид на север - запад слева), без масштаба ----------
+k3 = 3.6
+U3 = lambda u, v: (266 + u * k3, 106 + v * k3)
+image_title("Разрез 3-3", (337, 136))
+HP = EXT * NED6                                      # подсыпка 0,10 м на разрезе - 0,3 м (утолщена)
+u1, u2, u3, u4 = M6 * HK6, 12.4, 23.4, 34.4          # низ откоса; границы захваток; начало съезда
+ur = 39.5                                            # обрыв на съезде (уклон на схеме утрирован)
+vr = -HK6 + (ur - u4) * 0.25
+pp([U3(-2.4, 0), U3(0, 0), U3(u1, -HK6), U3(u4, -HK6), U3(ur, vr)], "Профиль")
+soil_p([U3(-2.4, 0), U3(0, 0), U3(u1, -HK6), U3(u4, -HK6), U3(ur, vr)])
+brk(U3(ur, vr + 1.2), U3(ur, vr - 1.2))
+lay = [U3(u1 + M6 * 0.0, -HK6), U3(16.0, -HK6), U3(16.0, -HK6 + HP), U3(u1 - M6 * HP, -HK6 + HP)]
+pp(lay, "Котлован_низ", True)
+hatch6(lay, "DOTS", 0.5)
+pile = [U3(16.0, -HK6), U3(16.0, -HK6 + 0.9), U3(15.0, -HK6 + HP)]
+pp(pile, "Машины", True)
+hatch6(pile, "DOTS", 0.5)
+for uc in (24.6, 27.2):                              # кучи щебня
+    tri = [U3(uc - 1.1, -HK6), U3(uc, -HK6 + 0.9), U3(uc + 1.1, -HK6)]
+    pp(tri, "Машины", True)
+    hatch6(tri, "DOTS", 0.5)
+roller_side(U3(7.0, -HK6 + HP), k3, 1)
+dozer_side(U3(16.05 + 2.85, -HK6), k3, -1)
+truck_side(U3(31.0, -HK6), k3, 1, dump=40)
+for (ua, ub_), s_ in zip(((u1, u2), (u2, u3), (u3, u4)), ("уплотнение", "разравнивание", "укладка")):
+    pdim(U3(ua, -HK6), U3(ub_, -HK6), U3(0, -HK6 - 2.2), s_)
+pdim(U3(0, 0), U3(u1, -HK6), U3(-1.8, 0), num(HK6), angle=90)
+callout(U3(10.5, -HK6 + HP / 2), U3(11.0, 2.0), f"щебень {num(K.H_PODS)} м", right=True)
+lbl(KAT6, U3(7.0, -HK6 + HP + 3.3), MA.BOTTOM_CENTER)
+lbl(BUL6, U3(19.0, -HK6 + 3.2), MA.BOTTOM_CENTER)
+lbl(MS.TR["name"], U3(34.0, 4.5), MA.BOTTOM_CENTER)
+lbl(f"съезд, i = {f(K.I_PAN):.1f}".replace(".", ","), U3(39.0, 0.6), MA.BOTTOM_RIGHT)
+
+# ---------- условные обозначения, примечания, ведомость машин ----------
+LX6, LY6 = 172, 184
+txt("Условные обозначения", (LX6, LY6), H_HEAD, TA.BOTTOM_LEFT, "Надписи", NARROW)
+for j, (kind, s_) in enumerate((
+        ("exc", "ось движения экскаватора, стоянка"),
+        ("tr", "ось движения автосамосвалов"),
+        ("doz", "рабочий и холостой ход бульдозера"),
+        ("man", "подчистка дна вручную"),
+        ("pile", "щебень, выгруженный кучами"),
+        ("rol", "проходы катка"),
+        ("num", "номер проходки экскаватора"))):
+    y = LY6 - 5.5 - 6.2 * j
+    sx0, sx1 = LX6, LX6 + 14
+    if kind == "exc":
+        pp([(sx0, y), (sx1 - 2.5, y)], "Оси_движения", lt=DASHDOT)
+        arr((sx1, y), 0, layer="Оси_движения")
+        psp.add_circle((sx0 + 4, y), 0.45, dxfattribs={"layer": "Оси_движения"})
+    elif kind == "tr":
+        pp([(sx0, y), (sx1 - 2.5, y)], "Транспорт", lt=DASH)
+        arr((sx1, y), 0, layer="Транспорт")
+    elif kind == "doz":
+        pp([(sx0, y + 1.2), (sx1 - 2.0, y + 1.2)], "Перемещения")
+        arr((sx1, y + 1.2), 0, L=1.6, wd=0.8)
+        pp([(sx0, y - 1.2), (sx1, y - 1.2)], "Перемещения", lt=DASH)
+    elif kind == "man":
+        sq = [(sx0 + 4.5, y - 2), (sx0 + 9.5, y - 2), (sx0 + 9.5, y + 2), (sx0 + 4.5, y + 2)]
+        pp(sq, "Машины", True)
+        hatch6(sq, "ANSI37", 0.12)
+    elif kind == "pile":
+        sq = [(sx0 + 5, y - 1.6), (sx0 + 8.2, y - 1.6), (sx0 + 8.2, y + 1.6), (sx0 + 5, y + 1.6)]
+        pp(sq, "Машины", True)
+        pp([sq[0], sq[2]], "Машины")
+        pp([sq[1], sq[3]], "Машины")
+    elif kind == "rol":
+        pp([(sx0 + 2, y - 1.5), (sx1 - 2, y - 1.5), (sx1, y), (sx1 - 2, y + 1.5), (sx0 + 2, y + 1.5),
+            (sx0, y)], "Перемещения", True)
+    elif kind == "num":
+        txt("II", (sx0 + 7, y), H_HEAD, TA.MIDDLE_CENTER, "Надписи")
+    txt("- " + s_, (sx1 + 3, y), H_TEXT, TA.MIDDLE_LEFT, "Надписи", NARROW)
+
+txt("Примечания", (LX6, 129), H_HEAD, TA.BOTTOM_LEFT, "Надписи", NARROW)
+NOTES6 = [
+    f"1. Котлован разрабатывается торцевыми проходками I-III шириной не более 1,5Rmax = {num(B6)} м "
+    f"с недобором {num(NED6)} м (прил. 7); съезд - проходкой IV.",
+    "2. Грунт грузится в автосамосвалы и вывозится в насыпь и в отвал для засыпки съезда (табл. 3).",
+    "3. Недобор срезается бульдозером и подается к экскаватору; у откосов и в углах дно подчищается вручную.",
+    f"4. Подсыпка из щебня толщиной {num(K.H_PODS)} м устраивается захватками от дальнего конца котлована "
+    "к съезду: укладка, разравнивание, уплотнение.",
+    "5. Rmax, Rн min, Rн max - радиусы копания на уровне стоянки и дна; l - длина передвижки; "
+    "Rвыгр, Hвыгр - радиус и высота выгрузки; b = 1,5...2,0 м - от гусениц до бровки забоя.",
+]
+mt(W08 + "\\P".join(NOTES6), (LX6, 126), H_TEXT, 81, MA.TOP_LEFT, "Надписи")
+
+dec = lambda v, n: f"{f(v):.{n}f}".replace(".", ",")
+MACH6 = [  # ведомость машин (п. 2.3.2; характеристики - прил. 8 и ЕНиР Е2-1, табл. 1 параграфов)
+    ("Экскаватор, обратная лопата", MS.EX_NAME, 1,
+     f"гидравлический, ковш {dec(MS.V_KOV, 2)} {M3}, Rmax {dec(MS.EX_R, 1)} м, Hк max {dec(MS.EX_HK, 1)} м, "
+     f"Hв max {dec(MS.EX_HV, 1)} м"),
+    ("Автосамосвал", MS.TR["name"], MS.TR["N"],
+     f"кузов {dec(MS.TR['Va'], 1)} {M3}, грузоподъемность {dec(MS.TR['Pa'], 0)} т, погрузочная высота "
+     f"{dec(MS.TR['hp'], 2)} м"),
+    ("Бульдозер", "ДЗ-35С (Д-575С), Т-180", 1, "отвал неповоротный 3,64 х 1,29 м, 132 кВт"),
+    ("Каток на пневмошинах", MS.KATOK_POD[1].split(",")[0], 1,
+     "самоходный, полоса 1,9 м, слой до 0,35 м, 66 кВт, 16 т"),
+]
+txt("Ведомость машин", (LX, 58), H_HEAD, TA.BOTTOM_LEFT, "Надписи", NARROW)
+CW6 = [44, 40, 10, 106]
+for r, row in enumerate([("Наименование", "Марка", "Кол.", "Технические характеристики")] + MACH6):
+    y = 58 - 3 - 7 * r
+    x = LX
+    for c, v in enumerate(row):
+        pl([(x, y), (x + CW6[c], y), (x + CW6[c], y - 7), (x, y - 7)], "Штамп", True)
+        left = r > 0 and c in (0, 1, 3)
+        txt(str(v), (x + 1.5 if left else x + CW6[c] / 2, y - 3.5), H_TEXT,
+            TA.MIDDLE_LEFT if left else TA.MIDDLE_CENTER, "Надписи", NARROW)
+        x += CW6[c]
 
 # ================= первый чертёж: черновик до котлована - только рабочие отметки и ЛНР =================
 # не входит в комплект листов по разд. 3 методички; оформление - как у листа 1

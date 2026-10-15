@@ -7,11 +7,13 @@ DWG. Проверки: AUDIT без ошибок, в PDF только шрифт
 печатает Arial, если шрифт не установлен для всех пользователей). PNG для
 просмотра рисуются из этих PDF - это вид листов ровно таким, каким его печатает AutoCAD.
 
-    python vypusk_acad.py
+    python vypusk_acad.py              # все листы
+    python vypusk_acad.py "Лист 6"     # только названные
 """
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 import ezdxf
 import pymupdf
@@ -27,6 +29,7 @@ SHEETS = {
     "Лист 3": "Лист 3. Продольный и поперечный разрезы площадки по котловану",
     "Лист 4": "Лист 4. Картограмма перемещения земляных масс",
     "Лист 5": "Лист 5. Схема производства работ по вертикальной планировке",
+    "Лист 6": "Лист 6. Технологическая схема разработки грунта и устройства дна котлована",
     "Лист 1 (первый)": "Лист 1 (первый вариант). План площадки с рабочими отметками и ЛНР",
 }
 
@@ -52,6 +55,8 @@ SCR = [
 (WORK / "vypusk.scr").write_text("\n".join(SCR), encoding="ascii")
 
 for k, (layout, title) in enumerate(SHEETS.items(), start=1):
+    if sys.argv[1:] and layout not in sys.argv[1:]:
+        continue
     doc = ezdxf.readfile(SRC)
     for name in [n for n in doc.layouts.names() if n not in ("Model", layout)]:
         doc.layouts.delete(name)

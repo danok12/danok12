@@ -187,7 +187,8 @@ hk = f"hк = {round(float(B.K1['HK']) * 1000)}"
 if sum(1 for e in msp if e.dxftype() == "DIMENSION" and e.dxf.get("text", "").replace("<>", "") == "hк = "
        and abs(e.get_measurement() * 1000 / MC.VS - float(B.K1["HK"]) * 1000) < 0.5) != 2:
     bad("на разрезах нет двух размеров", hk)
-LAYOUT_NAMES = ("Лист 1", "Лист 2", "Лист 3", "Лист 4", "Лист 5", "Лист 1 (первый)")
+LAYOUT_NAMES = ("Лист 1", "Лист 2", "Лист 3", "Лист 4", "Лист 5", "Лист 6", "Лист 1 (первый)")
+SCHEMES = ("Лист 6",)            # техсхемы без масштаба - целиком в пространстве листа, без видового экрана
 bad_styles = {e.dxf.style for L in (msp, *(doc.paperspace(n) for n in LAYOUT_NAMES), *doc.blocks)
               for e in L if e.dxftype() in ("TEXT", "MTEXT")} - {"ГОСТ тип Б"}
 if bad_styles: bad("текст не ГОСТ тип Б:", bad_styles)
@@ -197,7 +198,7 @@ if doc.audit().has_errors: bad("аудит DXF нашёл ошибки")
 psps = [doc.paperspace(n) for n in LAYOUT_NAMES]
 for psp in psps:
     vps = sorted((e.dxf.status, e.dxf.id) for e in psp if e.dxftype() == "VIEWPORT")
-    if not vps or vps[0][0] != 1 or len(vps) < 2:
+    if not vps or vps[0][0] != 1 or (len(vps) < 2 and psp.name not in SCHEMES):
         bad("нет главного видового экрана листа или рабочего экрана:", psp.name, vps)
 layouts = (msp, *psps, *doc.blocks)
 if any(e.dxftype() == "TEXT" for L in layouts for e in L):
@@ -249,5 +250,25 @@ for op in ("Срезка растительного слоя", "Рыхление
 p5 = " ".join(e.plain_text() for e in doc.paperspace("Лист 5") if e.dxftype() == "MTEXT")
 for brand in ("ДЗ-20", "Т-180", "ДП-22С", "ДЗ-35С", "ДУ-16В"):
     if brand not in p5: bad("лист 5: в ведомости техники нет", brand)
+# 5б. Лист 6 - техсхема котлована (прил. 9): проходки не шире 1,5·Rmax, размеры и машины - из расчёта
+n2 = lambda v: f"{round(float(v), 2):.2f}".replace(".", ",")
+p6 = doc.paperspace("Лист 6")
+d6 = [e.dxf.get("text", "") for e in p6.query("DIMENSION")]
+t6 = " ".join(e.plain_text().replace(chr(10), " ") for e in p6 if e.dxftype() == "MTEXT")
+V1 = B.K1["VERH"]
+XL_, XN_, XR_, YB_, YN_, YT_ = V1[0][0], V1[1][0], V1[3][0], V1[0][1], V1[2][1], V1[4][1]
+B_ = Fr(3, 2) * MS.EX_R
+widths = [B_, YT_ - B_ - YN_, YN_ - YB_]
+if any(w <= 0 or w > B_ for w in widths) or sum(widths) != YT_ - YB_:
+    bad("лист 6: проходки не укладываются в ширину котлована при 1,5·Rmax", [float(w) for w in widths])
+for v in widths + [XR_ - XL_, KT.B_PAN]:
+    if n2(v) not in d6: bad("лист 6: нет размера", n2(v))
+if d6.count(n2(B.K1["HK"])) < 2 or n2(B.K1["HK"] - Fr(MS.NEDOBOR, 100)) not in d6:
+    bad("лист 6: на разрезах нет глубины котлована / глубины копания")
+for w in (MS.EX_NAME, MS.TR["name"], "ДЗ-35С", MS.KATOK_POD[1].split(" ")[0], f"недобор {n2(Fr(MS.NEDOBOR, 100))} м",
+          f"щебень {n2(KT.H_PODS)} м"):
+    if w not in t6: bad("лист 6: нет надписи", w)
+if str(MS.TR["N"]) not in {e.plain_text() for e in p6 if e.dxftype() == "MTEXT"}:
+    bad("лист 6: число автосамосвалов в ведомости не", MS.TR["N"])
 print("Котлован: контуры на обоих планах и hк на разрезах совпадают с расчётом" if ok else "")
 print("ВСЁ СХОДИТСЯ" if ok else "ЕСТЬ РАСХОЖДЕНИЯ")
