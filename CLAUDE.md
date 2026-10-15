@@ -18,6 +18,7 @@ lessons/<тема>/
 
 Вне `lessons/`:
 - `zhurnal-dz/` — журнал домашних заданий (кому выдано, что сдать, до какого числа); исходник страницы-артефакта
+- `dz/<дата>/` — листы ДЗ без оформления (только задания): `zadachi.py` хранит условия и ответы, проверяет ответы и собирает PDF; в README — кому какой лист
 
 ## Правила работы с материалами
 
@@ -49,7 +50,7 @@ CH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome
 3. заменить `<details>` на `<details open>` — иначе ответы не попадут в PDF;
 4. добавить print-CSS: `@page{margin:14mm 12mm}`, `break-inside:avoid` на карточки, матрицы и строки таблиц, `break-after:avoid` на заголовки.
 
-`pdftoppm` в контейнере нет, поэтому проверять вёрстку скриншотом: `sed 's/@media print{/@media all{/'` и `--screenshot` в Chromium.
+Проверять вёрстку картинкой: если есть `pdftoppm` — `pdftoppm -r 70 -png out.pdf стр`; если нет — скриншотом: `sed 's/@media print{/@media all{/'` и `--screenshot` в Chromium.
 
 ## Git
 
