@@ -1,2 +1,3 @@
 .fonts/
 print*.html
+__pycache__/
