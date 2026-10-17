@@ -251,6 +251,8 @@ def shema3():
     yk, ym, yb = 72, 72 + 148, 72 + 296
     s = HEAD.format(w=w, h=h, alt="Схема 3: рама с шарниром в узле ригеля")
     s += ln((xl, yk), (xl, yb)) + ln((xl, ym), (xr, ym)) + ln((xr, ym), (xr, yb))
+    s += hinge((xl + R_H + 2, ym))            # шарнир J: ригель — к сплошной стойке
+    s += txt(xl - 12, ym + 20, "J", "lbl", "end")
     s += qload((xl, ym), (xr, ym), (0, -34), 6, "q", (0, -8))
     s += force((xl, yk), 1, 0, "F", (0, -6))
     s += moment((xr, ym), "m", 16, False, 200, (26, -4))
@@ -586,6 +588,68 @@ def shema5_sily():
         s = s.replace(a, b)
     return s
 
+
+# ================================ единичные состояния для перемещений (схемы 3, 4)
+def shema3_ed():
+    """Схема 3, единичное состояние: момент M = 1 по часовой в K.
+    Опоры заменены найденными реакциями (в истинном направлении)."""
+    w, h = 560, 470
+    xl, xr = 128, 330
+    yk, ym, yb = 72, 72 + 148, 72 + 296
+    s = HEAD.format(w=w, h=h, alt="Схема 3: единичное состояние M = 1 в точке K")
+    s += ln((xl, yk), (xl, yb)) + ln((xl, ym), (xr, ym)) + ln((xr, ym), (xr, yb))
+    s += hinge((xl + R_H + 2, ym)) + hinge((xl, yb)) + hinge((xr, yb))
+    s += moment((xl, yk), "", 18, False, 90, (0, 0))
+    s += txt(xl + 28, yk - 14, "M = 1", "val", "start")
+    s += cross((xl, yk)) + txt(xl - 26, yk + 6, "K", "lbl", "end")
+    s += txt(xl - 12, ym + 20, "J", "lbl", "end")
+    # реакции: R1v = 1/6 вниз, R1h = 1/4 вправо; R2v = 1/6 вверх, R2h = 1/4 влево
+    s += strelka((xl, yb), 0, 1, "R_1v = 1/6", (8, 50), 46, ot=True, anchor="start")
+    s += strelka((xl, yb), 1, 0, "R_1h = 1/4", (12, -12), 46, ot=True, anchor="start")
+    s += force((xr, yb), 0, -1, "", (0, 0), 46)
+    s += txt(xr + 8, yb + 50, "R_2v = 1/6", "val", "start")
+    s += strelka((xr, yb), -1, 0, "R_2h = 1/4", (-12, -12), 46, ot=True, anchor="end")
+    s += txt(xl - 10, yb + 24, "1", "lbl", "end") + txt(xr + 12, yb + 24, "2", "lbl", "start")
+    s += dim((xr, yk), (xr, ym), "h = 4", 110, True)
+    s += dim((xr, ym), (xr, yb), "h = 4", 110, True)
+    s += dim((xl, yb), (xr, yb), "l = 6", 92)
+    s += '</svg>\n'
+    for a, b in (("R_1v", sub("R", "1v")), ("R_1h", sub("R", "1h")),
+                 ("R_2v", sub("R", "2v")), ("R_2h", sub("R", "2h"))):
+        s = s.replace(a, b)
+    return s
+
+
+def shema4_ed():
+    """Схема 4, единичное состояние: P = 1 вниз в K. Опоры заменены
+    реакциями: R_S = 1/2 ↑, R_By = 1/2 ↑, M_B = 3 по часовой, R_Bx = 0."""
+    w, h = 640, 400
+    xs, xc, xr = 100, 268, 436
+    yt, yb = 110, 110 + 140
+    s = HEAD.format(w=w, h=h, alt="Схема 4: единичное состояние P = 1 в точке K")
+    s += ln((xs, yb), (xc, yb)) + ln((xc, yb), (xc, yt))
+    s += ln((xc, yt), (xr, yt)) + ln((xr, yt), (xr, yb))
+    s += hinge((xc, yt)) + txt(xc - 10, yt - 10, "H", "lbl", "end")
+    xk = (xs + xc) / 2
+    s += force((xk, yb), 0, 1, "", (0, 0), 50) + txt(xk + 10, yb - 34, "P = 1", "val", "start")
+    s += cross((xk, yb)) + txt(xk, yb + 26, "K", "lbl")
+    s += force((xs, yb), 0, -1, "", (0, 0), 50) + txt(xs + 8, yb + 50, "R_S = 1/2", "val", "start")
+    s += txt(xs - 10, yb - 10, "S", "lbl", "end")
+    s += ar((xr - 30, yb + 50), (xr - 30, yb + 6), "force", "ah")
+    s += txt(xr - 36, yb + 50, "R_By = 1/2", "val", "end")
+    s += moment((xr, yb), "", 24, False, 200, (0, 0), 200)
+    s += txt(xr + 30, yb + 4, "M_B = 3", "val", "start")
+    s += txt(xr - 8, yb + 26, "B", "lbl", "end")
+    s += txt(xr - 40, yb - 50, "R_Bx = 0", "val", "end")
+    s += dim((xs, yb), (xk, yb), "l/2 = 3", 100) + dim((xk, yb), (xc, yb), "l/2 = 3", 100)
+    s += dim((xc, yb), (xr, yb), "l = 6", 100)
+    s += dim((xr, yt), (xr, yb), "h = 4", 96, True)
+    s += '</svg>\n'
+    for a, b in (("R_S", sub("R", "S")), ("R_By", sub("R", "By")),
+                 ("R_Bx", sub("R", "Bx")), ("M_B", sub("M", "B"))):
+        s = s.replace(a, b)
+    return s
+
 if __name__ == "__main__":
     for name, fn in (("shema-1", shema1), ("shema-2", shema2),
                      ("shema-3", shema3), ("shema-4", shema4),
@@ -595,6 +659,7 @@ if __name__ == "__main__":
                      ("shema-4-etazhi", shema4_etazhi),
                      ("shema-5-etazhi", shema5_etazhi),
                      ("shema-4-sily", shema4_sily),
-                     ("shema-5-sily", shema5_sily)):
+                     ("shema-5-sily", shema5_sily),
+                     ("shema-3-ed", shema3_ed), ("shema-4-ed", shema4_ed)):
         open(name + ".svg", "w", encoding="utf-8").write(fn())
         print("записано", name + ".svg")

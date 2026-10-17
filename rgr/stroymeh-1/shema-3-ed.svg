@@ -1,0 +1,41 @@
+<svg viewBox="76 31 424 450" role="img" aria-label="Схема 3: единичное состояние M = 1 в точке K" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
+<marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="128.0" y1="72.0" x2="128.0" y2="368.0" class="bar"/>
+<line x1="128.0" y1="220.0" x2="330.0" y2="220.0" class="bar"/>
+<line x1="330.0" y1="220.0" x2="330.0" y2="368.0" class="bar"/>
+<circle cx="135.2" cy="220.0" r="5.2" class="hinge"/>
+<circle cx="128.0" cy="368.0" r="5.2" class="hinge"/>
+<circle cx="330.0" cy="368.0" r="5.2" class="hinge"/>
+<path d="M 117.0 86.3 A 18 18 0 1 1 139.0 86.3" class="moment" marker-end="url(#ah)"/>
+<text x="156.0" y="58.0" class="val" text-anchor="start">M = 1</text>
+<line x1="122.5" y1="66.5" x2="133.5" y2="77.5" class="mark"/>
+<line x1="122.5" y1="77.5" x2="133.5" y2="66.5" class="mark"/>
+<text x="102.0" y="78.0" class="lbl" text-anchor="end">K</text>
+<text x="116.0" y="240.0" class="lbl" text-anchor="end">J</text>
+<line x1="128.0" y1="372.0" x2="128.0" y2="414.0" class="force" marker-end="url(#ah)"/>
+<text x="136.0" y="418.0" class="val" text-anchor="start">R<tspan class='sub'>1v</tspan> = 1/6</text>
+<line x1="132.0" y1="368.0" x2="174.0" y2="368.0" class="force" marker-end="url(#ah)"/>
+<text x="140.0" y="356.0" class="val" text-anchor="start">R<tspan class='sub'>1h</tspan> = 1/4</text>
+<line x1="330.0" y1="414.0" x2="330.0" y2="368.0" class="force" marker-end="url(#ah)"/>
+<text x="330.0" y="431.0" class="lbl" text-anchor="middle"></text>
+<text x="338.0" y="418.0" class="val" text-anchor="start">R<tspan class='sub'>2v</tspan> = 1/6</text>
+<line x1="326.0" y1="368.0" x2="284.0" y2="368.0" class="force" marker-end="url(#ah)"/>
+<text x="318.0" y="356.0" class="val" text-anchor="end">R<tspan class='sub'>2h</tspan> = 1/4</text>
+<text x="118.0" y="392.0" class="lbl" text-anchor="end">1</text>
+<text x="342.0" y="392.0" class="lbl" text-anchor="start">2</text>
+<line x1="440.0" y1="72.0" x2="440.0" y2="220.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<line x1="435.0" y1="72.0" x2="445.0" y2="72.0" class="dim"/>
+<line x1="435.0" y1="220.0" x2="445.0" y2="220.0" class="dim"/>
+<text x="453.0" y="151.0" class="dim-lbl" text-anchor="start">h = 4</text>
+<line x1="440.0" y1="220.0" x2="440.0" y2="368.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<line x1="435.0" y1="220.0" x2="445.0" y2="220.0" class="dim"/>
+<line x1="435.0" y1="368.0" x2="445.0" y2="368.0" class="dim"/>
+<text x="453.0" y="299.0" class="dim-lbl" text-anchor="start">h = 4</text>
+<line x1="128.0" y1="374.0" x2="128.0" y2="467.0" class="ext"/>
+<line x1="330.0" y1="374.0" x2="330.0" y2="467.0" class="ext"/>
+<line x1="128.0" y1="460.0" x2="330.0" y2="460.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<text x="229.0" y="453.0" class="dim-lbl" text-anchor="middle">l = 6</text>
+</svg>

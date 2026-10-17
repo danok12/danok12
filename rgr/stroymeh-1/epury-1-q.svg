@@ -1,4 +1,4 @@
-<svg viewBox="76 74 608 404" role="img" aria-label="Схема 1: эпюра 1" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="76 73 608 411" role="img" aria-label="Схема 1: эпюра 1" xmlns="http://www.w3.org/2000/svg">
 <line x1="104.0" y1="96.0" x2="104.0" y2="158.0" class="ep-hatch"/>
 <line x1="117.8" y1="96.0" x2="117.8" y2="158.0" class="ep-hatch"/>
 <line x1="131.6" y1="96.0" x2="131.6" y2="158.0" class="ep-hatch"/>
@@ -90,4 +90,7 @@
 <text x="380.0" y="359.0" class="ep-lbl" text-anchor="middle">−20</text>
 <rect x="642.1" y="347.0" width="27.8" height="15.0" class="ep-bg"/>
 <text x="656.0" y="359.0" class="ep-lbl" text-anchor="middle">−20</text>
+<line x1="374.0" y1="458.0" x2="386.0" y2="470.0" class="ep-k"/>
+<line x1="374.0" y1="470.0" x2="386.0" y2="458.0" class="ep-k"/>
+<text x="390.0" y="454.0" class="ep-kl" text-anchor="start">K</text>
 </svg>

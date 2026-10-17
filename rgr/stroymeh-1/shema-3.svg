@@ -6,6 +6,8 @@
 <line x1="128.0" y1="72.0" x2="128.0" y2="368.0" class="bar"/>
 <line x1="128.0" y1="220.0" x2="330.0" y2="220.0" class="bar"/>
 <line x1="330.0" y1="220.0" x2="330.0" y2="368.0" class="bar"/>
+<circle cx="135.2" cy="220.0" r="5.2" class="hinge"/>
+<text x="116.0" y="240.0" class="lbl" text-anchor="end">J</text>
 <line x1="128.0" y1="186.0" x2="330.0" y2="186.0" class="q-line"/>
 <line x1="128.0" y1="186.0" x2="128.0" y2="220.0" class="q-arrow" marker-end="url(#ahs)"/>
 <line x1="161.7" y1="186.0" x2="161.7" y2="220.0" class="q-arrow" marker-end="url(#ahs)"/>

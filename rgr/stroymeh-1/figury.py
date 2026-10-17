@@ -7,7 +7,7 @@
 """
 from fractions import Fraction as F
 from sistemy import ALL
-from epury import Panel, skeleton, diagram, labels, znaki, txt
+from epury import Panel, skeleton, diagram, labels, znaki, txt, ln
 
 HEAD = ('<svg viewBox="0 0 {w} {h}" role="img" aria-label="{alt}" '
         'xmlns="http://www.w3.org/2000/svg">\n')
@@ -31,8 +31,19 @@ def razmah(s, kind):
     return best
 
 
-def risunok(s, kind, name):
-    """Один рисунок: скелет системы и эпюра на нём."""
+def tochka_k(s, pan):
+    """Точка K — та, где ищется перемещение: крестик и подпись."""
+    if 'K' not in s.nodes:
+        return ""
+    x, y = pan.P(s.nodes['K'])
+    d = 6
+    out = ln((x - d, y - d), (x + d, y + d), "ep-k") + ln((x - d, y + d), (x + d, y - d), "ep-k")
+    return out + txt(x + 10, y - 10, "K", "ep-kl", "start")
+
+
+def risunok(s, kind, name, extra=None):
+    """Один рисунок: скелет системы и эпюра на нём.
+    extra(pan) — дополнительная разметка (единичная сила и т. п.)."""
     x0, x1, y0, y1 = extent(s)
     wm, hm = max(x1 - x0, 1e-9), max(y1 - y0, 1e-9)
     pad = AMP + 34                       # поле под ординаты и подписи
@@ -47,6 +58,9 @@ def risunok(s, kind, name):
     out += skeleton(s, pan)
     out += znaki(s, pan, kind, sc)
     out += labels(s, pan, kind, sc)
+    out += tochka_k(s, pan)
+    if extra:
+        out += extra(pan)
     out += '</svg>\n'
     open(name, "w", encoding="utf-8").write(out)
     return name
