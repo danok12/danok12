@@ -23,7 +23,7 @@
 <text x="400.0" y="300.0" class="val" text-anchor="end">R<tspan class='sub'>By</tspan> = 1/2</text>
 <path d="M 440.2 226.4 A 24 24 0 1 1 424.0 270.8" class="moment" marker-end="url(#ah)"/>
 <text x="466.0" y="254.0" class="val" text-anchor="start">M<tspan class='sub'>B</tspan> = 3</text>
-<text x="428.0" y="276.0" class="lbl" text-anchor="end">B</text>
+<text x="420.0" y="276.0" class="lbl" text-anchor="end">B</text>
 <text x="396.0" y="200.0" class="val" text-anchor="end">R<tspan class='sub'>Bx</tspan> = 0</text>
 <line x1="100.0" y1="256.0" x2="100.0" y2="357.0" class="ext"/>
 <line x1="184.0" y1="256.0" x2="184.0" y2="357.0" class="ext"/>

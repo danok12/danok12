@@ -1,0 +1,70 @@
+<svg viewBox="84 35 334 430" role="img" aria-label="Схема 3: температурное воздействие" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 L10 5 L0 9.5 z" fill="context-stroke"/></marker>
+<marker id="ahs" viewBox="0 0 10 10" refX="9.4" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" fill="context-stroke"/></marker>
+</defs>
+<line x1="128.0" y1="72.0" x2="128.0" y2="220.0" class="bar"/>
+<line x1="128.0" y1="220.0" x2="128.0" y2="368.0" class="bar-red"/>
+<line x1="128.0" y1="220.0" x2="330.0" y2="220.0" class="bar-red"/>
+<line x1="330.0" y1="220.0" x2="330.0" y2="368.0" class="bar-red"/>
+<polyline points="137,368 137,229 321,229 321,368" class="red-thin"/>
+<circle cx="135.2" cy="220.0" r="5.2" class="hinge"/>
+<circle cx="128.0" cy="368.0" r="5.2" class="hinge"/>
+<line x1="128.0" y1="368.0" x2="128.0" y2="392.0" class="bar-thin"/>
+<circle cx="128.0" cy="392.0" r="5.2" class="hinge"/>
+<line x1="111.0" y1="398.2" x2="145.0" y2="398.2" class="hatch-line"/>
+<line x1="113.4" y1="398.2" x2="106.4" y2="405.2" class="hatch"/>
+<line x1="118.3" y1="398.2" x2="111.3" y2="405.2" class="hatch"/>
+<line x1="123.1" y1="398.2" x2="116.1" y2="405.2" class="hatch"/>
+<line x1="128.0" y1="398.2" x2="121.0" y2="405.2" class="hatch"/>
+<line x1="132.9" y1="398.2" x2="125.9" y2="405.2" class="hatch"/>
+<line x1="137.7" y1="398.2" x2="130.7" y2="405.2" class="hatch"/>
+<line x1="142.6" y1="398.2" x2="135.6" y2="405.2" class="hatch"/>
+<circle cx="128.0" cy="368.0" r="5.2" class="hinge"/>
+<line x1="128.0" y1="368.0" x2="104.0" y2="368.0" class="bar-thin"/>
+<circle cx="104.0" cy="368.0" r="5.2" class="hinge"/>
+<line x1="97.8" y1="351.0" x2="97.8" y2="385.0" class="hatch-line"/>
+<line x1="97.8" y1="353.4" x2="104.8" y2="346.4" class="hatch"/>
+<line x1="97.8" y1="358.3" x2="104.8" y2="351.3" class="hatch"/>
+<line x1="97.8" y1="363.1" x2="104.8" y2="356.1" class="hatch"/>
+<line x1="97.8" y1="368.0" x2="104.8" y2="361.0" class="hatch"/>
+<line x1="97.8" y1="372.9" x2="104.8" y2="365.9" class="hatch"/>
+<line x1="97.8" y1="377.7" x2="104.8" y2="370.7" class="hatch"/>
+<line x1="97.8" y1="382.6" x2="104.8" y2="375.6" class="hatch"/>
+<circle cx="330.0" cy="368.0" r="5.2" class="hinge"/>
+<line x1="330.0" y1="368.0" x2="330.0" y2="392.0" class="bar-thin"/>
+<circle cx="330.0" cy="392.0" r="5.2" class="hinge"/>
+<line x1="313.0" y1="398.2" x2="347.0" y2="398.2" class="hatch-line"/>
+<line x1="315.4" y1="398.2" x2="308.4" y2="405.2" class="hatch"/>
+<line x1="320.3" y1="398.2" x2="313.3" y2="405.2" class="hatch"/>
+<line x1="325.1" y1="398.2" x2="318.1" y2="405.2" class="hatch"/>
+<line x1="330.0" y1="398.2" x2="323.0" y2="405.2" class="hatch"/>
+<line x1="334.9" y1="398.2" x2="327.9" y2="405.2" class="hatch"/>
+<line x1="339.7" y1="398.2" x2="332.7" y2="405.2" class="hatch"/>
+<line x1="344.6" y1="398.2" x2="337.6" y2="405.2" class="hatch"/>
+<circle cx="330.0" cy="368.0" r="5.2" class="hinge"/>
+<line x1="330.0" y1="368.0" x2="354.0" y2="368.0" class="bar-thin"/>
+<circle cx="354.0" cy="368.0" r="5.2" class="hinge"/>
+<line x1="360.2" y1="351.0" x2="360.2" y2="385.0" class="hatch-line"/>
+<line x1="360.2" y1="353.4" x2="353.2" y2="346.4" class="hatch"/>
+<line x1="360.2" y1="358.3" x2="353.2" y2="351.3" class="hatch"/>
+<line x1="360.2" y1="363.1" x2="353.2" y2="356.1" class="hatch"/>
+<line x1="360.2" y1="368.0" x2="353.2" y2="361.0" class="hatch"/>
+<line x1="360.2" y1="372.9" x2="353.2" y2="365.9" class="hatch"/>
+<line x1="360.2" y1="377.7" x2="353.2" y2="370.7" class="hatch"/>
+<line x1="360.2" y1="382.6" x2="353.2" y2="375.6" class="hatch"/>
+<line x1="122.5" y1="66.5" x2="133.5" y2="77.5" class="mark"/>
+<line x1="122.5" y1="77.5" x2="133.5" y2="66.5" class="mark"/>
+<text x="142.0" y="64.0" class="lbl" text-anchor="start">K</text>
+<text x="116.0" y="240.0" class="lbl" text-anchor="end">J</text>
+<text x="229.0" y="288.0" class="lbl-red" text-anchor="middle">t₂ = +20°</text>
+<text x="229.0" y="312.0" class="note-red" text-anchor="middle">внутри контура</text>
+<text x="350.0" y="180.0" class="lbl" text-anchor="start">t₁ = −8°</text>
+<text x="350.0" y="202.0" class="note" text-anchor="start">снаружи</text>
+<text x="144.0" y="126.0" class="note" text-anchor="start">K–J: обе грани</text>
+<text x="144.0" y="144.0" class="note" text-anchor="start">снаружи, t′ = 0</text>
+<line x1="128.0" y1="374.0" x2="128.0" y2="451.0" class="ext"/>
+<line x1="330.0" y1="374.0" x2="330.0" y2="451.0" class="ext"/>
+<line x1="128.0" y1="444.0" x2="330.0" y2="444.0" class="dim" marker-start="url(#ahs)" marker-end="url(#ahs)"/>
+<text x="229.0" y="437.0" class="dim-lbl" text-anchor="middle">l = 6</text>
+</svg>

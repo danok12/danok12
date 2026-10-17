@@ -639,7 +639,7 @@ def shema4_ed():
     s += txt(xr - 36, yb + 50, "R_By = 1/2", "val", "end")
     s += moment((xr, yb), "", 24, False, 200, (0, 0), 200)
     s += txt(xr + 30, yb + 4, "M_B = 3", "val", "start")
-    s += txt(xr - 8, yb + 26, "B", "lbl", "end")
+    s += txt(xr - 16, yb + 26, "B", "lbl", "end")
     s += txt(xr - 40, yb - 50, "R_Bx = 0", "val", "end")
     s += dim((xs, yb), (xk, yb), "l/2 = 3", 100) + dim((xk, yb), (xc, yb), "l/2 = 3", 100)
     s += dim((xc, yb), (xr, yb), "l = 6", 100)
@@ -649,6 +649,115 @@ def shema4_ed():
                  ("R_Bx", sub("R", "Bx")), ("M_B", sub("M", "B"))):
         s = s.replace(a, b)
     return s
+
+
+def shema1_ed():
+    """Схема 1, единичное состояние: P = 1 вправо в K (ищем Δ_K гор).
+    Реакции заделки A: R_Ax = 1 влево, R_Ay = 0, M_A = 8 по часовой."""
+    w, h = 600, 420
+    L, H = 118, 104
+    x0, xa = 120, 238
+    yt = 74
+    yb, yk = yt + H, yt + 2 * H
+    s = HEAD.format(w=w, h=h, alt="Схема 1: единичное состояние P = 1 в K")
+    s += ln((x0, yt), (xa, yt)) + ln((xa, yt), (xa, yk)) + ln((xa, yb), (xa + L, yb))
+    s += fixed((x0, yt), 90, 52, -1)
+    s += force((xa, yk), 1, 0, "", (0, 0), 50) + txt(xa - 56, yk - 10, "P = 1", "val", "end")
+    s += cross((xa, yk)) + txt(xa + 12, yk + 20, "K", "lbl", "start")
+    s += txt(x0 + 6, yt + 24, "A", "lbl", "start")
+    s += txt(xa + 10, yt - 8, "B", "lbl", "start") + txt(xa - 10, yb - 8, "C", "lbl", "end")
+    s += txt(xa + L + 6, yb - 8, "D", "lbl", "start")
+    s += ar((x0 + 74, yt + 44), (x0 + 22, yt + 44), "force", "ah")
+    s += txt(x0 + 26, yt + 68, "R_Ax = 1", "val", "start")
+    s += txt(x0 + 26, yt + 90, "R_Ay = 0", "val", "start")
+    s += moment((x0 + 52, yt), "", 16, False, 90, (0, 0))
+    s += txt(x0 + 52, yt - 26, "M_A = 8", "val", "middle")
+    s += dim((xa, yt), (xa, yb), "h = 4", 200, True) + dim((xa, yb), (xa, yk), "h = 4", 200, True)
+    s += dim((x0, yk), (xa, yk), "l = 6", 60)
+    s += '</svg>\n'
+    for a, b in (("R_Ax", sub("R", "Ax")), ("R_Ay", sub("R", "Ay")), ("M_A", sub("M", "A"))):
+        s = s.replace(a, b)
+    return s
+
+
+def shema3_temp():
+    """Схема 3: где действует температура. Красным — стержни замкнутого
+    контура J–R–2–1: снаружи t₁, внутри t₂, перепад t′ ≠ 0. Консоль K–J
+    чёрная: обе её грани снаружи, перепада нет."""
+    w, h = 560, 470
+    xl, xr = 128, 330
+    yk, ym, yb = 72, 72 + 148, 72 + 296
+    s = HEAD.format(w=w, h=h, alt="Схема 3: температурное воздействие")
+    s += ln((xl, yk), (xl, ym))
+    s += ln((xl, ym), (xl, yb), "bar-red") + ln((xl, ym), (xr, ym), "bar-red") + ln((xr, ym), (xr, yb), "bar-red")
+    d = 9                                         # внутренний контур — тёплая сторона
+    s += ('<polyline points="' + f"{xl + d},{yb} {xl + d},{ym + d} {xr - d},{ym + d} {xr - d},{yb}"
+          + '" class="red-thin"/>\n')
+    s += hinge((xl + R_H + 2, ym)) + pin2((xl, yb), 24, -1) + pin2((xr, yb), 24, 1)
+    s += cross((xl, yk)) + txt(xl + 14, yk - 8, "K", "lbl", "start")
+    s += txt(xl - 12, ym + 20, "J", "lbl", "end")
+    s += txt((xl + xr) / 2, (ym + yb) / 2 - 6, "t₂ = +20°", "lbl-red")
+    s += txt((xl + xr) / 2, (ym + yb) / 2 + 18, "внутри контура", "note-red")
+    s += txt(xr + 20, ym - 40, "t₁ = −8°", "lbl", "start")
+    s += txt(xr + 20, ym - 18, "снаружи", "note", "start")
+    s += txt(xl + 16, yk + 54, "K–J: обе грани", "note", "start")
+    s += txt(xl + 16, yk + 72, "снаружи, t′ = 0", "note", "start")
+    s += dim((xl, yb), (xr, yb), "l = 6", 76)
+    s += '</svg>\n'
+    return s
+
+
+def shema4_osadka():
+    """Схема 4: смещение заделки B и новое положение рамы (жёсткие диски).
+
+    Заделка B: вниз на c₁ = 0,01 м, вправо на c₂ = 0,02 м, поворот на
+    φ = 0,05 рад против часовой. Перемещения на рисунке увеличены в UV раз.
+    """
+    k, UV = 30, 3                                 # пикселей на метр; увеличение перемещений
+    ox, oy = 90, 300
+    P = lambda x, y: (ox + x * k, oy - y * k)
+    c1, c2, ph = 0.01, 0.02, 0.05
+    B, H = (12, 0), (6, 4)
+    uB = (c2, -c1)
+    u2 = lambda p: (uB[0] - ph * (p[1] - B[1]), uB[1] + ph * (p[0] - B[0]))
+    uH = u2(H)
+    th1 = (0 - uH[1]) / (0 - H[0])                 # S не смещается по вертикали
+    u1 = lambda p: (uH[0] - th1 * (p[1] - H[1]), uH[1] + th1 * (p[0] - H[0]))
+    nodes1 = {'S': (0, 0), 'K': (3, 0), 'C': (6, 0), 'H': (6, 4)}
+    nodes2 = {'H': (6, 4), 'R': (12, 4), 'B': (12, 0)}
+    new = lambda p, u: P(p[0] + UV * u(p)[0], p[1] + UV * u(p)[1])
+    w, h = 640, 400
+    s = HEAD.format(w=w, h=h, alt="Схема 4: смещение опоры B и перемещение точки K")
+    for a, b in (('S', 'C'), ('C', 'H')):
+        s += ln(P(*nodes1[a]), P(*nodes1[b]))
+        s += ln(new(nodes1[a], u1), new(nodes1[b], u1), "deformed")
+    for a, b in (('H', 'R'), ('R', 'B')):
+        s += ln(P(*nodes2[a]), P(*nodes2[b]))
+        s += ln(new(nodes2[a], u2), new(nodes2[b], u2), "deformed")
+    s += hinge(P(*H)) + hinge(new(H, u2))
+    s += link_v(P(0, 0), 26)
+    s += fixed(P(*B), 0, 46, 1)
+    K0, K1 = P(3, 0), new((3, 0), u1)
+    s += cross(K0) + txt(K0[0], K0[1] - 12, "K", "lbl")
+    s += cross(K1) + txt(K1[0] - 10, K1[1] + 22, "K′", "lbl", "end")
+    s += ar((K0[0] + 16, K0[1]), (K0[0] + 16, K1[1]), "dim", "ahs")
+    s += txt(K0[0] + 22, K0[1] + 44, "Δ_Kc = 0,155 м (вниз)", "val", "start")
+    Bp = P(*B)
+    s += ar((Bp[0] - 20, Bp[1] + 40), (Bp[0] + 34, Bp[1] + 40), "force", "ah")
+    s += txt(Bp[0] + 40, Bp[1] + 45, "c₂ = 0,02 м", "val", "start")
+    s += ar((Bp[0] + 44, Bp[1] - 46), (Bp[0] + 44, Bp[1] - 6), "force", "ah")
+    s += txt(Bp[0] + 52, Bp[1] - 24, "c₁ = 0,01 м", "val", "start")
+    s += moment((Bp[0] - 30, Bp[1] - 24), "", 15, True, 0, (0, 0), 260)
+    s += txt(Bp[0] - 50, Bp[1] - 30, "φ = 0,05 рад", "val", "end")
+    for nm, p in (('S', (0, 0)), ('C', (6, 0)), ('R', (12, 4))):
+        x, y = P(*p)
+        s += txt(x + (8 if nm != 'S' else -8), y - 10, nm, "lbl", "start" if nm != 'S' else "end")
+    s += txt(P(6, 4)[0] - 10, P(6, 4)[1] - 10, "H", "lbl", "end")
+    s += txt(Bp[0] - 10, Bp[1] + 22, "B", "lbl", "end")
+    s += txt(10, 392, f"Штрих — положение рамы после смещения опоры (перемещения увеличены в {UV} раза).",
+             "note", "start")
+    s += '</svg>\n'
+    return s.replace("Δ_Kc", "Δ<tspan class='sub'>Kc</tspan>")
 
 if __name__ == "__main__":
     for name, fn in (("shema-1", shema1), ("shema-2", shema2),
@@ -660,6 +769,8 @@ if __name__ == "__main__":
                      ("shema-5-etazhi", shema5_etazhi),
                      ("shema-4-sily", shema4_sily),
                      ("shema-5-sily", shema5_sily),
-                     ("shema-3-ed", shema3_ed), ("shema-4-ed", shema4_ed)):
+                     ("shema-3-ed", shema3_ed), ("shema-4-ed", shema4_ed),
+                     ("shema-1-ed", shema1_ed), ("shema-3-temp", shema3_temp),
+                     ("shema-4-osadka", shema4_osadka)):
         open(name + ".svg", "w", encoding="utf-8").write(fn())
         print("записано", name + ".svg")

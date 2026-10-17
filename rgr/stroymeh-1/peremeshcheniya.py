@@ -204,6 +204,17 @@ for nm, kw in (("S вверх", dict(cS=F(1))), ("B вправо", dict(cBx=F(1)
     ok &= good
     print(f"проверка схемы 4, смещение «{nm}» = 1:  кинематика {kin},  −ΣR·c = {mor}  "
           f"{'ок' if good else 'НЕТ'}")
+# принятые смещения (как на паре): B вниз 0,01, вправо 0,02, поворот 0,05 против часовой
+dK = K_vniz_kinematika(cBy=F(-1, 100), cBx=F(2, 100), phB=F(-5, 100))
+mor = -(R['R_S'] * 0 + R['R_Bx'] * F(2, 100) + R['R_By'] * F(-1, 100) + (-R['M_B']) * F(-5, 100))
+good = dK == mor == F(155, 1000)
+ok &= good
+print(f"схема 4, принятые смещения: кинематика {float(dK)} м, −ΣR·c = {float(mor)} м (вниз) — {'ок' if good else 'НЕТ'}")
+# схема 1 — горизонтальное: по участкам, как в документе (Верещагин и Симпсон)
+ver = F(48) * 182 + F(4, 6) * (122 * 8 + 4 * 128 * 6 + 130 * 4) + F(8) * 10
+good = ver == Dg
+ok &= good
+print(f"схема 1, по участкам: 48·182 + 3045,33 + 8·10 = {float(ver):.2f} = Мор {float(Dg):.2f} — {'ок' if good else 'НЕТ'}")
 print("\n" + ("ВСЁ СОШЛОСЬ" if ok else "ЕСТЬ РАСХОЖДЕНИЯ"))
 
 
@@ -238,7 +249,6 @@ if __name__ == "__main__":
 
     epury.num = drob
     K1 = s1p.nodes['K']
-    figury.risunok(v1, 2, "ed-1-v-m.svg", edinica(K1, 0, -1, "P = 1"))
     figury.risunok(g1, 2, "ed-1-g-m.svg", edinica(K1, 1, 0, "P = 1"))
     figury.risunok(u3, 2, "ed-3-m.svg")
     figury.risunok(u3, 0, "ed-3-n.svg")
