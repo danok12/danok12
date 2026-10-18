@@ -46,7 +46,7 @@ for i in range(1, 6):
             h = h.replace(key, po_meste(rd(f"epury-{i}-{k.lower()}.svg")))
 for key, f, size in (("__ED_1G__", "ed-1-g-m.svg", (136, 78)),
                      ("__SH_1E__", "shema-1-ed.svg", (100, 80)), ("__ED_1PARAB__", "ed-1-parab.svg", (150, 45)),
-                     ("__ED_1PERE__", "ed-1-pere.svg", (150, 140)), ("__SH_3T__", "shema-3-temp.svg", (110, 95)),
+                     ("__ED_1PERE__", "ed-1-pere.svg", (150, 170)), ("__ED_1PEREV__", "ed-1-pere-v.svg", (140, 60)), ("__SH_3T__", "shema-3-temp.svg", (110, 95)),
                      ("__SH_4O__", "shema-4-osadka.svg", (140, 70)),
                      ("__ED_3M__", "ed-3-m.svg", (136, 78)), ("__ED_3N__", "ed-3-n.svg", (136, 78)),
                      ("__SH_3E__", "shema-3-ed.svg", (110, 100)), ("__SH_4E__", "shema-4-ed.svg", (130, 80))):
