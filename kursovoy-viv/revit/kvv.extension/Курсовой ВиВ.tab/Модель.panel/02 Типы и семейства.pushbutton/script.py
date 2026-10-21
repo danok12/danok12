@@ -4,6 +4,7 @@
 Работает с активным документом (проект на шаблоне ADSK ВК). Повторный запуск безопасен: уже загруженное
 пропускается.
 """
+import math
 import os
 import clr
 from pyrevit import HOST_APP
@@ -226,8 +227,116 @@ def soediniteli(log):
     t.RollBack()
 
 
+MODUL_PPR = u'ADSK_Модуль ОВ и ВК_Трубы ППР под сварку_V1.rvt'
+
+
+def rezhim_zapuska():
+    """revit/02_rezhim.txt: «ppr» — только разведка: трубы ППР из модуля (копируются в проект), крестовины
+    канализационные, вертикальная арматура (проба с откатом). Файл после чтения удаляется."""
+    import io
+    put = os.path.join(kvv.REVIT, u'02_rezhim.txt')
+    if not os.path.isfile(put):
+        return u''
+    with io.open(put, encoding='utf-8') as f:
+        r = f.read().strip()
+    os.remove(put)
+    return r
+
+
+def opisat_tip_trub(d, pt, log):
+    log(u'  тип труб:', name(pt))
+    rpm = pt.RoutingPreferenceManager
+    for g in (DB.RoutingPreferenceRuleGroupType.Segments, DB.RoutingPreferenceRuleGroupType.Elbows,
+              DB.RoutingPreferenceRuleGroupType.Junctions, DB.RoutingPreferenceRuleGroupType.Crosses,
+              DB.RoutingPreferenceRuleGroupType.Transitions, DB.RoutingPreferenceRuleGroupType.Unions,
+              DB.RoutingPreferenceRuleGroupType.Caps):
+        for i in range(rpm.GetNumberOfRules(g)):
+            rule = rpm.GetRule(g, i)
+            e = d.GetElement(rule.MEPPartId)
+            nm = name(e) if e is not None else u'-'
+            if isinstance(e, DB.FamilySymbol):
+                nm = e.FamilyName + u' : ' + nm
+            log(u'    ', g, u'|', nm)
+            if g == DB.RoutingPreferenceRuleGroupType.Segments and isinstance(e, Plumbing.PipeSegment):
+                razm = [u'%.0f/%.1f/%.1f' % (sz.NominalDiameter * 304.8, sz.OuterDiameter * 304.8,
+                                            sz.InnerDiameter * 304.8) for sz in e.GetSizes()]
+                log(u'       размеры DN/нар/вн, мм:', u'; '.join(razm))
+
+
+def razvedka_ppr(log):
+    m = app.OpenDocumentFile(os.path.join(S, u'Системы трубопроводов', MODUL_PPR))
+    try:
+        tipy = list(DB.FilteredElementCollector(m).OfClass(Plumbing.PipeType))
+        log(u'модуль', MODUL_PPR, u'| типов труб', len(tipy))
+        for pt in tipy:
+            opisat_tip_trub(m, pt, log)
+        nuzhno = [pt.Id for pt in tipy if po_imeni(doc, Plumbing.PipeType, name(pt)) is None]
+        if nuzhno:
+            t = DB.Transaction(doc, u'Типы труб ППР из модуля')
+            t.Start()
+            kopirovat(m, nuzhno, log, u'типов труб ППР')
+            t.Commit()
+        else:
+            log(u'типы труб ППР уже есть в проекте')
+    finally:
+        m.Close(False)
+    for pt in DB.FilteredElementCollector(doc).OfClass(Plumbing.PipeType):
+        if u'анализ' in name(pt) or u'Полипропилен' in name(pt):
+            opisat_tip_trub(doc, pt, log)
+    # крестовины и проба вертикальной арматуры — с откатом
+    lvl = DB.FilteredElementCollector(doc).OfClass(DB.Level).FirstElement()
+    t = DB.Transaction(doc, u'Проба: крестовины и вертикальная арматура')
+    t.Start()
+    try:
+        for s in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol).OfCategory(
+                DB.BuiltInCategory.OST_PipeFitting):
+            if u'Крестовин' not in s.FamilyName:
+                continue
+            log(u'\n# крестовина', s.FamilyName, u':', name(s))
+            try:
+                if not s.IsActive:
+                    s.Activate()
+                    doc.Regenerate()
+                e = doc.Create.NewFamilyInstance(DB.XYZ(0, 0, 0), s, lvl, DB.Structure.StructuralType.NonStructural)
+                doc.Regenerate()
+                for cn in e.MEPModel.ConnectorManager.Connectors:
+                    o, dr = cn.Origin, cn.CoordinateSystem.BasisZ
+                    log(u'   r=%.1fмм o=(%.0f, %.0f, %.0f) dir=(%.2f, %.2f, %.2f)' % (
+                        cn.Radius * 304.8, o.X * 304.8, o.Y * 304.8, o.Z * 304.8, dr.X, dr.Y, dr.Z))
+            except Exception as ex:
+                log(u'   ошибка:', ex)
+        for fam in (u'VALTEC_VT.214.N_КранШаровой ВР', u'ADSK_Фильтр механический сетчатый муфтовый ВР',
+                    u'Квартирный счетчик воды_Пульсар', u'ADSK_Клапан обратный пружинный_Муфтовый_DN15-50',
+                    u'VALTEC_VT.089.N_Редуктор давления мембранный'):
+            syms = [s for s in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol) if s.FamilyName == fam]
+            log(u'\n# вертикально:', fam, u'| типы:', u', '.join(name(s) for s in syms[:8]))
+            if not syms:
+                continue
+            s = syms[0]
+            try:
+                if not s.IsActive:
+                    s.Activate()
+                    doc.Regenerate()
+                e = doc.Create.NewFamilyInstance(DB.XYZ(0, 0, 0), s, lvl, DB.Structure.StructuralType.NonStructural)
+                doc.Regenerate()
+                ax = DB.Line.CreateBound(DB.XYZ(0, 0, 0), DB.XYZ(0, 1, 0))
+                DB.ElementTransformUtils.RotateElement(doc, e.Id, ax, math.pi / 2)
+                doc.Regenerate()
+                for cn in e.MEPModel.ConnectorManager.Connectors:
+                    o, dr = cn.Origin, cn.CoordinateSystem.BasisZ
+                    log(u'   после поворота: r=%.1fмм o=(%.0f, %.0f, %.0f) dir=(%.2f, %.2f, %.2f)' % (
+                        cn.Radius * 304.8, o.X * 304.8, o.Y * 304.8, o.Z * 304.8, dr.X, dr.Y, dr.Z))
+            except Exception as ex:
+                log(u'   поворот не удался:', ex)
+    finally:
+        t.RollBack()
+
+
 def main(log):
     log(u'документ:', doc.Title)
+    if rezhim_zapuska() == u'ppr':
+        razvedka_ppr(log)
+        return
     tipy_ar(log)
     semeystva(log)
     truby(log)
