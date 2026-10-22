@@ -18,7 +18,7 @@ reload(kvv)
 doc = HOST_APP.doc
 M = kvv.M
 METKA = u'КВВ-здание'
-TOLSH = {u'nar': 0.52, u'fund': 0.316, u'nes': 0.42, u'per': 0.10, u'beton': 0.20, u'korob': 0.05}
+TOLSH = {u'nar': 0.58, u'fund': 0.316, u'nes': 0.25, u'per': 0.10, u'beton': 0.20, u'korob': 0.05}   # как в geometriya_v3.py
 
 
 def pometit(e):

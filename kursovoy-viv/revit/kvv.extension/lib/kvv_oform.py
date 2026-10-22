@@ -199,7 +199,7 @@ def ustanovit_nomer(t, slovo, nomer, log):
 
 def vvody_vypuski(doc, g, log):
     """Ввод В1 — труба, выходящая за наружную стену по оси А; выпуски К1 — за стену по оси Д (по возрастанию x)."""
-    B, E = 12.8, 0.06
+    B, E = 12.8, 0.09                  # ось наружной стены 580 мм смещена наружу (geometriya_v3.py)
     vv, vyp = [], []
     for t in DB.FilteredElementCollector(doc).OfClass(Plumbing.Pipe):
         s_ = metka(t)
