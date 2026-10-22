@@ -603,6 +603,15 @@ class Stroitel(object):
         for s in self.g['svyazi']:
             if s['a'][0] in ids_sys and isinstance(s['b'], dict) and 'arm' in s['b']:
                 nuzhnye.add(s['b']['arm'])
+        # середина сборки (регулятор, счётчик) с трубами не связана — по соседям по сборке
+        dobavleno = True
+        while dobavleno:
+            dobavleno = False
+            for a1, a2 in self.g.get('arm_svyazi', []):
+                for x, y in ((a1, a2), (a2, a1)):
+                    if x in nuzhnye and y not in nuzhnye:
+                        nuzhnye.add(y)
+                        dobavleno = True
         for a in self.g['armatura']:
             if a['id'] not in nuzhnye:
                 continue
@@ -695,6 +704,38 @@ class Stroitel(object):
                     ca.ConnectTo(cb)
             except Exception as ex:
                 self.oshibka(u'присоединение к прибору/арматуре', ex)
+        # арматура, свинченная с арматурой (узел учёта одной сборкой): соединители встык
+        n_sb, raznye = 0, []
+        for a1, a2 in self.g.get('arm_svyazi', []):
+            e1, e2 = self.arm.get(a1), self.arm.get(a2)
+            if e1 is None or e2 is None:
+                continue
+            try:
+                para = None
+                for c1 in soediniteli(e1):
+                    if c1.Domain != DB.Domain.DomainPiping or c1.IsConnected:
+                        continue
+                    c2, d = blizhayshiy(e2, c1.Origin)
+                    if c2 is not None and (para is None or d < para[2]):
+                        para = (c1, c2, d)
+                if para is None or para[2] > 5 * MM:
+                    self.oshibka(u'арматура сборки не встык', u'%s — %s' % (e1.Symbol.FamilyName, e2.Symbol.FamilyName))
+                    continue
+                c1, c2, _ = para
+                if abs(c1.Radius - c2.Radius) > 0.3 * MM:
+                    # разные «диаметры» соединителей у семейств 1/2" — Revit соединение не держит: встык без связи
+                    raznye.append(u'%s %.1f / %s %.1f' % (e1.Symbol.FamilyName, c1.Radius * 2 / MM,
+                                                          e2.Symbol.FamilyName, c2.Radius * 2 / MM))
+                    continue
+                c1.ConnectTo(c2)
+                n_sb += 1
+            except Exception as ex:
+                self.oshibka(u'соединение арматуры сборки', ex)
+        if self.g.get('arm_svyazi'):
+            self.log(u'арматура одной сборкой: соединено', n_sb, u'| встык без связи (разные соединители)',
+                     len(raznye))
+            for r in sorted(set(raznye)):
+                self.log(u'   ', r)
         # тройники и крестовины
         for t in self.g['troyniki']:
             if t['m1'][0] not in ids_sys:

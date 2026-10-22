@@ -332,6 +332,7 @@ def dn_po_n(n, dmin):
 
 
 pribory, seti, troyniki, kresty, armatura, svyazi, mufty, stoyaki = [], [], [], [], [], [], [], []
+arm_svyazi = []     # арматура, свинченная с арматурой: [id выхода, id входа] (узел учёта — одной сборкой)
 gabarity_pr = []          # (id, x0, y0, x1, y1, z0, z1)
 
 # соединители приборов, мм, в системе семейства (журнал кнопки «02»); ванна ВСт 1500
@@ -484,19 +485,28 @@ def arm(key, p, d, ur):
     return aid, out
 
 
-def vetka(sys_, pt, d, pts_do, napr, items, ur, gap=0.02, first=0.07):
+def vetka(sys_, pt, d, pts_do, napr, items, ur, gap=0.02, first=0.07, sborka=False):
+    """Труба до арматуры items по направлению napr. sborka — арматура свинчена одна с другой (вход следующей — в
+    выходе предыдущей), труба — только до первой и после последней; иначе между ними отрезки длиной gap."""
     p = pts_do[-1]
     napr = tuple(napr) + (0.0,) * (3 - len(napr))
     p_in = (p[0] + napr[0] * first, p[1] + napr[1] * first, p[2] + napr[2] * first)
     r0 = truba(sys_, pt, d, pts_do + [p_in], ur)
     prev = (r0, 1)
-    for key in items:
+    pred = None
+    for i, key in enumerate(items):
         aid, out = arm(key, p_in, napr, ur)
-        svyaz(prev, dict(arm=aid, side="in"))
+        if pred is None:
+            svyaz(prev, dict(arm=aid, side="in"))
+        else:
+            arm_svyazi.append([pred, aid])
+        if sborka and i < len(items) - 1:
+            p_in, pred = out, aid
+            continue
         p_in = (out[0] + napr[0] * gap, out[1] + napr[1] * gap, out[2] + napr[2] * gap)
         r = truba(sys_, pt, d, [out, p_in], ur)
         svyaz((r, 0), dict(arm=aid, side="out"))
-        prev = (r, 1)
+        prev, pred = (r, 1), None
     return r0, prev, p_in
 
 
@@ -606,7 +616,10 @@ def kv_v1(k, zf, ur, rs_v, stoyak_xy, napr, nogi_, klyuch=None):
     rs_v.append((z1, (r0, 0)))
     seti[ra]["pts"] = seti[ra]["pts"][:1] + [R((xr, y_op, z1))]
     items = ["filtr15"] + (["reg15"] if k in ET_REG else []) + ["sch15", "obr15"]
-    rv, (rn, _), p = vetka("V1", "ppr", 25, [(xr, y_op, z1)], (0, 0, -1), items, ur, gap=0.16, first=0.15)
+    # фильтр, регулятор, счётчик (с присоединителями) и обратный клапан — одной сборкой на резьбе; муфты
+    # комбинированные ППР 25 х 1/2" — только над фильтром и под обратным клапаном
+    rv, (rn, _), p = vetka("V1", "ppr", 25, [(xr, y_op, z1)], (0, 0, -1), items, ur, gap=0.16, first=0.15,
+                           sborka=True)
     svyaz((ra, 1), (rv, 0))
     seti[rn]["pts"] = seti[rn]["pts"][:1] + [R((xr, y_op, zf + Z_RAZV))]
     puti = {}
@@ -1536,7 +1549,7 @@ trassa_v3 = dict(stoyaki_v1={nm: [round(v[0], 3), v[1], round(v[5], 3), round(v[
 json.dump(trassa_v3, open(os.path.join(HERE, "..", "calc", "trassa_v3.json"), "w", encoding="utf-8"),
           ensure_ascii=False, indent=1)
 
-geo = dict(pomescheniya=pomescheniya, razdeliteli=razdeliteli, pribory=pribory, seti=seti, troyniki=troyniki, kresty=kresty, kresty2=kresty2, armatura=armatura, svyazi=svyazi,
+geo = dict(pomescheniya=pomescheniya, razdeliteli=razdeliteli, pribory=pribory, seti=seti, troyniki=troyniki, kresty=kresty, kresty2=kresty2, armatura=armatura, svyazi=svyazi, arm_svyazi=arm_svyazi,
            mufty=mufty, stoyaki=stoyaki, oborud=oborud, dveri=dveri, lestnicy=lestnicy,
            zaglushki=zaglushki, krany_pol=krany_pol,
            sistemy=dict(V1="ADSK_Водопровод_В1", K1="ADSK_Канализация_К1"),
