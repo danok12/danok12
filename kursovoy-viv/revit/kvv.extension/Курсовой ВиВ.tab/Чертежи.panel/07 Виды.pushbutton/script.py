@@ -296,28 +296,12 @@ def razrez_shahty(g, log):
     v.SetCategoryHidden(DB.ElementId(DB.BuiltInCategory.OST_Grids), True)      # ось 1 тянулась через весь лист
     log(u'разрез: снято фильтров вида', len(filtry))
     doc.Regenerate()
-    stare = [e.Id for e in DB.FilteredElementCollector(doc, v.Id).OfClass(DB.TextNote)]
-    if stare:
-        doc.Delete(List[DB.ElementId](stare))
-    tnt = kvv_oform.tip_teksta(doc, log)
     z_kr = min(k['z'] for k in g['kresty2'] if abs(k['x'] - xk) < 1e-3 and abs(k['y'] - yk) < 1e-3)
-    x_per = 0.30                         # перегородка шахты (geometriya_v3.py, X_PER_A)
-    P = kvv.xyz
-    # подписи — справа, за наружной стеной (вне рамки вида), в пределах её высоты: в долях масштаба, 1,0 = 10 мм
-    # листа; на листе 1:50 — 1 м модели = 20 мм. Знаков «°» и «Ø» в шрифте текста нет — не писать
-    vyn = [(u'Узел учёта В1 на +1,500: кран, фильтр,\rрегулятор давления, счётчик,\rобратный клапан',
-            P(xv, yk - 0.35, 1.05), 2.8, 0.6),
-           (u'Прослойка 50 мм и перегородка 100 мм —\rшахта не у наружной стены', P(x_per, yc, 0.45), 2.8, -0.1),
-           (u'Крестовина двухплоскостная 110×50 на +0,055 —\rнад плитой перекрытия, не в ней', P(xk, yk, z_kr), 2.8, -0.75),
-           (u'Сборный К1 DN100 под потолком подвала', P(xk, yc, -0.95), 2.8, 0.1)]
-    n = 0
-    for tekst, tochka, dx, dy in vyn:
-        if kvv_oform.vynoska(doc, v, tnt, tekst, tochka, dx, dy, log) is not None:
-            n += 1
+    n = 0          # выноски ставит 08 (kvv_oform.podpisi_razreza): его очистка удаляет тексты этого типа в проекте
     cb = v.CropBox
     log(u'разрез', RAZREZ, u'| 1:%d' % v.Scale, u'| %.1f x %.1f м, глубина %.1f м' % (
         (cb.Max.X - cb.Min.X) / M, (cb.Max.Y - cb.Min.Y) / M, (cb.Max.Z - cb.Min.Z) / M),
-        u'| взгляд', v.ViewDirection, u'| крестовина на %.3f | выносок %d' % (z_kr, n))
+        u'| взгляд', v.ViewDirection, u'| крестовина на %.3f' % z_kr)
 
 
 def main(log):

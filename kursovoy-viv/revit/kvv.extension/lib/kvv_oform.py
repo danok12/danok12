@@ -953,6 +953,30 @@ def liniya_razreza(doc, v, tnt, g, log):
         gs_tolst.Name if gs_tolst is not None else u'по умолчанию (широкой линии нет)')
 
 
+def podpisi_razreza(doc, v, tnt, g, log):
+    """Выноски на разрезе 1-1 по шахте кв. А (вид из 07): узел учёта В1, прослойка и перегородка шахты,
+    крестовина К1 над плитой, сборный К1 под потолком подвала. Справа, за наружной стеной (вне рамки вида), в
+    пределах её высоты: смещения в долях масштаба, 1,0 = 10 мм листа; на листе 1:50 — 1 м модели = 20 мм. Знаков
+    «°» и «Ø» в шрифте текста нет — не писать."""
+    st = dict((s_['sys'], s_) for s_ in g['stoyaki'] if s_['x'] < 5.0)
+    xk, yk, xv = st[u'K1']['x'], st[u'K1']['y'], st[u'V1']['x']
+    yc = yk + 0.10                                       # плоскость разреза (07)
+    z_kr = min(k['z'] for k in g['kresty2'] if abs(k['x'] - xk) < 1e-3 and abs(k['y'] - yk) < 1e-3)
+    x_per = 0.30                                         # перегородка шахты (geometriya_v3.py, X_PER_A)
+    P = kvv.xyz
+    vyn = [(u'Узел учёта В1 на +1,500: кран, фильтр,\rрегулятор давления, счётчик,\rобратный клапан',
+            P(xv, yk - 0.35, 1.05), 2.8, 0.6),
+           (u'Прослойка 50 мм и перегородка 100 мм —\rшахта не у наружной стены', P(x_per, yc, 0.45), 2.8, -0.1),
+           (u'Крестовина двухплоскостная 110×50 на +0,055 —\rнад плитой перекрытия, не в ней', P(xk, yk, z_kr),
+            2.8, -0.75),
+           (u'Сборный К1 DN100 под потолком подвала', P(xk, yc, -0.95), 2.8, 0.1)]
+    n = 0
+    for tekst, tochka, dx, dy in vyn:
+        if vynoska(doc, v, tnt, tekst, tochka, dx, dy, log) is not None:
+            n += 1
+    log(u'  выносок на разрезе', v.Name, n)
+
+
 def oformit_vse(doc, g, tr, plany, shemy, tip_marki_stoyaka, log):
     """Всё оформление планов и схем. plany / shemy — {имя вида: вид}."""
     tipy = {'truba': tip_marki(doc, *MARKA_TRUBY), 'vvod': tip_marki(doc, *MARKA_VVOD),
@@ -1004,6 +1028,13 @@ def oformit_vse(doc, g, tr, plany, shemy, tip_marki_stoyaka, log):
         except Exception:
             import traceback
             log(u'  ОШИБКА оформления схемы', nm, traceback.format_exc())
+    for v in DB.FilteredElementCollector(doc).OfClass(DB.ViewSection):
+        if not v.IsTemplate and v.Name == u'1-1':
+            try:
+                podpisi_razreza(doc, v, tnt, g, log)
+            except Exception:
+                import traceback
+                log(u'  ОШИБКА выносок разреза', traceback.format_exc())
 
 
 KRAN_POL = u'Кран водоразборный\rсо штуцером 1"'

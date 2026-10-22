@@ -231,9 +231,10 @@ for k, (nm, txt, fo, f, ed, fmt) in enumerate(RS):
 # ---------------- 1.4 гидравлика ----------------
 w = list_("1.4 Гидравлика В1", "Таблица 1.4. Гидравлический расчёт сети В1 по диктующему направлению "
                                "(стояк %s, душевая сетка 11-го этажа)" % REZ["st_dikt"],
-          [8, 36, 9, 7, 11, 9, 9, 9, 7, 10, 9, 10, 9, 9])
+          [8, 36, 9, 7, 11, 9, 9, 9, 7, 10, 9, 10, 9, 9, 9])
 shapka(w, 3, ["Уча-сток", "Наименование", "L, м", "N", "P^c", "NP", "α", "q, л/с", "DN", "d_р, мм", "v, м/с",
-              "i", "iL", "h, м"])
+              "i", "iL", "h, м", "Материал"])
+PPR = {20: 13.2, 25: 16.6, 32: 21.2, 40: 26.6, 50: 33.2}      # ППР PN20: наружный -> внутренний, мм
 VGP = {15: 15.7, 20: 21.2, 25: 27.1, 32: 35.9, 40: 41.0, 50: 53.0, 65: 67.5, 80: 80.5, 100: 105.0}
 n_v1 = len(REZ["v1"])
 for k, u in enumerate(REZ["v1"]):
@@ -248,10 +249,13 @@ for k, u in enumerate(REZ["v1"]):
     yach(w, "G%d" % r, "=" + alfa("F%d" % r), fmt="0.000")
     yach(w, "H%d" % r, "=5*Q0_C*G%d" % r, fmt="0.000")
     yach(w, "I%d" % r, u["dn"], f_in, fill_in, "0")
-    yach(w, "J%d" % r, "=INDEX(VGP_D,MATCH(I%d,VGP_DN,0))-1" % r, fmt="0.0")
+    yach(w, "O%d" % r, "ППР" if u.get("mat") == "ппр" else "сталь", f_in, fill_in)
+    yach(w, "J%d" % r, '=IF(O{r}="ППР",INDEX(PPR_D,MATCH(I{r},PPR_DN,0)),'
+                       'INDEX(VGP_D,MATCH(I{r},VGP_DN,0))-1)'.format(r=r), fmt="0.0")
     yach(w, "K%d" % r, "=H%d/1000/(PI()*(J%d/1000)^2/4)" % (r, r), fmt="0.00")
-    yach(w, "L%d" % r, "=IF(K{r}<1.2,0.000912*K{r}^2/(J{r}/1000)^1.3*(1+0.867/K{r})^0.3,"
-                       "0.00107*K{r}^2/(J{r}/1000)^1.3)".format(r=r), fmt="0.0000")
+    yach(w, "L%d" % r, '=IF(O{r}="ППР",0.000685*K{r}^1.774/(J{r}/1000)^1.226,'
+                       'IF(K{r}<1.2,0.000912*K{r}^2/(J{r}/1000)^1.3*(1+0.867/K{r})^0.3,'
+                       '0.00107*K{r}^2/(J{r}/1000)^1.3))'.format(r=r), fmt="0.0000")
     yach(w, "M%d" % r, "=L%d*C%d" % (r, r), fmt="0.000")
     yach(w, "N%d" % r, "=M%d*(1+K_L)" % r, fmt="0.000")
 rs = 4 + n_v1
@@ -259,14 +263,15 @@ yach(w, "B%d" % rs, "Итого Σh по диктующему направлен
 yach(w, "N%d" % rs, "=SUM(N4:N%d)" % (rs - 1), f_bold, fill_res, "0.00")
 imya("SUM_H", w, "N%d" % rs)
 REZ_CELLS["SUM_H"] = "'%s'!N%d" % (w.title, rs)
-yach(w, "A%d" % (rs + 2), "d_р — расчётный внутренний диаметр (внутренний диаметр трубы ГОСТ 3262-75 минус 1 мм); "
-                          "i — по формулам Ф.А. Шевелева для неновых стальных труб: v < 1,2 м/с — "
+yach(w, "A%d" % (rs + 2), "Квартирные разводки, узлы учёта и стояки — ППР PN20 (ГОСТ 32415-2013): d_р — внутренний "
+                          "диаметр, i = 0,000685·v^1,774/d_р^1,226 (Шевелёв, ф. 28). Подводки к стоякам, магистраль и "
+                          "напорная линия — сталь ВГП (ГОСТ 3262-75): d_р — внутренний диаметр минус 1 мм, v < 1,2 м/с — "
                           "i = 0,000912·v²/d_р^1,3·(1 + 0,867/v)^0,3; v ≥ 1,2 м/с — i = 0,00107·v²/d_р^1,3. "
-                          "h = iL·(1 + K_l). DN подобран по экономичным скоростям (≤ 1,5 м/с в подводках, ≤ 1,2 м/с "
+                          "h = iL·(1 + K_l). Диаметр — по экономичным скоростям (≤ 1,5 м/с в подводках, ≤ 1,2 м/с "
                           "в стояках и магистралях).", f_note, border=False,
      al=Alignment(horizontal="left", vertical="top", wrap_text=True))
-w.merge_cells("A%d:N%d" % (rs + 2, rs + 3))
-w.row_dimensions[rs + 2].height = 28
+w.merge_cells("A%d:O%d" % (rs + 2, rs + 3))
+w.row_dimensions[rs + 2].height = 42
 yach(w, "P3", "DN", f_bold, fill_h)
 yach(w, "Q3", "d_вн, мм", f_bold, fill_h)
 for k, (dn, d) in enumerate(sorted(VGP.items())):
@@ -274,7 +279,17 @@ for k, (dn, d) in enumerate(sorted(VGP.items())):
     yach(w, "Q%d" % (4 + k), d, fmt="0.0")
 NAMES["VGP_DN"] = "'%s'!$P$4:$P$%d" % (w.title, 3 + len(VGP))
 NAMES["VGP_D"] = "'%s'!$Q$4:$Q$%d" % (w.title, 3 + len(VGP))
-w.column_dimensions["O"].width = 3
+yach(w, "S3", "ППР Ø", f_bold, fill_h)
+yach(w, "T3", "d_вн, мм", f_bold, fill_h)
+for k, (dn, d) in enumerate(sorted(PPR.items())):
+    yach(w, "S%d" % (4 + k), dn, fmt="0")
+    yach(w, "T%d" % (4 + k), d, fmt="0.0")
+NAMES["PPR_DN"] = "'%s'!$S$4:$S$%d" % (w.title, 3 + len(PPR))
+NAMES["PPR_D"] = "'%s'!$T$4:$T$%d" % (w.title, 3 + len(PPR))
+w.column_dimensions["R"].width = 3
+w.column_dimensions["S"].width = 7
+w.column_dimensions["T"].width = 10
+w.column_dimensions["O"].width = 9
 w.column_dimensions["P"].width = 7
 w.column_dimensions["Q"].width = 10
 
@@ -470,10 +485,9 @@ OTM = [
     ("Выпуск у стены (−2,000)", None, "=Z0_ABS-2", "лоток выпуска у стены"),
     ("Выпуск в КК-1 (Ø100)", None, "=C4-K1_I_%d*5" % vyp, "−i·5 м (стена — колодец)"),
     ("КК-1", zem["КК-1"], "=C5+0.1-0.15", "шелыга в шелыгу: Ø100 → Ø150"),
-    ("КК-2", zem["КК-2"], "=C6-K1_IL_%d" % idx["КК-1 - КК-2"], "− i·L участка КК-1–КК-2"),
-    ("КК-3", zem["КК-3"], "=C7-K1_IL_%d" % idx["КК-2 - КК-3"], "− i·L участка КК-2–КК-3"),
-    ("ККК", zem["ККК"], "=C8-K1_IL_%d" % idx["КК-3 - ККК"], "− i·L участка КК-3–ККК"),
-    ("ГКК", zem["ГКК"], "=C9-K1_IL_%d" % idx["ККК - ГКК"], "− i·L участка ККК–ГКК"),
+    ("КК-3", zem["КК-3"], "=C6-K1_IL_%d" % idx["КК-1 - КК-3"], "− i·L участка КК-1–КК-3 (КК-2 убран)"),
+    ("ККК", zem["ККК"], "=C7-K1_IL_%d" % idx["КК-3 - ККК"], "− i·L участка КК-3–ККК"),
+    ("ГКК", zem["ГКК"], "=C8-K1_IL_%d" % idx["ККК - ГКК"], "− i·L участка ККК–ГКК"),
 ]
 for k, (nm, z, f, kak) in enumerate(OTM):
     r = 4 + k
@@ -490,13 +504,14 @@ for k, (nm, z, f, kak) in enumerate(OTM):
     yach(w, "F%d" % r, kak)
     if nm == "ГКК":
         REZ_CELLS["LOT_GKK"] = "'%s'!C%d" % (w.title, r)
+        r_gkk = r
 yach(w, "A12", "H₀ = max(H_пр − 0,3; 0,7 + d)", f_bold)
 yach(w, "C12", "=MAX(H_PROMERZ-0.3,0.7+0.15)", f_bold, fill_res, "0.00")
 imya("H0_MIN", w, "C12")
 yach(w, "A13", "Лоток городского коллектора Ø400 в ГКК («по месту»)")
 yach(w, "C13", REZ["Z_GKK_GOR"], f_in, fill_in, "0.00")
 yach(w, "A14", "Дворовая труба входит выше шелыги коллектора на, м")
-yach(w, "C14", "=C10-(C13+0.4)", fmt="0.00")            # лоток дворовой трубы над шелыгой коллектора
+yach(w, "C14", "=C%d-(C13+0.4)" % r_gkk, fmt="0.00")    # лоток дворовой трубы над шелыгой коллектора
 REZ_CELLS["PEREPAD"] = "'%s'!C14" % w.title
 
 # справочная таблица — в конец книги
