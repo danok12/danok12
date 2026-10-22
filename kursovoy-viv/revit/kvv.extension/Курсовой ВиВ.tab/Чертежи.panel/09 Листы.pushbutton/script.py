@@ -41,6 +41,8 @@ LISTY = [
     (u'5', u'План подвала. Система К1', u'К1_План подвала', PRIM_K1),
     (u'6', u'Аксонометрическая схема. Система К1', u'К1_Аксонометрическая схема', PRIM_K1),
 ]
+# разрез 1-1 по шахте кв. А (вид из 07) — на лист 4, под план типового этажа К1
+RAZREZ = (u'4', u'1-1', u'Разрез 1-1 по шахте кв. А')
 FORMAT_PLANA, FORMAT_SHEMY = 2, 1      # «Формат А» основной надписи ADSK
 LISTOV_VSEGO = len(LISTY) + 1          # лист 7 — генплан (AutoCAD, kursovoy-viv/genplan)
 # лист 7 «Экспликация помещений» убран по просьбе пользователя (08.10.2026): лист удаляется как лишний номер,
@@ -233,6 +235,38 @@ def zagolovok_po_centru(vp, v, log):
         cel / MM, (lo.MinimumPoint.X + lo.MaximumPoint.X) / 2 / MM))
 
 
+def razrez_na_list(sh, bb, vp_plan, log):
+    """Разрез 1-1 — под планом (верх — в 12 мм под видом плана, место под заголовок), правый край — в 10 мм левее
+    основной надписи (185 мм от правой рамки), левее — примечания."""
+    v = vid_po_imeni(RAZREZ[1])
+    if v is None:
+        log(u'  НЕТ вида разреза', RAZREZ[1], u'— запустить 07')
+        return
+    if not DB.Viewport.CanAddViewToSheet(doc, sh.Id, v.Id):
+        log(u'  разрез нельзя поставить на лист', sh.SheetNumber)
+        return
+    vr = DB.Viewport.Create(doc, sh.Id, v.Id, DB.XYZ(bb.Min.X + 300 * MM, bb.Min.Y + 80 * MM, 0))
+    doc.Regenerate()
+    zagolovok(vr, v, RAZREZ[2], log)
+    doc.Regenerate()
+    o, op = vr.GetBoxOutline(), vp_plan.GetBoxOutline()
+    w_, h_ = o.MaximumPoint.X - o.MinimumPoint.X, o.MaximumPoint.Y - o.MinimumPoint.Y
+    x_r = bb.Max.X - (5 + 185 + 10) * MM
+    y_t = op.MinimumPoint.Y - 12 * MM
+    vr.SetBoxCenter(DB.XYZ(x_r - w_ / 2, y_t - h_ / 2, 0))
+    doc.Regenerate()
+    try:
+        zagolovok_po_centru(vr, v, log)
+    except Exception as ex:
+        log(u'  заголовок разреза не выровнен:', ex)
+    o = vr.GetBoxOutline()
+    log(u'  разрез 1-1 на листе', sh.SheetNumber, u'| 1:%d' % v.Scale, u'| %.0f..%.0f x %.0f..%.0f мм от угла листа' % (
+        (o.MinimumPoint.X - bb.Min.X) / MM, (o.MaximumPoint.X - bb.Min.X) / MM,
+        (o.MinimumPoint.Y - bb.Min.Y) / MM, (o.MaximumPoint.Y - bb.Min.Y) / MM))
+    if o.MinimumPoint.Y - bb.Min.Y < 8 * MM:
+        log(u'  ВНИМАНИЕ: разрез ниже рамки листа — уменьшить рамку вида в 07')
+
+
 def vid_po_imeni(nm):
     for v in DB.FilteredElementCollector(doc).OfClass(DB.View):
         if not v.IsTemplate and v.Name == nm:
@@ -418,6 +452,11 @@ def main(log):
                         u'| LabelOffset %.0f, %.0f мм' % (vp.LabelOffset.X / MM, vp.LabelOffset.Y / MM))
                 except Exception as ex:
                     log(u'  заголовок вида: нет контура', ex)
+                if nom == RAZREZ[0]:
+                    try:
+                        razrez_na_list(sh, bb, vp, log)
+                    except Exception as ex:
+                        log(u'  разрез на лист не встал:', ex)
                 o = vp.GetBoxOutline()
                 log(u'лист', nom, u'рамка %d x %d мм | вид' % (round(w / MM), round(h / MM)), vn, u'| 1:%d' % v.Scale,
                     u'| габарит вида %d x %d мм' % (round((o.MaximumPoint.X - o.MinimumPoint.X) / MM),

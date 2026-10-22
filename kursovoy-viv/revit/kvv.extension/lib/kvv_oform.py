@@ -225,7 +225,7 @@ def vvody_vypuski(doc, g, log):
 
 def napravleniya(v):
     """Экранные «вправо» и «вверх» вида в координатах модели (для плана — X и Y)."""
-    if isinstance(v, DB.View3D):
+    if isinstance(v, (DB.View3D, DB.ViewSection)):
         return v.RightDirection, v.UpDirection
     return DB.XYZ.BasisX, DB.XYZ.BasisY
 
@@ -913,6 +913,46 @@ def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
     log(u'  отметок на', v.Name, ot.n, u'| способ:', ot.sposob, u'| не встало', ot.oshibki)
 
 
+def liniya_razreza(doc, v, tnt, g, log):
+    """Линия разреза 1-1 (вид «1-1» из 07: поперёк здания на 0,1 м севернее оси стояков кв. А секции 1, от −0,7 до
+    2,4 по x, взгляд на юг) на плане типового этажа — по ГОСТ 2.305: разомкнутая линия — штрихи у концов
+    секущей плоскости (запад — снаружи от наружной стены, 5 мм: дальше размерная цепочка; восток — за рамкой
+    разреза), стрелки направления взгляда в 2 мм от внешних концов штрихов, под стрелками — «1». Стирается и
+    рисуется заново вместе с оформлением (ochistit)."""
+    st = [s_ for s_ in g['stoyaki'] if s_['sys'] == u'K1' and s_['x'] < 5.0][0]
+    yc = st['y'] + 0.10
+    k = v.Scale / 100.0                                  # 1,0 — 10 мм листа = 1 м модели при 1:100
+    z = v.GenLevel.Elevation / M
+    # штрих — стилем широкой линии: переопределение толщины линии на виде у линий детализации не действовало
+    gs_tolst = None
+    for sc in doc.Settings.Categories.get_Item(DB.BuiltInCategory.OST_Lines).SubCategories:
+        if any(w in sc.Name for w in (u'Широк', u'Wide', u'олст')):
+            gs_tolst = sc.GetGraphicsStyle(DB.GraphicsStyleType.Projection)
+            break
+
+    def liniya(x0, y0, x1, y1, tolstaya):
+        dc = doc.Create.NewDetailCurve(v, DB.Line.CreateBound(kvv.xyz(x0, y0, z), kvv.xyz(x1, y1, z)))
+        if tolstaya and gs_tolst is not None:
+            dc.LineStyle = gs_tolst
+        return dc
+    opt = DB.TextNoteOptions(tnt.Id)
+    opt.HorizontalAlignment = DB.HorizontalTextAlignment.Center
+    n = 0
+    # запад: от наружной грани стены до размерной цепочки 6 мм — штрих 5 мм; восток — 8 мм за рамкой разреза
+    for x_vn, nar, L in ((-0.40, -1, 0.5 * k), (2.45, 1, 0.8 * k)):    # внутренний конец штриха, наружу по x
+        x_nar = x_vn + nar * L
+        liniya(x_vn, yc, x_nar, yc, True)
+        xa = x_nar - nar * 0.2 * k                        # стрелка — в 2 мм от внешнего конца штриха
+        dl, ost, shir = 0.6 * k, 0.25 * k, 0.08 * k
+        liniya(xa, yc, xa, yc - dl, False)
+        liniya(xa, yc - dl, xa - shir, yc - dl + ost, False)
+        liniya(xa, yc - dl, xa + shir, yc - dl + ost, False)
+        DB.TextNote.Create(doc, v.Id, kvv.xyz(xa, yc - dl - 0.1 * k, z), u'1', opt)      # под остриём стрелки
+        n += 1
+    log(u'  линия разреза 1-1 на', v.Name, u'| y = %.2f | концов %d | стиль штрихов' % (yc, n),
+        gs_tolst.Name if gs_tolst is not None else u'по умолчанию (широкой линии нет)')
+
+
 def oformit_vse(doc, g, tr, plany, shemy, tip_marki_stoyaka, log):
     """Всё оформление планов и схем. plany / shemy — {имя вида: вид}."""
     tipy = {'truba': tip_marki(doc, *MARKA_TRUBY), 'vvod': tip_marki(doc, *MARKA_VVOD),
@@ -949,6 +989,12 @@ def oformit_vse(doc, g, tr, plany, shemy, tip_marki_stoyaka, log):
         except Exception:
             import traceback
             log(u'  ОШИБКА оформления плана', nm, traceback.format_exc())
+        if nm == u'К1_План типового этажа':
+            try:
+                liniya_razreza(doc, v, tnt, g, log)
+            except Exception:
+                import traceback
+                log(u'  ОШИБКА линии разреза', traceback.format_exc())
     for nm, v in sorted(shemy.items()):
         if v is None:
             continue

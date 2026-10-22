@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Виды для листов: планы типового этажа и подвала (В1, К1), аксонометрические схемы В1 и К1.
+"""Виды для листов: планы типового этажа и подвала (В1, К1), аксонометрические схемы В1 и К1, разрез 1-1 по шахте
+кв. А (лист 4).
 
 Шаблоны видов — из шаблона ADSK ВК. Повторный запуск пересоздаёт виды (по имени).
 """
@@ -7,7 +8,9 @@ from pyrevit import HOST_APP
 from Autodesk.Revit import DB
 from System.Collections.Generic import List
 import kvv
+import kvv_oform
 reload(kvv)
+reload(kvv_oform)
 
 doc = HOST_APP.doc
 M = kvv.M
@@ -21,6 +24,9 @@ PLANY = [  # имя вида, уровень, шаблон, тип вида
 ]
 SHEMY = [(u'В1_Аксонометрическая схема', u'О_3D_Система В1', u'ADSK_Водопровод_В1'),
          (u'К1_Аксонометрическая схема', u'О_3D_Система К1', u'ADSK_Канализация_К1')]
+
+RAZREZ = u'1-1'               # разрез по шахте кв. А секции 1: имя вида — то, что пишется у секущей линии на планах
+MASSHTAB_RAZREZA = 50
 
 
 def vid_po_imeni(nm):
@@ -239,6 +245,81 @@ def obrezka(v, x0, y0, x1, y1):
     v.CropBoxVisible = False
 
 
+def razrez_shahty(g, log):
+    """Разрез 1-1 по шахте кв. А секции 1 — показать, что крестовина К1 и отводы над плитой перекрытия, а не в ней
+    (преподаватель считал, что канализация «в полу»). Плоскость поперёк здания на 0,1 м за осью стояков (через
+    унитаз), взгляд на юг: наружная стена, прослойка и перегородка шахты, стояки В1 и К1, крестовина 110×50 над
+    полом, отвод от унитаза, опуск узла учёта В1 с арматурой; внизу — сборный К1 под потолком подвала."""
+    st = dict((s_['sys'], s_) for s_ in g['stoyaki'] if s_['x'] < 5.0)
+    xk, yk, xv = st['K1']['x'], st['K1']['y'], st['V1']['x']
+    yc, xo, zo = yk + 0.10, 0.85, 0.3
+    t = DB.Transform.Identity
+    t.Origin = kvv.xyz(xo, yc, zo)
+    # Revit смотрит вдоль +BasisZ рамки, секущая плоскость — на Min.Z, вправо на листе — −BasisX (проверено:
+    # при BasisZ = +y разрез смотрел на север и резал кухню). Взгляд на юг: BasisZ = −y, вправо — на запад
+    t.BasisX = DB.XYZ(1, 0, 0)
+    t.BasisY = DB.XYZ.BasisZ
+    t.BasisZ = DB.XYZ(0, -1, 0)
+    box = DB.BoundingBoxXYZ()
+    box.Transform = t
+    # по x от −0,7 (наружная стена) до 2,4 (ванна), по z от −1,1 (сборный К1 под потолком подвала) до +1,75 (тройник
+    # узла учёта на +1,5), вглубь на юг — 2,7 м (умывальник, мойка)
+    box.Min = DB.XYZ((-0.7 - xo) * M, (-1.1 - zo) * M, 0.0)
+    box.Max = DB.XYZ((2.4 - xo) * M, (1.75 - zo) * M, 2.7 * M)
+    # направление разреза рамкой подрезки не меняется — прежний вид удаляется (с листа его снимает и ставит 09)
+    v = vid_po_imeni(RAZREZ)
+    if v is not None:
+        doc.Delete(v.Id)
+        doc.Regenerate()
+    vft = tip_vida(None, DB.ViewFamily.Section)
+    v = DB.ViewSection.CreateSection(doc, vft.Id, box)
+    v.Name = RAZREZ
+    v.ViewTemplateId = DB.ElementId.InvalidElementId
+    v.Scale = MASSHTAB_RAZREZA
+    v.DetailLevel = DB.ViewDetailLevel.Fine
+    v.CropBoxActive = True
+    v.CropBoxVisible = False
+    for nm, zn in ((u'ADSK_Назначение вида', u'Оформленные виды'), (u'ADSK_Штамп Раздел проекта', u'Канализация')):
+        p = v.LookupParameter(nm)
+        if p is not None and not p.IsReadOnly:
+            p.Set(zn)
+    # видны обе системы: фильтры вида (из типа вида) сняты; уровни и оси скрыты — отметки даны в выносках
+    filtry = list(v.GetFilters())
+    for fid in filtry:
+        v.RemoveFilter(fid)
+    for bic in (DB.BuiltInCategory.OST_PipeCurves, DB.BuiltInCategory.OST_PipeFitting,
+                DB.BuiltInCategory.OST_PipeAccessory, DB.BuiltInCategory.OST_PlumbingFixtures):
+        cid = DB.ElementId(bic)
+        if v.CanCategoryBeHidden(cid):
+            v.SetCategoryHidden(cid, False)
+    v.SetCategoryHidden(DB.ElementId(DB.BuiltInCategory.OST_Levels), True)
+    v.SetCategoryHidden(DB.ElementId(DB.BuiltInCategory.OST_Grids), True)      # ось 1 тянулась через весь лист
+    log(u'разрез: снято фильтров вида', len(filtry))
+    doc.Regenerate()
+    stare = [e.Id for e in DB.FilteredElementCollector(doc, v.Id).OfClass(DB.TextNote)]
+    if stare:
+        doc.Delete(List[DB.ElementId](stare))
+    tnt = kvv_oform.tip_teksta(doc, log)
+    z_kr = min(k['z'] for k in g['kresty2'] if abs(k['x'] - xk) < 1e-3 and abs(k['y'] - yk) < 1e-3)
+    x_per = 0.30                         # перегородка шахты (geometriya_v3.py, X_PER_A)
+    P = kvv.xyz
+    # подписи — справа, за наружной стеной (вне рамки вида), в пределах её высоты: в долях масштаба, 1,0 = 10 мм
+    # листа; на листе 1:50 — 1 м модели = 20 мм. Знаков «°» и «Ø» в шрифте текста нет — не писать
+    vyn = [(u'Узел учёта В1 на +1,500: кран, фильтр,\rрегулятор давления, счётчик,\rобратный клапан',
+            P(xv, yk - 0.35, 1.05), 2.8, 0.6),
+           (u'Прослойка 50 мм и перегородка 100 мм —\rшахта не у наружной стены', P(x_per, yc, 0.45), 2.8, -0.1),
+           (u'Крестовина двухплоскостная 110×50 на +0,055 —\rнад плитой перекрытия, не в ней', P(xk, yk, z_kr), 2.8, -0.75),
+           (u'Сборный К1 DN100 под потолком подвала', P(xk, yc, -0.95), 2.8, 0.1)]
+    n = 0
+    for tekst, tochka, dx, dy in vyn:
+        if kvv_oform.vynoska(doc, v, tnt, tekst, tochka, dx, dy, log) is not None:
+            n += 1
+    cb = v.CropBox
+    log(u'разрез', RAZREZ, u'| 1:%d' % v.Scale, u'| %.1f x %.1f м, глубина %.1f м' % (
+        (cb.Max.X - cb.Min.X) / M, (cb.Max.Y - cb.Min.Y) / M, (cb.Max.Z - cb.Min.Z) / M),
+        u'| взгляд', v.ViewDirection, u'| крестовина на %.3f | выносок %d' % (z_kr, n))
+
+
 def main(log):
     g = kvv.load_json('revit', 'geometriya_v3.json')
     lv = kvv.urovni(doc)
@@ -272,6 +353,11 @@ def main(log):
             except Exception as ex:
                 log(u'   стыки стен на плане не настроены:', ex)
             log(u'план', nm, u'| шаблон', shab if t else u'-', u'| тип', DB.Element.Name.GetValue(vft))
+        try:
+            razrez_shahty(g, log)
+        except Exception:
+            import traceback
+            log(u'ОШИБКА разреза:', traceback.format_exc())
         vft3 = tip_vida(None, DB.ViewFamily.ThreeDimensional)
         for nm, shab, sist in SHEMY:
             v = vid_po_imeni(nm)
