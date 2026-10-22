@@ -22,8 +22,51 @@ KATEGORII_ANNOTACIY = [DB.BuiltInCategory.OST_PipeTags, DB.BuiltInCategory.OST_R
                        DB.BuiltInCategory.OST_LevelHeads, DB.BuiltInCategory.OST_SpotElevSymbols]
 
 
+def rezhim_zapuska():
+    """revit/00_rezhim.txt: «svobodnye» — только проверка висящих элементов сетей; «siroty» — удалить висящие
+    фасонные части и арматуру без метки КВВ и проверить. Файл после чтения удаляется."""
+    import io
+    import os
+    put = os.path.join(kvv.REVIT, u'00_rezhim.txt')
+    if not os.path.isfile(put):
+        return u''
+    with io.open(put, encoding='utf-8') as f:
+        r = f.read().strip()
+    os.remove(put)
+    return r
+
+
 def main(log):
     log(u'документ:', doc.Title)
+    rezhim = rezhim_zapuska()
+    if rezhim == u'svobodnye':
+        kvv_proverka.svobodnye(doc, log)
+        return
+    if rezhim.startswith(u'vid '):
+        kvv_proverka.vid_diag(doc, rezhim[4:].strip(), log)
+        return
+    if rezhim == u'metki':
+        import kvv_seti
+        reload(kvv_seti)
+        with kvv.Tranzakciya(doc, u'КВВ: метки деталей', log):
+            kvv_seti.pometit_avto(doc, log)
+        return
+    if rezhim == u'proba':
+        kvv_proverka.proba_kombi(doc, log)
+        return
+    if rezhim == u'pribory':
+        kvv_proverka.pribory_diag(doc, log)
+        return
+    if rezhim == u'fitingi':
+        kvv_proverka.fitingi(doc, log)
+        return
+    if rezhim == u'siroty':
+        import kvv_seti
+        reload(kvv_seti)
+        with kvv.Tranzakciya(doc, u'КВВ: висящие детали', log):
+            kvv_seti.udalit_siroty(doc, log)
+        kvv_proverka.svobodnye(doc, log)
+        return
     kvv_proverka.shrift_v_semeystvah(doc, log, KATEGORII_ANNOTACIY)
     with kvv.Tranzakciya(doc, u'КВВ: шрифт ГОСТ', log):
         kvv_proverka.shrift_v_proekte(doc, log)

@@ -44,9 +44,9 @@ def truby_stoyakov(g, log):
     for t in DB.FilteredElementCollector(doc).OfClass(Plumbing.Pipe):
         c = t.Location.Curve
         a, b = c.GetEndPoint(0), c.GetEndPoint(1)
-        # короткие участки стояка К1 в подвале: чугун от отвода до перехода SML/ПП (−0,35) — от 0,2 м, ПП до
+        # короткие участки стояка К1 в подвале: чугун от отвода до муфты HL (ПП/SML) — у пар Б/В около 4 см, ПП до
         # крестовины 1-го этажа (+0,055) — 0,4 м
-        if abs(a.X - b.X) > 1e-4 or abs(a.Y - b.Y) > 1e-4 or abs(a.Z - b.Z) < 0.1 * M:
+        if abs(a.X - b.X) > 1e-4 or abs(a.Y - b.Y) > 1e-4 or abs(a.Z - b.Z) < 0.02 * M:
             continue
         for s in g['stoyaki']:
             if abs(a.X / M - s['x']) < 0.01 and abs(a.Y / M - s['y']) < 0.01:

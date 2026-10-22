@@ -17,6 +17,48 @@ GR_PEREHODY = DB.RoutingPreferenceRuleGroupType.Transitions
 # запасные семейства переходов (если правило типа трубы не дало переход): оцинкованная сталь на резьбе —
 # муфта переходная из ковкого чугуна, затем сварной концентрический переход
 PEREHODY = (u'ADSK_ЧугунРезьба_МуфтаПереходная_ГОСТ8957-75', u'ADSK_СтальСварка_Переход_ГОСТ17378-2001')
+# переходы из модулей ADSK (кнопка 02 копирует их в проект): у переходов «по умолчанию» нет нужных размеров — семейство
+# ADSK рисует вместо детали шар-предупреждение (Warning = Да, «Не найдено: …»)
+PEREHOD_PP_SML = u'ADSK_ЧугунБезраструбный_Переходная муфта HL'            # HL 9/1 100-110: ПП Ø110 — SML DN100
+KOMBI_NR = u'ADSK_Полипропилен_Муфта комбинированная НР'                  # ППР — арматура с ВР (кран, фильтр…)
+KOMBI_VR = u'ADSK_Полипропилен_Муфта комбинированная ВР'                  # ППР — счётчик, прибор
+KOMBI_KLYUCH_NR = u'ADSK_Полипропилен_Муфта комбинированная под ключ НР'  # ПЭ 63 — сталь DN50 (ввод)
+
+
+def multiport(sym):
+    """Семейство с видом детали «Мультипорт» — правилами маршрутизации не ставится."""
+    try:
+        p_ = sym.Family.get_Parameter(DB.BuiltInParameter.FAMILY_CONTENT_PART_TYPE)
+        return p_ is not None and p_.AsInteger() == int(DB.PartType.MultiPort)
+    except Exception:
+        return False
+
+
+def preduprezhdenie(f):
+    """Шар-предупреждение семейства ADSK: размер не найден в таблице (параметр «Warning» = Да)."""
+    if f is None:
+        return False
+    p = f.LookupParameter(u'Warning')
+    return p is not None and p.StorageType == DB.StorageType.Integer and p.AsInteger() == 1
+
+
+DYUYMY = {15: u'1/2"', 20: u'3/4"', 25: u'1"', 32: u'1 1/4"', 40: u'1 1/2"', 50: u'2"'}
+
+
+def simvoly_semeystva(doc, imya, dn=None):
+    """Типы семейства; при dn — только те, в имени которых больше всего размеров соединения («25 х 1/2"»,
+    «HL 9/1 100-110»): у муфт ППР тип задаёт размер, перебирать все долго."""
+    vse = [s_ for s_ in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol).OfCategory(
+        DB.BuiltInCategory.OST_PipeFitting) if s_.FamilyName == imya]
+    if not dn or len(vse) < 2:
+        return vse
+    metki = set(u'%d' % int(round(d)) for d in dn) | set(DYUYMY[int(round(d))] for d in dn if int(round(d)) in DYUYMY)
+
+    def ochki(s_):
+        nm = DB.Element.Name.GetValue(s_).replace(u'x', u'х')
+        return sum(1 for m in metki if m in nm)
+    best = max(ochki(s_) for s_ in vse)
+    return [s_ for s_ in vse if ochki(s_) == best] if best > 0 else vse
 
 
 def komment(e, txt):
@@ -44,6 +86,86 @@ def udalit(doc, pref, log):
     if ids:
         doc.Delete(List[DB.ElementId](ids))
     log(u'удалено с меткой', pref, len(ids))
+    udalit_siroty(doc, log)
+
+
+def udalit_siroty(doc, log):
+    """Фасонные части и арматура без метки КВВ, у которых все соединители свободны, — «висят в воздухе»: их
+    вставлял сам Revit (переходные муфты у приборов и арматуры другого диаметра), трубы при пересборке удаляются по
+    метке, а эти детали оставались на старых местах (к 22.10.2026 их накопилось 1800+)."""
+    ids = []
+    for bic in (DB.BuiltInCategory.OST_PipeFitting, DB.BuiltInCategory.OST_PipeAccessory):
+        for e in DB.FilteredElementCollector(doc).OfCategory(bic).WhereElementIsNotElementType():
+            p = e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+            m_ = p.AsString() if p is not None and p.HasValue else None
+            if m_ and m_.startswith(u'КВВ'):
+                continue
+            if getattr(e, 'SuperComponent', None) is not None or e.Symbol.FamilyName.startswith(u'Влж'):
+                continue                                  # вложенная часть другого семейства
+            cs = [c for c in soediniteli(e) if c.Domain == DB.Domain.DomainPiping]
+            # все соединители свободны — или их нет совсем (переходные муфты ППР, которые Revit сам вставлял при
+            # соединении ППР Ø20/25 с патрубком DN15: размера нет в таблице — шар-предупреждение без соединителей)
+            if (cs and all(not c.IsConnected for c in cs)) or                     (not cs and bic == DB.BuiltInCategory.OST_PipeFitting):
+                ids.append(e.Id)
+    n = 0
+    if ids:
+        try:
+            doc.Delete(List[DB.ElementId](ids))
+            n = len(ids)
+        except Exception:
+            for i in ids:                                 # по одному: что не удаляется — остаётся
+                try:
+                    doc.Delete(i)
+                    n += 1
+                except Exception:
+                    pass
+    log(u'удалено висящих фасонных частей и арматуры без метки', n, u'из', len(ids))
+
+
+def pometit_avto(doc, log):
+    """Фасонные части и арматура без метки КВВ, соединённые с помеченными элементами сети, — их вставил сам Revit
+    (переходные муфты при тройнике на магистрали другого диаметра): метка соседа. Без метки схема другой системы
+    (07, tolko_sistema) их не скрывает. По цепочке — пока что-то помечается. В транзакции."""
+    def m_(e):
+        p = e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+        return p.AsString() if p is not None and p.HasValue else None
+    bez = []
+    for bic in (DB.BuiltInCategory.OST_PipeFitting, DB.BuiltInCategory.OST_PipeAccessory):
+        for e in DB.FilteredElementCollector(doc).OfCategory(bic).WhereElementIsNotElementType():
+            mt = m_(e)
+            if (mt and mt.startswith(u'КВВ')) or getattr(e, 'SuperComponent', None) is not None:
+                continue
+            bez.append(e)
+    po_sem = {}
+    while True:
+        ost = []
+        for e in bez:
+            sosed = None
+            for c in soediniteli(e):
+                if c.Domain != DB.Domain.DomainPiping or not c.IsConnected:
+                    continue
+                for r in c.AllRefs:
+                    o = r.Owner
+                    if o is None or o.Id == e.Id or isinstance(o, Plumbing.PipingSystem):
+                        continue
+                    mt = m_(o)
+                    if mt and (mt.startswith(u'КВВ-В1') or mt.startswith(u'КВВ-К1')):
+                        sosed = mt
+                        break
+                if sosed:
+                    break
+            if sosed:
+                komment(e, sosed)
+                k = e.Symbol.FamilyName
+                po_sem[k] = po_sem.get(k, 0) + 1
+            else:
+                ost.append(e)
+        if len(ost) == len(bez):
+            break
+        bez = ost
+    for k, n in sorted(po_sem.items()):
+        log(u'  помечено по соседу (вставил Revit):', k, n)
+    log(u'деталей без метки КВВ осталось', len(bez), u'(вложенные части и детали вне сетей не считаются)')
 
 
 def soediniteli(e):
@@ -86,9 +208,12 @@ class Stroitel(object):
         self.doc, self.g, self.log = doc, g, log
         self.lv = kvv.urovni(doc)
         self.oshibki = {}
-        self.koncy = {}           # id трубопровода -> (соединитель начала, соединитель конца)
+        # id трубопровода -> ((первая труба, точка начала), (последняя труба, точка конца)); соединитель ищется заново
+        # при каждом обращении: после отката подтранзакции (неудачная проба муфты) прежний объект недействителен
+        self.koncy = {}
         self.arm = {}             # id арматуры -> экземпляр
         self.otrezki = []         # (труба, id трубопровода, № отрезка, начало, конец) — для проверки после фитингов
+        self.perehody = {}        # семейство перехода из модулей -> сколько поставлено
         self.pr = dict((int(e.LookupParameter(u'Комментарии').AsString()[5:]), e)
                        for e in po_metke(doc, u'КВВ-П'))
         self.ob = dict((int(e.LookupParameter(u'Комментарии').AsString()[5:]), e)
@@ -99,6 +224,8 @@ class Stroitel(object):
         self.oshibki[chto][0] += 1
 
     def otchet(self):
+        for k, n in sorted(self.perehody.items()):
+            self.log(u'  переходов %s: %d' % (k, n))
         for k, (n, ex) in sorted(self.oshibki.items()):
             self.log(u'  не удалось: %s — %d шт. (%s)' % (k, n, ex))
 
@@ -228,9 +355,7 @@ class Stroitel(object):
                 c2, _ = blizhayshiy(t2, p)
                 self.soedinit(c1, c2, metka)
             if truby:
-                c0, _ = blizhayshiy(truby[0], pts[0])
-                c9, _ = blizhayshiy(truby[-1], pts[-1])
-                self.koncy[r['id']] = (c0, c9)
+                self.koncy[r['id']] = ((truby[0], pts[0]), (truby[-1], pts[-1]))
         self.log(u'труб', sys_, n)
         return metka
 
@@ -249,12 +374,14 @@ class Stroitel(object):
                 for o in (o1, o2):
                     if isinstance(o, Plumbing.Pipe) and o.PipeType.Id not in [t.Id for t in tipy]:
                         tipy.append(o.PipeType)
-                for t in tipy:
-                    t.RoutingPreferenceManager.AddRule(GR_PEREHODY, DB.RoutingPreferenceRule(sym.Id, u'КВВ'), 0)
-                doc.Regenerate()
             c1, _ = blizhayshiy(o1, p)
             c2, _ = blizhayshiy(o2, p)
             dot = c1.CoordinateSystem.BasisZ.DotProduct(c2.CoordinateSystem.BasisZ)
+            gr = GR_PEREHODY if dot <= -0.999 else DB.RoutingPreferenceRuleGroupType.Elbows
+            if sym is not None:
+                for t in tipy:
+                    t.RoutingPreferenceManager.AddRule(gr, DB.RoutingPreferenceRule(sym.Id, u'КВВ'), 0)
+                doc.Regenerate()
             if dot > -0.999:
                 f = doc.Create.NewElbowFitting(c1, c2)
             elif abs(c1.Radius - c2.Radius) > 1e-6:
@@ -263,9 +390,101 @@ class Stroitel(object):
                 f = doc.Create.NewUnionFitting(c1, c2)
             komment(f, metka)
             for t in tipy:
-                t.RoutingPreferenceManager.RemoveRule(GR_PEREHODY, 0)
+                t.RoutingPreferenceManager.RemoveRule(gr, 0)
+            doc.Regenerate()
+            if preduprezhdenie(f):
+                raise Exception(u'шар-предупреждение: ' + f.Symbol.FamilyName)
             st.Commit()
             return f
+        except Exception:
+            st.RollBack()
+            raise
+
+    def kandidaty(self, o1, o2, dn, soosny=True):
+        """Семейства переходов, которые пробуются первыми (по типам соединяемых элементов и диаметрам); если
+        соединители не соосны — ничего (такие стыки генератор делает соосными)."""
+        if abs(dn[0] - dn[1]) < 0.5:
+            return []
+        tipy = [DB.Element.Name.GetValue(o.PipeType) if isinstance(o, Plumbing.Pipe) else u'' for o in (o1, o2)]
+        if min(dn) > 90:
+            return [PEREHOD_PP_SML]
+        if any(u'Полиэтилен' in t for t in tipy):
+            return [KOMBI_KLYUCH_NR]
+        if any(u'Полипропилен_PN' in t for t in tipy):
+            drugoy = o2 if isinstance(o1, Plumbing.Pipe) else o1
+            if isinstance(drugoy, Plumbing.Pipe):
+                return []
+            kat = drugoy.Category.Id.IntegerValue
+            sch = u'четчик' in getattr(getattr(drugoy, 'Symbol', None), 'FamilyName', u'')
+            if not soosny:
+                return []
+            # резьба у арматуры и подводок к смесителям — внутренняя (ВР): муфта НР; присоединители счётчика —
+            # наружная резьба: муфта ВР
+            # ППР Ø40 у крана 1" (основание стояка в подвале) — муфта «под ключ» 40 х 1"
+            return ([KOMBI_VR, KOMBI_NR] if sch else [KOMBI_NR, KOMBI_VR]) + [KOMBI_KLYUCH_NR]
+        return []
+
+    def _mufta_mp(self, o1, o2, P0, sym, metka):
+        """Муфта-мультипорт между соосными соединителями c1 и c2 (у трубы ППР/ПЭ — тот, что ближе к её диаметру по
+        соединителю муфты): резьбой — к неподвижному элементу (арматура, прибор, стальная труба), конец другой трубы
+        укорачивается до раструба муфты. В подтранзакции; шар-предупреждение или несовпадение — откат."""
+        doc = self.doc
+        st = DB.SubTransaction(doc)
+        st.Start()
+        try:
+            if not sym.IsActive:
+                sym.Activate()
+                doc.Regenerate()
+            # подвижный — конец трубы, диаметр которого есть у муфты «ППР»-стороной (больший из двух у переходов
+            # ППР 20/25 -> DN15, ПЭ 63 -> сталь 50)
+            c1, _ = blizhayshiy(o1, P0)
+            c2, _ = blizhayshiy(o2, P0)
+            a, b = (c1, c2) if c1.Radius > c2.Radius else (c2, c1)
+            if not isinstance(a.Owner, Plumbing.Pipe):
+                raise Exception(u'подвижный соединитель — не труба')
+            P = b.Origin
+            e = doc.Create.NewFamilyInstance(P, sym, DB.Structure.StructuralType.NonStructural)
+            doc.Regenerate()
+
+            def svoi():
+                cs = [c for c in soediniteli(e) if c.Domain == DB.Domain.DomainPiping]
+                if len(cs) != 2:
+                    raise Exception(u'у муфты не два соединителя')
+                cs.sort(key=lambda c: abs(c.Radius - b.Radius))
+                return cs[0], cs[1]                       # резьба (к b), раструб (к трубе a)
+            rez, ras = svoi()
+            if abs(rez.Radius - b.Radius) > 0.6 * MM or abs(ras.Radius - a.Radius) > 0.6 * MM:
+                raise Exception(u'размеры муфты %.0f/%.0f, нужно %.0f/%.0f' % (
+                    rez.Radius * 2 / MM, ras.Radius * 2 / MM, b.Radius * 2 / MM, a.Radius * 2 / MM))
+            u = rez.CoordinateSystem.BasisZ
+            v = b.CoordinateSystem.BasisZ.Negate()        # резьбовой конец муфты смотрит в соединитель b
+            os_ = u.CrossProduct(v)
+            if os_.GetLength() < 1e-9:
+                if u.DotProduct(v) < 0:
+                    perp = DB.XYZ.BasisZ if abs(u.Z) < 0.9 else DB.XYZ.BasisX
+                    os_ = u.CrossProduct(perp)
+                    DB.ElementTransformUtils.RotateElement(doc, e.Id, DB.Line.CreateBound(P, P + os_.Normalize()),
+                                                           math.pi)
+            else:
+                DB.ElementTransformUtils.RotateElement(doc, e.Id, DB.Line.CreateBound(P, P + os_.Normalize()),
+                                                       u.AngleTo(v))
+            doc.Regenerate()
+            rez, ras = svoi()
+            DB.ElementTransformUtils.MoveElement(doc, e.Id, P - rez.Origin)
+            doc.Regenerate()
+            rez, ras = svoi()
+            if ras.CoordinateSystem.BasisZ.DotProduct(a.CoordinateSystem.BasisZ) > -0.999:
+                raise Exception(u'раструб муфты не навстречу трубе')
+            a.Origin = ras.Origin
+            doc.Regenerate()
+            a.ConnectTo(ras)
+            rez.ConnectTo(b)
+            komment(e, metka)
+            doc.Regenerate()
+            if preduprezhdenie(e):
+                raise Exception(u'шар-предупреждение: ' + sym.FamilyName)
+            st.Commit()
+            return e
         except Exception:
             st.RollBack()
             raise
@@ -276,6 +495,19 @@ class Stroitel(object):
         переходом ГОСТ 17378."""
         o1, o2, p = c1.Owner, c2.Owner, c1.Origin
         dn = (c1.Radius * 2 / MM, c2.Radius * 2 / MM)
+        osh = None
+        soosny = c1.CoordinateSystem.BasisZ.DotProduct(c2.CoordinateSystem.BasisZ) <= -0.999       # до проб
+        for imya in self.kandidaty(o1, o2, dn, soosny):
+            for sym in simvoly_semeystva(self.doc, imya, dn):
+                try:
+                    if multiport(sym):
+                        self._mufta_mp(o1, o2, p, sym, metka)
+                    else:
+                        self._popytka(o1, o2, p, metka, sym)
+                    self.perehody[imya] = self.perehody.get(imya, 0) + 1
+                    return
+                except Exception as ex:
+                    osh = ex
         try:
             self._popytka(o1, o2, p, metka)
             return
@@ -298,6 +530,8 @@ class Stroitel(object):
         self.log(u'  отвод/переход не встал в точке (%.3f, %.3f, %.3f): DN %.0f / %.0f' % (
             p.X / M, p.Y / M, p.Z / M, dn[0], dn[1]))
         try:
+            c1, _ = blizhayshiy(o1, p)                   # прежние объекты могли стать недействительными после откатов
+            c2, _ = blizhayshiy(o2, p)
             c1.ConnectTo(c2)
         except Exception:
             pass
@@ -354,7 +588,13 @@ class Stroitel(object):
     def konec(self, ref):
         rid, end = ref
         k = self.koncy.get(rid)
-        return k[end] if k else None
+        if not k:
+            return None
+        t, p = k[end]
+        if not t.IsValidObject:
+            return None
+        c, _ = blizhayshiy(t, p)
+        return c
 
     def armatura(self, sys_, metka):
         n = 0
@@ -447,7 +687,12 @@ class Stroitel(object):
                     continue
                 if d > 5 * MM:
                     self.oshibka(u'соединитель прибора/арматуры далеко от трубы', u'%.0f мм' % (d / MM))
-                ca.ConnectTo(cb)
+                if abs(ca.Radius - cb.Radius) > 0.3 * MM:
+                    # ППР Ø20/25 и арматура или прибор DN15: прямое соединение разных диаметров Revit не держит
+                    # (и сам вставлял переходную муфту ППР без размера 20/15 — шар-предупреждение)
+                    self.soedinit(ca, cb, metka)
+                else:
+                    ca.ConnectTo(cb)
             except Exception as ex:
                 self.oshibka(u'присоединение к прибору/арматуре', ex)
         # тройники и крестовины
@@ -622,6 +867,7 @@ class Stroitel(object):
         self.armatura(sys_, metka)
         self.doc.Regenerate()
         self.svyazi(sys_, metka)
+        pometit_avto(self.doc, self.log)
         self.otchet()
         self.doc.Regenerate()
         plohie = self.korotkie()
@@ -713,6 +959,38 @@ def proba_troynikov(doc, log, imya_tipa, sys_imya, dn):
 SML_KOSOY = u'КВВ_Чугун SML_Тройник косой'
 
 
+class _Perezagruzka(DB.IFamilyLoadOptions):
+    def OnFamilyFound(self, familyInUse, overwriteParameterValues):
+        overwriteParameterValues.Value = True
+        return True
+
+    def OnSharedFamilyFound(self, sharedFamily, familyInUse, source, overwriteParameterValues):
+        source.Value = DB.FamilySource.Family
+        overwriteParameterValues.Value = True
+        return True
+
+
+def bez_preduprezhdeniya(doc, fam, log):
+    """Косой тройник SML сделан из тройника ППР: в его таблице нет DN100, и ADSK рисует шар-предупреждение
+    (Warning = Да), хотя геометрия строится от диаметров соединителей. Формула «Warning» = нет; семейство
+    перезагружается в проект. Вне транзакции."""
+    imya = fam.Name                                      # после перезагрузки прежний объект семейства недействителен
+    fd = doc.EditFamily(fam)
+    try:
+        fm = fd.FamilyManager
+        p = [q for q in fm.GetParameters() if q.Definition.Name == u'Warning']
+        if not p or (p[0].Formula or u'').replace(u' ', u'') == u'1<0':
+            return
+        t = DB.Transaction(fd, u'Без предупреждения')
+        t.Start()
+        fm.SetFormula(p[0], u'1 < 0')
+        t.Commit()
+        fd.LoadFamily(doc, _Perezagruzka())
+        log(u'семейство', imya, u': предупреждение выключено, перезагружено')
+    finally:
+        fd.Close(False)
+
+
 def sml_kosoy_troynik(doc, log, imya_tipa_sml):
     """Косой тройник SML 45° (СП 30, п. 18.4): в библиотеке ADSK только прямой SML-тройник.
 
@@ -750,6 +1028,8 @@ def sml_kosoy_troynik(doc, log, imya_tipa_sml):
         ok = doc.LoadFamily(put)
         t.Commit()
         log(u'создано и загружено семейство', SML_KOSOY, ok)
+    fam = [f for f in DB.FilteredElementCollector(doc).OfClass(DB.Family) if f.Name == SML_KOSOY][0]
+    bez_preduprezhdeniya(doc, fam, log)
     fam = [f for f in DB.FilteredElementCollector(doc).OfClass(DB.Family) if f.Name == SML_KOSOY][0]
     sym = doc.GetElement(list(fam.GetFamilySymbolIds())[0])
     pt = kvv.po_imeni(doc, Plumbing.PipeType, imya_tipa_sml)

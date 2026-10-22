@@ -58,6 +58,12 @@ MODULI = [(u'ADSK_Модуль ОВ и ВК_Трубы водогазопров�
            [u'ADSK_Сталь водогазопроводная_Оцинкованная_ГОСТ 3262-75']),
           (u'ADSK_Модуль ОВ и ВК_Трубы чугунные безраструбные SML_V1.rvt', [u'ADSK_Чугун_Безраструбный SML_DIN EN 877']),
           (u'ADSK_Модуль ОВ и ВК_Трубы ППР под сварку_V1.rvt', [u'ADSK_Полипропилен_PN20'])]   # В1 в квартирах и стояки
+# соединительные детали из модулей (все типы семейства): у переходов «по умолчанию» нет нужных размеров — ADSK рисует
+# шар-предупреждение (kvv_seti.kandidaty)
+DETALI = [(u'ADSK_Модуль ОВ и ВК_Трубы чугунные безраструбные SML_V1.rvt', u'ADSK_ЧугунБезраструбный_Переходная муфта HL'),
+          (u'ADSK_Модуль ОВ и ВК_Трубы ППР под сварку_V1.rvt', u'ADSK_Полипропилен_Муфта комбинированная ВР'),
+          (u'ADSK_Модуль ОВ и ВК_Трубы ППР под сварку_V1.rvt', u'ADSK_Полипропилен_Муфта комбинированная НР'),
+          (u'ADSK_Модуль ОВ и ВК_Трубы ППР под сварку_V1.rvt', u'ADSK_Полипропилен_Муфта комбинированная под ключ НР')]
 TIP_PE = u'ADSK_Полиэтилен ПЭ100 SDR17_ГОСТ 18599-2001'
 SEGMENT_PE = u'Полиэтилен ПЭ100 - SDR17'
 
@@ -179,6 +185,31 @@ def truby(log):
     rpm.AddRule(g, DB.RoutingPreferenceRule(seg.Id, u'ПЭ100 SDR17'))
     t.Commit()
     log(u'создан тип', TIP_PE)
+
+
+def detali(log):
+    """Семейства соединительных деталей из модулей ADSK (все типы), если их ещё нет в проекте."""
+    est = set(f.Name for f in DB.FilteredElementCollector(doc).OfClass(DB.Family))
+    po_modulyam = {}
+    for fn, fam in DETALI:
+        if fam in est:
+            log(u'деталь уже есть:', fam)
+            continue
+        po_modulyam.setdefault(fn, []).append(fam)
+    for fn, semya in po_modulyam.items():
+        m = app.OpenDocumentFile(os.path.join(S, u'Системы трубопроводов', fn))
+        try:
+            ids = [s_.Id for s_ in DB.FilteredElementCollector(m).OfClass(DB.FamilySymbol)
+                   if s_.FamilyName in semya]
+            if not ids:
+                log(u'НЕТ в модуле', fn, u':', u', '.join(semya))
+                continue
+            t = DB.Transaction(doc, u'Детали из модуля')
+            t.Start()
+            kopirovat(m, ids, log, u'типов деталей (%s)' % u', '.join(semya))
+            t.Commit()
+        finally:
+            m.Close(False)
 
 
 def soediniteli(log):
@@ -335,14 +366,53 @@ def razvedka_ppr(log):
         t.RollBack()
 
 
+def katalog(log):
+    """Что есть в модулях труб ADSK и шаблоне ВК: соединительные детали и арматура (семейство : тип, PartType),
+    типы труб и правила их маршрутизации. Ищем переход ПП — чугун, комбинированные муфты ППР с резьбой DN15,
+    тройники ППР с переходом."""
+    moduli = [os.path.join(S, u'Системы трубопроводов', f) for f in sorted(os.listdir(os.path.join(S, u'Системы трубопроводов')))
+              if f.lower().endswith(u'.rvt')]
+    for put in moduli + [kvv.SHABLON_VK]:
+        log(u'######', os.path.basename(put))
+        try:
+            d = app.NewProjectDocument(put) if put.lower().endswith(u'.rte') else app.OpenDocumentFile(put)
+        except Exception as ex:
+            log(u'  не открылся:', ex)
+            continue
+        try:
+            for pt in DB.FilteredElementCollector(d).OfClass(Plumbing.PipeType):
+                log(u'  тип труб:', name(pt))
+                rpm = pt.RoutingPreferenceManager
+                for gr in (DB.RoutingPreferenceRuleGroupType.Transitions, DB.RoutingPreferenceRuleGroupType.Unions,
+                           DB.RoutingPreferenceRuleGroupType.Junctions):
+                    for i in range(rpm.GetNumberOfRules(gr)):
+                        r = rpm.GetRule(gr, i)
+                        e = d.GetElement(r.MEPPartId)
+                        log(u'     %s | %s' % (gr, (e.FamilyName + u' : ' + name(e)) if e is not None else u'-'))
+            semya = {}
+            for bic in (DB.BuiltInCategory.OST_PipeFitting, DB.BuiltInCategory.OST_PipeAccessory):
+                for sym in DB.FilteredElementCollector(d).OfClass(DB.FamilySymbol).OfCategory(bic):
+                    semya.setdefault((bic, sym.FamilyName), []).append(name(sym))
+            for (bic, fam), tipy in sorted(semya.items(), key=lambda kv: kv[0][1]):
+                log(u'  %s | %s : %s' % (u'деталь' if bic == DB.BuiltInCategory.OST_PipeFitting else u'арматура', fam,
+                                         u'; '.join(sorted(tipy))[:300]))
+        finally:
+            d.Close(False)
+
+
 def main(log):
     log(u'документ:', doc.Title)
-    if rezhim_zapuska() == u'ppr':
+    rezhim = rezhim_zapuska()
+    if rezhim == u'ppr':
         razvedka_ppr(log)
+        return
+    if rezhim == u'katalog':
+        katalog(log)
         return
     tipy_ar(log)
     semeystva(log)
     truby(log)
+    detali(log)
     soediniteli(log)
 
 

@@ -339,6 +339,9 @@ SOED = {"vanna": dict(cold=(-12, 425, 700), hot=(-12, 275, 700), san=(200, 350, 
         "unitaz": dict(cold=(-200, -95, 700), san=(0, -55, 155)),        # «Косой выпуск»: 45° вниз к стене
         "umyv": dict(cold=(12, -75, 800), hot=(-12, -75, 800), san=(57, -180, 558)),
         "moyka": dict(cold=(407, -30, 850), hot=(382, -30, 850), san=(352, -130, 558))}
+# направления патрубков в системе семейства (журнал кнопки «02»), где они не вертикальные: к ним — по оси патрубка
+SOED_DIR = {"unitaz": {"cold": (-1.0, 0.0, 0.0)}}
+PR_DIR = {}             # точка соединителя (округлённая) -> направление патрубка в координатах здания
 # Холодная вода подводится слева (если смотреть на прибор спереди) — как в образце и по СП 30 (холодная левее
 # горячей). У умывальника, мойки и ванны ADSK холодная справа -> экземпляры отражаются относительно оси симметрии.
 ZERKALO = {"umyv": ("x", 0.0), "moyka": ("x", 400.0), "vanna": ("y", 350.0)}
@@ -396,6 +399,11 @@ def pribor(key, x, y, th, ur, zf, mir=False):
         lx, ly = mir_lok(key, lx, ly, zk)
         dx, dy = rot(lx / 1000, ly / 1000, th)
         c[k] = (x + dx, y + dy, zf + lz / 1000)
+        nd = SOED_DIR.get(key, {}).get(k)
+        if nd is not None:
+            ndx, ndy = mir_lok(key, nd[0], nd[1], (zk[0], 0.0)) if zk else (nd[0], nd[1])
+            wx, wy = rot(ndx, ndy, th)
+            PR_DIR[tuple(round(v, 4) for v in c[k])] = (round(wx, 6), round(wy, 6), nd[2])
     g = GABARIT[key]
     xs, ys = [], []
     for lx in (g[0], g[3]):
@@ -494,7 +502,7 @@ def vetka(sys_, pt, d, pts_do, napr, items, ur, gap=0.02, first=0.07):
 
 Z_RAZV = 0.25       # ось поквартирной разводки над полом — как в образце преподавателя (+0,250)
 Z_UZEL = 1.5        # тройник квартирного ответвления на стояке В1 — как в образце (+1,500 от пола)
-L_UZLA = 0.35       # от оси стояка до опуска узла вдоль стены шахты: за подводкой к бачку унитаза (0,2 м)
+L_UZLA = 0.45       # от оси стояка до опуска узла вдоль стены шахты: за подходом к бачку унитаза (0,15 м по оси патрубка)
 I_OTV = 0.03        # уклон поэтажных отводов Ø50
 I_UN = 0.02         # уклон отвода от унитаза Ø110
 # ось двухплоскостной крестовины К1 над полом: низ трубы Ø110 — на уровне чистого пола (в образце лоток +0,009);
@@ -523,11 +531,19 @@ def razrezat(sys_, pt, d, pts3, rez, ur):
 utoplen = set()         # соединители, лежащие в плоскости обшивки короба (ванны): подъём внутри короба
 
 
-def k_priboru(p, conn, xh, z):
+def k_priboru(p, conn, xh, z, konec=False):
+    d = PR_DIR.get(tuple(round(v, 4) for v in conn))
+    if konec and d is not None and abs(d[2]) < 0.5:
+        # патрубок вбок (бачок унитаза): последние 150 мм — по оси патрубка, чтобы муфта комбинированная ППР встала
+        # соосно (переходы и муфты ставятся только между соосными соединителями)
+        a = (conn[0] + d[0] * 0.15, conn[1] + d[1] * 0.15)
+        pts = [(p[0], a[1], z), (a[0], a[1], z), (a[0], a[1], conn[2]), conn]
+        return [q for i, q in enumerate(pts) if i == 0 or math.dist(q, pts[i - 1]) > 1e-6]
     if tuple(round(v, 4) for v in conn) in utoplen:
-        # подъём внутри короба в 100 мм от соединителя (патрубок смесителя ванны DN20 — подводка ППР Ø20)
+        # подъём внутри короба в 150 мм от соединителя (патрубок смесителя ванны DN15 — подводка ППР Ø20):
+        # на горизонтальном отрезке — отвод и муфта комбинированная ППР 20 х 1/2"
         dx = abs(conn[0] - xh)
-        xv = xh if 0.10 <= dx < 0.16 else conn[0] - math.copysign(0.10, conn[0] - xh)
+        xv = xh if 0.15 <= dx < 0.21 else conn[0] - math.copysign(0.15, conn[0] - xh)
         pts = [p] + ([(xv, conn[1], z)] if abs(xv - p[0]) > 1e-6 else [])
         return pts + [(xv, conn[1], conn[2]), conn]
     if abs(conn[0] - p[0]) < 0.005:            # соединитель над линией разводки — прямой подъём
@@ -558,7 +574,9 @@ def nogi(xh, y0, z, ftaps, ur, d_vetki=25, puti=None):
             for (wx, wy) in (obhod or []):
                 cur.append((wx, wy, z))
                 xe = wx
-            cur += k_priboru((xe, conn[1], z), conn, xe, z)
+            for q in k_priboru((xe, conn[1], z), conn, xe, z, konec=True):
+                if math.dist(q, cur[-1]) > 1e-6:
+                    cur.append(q)
             ids.append(truba("V1", "ppr", d_vetki, cur, ur))
             svyaz((ids[-1], 1), dict(fix=fid, kind="cold"))
     rbs = []
@@ -583,11 +601,12 @@ def kv_v1(k, zf, ur, rs_v, stoyak_xy, napr, nogi_, klyuch=None):
     xr, yr = stoyak_xy
     z1 = zf + Z_UZEL
     y_op = yr + napr[1] * L_UZLA
-    r0, (ra, _), p = vetka("V1", "ppr", 25, [(xr, yr, z1)], napr, ["kran15"], ur, first=0.12)
+    # отрезки у арматуры DN15 — с местом под муфты комбинированные ППР 25 х 1/2" (около 50 мм каждая)
+    r0, (ra, _), p = vetka("V1", "ppr", 25, [(xr, yr, z1)], napr, ["kran15"], ur, first=0.16)
     rs_v.append((z1, (r0, 0)))
     seti[ra]["pts"] = seti[ra]["pts"][:1] + [R((xr, y_op, z1))]
     items = ["filtr15"] + (["reg15"] if k in ET_REG else []) + ["sch15", "obr15"]
-    rv, (rn, _), p = vetka("V1", "ppr", 25, [(xr, y_op, z1)], (0, 0, -1), items, ur, gap=0.04, first=0.15)
+    rv, (rn, _), p = vetka("V1", "ppr", 25, [(xr, y_op, z1)], (0, 0, -1), items, ur, gap=0.16, first=0.15)
     svyaz((ra, 1), (rv, 0))
     seti[rn]["pts"] = seti[rn]["pts"][:1] + [R((xr, y_op, zf + Z_RAZV))]
     puti = {}
@@ -729,15 +748,30 @@ def napr_vetki(ref):
 
 
 def stoyak(imya, sys_, x, y, uzly, niz, verh, ur_niz, d_fun, pt):
+    """Стояк участками между узлами. runs — первые трубы участков (к ним снизу тройники), koncy — последние (их конец
+    — отметка узла). У ППР смена диаметра — не в тройнике (у тройников ADSK нет перехода по проходу): в начале
+    участка 0,15 м прежнего диаметра и муфта переходная."""
     uzly = sorted(uzly, key=lambda u: u[0])
     zz = [niz] + [u[0] for u in uzly] + [verh]
-    runs = []
+    runs, koncy, d_pred = [], [], None
     for i in range(len(zz) - 1):
         if zz[i + 1] - zz[i] < 1e-6:
             continue
-        runs.append(truba(sys_, pt, d_fun(i, len(uzly)), [(x, y, zz[i]), (x, y, zz[i + 1])], ur_niz(zz[i])))
+        d = d_fun(i, len(uzly))
+        if pt == "ppr" and d_pred is not None and d != d_pred and zz[i + 1] - zz[i] > 0.5:
+            z_p = zz[i] + 0.15
+            r1 = truba(sys_, pt, d_pred, [(x, y, zz[i]), (x, y, z_p)], ur_niz(zz[i]))
+            r2 = truba(sys_, pt, d, [(x, y, z_p), (x, y, zz[i + 1])], ur_niz(z_p))
+            svyaz((r1, 1), (r2, 0))
+            runs.append(r1)
+            koncy.append(r2)
+        else:
+            r = truba(sys_, pt, d, [(x, y, zz[i]), (x, y, zz[i + 1])], ur_niz(zz[i]))
+            runs.append(r)
+            koncy.append(r)
+        d_pred = d
     for i, (z, vetv) in enumerate(uzly):
-        a, b = runs[i], runs[i + 1] if i + 1 < len(runs) else None
+        a, b = koncy[i], runs[i + 1] if i + 1 < len(runs) else None
         if b is None:
             svyaz((a, 1), vetv[0])
         elif len(vetv) == 1:
@@ -749,7 +783,7 @@ def stoyak(imya, sys_, x, y, uzly, niz, verh, ur_niz, d_fun, pt):
         else:
             kresty.append(dict(m1=(a, 1), m2=(b, 0), b1=vetv[0], b2=vetv[1]))
     stoyaki.append(dict(imya=imya, sys=sys_, x=round(x, 4), y=round(y, 4), niz=round(niz, 3), verh=round(verh, 3),
-                        runs=runs))
+                        runs=koncy))
     return runs
 
 
@@ -929,11 +963,17 @@ oborud = [dict(fam="COR-MVL_2_32_Revit2019(08.25)", tip=nas["tip"], x=XP, y=YP, 
                vs=R(p_vs), nap=R(p_nap))]
 # напорная линия установки до тройника магистрали (проектируется только В1: ГВС вне объёма проекта)
 N_VSE = sum(v[4] for v in podvod.values())
-r_nap = truba("V1", "stal", 50, [p_nap, (X_TR, p_nap[1], p_nap[2]), (X_TR, p_nap[1], Z_MAG), (X_TR, Y_MAG, Z_MAG)],
+# у стальных тройников ADSK ответвление не больше прохода: перед тройником магистрали — переход на диаметр прохода
+D_NAP2 = max(seti[r_zap]["d"], seti[mag_vost[0]]["d"])
+Y_NAP2 = Y_MAG - 0.25
+r_nap = truba("V1", "stal", 50, [p_nap, (X_TR, p_nap[1], p_nap[2]), (X_TR, p_nap[1], Z_MAG), (X_TR, Y_NAP2, Z_MAG)],
               UR_P)
 svyaz((r_nap, 0), dict(obor=0, kind="nap"))
-troynik((r_zap, 0), (mag_vost[0], 0), (r_nap, 1))
-L_NAP = round(sum(math.dist(a, b) for a, b in zip(seti[r_nap]["pts"][:-1], seti[r_nap]["pts"][1:])), 2)
+r_nap2 = truba("V1", "stal", D_NAP2, [(X_TR, Y_NAP2, Z_MAG), (X_TR, Y_MAG, Z_MAG)], UR_P)
+svyaz((r_nap, 1), (r_nap2, 0))
+troynik((r_zap, 0), (mag_vost[0], 0), (r_nap2, 1))
+L_NAP = round(sum(math.dist(a, b) for r_ in (r_nap, r_nap2)
+                  for a, b in zip(seti[r_]["pts"][:-1], seti[r_]["pts"][1:])), 2)
 
 Z_VV = -2.5
 Y_ST_A = -E - T_NAR / 2                 # наружная грань стены по оси А

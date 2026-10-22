@@ -415,3 +415,279 @@ def vidy_3d(doc, log):
     log(u'3D-виды для осмотра:', VID_3D, u'и', VID_3D_PODVAL, u'| детализация высокая, стены прозрачные, '
         u'сети по системам')
     return vidy
+
+
+def svobodnye(doc, log):
+    """Элементы сетей, которые «висят»: свободные соединители у труб, фитингов и арматуры (кроме верха вытяжной
+    части стояков К1), элементы без системы и без метки КВВ. Свободный соединитель делится на «касается» (в той же
+    точке ±2 мм есть соединитель другого элемента, но связи нет) и «открытый конец». Журнал — сводка и списки."""
+    import collections
+    M = kvv.M
+    kat_set = (DB.BuiltInCategory.OST_PipeCurves, DB.BuiltInCategory.OST_PipeFitting,
+               DB.BuiltInCategory.OST_PipeAccessory)
+    kat_vse = kat_set + (DB.BuiltInCategory.OST_PlumbingFixtures, DB.BuiltInCategory.OST_MechanicalEquipment)
+
+    def soed(e):
+        if isinstance(e, Plumbing.Pipe):
+            return list(e.ConnectorManager.Connectors)
+        mm = getattr(e, 'MEPModel', None)
+        if mm is None or mm.ConnectorManager is None:
+            return []
+        return [c for c in mm.ConnectorManager.Connectors if c.Domain == DB.Domain.DomainPiping]
+
+    def klyuch(p):
+        return (int(round(p.X / M * 500)), int(round(p.Y / M * 500)), int(round(p.Z / M * 500)))   # сетка 2 мм
+
+    tochki = collections.defaultdict(list)
+    elementy = []
+    for bic in kat_vse:
+        for e in DB.FilteredElementCollector(doc).OfCategory(bic).WhereElementIsNotElementType():
+            cs = soed(e)
+            for c in cs:
+                tochki[klyuch(c.Origin)].append(e.Id.IntegerValue)
+            if bic in kat_set:
+                elementy.append((e, cs))
+
+    def sosed(e, c):
+        k = klyuch(c.Origin)
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for dz in (-1, 0, 1):
+                    for i in tochki.get((k[0] + dx, k[1] + dy, k[2] + dz), []):
+                        if i != e.Id.IntegerValue:
+                            return doc.GetElement(DB.ElementId(i))
+        return None
+
+    def imya(e):
+        if isinstance(e, Plumbing.Pipe):
+            return u'Труба ' + DB.Element.Name.GetValue(e.PipeType)
+        return u'%s : %s' % (e.Symbol.FamilyName, DB.Element.Name.GetValue(e.Symbol))
+
+    svodka = collections.Counter()
+    kasaetsya, otkrytye, chuzhie = [], [], []
+    for e, cs in elementy:
+        m_ = metka(e)
+        bez_sist = False
+        try:
+            bez_sist = all(c.MEPSystem is None for c in cs)
+        except Exception:
+            pass
+        if not m_.startswith(u'КВВ') or bez_sist:
+            sup = getattr(e, 'SuperComponent', None)
+            chuzhie.append(u'  id %d | %s | метка %s%s | соединителей %d, свободных %d | %s' % (
+                e.Id.IntegerValue, imya(e) + (u' (вложено в %s)' % sup.Symbol.FamilyName if sup is not None else u''),
+                m_ or u'-', u' | БЕЗ СИСТЕМЫ' if bez_sist else u'', len(cs),
+                len([c for c in cs if not c.IsConnected]),
+                u'; '.join(u'(%.3f, %.3f, %.3f)' % (c.Origin.X / M, c.Origin.Y / M, c.Origin.Z / M) for c in cs)))
+        for c in cs:
+            if c.IsConnected:
+                continue
+            if isinstance(e, Plumbing.Pipe) and c.Origin.Z / M > 35.0:
+                continue                                  # верх вытяжной части стояка
+            s_ = sosed(e, c)
+            t = u'(%.3f, %.3f, %.3f)' % (c.Origin.X / M, c.Origin.Y / M, c.Origin.Z / M)
+            if s_ is not None:
+                vid = u'касается'
+                kasaetsya.append(u'  id %d %s | %s — касается id %d %s' % (
+                    e.Id.IntegerValue, imya(e), t, s_.Id.IntegerValue,
+                    imya(s_) if s_.Category.Id.IntegerValue != int(DB.BuiltInCategory.OST_PlumbingFixtures)
+                    else u'прибор ' + s_.Symbol.FamilyName))
+            else:
+                vid = u'открытый конец'
+                otkrytye.append(u'  id %d %s | метка %s | %s' % (e.Id.IntegerValue, imya(e), m_ or u'-', t))
+            svodka[(vid, imya(e).split(u' : ')[0], m_[:6])] += 1
+    log(u'висящие элементы сетей: проверено', len(elementy))
+    for (vid, nm, m_), n in sorted(svodka.items(), key=lambda kv: -kv[1]):
+        log(u'  %5d | %s | %s | %s' % (n, vid, nm, m_))
+    log(u'без метки КВВ или без системы:', len(chuzhie))
+    sv = collections.Counter(v.split(u' | ')[1].split(u' : ')[0] + u' | ' + v.split(u' | ')[-2].strip() +
+                             (u' | БЕЗ СИСТЕМЫ' if u'БЕЗ СИСТЕМЫ' in v else u'') for v in chuzhie)
+    for k_, n_ in sv.most_common(20):
+        log(u'  %5d | %s' % (n_, k_))
+    for v in chuzhie[:100]:
+        log(v)
+    log(u'открытые концы:', len(otkrytye))
+    for v in otkrytye[:100]:
+        log(v)
+    log(u'касаются, но не соединены (первые 40 из %d):' % len(kasaetsya))
+    for v in kasaetsya[:40]:
+        log(v)
+
+
+def fitingi(doc, log):
+    """Фасонные части и арматура сетей: по семейству и типу — сколько, с какой меткой, габарит (мм) и точка первого
+    экземпляра; отдельно — что стоит на стояках К1 ниже нуля (переход ПП — чугун)."""
+    import collections
+    M = kvv.M
+    gr = collections.OrderedDict()
+    for bic in (DB.BuiltInCategory.OST_PipeFitting, DB.BuiltInCategory.OST_PipeAccessory):
+        for e in DB.FilteredElementCollector(doc).OfCategory(bic).WhereElementIsNotElementType():
+            k = (metka(e)[:6], e.Symbol.FamilyName, DB.Element.Name.GetValue(e.Symbol))
+            gr.setdefault(k, []).append(e)
+    for (m_, fam, tip), es in sorted(gr.items(), key=lambda kv: (kv[0][0], kv[0][1])):
+        e = es[0]
+        bb = e.get_BoundingBox(None)
+        if bb is not None:
+            raz = u'%.0f x %.0f x %.0f' % ((bb.Max.X - bb.Min.X) / kvv.MM, (bb.Max.Y - bb.Min.Y) / kvv.MM,
+                                          (bb.Max.Z - bb.Min.Z) / kvv.MM)
+            c = (bb.Min + bb.Max).Multiply(0.5)
+            t = u'(%.3f, %.3f, %.3f)' % (c.X / M, c.Y / M, c.Z / M)
+        else:
+            raz, t = u'-', u'-'
+        try:
+            pt = e.MEPModel.PartType
+        except Exception:
+            pt = u'-'
+        n_w, prim = 0, u''
+        for x in es:
+            pw = x.LookupParameter(u'Warning')
+            if pw is not None and pw.AsInteger() == 1:
+                n_w += 1
+                if not prim:
+                    pn = x.LookupParameter(u'ADSK_Наименование')
+                    pr_ = x.LookupParameter(u'Размер')
+                    prim = u'%s | %s' % (pn.AsString() if pn is not None else u'-', pr_.AsString() if pr_ is not None else u'-')
+        log(u'  %4d | %s | %s : %s | PartType %s | габарит %s мм | %s%s' % (
+            len(es), m_ or u'-', fam, tip, pt, raz, t, u' | ШАР-ПРЕДУПРЕЖДЕНИЕ у %d: %s' % (n_w, prim) if n_w else u''))
+        if False:
+            for zag, el in ((u'экз', e), (u'тип', e.Symbol)):
+                for pr in sorted(el.Parameters, key=lambda q: q.Definition.Name):
+                    try:
+                        v = pr.AsValueString() or pr.AsString() or u''
+                    except Exception:
+                        v = u'?'
+                    log(u'       %s | %s = %s%s' % (zag, pr.Definition.Name, v, u' (ч)' if pr.IsReadOnly else u''))
+            for c in e.MEPModel.ConnectorManager.Connectors:
+                log(u'       соединитель: Ø%.1f мм, (%.3f, %.3f, %.3f)' % (c.Radius * 2 / kvv.MM, c.Origin.X / M,
+                                                                       c.Origin.Y / M, c.Origin.Z / M))
+
+
+def pribory_diag(doc, log):
+    """По одному экземпляру каждого семейства сантехприборов: параметры экземпляра и типа (имя = значение), вложенные
+    семейства с габаритом по Z относительно уровня — что торчит ниже пола."""
+    M = kvv.M
+    vidno = set()
+    for e in DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_PlumbingFixtures) \
+            .WhereElementIsNotElementType():
+        fam = e.Symbol.FamilyName
+        if fam in vidno:
+            continue
+        vidno.add(fam)
+        lv = doc.GetElement(e.LevelId)
+        z0 = lv.Elevation if lv is not None else 0.0
+        log(u'# %s : %s | уровень %s' % (fam, DB.Element.Name.GetValue(e.Symbol), lv.Name if lv else u'-'))
+        for zag, el in ((u'экз', e), (u'тип', e.Symbol)):
+            for pr in sorted(el.Parameters, key=lambda q: q.Definition.Name):
+                try:
+                    v = pr.AsValueString() or pr.AsString() or u''
+                except Exception:
+                    v = u'?'
+                log(u'   %s | %s = %s%s' % (zag, pr.Definition.Name, v, u' (только чтение)' if pr.IsReadOnly else u''))
+        for sid in e.GetSubComponentIds():
+            se = doc.GetElement(sid)
+            bb = se.get_BoundingBox(None)
+            if bb is None:
+                continue
+            log(u'   вложенное: %s : %s | Z %.3f…%.3f м от уровня' % (
+                se.Symbol.FamilyName, DB.Element.Name.GetValue(se.Symbol), (bb.Min.Z - z0) / M, (bb.Max.Z - z0) / M))
+
+
+def proba_kombi(doc, log):
+    """В откатываемой транзакции: кран VALTEC 1/2" и труба ППР Ø25 к его соединителю; для каждого типа муфт
+    комбинированных — PartType, соединители семейства и попытка NewTransitionFitting с правилом этого типа."""
+    M = kvv.M
+    for sym in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol).OfCategory(DB.BuiltInCategory.OST_PipeFitting):
+        if u'комбинированная' in sym.FamilyName:
+            try:
+                pt = sym.Family.get_Parameter(DB.BuiltInParameter.FAMILY_CONTENT_PART_TYPE).AsValueString()
+            except Exception:
+                pt = u'?'
+            log(u'  тип:', sym.FamilyName, u':', DB.Element.Name.GetValue(sym), u'| PartType', pt)
+    kran = [s_ for s_ in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol)
+            if s_.FamilyName == u'VALTEC_VT.214.N_КранШаровой ВР' and DB.Element.Name.GetValue(s_) == u'1/2"']
+    ppr = [t for t in DB.FilteredElementCollector(doc).OfClass(Plumbing.PipeType)
+           if DB.Element.Name.GetValue(t) == u'ADSK_Полипропилен_PN20']
+    sist = [t for t in DB.FilteredElementCollector(doc).OfClass(Plumbing.PipingSystemType)]
+    lv = [l for l in DB.FilteredElementCollector(doc).OfClass(DB.Level) if l.Name == u'Подвал'][0]
+    if not kran or not ppr:
+        log(u'  нет крана или типа ППР')
+        return
+    sist_v = [t for t in sist if u'В1' in DB.Element.Name.GetValue(t)] or sist
+    t = DB.Transaction(doc, u'проба муфты')
+    t.Start()
+    try:
+        if not kran[0].IsActive:
+            kran[0].Activate()
+        P = kvv.xyz(-20.0, -20.0, lv.Elevation / M + 1.0)
+        e = doc.Create.NewFamilyInstance(P, kran[0], lv, DB.Structure.StructuralType.NonStructural)
+        doc.Regenerate()
+        cs = list(e.MEPModel.ConnectorManager.Connectors)
+        c = cs[0]
+        log(u'  кран: соединитель Ø%.1f, тип соединения %s' % (c.Radius * 2 / kvv.MM, c.ConnectorType))
+        o, z = c.Origin, c.CoordinateSystem.BasisZ
+        tr = Plumbing.Pipe.Create(doc, sist_v[0].Id, ppr[0].Id, lv.Id, o + z.Multiply(0.3 * M), o)
+        tr.get_Parameter(DB.BuiltInParameter.RBS_PIPE_DIAMETER_PARAM).Set(25 * kvv.MM)
+        doc.Regenerate()
+        ct = [q for q in tr.ConnectorManager.Connectors if q.Origin.DistanceTo(o) < 1e-6][0]
+        rpm = ppr[0].RoutingPreferenceManager
+        gr = DB.RoutingPreferenceRuleGroupType.Transitions
+        for sym in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol).OfCategory(DB.BuiltInCategory.OST_PipeFitting):
+            if u'комбинированная' not in sym.FamilyName or u'25' not in DB.Element.Name.GetValue(sym):
+                continue
+            st = DB.SubTransaction(doc)
+            st.Start()
+            try:
+                if not sym.IsActive:
+                    sym.Activate()
+                rpm.AddRule(gr, DB.RoutingPreferenceRule(sym.Id, u'проба'), 0)
+                doc.Regenerate()
+                f = doc.Create.NewTransitionFitting(ct, c)
+                doc.Regenerate()
+                pw = f.LookupParameter(u'Warning')
+                log(u'  OK:', sym.FamilyName, DB.Element.Name.GetValue(sym), u'-> поставлен', f.Symbol.FamilyName,
+                    DB.Element.Name.GetValue(f.Symbol), u'| Warning', pw.AsInteger() if pw else u'-')
+            except Exception as ex:
+                log(u'  НЕТ:', sym.FamilyName, DB.Element.Name.GetValue(sym), u'->', ex)
+            finally:
+                st.RollBack()
+    finally:
+        t.RollBack()
+
+
+def vid_diag(doc, imya, log):
+    """Элементы, видимые на виде imya: счёт по категориям и семействам; элементы сетей не своей системы —
+    подробно (система, метка КВВ, точка в м)."""
+    v = [x for x in DB.FilteredElementCollector(doc).OfClass(DB.View) if not x.IsTemplate and x.Name == imya]
+    if not v:
+        log(u'нет вида', imya)
+        return
+    v = v[0]
+    svoya = u'В1' if imya.startswith(u'В1') else u'К1'
+    po_kat = {}
+    chuzhie = []
+    for e in DB.FilteredElementCollector(doc, v.Id).WhereElementIsNotElementType():
+        if e.Category is None:
+            continue
+        fam = getattr(getattr(e, 'Symbol', None), 'FamilyName', None) or e.GetType().Name
+        k = (e.Category.Name, fam)
+        po_kat[k] = po_kat.get(k, 0) + 1
+        ps = e.get_Parameter(DB.BuiltInParameter.RBS_DUCT_PIPE_SYSTEM_ABBREVIATION_PARAM)
+        sist = ps.AsString() if ps is not None and ps.HasValue else None
+        pn = e.get_Parameter(DB.BuiltInParameter.RBS_SYSTEM_NAME_PARAM)
+        imya_s = pn.AsString() if pn is not None and pn.HasValue else None
+        mep = e.Category.Id.IntegerValue in (int(DB.BuiltInCategory.OST_PipeCurves),
+                                              int(DB.BuiltInCategory.OST_PipeFitting),
+                                              int(DB.BuiltInCategory.OST_PipeAccessory),
+                                              int(DB.BuiltInCategory.OST_PlumbingFixtures),
+                                              int(DB.BuiltInCategory.OST_MechanicalEquipment))
+        if mep and svoya not in ((sist or u'') + (imya_s or u'')):
+            bb = e.get_BoundingBox(None)
+            c = (bb.Min + bb.Max).Multiply(0.5 / kvv.M) if bb is not None else None
+            chuzhie.append((e.Category.Name, fam, sist, imya_s, metka(e), e.Id.IntegerValue, c))
+    log(u'вид', imya, u'| видимых элементов по категориям и семействам:')
+    for (kat, fam), n in sorted(po_kat.items()):
+        log(u'  %s | %s : %d' % (kat, fam, n))
+    log(u'элементов сетей не системы %s: %d' % (svoya, len(chuzhie)))
+    for kat, fam, sist, imya_s, mt, i, c in sorted(chuzhie, key=lambda r: (r[1], r[5])):
+        log(u'  ', kat, u'|', fam, u'| сист.', sist, imya_s, u'| метка', mt, u'| id', i,
+            u'| (%.2f, %.2f, %.2f)' % (c.X, c.Y, c.Z) if c is not None else u'')

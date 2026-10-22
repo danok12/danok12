@@ -1035,6 +1035,29 @@ def oformit_vse(doc, g, tr, plany, shemy, tip_marki_stoyaka, log):
             except Exception:
                 import traceback
                 log(u'  ОШИБКА выносок разреза', traceback.format_exc())
+            skryt_znachok_razreza(doc, v, log)
+
+
+def skryt_znachok_razreza(doc, razrez, log):
+    """Штатный значок разреза Revit (с номером вида на листе) — на всех планах скрыт: разрез 1-1 пересекает подвал
+    и 1-й этаж, на плане подвала К1 значок с «2» ложился на марку Ст.К1-6. Линия разреза по ГОСТ с «1» рисуется
+    вручную (liniya_razreza) на плане типового этажа."""
+    # значок на планах — отдельный элемент категории «Виды» (Viewer) с именем вида, а не сам вид
+    znachki = [e for e in DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Viewers)
+               .WhereElementIsNotElementType() if e.Name == razrez.Name and e.Id != razrez.Id]
+    n = 0
+    for v in DB.FilteredElementCollector(doc).OfClass(DB.ViewPlan):
+        if v.IsTemplate:
+            continue
+        sk = [e.Id for e in znachki if e.CanBeHidden(v) and not e.IsHidden(v)]
+        if not sk:
+            continue
+        try:
+            v.HideElements(List[DB.ElementId](sk))
+            n += 1
+        except Exception as ex:
+            log(u'  значок разреза не скрыт на', v.Name, ex)
+    log(u'  значок разреза 1-1 (элементов %d) скрыт на планах: %d' % (len(znachki), n))
 
 
 KRAN_POL = u'Кран водоразборный\rсо штуцером 1"'
