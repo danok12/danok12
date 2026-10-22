@@ -375,8 +375,9 @@ class Stroitel(object):
                 if a.get('dn'):
                     self.razmer_armatury(e, a['dn'])
                 if a.get('vert'):
-                    # вертикальный узел учёта: локальная X (вход → выход) — вниз (vert = −1) или вверх
-                    P = e.Location.Point
+                    # вертикальный узел учёта: локальная X (вход → выход) — вниз (vert = −1) или вверх. Ось поворота —
+                    # через точку вставки на её отметке (Location.Point до регенерации ещё на отметке уровня)
+                    P = kvv.xyz(a['x'], a['y'], a['z'])
                     ax = DB.Line.CreateBound(P, P + DB.XYZ.BasisY)
                     DB.ElementTransformUtils.RotateElement(self.doc, e.Id, ax, math.pi / 2 * -a['vert'])
                 komment(e, metka)
@@ -465,8 +466,10 @@ class Stroitel(object):
                     komment(f, metka)
                 except Exception as ex2:
                     self.oshibka(u'тройник', ex2)
-                    o = c[2].Origin
-                    self.log(u'  тройник не встал в точке (%.3f, %.3f, %.3f): %s' % (o.X / M, o.Y / M, o.Z / M, ex2))
+                    # точка — из geometriya_v3.json: после неудачного косого тройника труба может быть уже удалена
+                    rb = self.g['seti'][t['b'][0]]['pts']
+                    o = rb[0] if t['b'][1] == 0 else rb[-1]
+                    self.log(u'  тройник не встал в точке (%.3f, %.3f, %.3f): %s' % (o[0], o[1], o[2], ex2))
         for t in self.g['kresty']:
             if t['m1'][0] not in ids_sys:
                 continue
