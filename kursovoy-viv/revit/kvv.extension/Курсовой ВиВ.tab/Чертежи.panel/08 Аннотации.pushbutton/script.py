@@ -44,7 +44,9 @@ def truby_stoyakov(g, log):
     for t in DB.FilteredElementCollector(doc).OfClass(Plumbing.Pipe):
         c = t.Location.Curve
         a, b = c.GetEndPoint(0), c.GetEndPoint(1)
-        if abs(a.X - b.X) > 1e-4 or abs(a.Y - b.Y) > 1e-4 or abs(a.Z - b.Z) < 0.5 * M:
+        # короткие участки стояка К1 в подвале: чугун от отвода до перехода SML/ПП (−0,35) — от 0,2 м, ПП до
+        # крестовины 1-го этажа (+0,055) — 0,4 м
+        if abs(a.X - b.X) > 1e-4 or abs(a.Y - b.Y) > 1e-4 or abs(a.Z - b.Z) < 0.1 * M:
             continue
         for s in g['stoyaki']:
             if abs(a.X / M - s['x']) < 0.01 and abs(a.Y / M - s['y']) < 0.01:
@@ -357,6 +359,10 @@ def main(log):
                             d = min(abs(z - z0), abs(z - z1))
                             if d_min is None or d < d_min:
                                 t, d_min = tt, d
+                    if v.GenLevel.Elevation < -1e-6 and truby:
+                        # в подвале — самый нижний участок стояка: у К1 это чугун под потолком подвала (от перехода
+                        # SML/ПП на −0,35 до отвода в сборный), полипропилен выше на плане подвала не показывается
+                        t = truby[0]
                     if t is None:
                         continue
                 c = t.Location.Curve

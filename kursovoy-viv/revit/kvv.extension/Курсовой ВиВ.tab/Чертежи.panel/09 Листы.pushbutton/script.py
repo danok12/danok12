@@ -267,7 +267,8 @@ def parametry(e, log, zag):
 
 
 def rezhim_zapuska():
-    """revit/09_rezhim.txt: «vygruzka» — только выгрузить листы. Файл после чтения удаляется."""
+    """revit/09_rezhim.txt: «vygruzka» — только выгрузить листы; «listy» — только собрать листы, без выгрузки;
+    «pdf [N …]» — только векторный PDF. Файл после чтения удаляется."""
     put = os.path.join(kvv.REVIT, u'09_rezhim.txt')
     if not os.path.isfile(put):
         return u''
@@ -440,6 +441,9 @@ def main(log):
                     DB.TextNote.Create(doc, sh.Id, DB.XYZ(bb.Min.X + 25 * MM, bb.Min.Y + 52 * MM, 0), 200 * MM, prim,
                                        opt)
     log(u'листов', len(LISTY))
+    if rezhim == u'listy':
+        log(u'режим: только листы, без выгрузки (выгрузка — «pdf N» по одному листу)')
+        return
     eksport_png(log)
     eksport_pdf(log)
 

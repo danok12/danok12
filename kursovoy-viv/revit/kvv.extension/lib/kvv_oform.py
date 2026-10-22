@@ -716,7 +716,8 @@ def zanyatye_mesta(doc, v, ekr, MMv, log):
 
 def podpisi_uklonov(doc, v, tnt, g, log):
     """Уклоны на схеме К1, как в образце: «0,03» со стрелкой по течению — вдоль каждого поэтажного отвода Ø50,
-    «0,02» — вдоль самого длинного сборного трубопровода подвала каждой секции. Текст повёрнут вдоль трубы;
+    «0,02» — вдоль самого длинного сборного трубопровода подвала каждой секции, «0,01» — вдоль выпуска (замечание
+    преподавателя 21.10.2026). Текст повёрнут вдоль трубы;
     место — первое свободное из вариантов (середина отвода и сдвиги вдоль него, под трубой и над ней): подпись не
     задевает трубы К1 и уже стоящие на виде надписи, выноски, марки и отметки."""
     k = v.Scale / 100.0
@@ -731,7 +732,7 @@ def podpisi_uklonov(doc, v, tnt, g, log):
     def ekr(p):
         return p.DotProduct(r), p.DotProduct(u)
 
-    otvody, podval, truby = {}, {}, []
+    otvody, podval, vypusk, truby = {}, {}, {}, []
     for t in truby_sistemy(doc, u'КВВ-К1'):
         a, b = koncy(t)
         truby.append([ekr(a), ekr(b)])
@@ -741,10 +742,13 @@ def podpisi_uklonov(doc, v, tnt, g, log):
         i = abs(b.Z - a.Z) / h
         d = t.get_Parameter(DB.BuiltInParameter.RBS_PIPE_DIAMETER_PARAM).AsDouble() / MM
         if max(a.Z, b.Z) < -0.05 * M:
+            sek = 0 if (a.X + b.X) / 2 < zerk / 2 * M else 1
             if abs(i - 0.02) < 0.003:
-                sek = 0 if (a.X + b.X) / 2 < zerk / 2 * M else 1
                 if sek not in podval or h > podval[sek][0]:
                     podval[sek] = (h, a, b)
+            elif abs(i - 0.01) < 0.003:
+                if sek not in vypusk or h > vypusk[sek][0]:
+                    vypusk[sek] = (h, a, b)
         elif 40 < d < 60 and abs(i - 0.03) < 0.003 and abs(b.X - a.X) < 0.002 * M:
             et = int(round(((a.Z + b.Z) / 2 / M) / h_et))
             otvody.setdefault((round(a.X / M, 2), et), []).extend([a, b])
@@ -850,7 +854,19 @@ def podpisi_uklonov(doc, v, tnt, g, log):
             n += 1
         except Exception as ex:
             log(u'  подпись уклона в подвале не встала:', sek, ex)
+    for sek, (h, a, b) in sorted(vypusk.items()):
+        verh, niz = (a, b) if a.Z > b.Z else (b, a)
+        try:
+            shtraf = postavit(verh, niz, u'0,01', 1, (0.5, 0.4, 0.6, 0.3, 0.7))
+            if shtraf >= 100:
+                so_stolkn += 1
+            elif shtraf > 0:
+                na_trubah += 1
+            n += 1
+        except Exception as ex:
+            log(u'  подпись уклона выпуска не встала:', sek, ex)
     log(u'  подписей уклонов на', v.Name, n, u'| поэтажных отводов', len(otvody), u'| в подвале', len(podval),
+        u'| выпусков', len(vypusk),
         u'| задевают надписи', so_stolkn, u'| задевают только трубы', na_trubah, u'| не встало', oshibki)
 
 
@@ -884,13 +900,16 @@ def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
         raschetnye_tochki(doc, g, kvv.load_json('calc', 'rezultaty_v3.json'), tr, v, tnt, log)
     else:
         prochistki_revizii_podpisi(doc, v, tnt, tr, False, log)
-        podpisi_uklonov(doc, v, tnt, g, log)
         for t in vypuski:
             p = tochka_na_y(t, 13.12)
             ot.postavit(t, p, -1.4, -0.8, lotok=True)          # влево-вниз: вверху подписи «2 этаж»
-            # у западного выпуска — ниже: на -1,2 марка ложилась на подпись «1 этаж» крайнего стояка
+            # вверх-влево — за конец выпуска, там свободно (вправо-вниз марка ложилась на отвод 1-го этажа
+            # стояка кв. А и на «Пр.» опуска у стены)
             q = tochka_na_y(t, 13.12 + 0.6)
-            marka_s_vynoskoy(doc, v, tipy['vypusk'], t, q, 1.6, -2.0 if q.X < 23 * M else -1.2, log)
+            marka_s_vynoskoy(doc, v, tipy['vypusk'], t, q, -2.4, 1.6, log)
+        doc.Regenerate()
+        # подписи уклонов — после марок и отметок выпусков: обходят уже стоящие надписи и выноски
+        podpisi_uklonov(doc, v, tnt, g, log)
     log(u'  отметок на', v.Name, ot.n, u'| способ:', ot.sposob, u'| не встало', ot.oshibki)
 
 
