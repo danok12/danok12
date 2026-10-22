@@ -558,8 +558,8 @@ def nogi(xh, y0, z, ftaps, ur, d_vetki=25, puti=None):
     if puti is not None:
         n = len(ftaps)
         for j, (conn, fid, obhod) in enumerate(ftaps):
-            put = [(1, round(dl3(rbs[j]), 3))] if j < n - 1 else []
-            put += [(n - i, round(dl3(ids[i]), 3)) for i in range(j, -1, -1)]
+            put = [(1, round(dl3(rbs[j]), 3), 20)] if j < n - 1 else []
+            put += [(n - i, round(dl3(ids[i]), 3), d_vetki) for i in range(j, -1, -1)]
             puti[pribory[fid]["key"]] = put
     return ids[0]
 
@@ -586,7 +586,7 @@ def kv_v1(k, zf, ur, rs_v, stoyak_xy, napr, nogi_, klyuch=None):
         troynik((starty[0], 0), (starty[1], 0), (rn, 1))
     if klyuch is not None and k == N_ET:
         uzel = round(Z_UZEL - Z_RAZV + L_UZLA, 3)          # опуск узла и отвод с краном до тройника стояка
-        razvodka_kv[klyuch] = {kl: put + [(N_PR, uzel)] for kl, put in puti.items()}
+        razvodka_kv[klyuch] = {kl: put + [(N_PR, uzel, 25)] for kl, put in puti.items()}
 
 
 def otvod_k1(x_l, y_r, z_r, napr, pr, ur):
@@ -1467,8 +1467,8 @@ print("магистраль (от, до, L, N, DN):", uchastki_mag)
 print("приборов", len(pribory), "труб", len(seti), "тройников", len(troyniki), "арматуры", len(armatura),
       "муфт", len(mufty), "стен", len(steny), "дверей", len(dveri), "окон", len(okna))
 # стояки В1: x, y, x врезки в магистраль, длина общей части ответвления (кв. Б и В — на два стояка), своей части
-trassa_v3 = dict(stoyaki_v1={nm: [round(v[0], 3), v[1], round(v[5], 3), round(v[8], 3), round(v[9], 3)]
-                             for nm, v in podvod.items()},
+trassa_v3 = dict(stoyaki_v1={nm: [round(v[0], 3), v[1], round(v[5], 3), round(v[8], 3), round(v[9], 3),
+                                  "%d%s" % (v[7].s, v[6])] for nm, v in podvod.items()},
                  magistral=uchastki_mag,
                  x_troynik=X_TR, y_mag=Y_MAG, z_mag=Z_MAG, vypuski=vypuski, l_nap=L_NAP, n_vse=N_VSE,
                  zerkalo=ZERK, x_shov=round(L_SEK + DSH / 2, 3),

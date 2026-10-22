@@ -372,12 +372,44 @@ class Stroitel(object):
                 continue
             try:
                 e = postavit(self.doc, sym, self.lv[a['ur']], a['x'], a['y'], a['z'], a['th'])
+                if a.get('dn'):
+                    self.razmer_armatury(e, a['dn'])
+                if a.get('vert'):
+                    # вертикальный узел учёта: локальная X (вход → выход) — вниз (vert = −1) или вверх
+                    P = e.Location.Point
+                    ax = DB.Line.CreateBound(P, P + DB.XYZ.BasisY)
+                    DB.ElementTransformUtils.RotateElement(self.doc, e.Id, ax, math.pi / 2 * -a['vert'])
                 komment(e, metka)
                 self.arm[a['id']] = e
                 n += 1
             except Exception as ex:
                 self.oshibka(u'арматура', ex)
         self.log(u'арматуры', sys_, n)
+
+    def razmer_armatury(self, e, dn):
+        """Условный проход арматуры (обратный клапан ADSK DN15-50 по умолчанию DN25): параметр экземпляра или
+        типа с «диаметр»/«DN»/«Ду» в имени, длина. Что задано — один раз в журнал."""
+        zadano = []
+        for el in (e, e.Symbol):
+            for pr in el.Parameters:
+                nm = pr.Definition.Name
+                if pr.IsReadOnly or pr.StorageType != DB.StorageType.Double:
+                    continue
+                if not any(k in nm for k in (u'иаметр', u'DN', u'Ду', u'Условный')):
+                    continue
+                if abs(pr.AsDouble() / MM - 25.0) > 0.5:      # только условный проход DN25 по умолчанию
+                    continue
+                try:
+                    pr.Set(dn * MM)
+                    zadano.append(nm)
+                except Exception:
+                    pass
+        if not getattr(self, '_dn_v_zhurnale', False):
+            self._dn_v_zhurnale = True
+            self.doc.Regenerate()
+            rad = [c.Radius * 2 / MM for c in soediniteli(e)]
+            self.log(u'  DN арматуры', e.Symbol.FamilyName, u': заданы параметры', u', '.join(zadano) or u'-',
+                     u'| соединители, мм:', u', '.join(u'%.0f' % r for r in rad))
 
     def svyazi(self, sys_, metka):
         doc = self.doc
@@ -451,6 +483,72 @@ class Stroitel(object):
                     komment(f, metka)
                 except Exception:
                     pass
+        n2 = 0
+        for t in self.g.get('kresty2', []):
+            if t['m_niz'][0] not in ids_sys:
+                continue
+            try:
+                if self.krestovina2(t, metka) is not None:
+                    n2 += 1
+            except Exception as ex:
+                self.oshibka(u'крестовина двухплоскостная', ex)
+        if self.g.get('kresty2'):
+            self.log(u'крестовин двухплоскостных', n2)
+
+    def krestovina2(self, t, metka):
+        """Крестовина двухплоскостная 110×50 87° (ADSK_ППР_…, левая или правая): ось — по стояку, патрубок Ø110 —
+        к унитазу, Ø50 — к отводу от остальных приборов. Концы четырёх труб переносятся в патрубки и соединяются."""
+        doc = self.doc
+        cc = dict((k, self.konec(t[k])) for k in ('m_niz', 'm_verh', 'b110', 'b50'))
+        if None in cc.values():
+            self.oshibka(u'крестовина: нет конца трубы', u'')
+            return None
+        d110 = DB.XYZ(t['d110'][0], t['d110'][1], 0)
+        d50 = DB.XYZ(t['d50'][0], t['d50'][1], 0)
+        # левая: патрубок Ø50 по Z×(−d110) при оси стояка вверх
+        lev = d50.DotProduct(DB.XYZ(d110.Y, -d110.X, 0)) > 0.5
+        sym = kvv.simvol(doc, KREST2, KREST2_LEV if lev else KREST2_PRAV)
+        if sym is None:
+            self.oshibka(u'нет семейства крестовины', KREST2)
+            return None
+        P = kvv.xyz(t['x'], t['y'], t['z'])
+        e = postavit(doc, sym, self.lv[t['ur']], t['x'], t['y'], t['z'], 0)
+        DB.ElementTransformUtils.RotateElement(doc, e.Id, DB.Line.CreateBound(P, P + DB.XYZ.BasisY), -math.pi / 2)
+        doc.Regenerate()
+
+        def patrubki():
+            out = {}
+            for c in soediniteli(e):
+                z = c.CoordinateSystem.BasisZ
+                if z.Z > 0.7:
+                    out['m_verh'] = c
+                elif z.Z < -0.7:
+                    out['m_niz'] = c
+                elif abs(c.Radius * 2 / MM - 110) < 1:
+                    out['b110'] = c
+                else:
+                    out['b50'] = c
+            return out
+        pa = patrubki()
+        z0 = pa['b110'].CoordinateSystem.BasisZ
+        cur = DB.XYZ(z0.X, z0.Y, 0).Normalize()
+        ang = math.atan2(cur.CrossProduct(d110).Z, cur.DotProduct(d110))
+        if abs(ang) > 1e-6:
+            DB.ElementTransformUtils.RotateElement(doc, e.Id, DB.Line.CreateBound(P, P + DB.XYZ.BasisZ), ang)
+            doc.Regenerate()
+            pa = patrubki()
+        z5 = pa['b50'].CoordinateSystem.BasisZ
+        if DB.XYZ(z5.X, z5.Y, 0).Normalize().DotProduct(d50) < 0.9:
+            self.oshibka(u'крестовина: патрубок Ø50 не к отводу', u'(%.3f, %.3f, %.3f)' % (t['x'], t['y'], t['z']))
+        for k in ('m_niz', 'm_verh', 'b110', 'b50'):
+            ct, cf = cc[k], pa[k]
+            try:
+                ct.Origin = cf.Origin
+                ct.ConnectTo(cf)
+            except Exception as ex:
+                self.oshibka(u'крестовина: присоединение ' + k, ex)
+        komment(e, metka)
+        return e
 
     def korotkie(self):
         """Отрезки, которые фитинги «съели» (Revit откажет при фиксации: «Линия слишком короткая»)."""
@@ -753,6 +851,9 @@ def gibkaya_vstavka(doc, log, x_shov, metka):
 
 
 ZAGLUSHKA = (u'ADSK_ППР_Заглушка канализационная', u'Заглушка канализационная')
+KREST2 = u'ADSK_ППР_Крестовина двухплоскостная канализационная'
+KREST2_LEV = u'110x50 — 87° левая'
+KREST2_PRAV = u'110x50 — 87° правая'
 REVIZIYA = (u'ADSK_ППР_Ревизия канализационная', u'Ревизия')
 ET_REVIZIY = (1, 4, 7, 10, 11)      # п. 18.28 СП 30: в нижнем и верхнем этажах и не реже чем через три этажа
 Z_REVIZII = 1.0                     # над полом
