@@ -144,6 +144,27 @@ if not MS.KOVSH_PRIL6 or f"{float(MS.V_KOV):g}".replace(".", ",") not in MS.KOVS
 print(f"П. 2.3: сверено {n7} значений; принят вариант {MS.VAR_OK}, экскаватор {MS.EX_NAME},"
       f" самосвалы {MS.TR['name']} x {MS.TR['N']}")
 
+# 2в. Калькуляция (табл. 12) и график (табл. 13) = kalkulyaciya.py; Уп.т - 85-110 % (с. 34)
+import kalkulyaciya as KL
+w12, w13 = wb["Табл. 12 калькуляция"], wb["Табл. 13 график"]
+rows12 = [r for r in range(6, w12.max_row + 1) if isinstance(w12[f"A{r}"].value, int)]
+if len(rows12) != len(KL.ROWS): bad("табл. 12: не все процессы", len(rows12), len(KL.ROWS))
+for r, q in zip(rows12, KL.ROWS):
+    if not near(w12[f"I{r}"].value, q["man_d"], 1e-6): bad("табл. 12 расходится:", q["name"], "чел.-дн")
+    if q["mach_s"] is not None and not near(w12[f"L{r}"].value, q["mach_s"], 1e-6):
+        bad("табл. 12 расходится:", q["name"], "маш.-см")
+rt = rows12[-1] + 1
+if not near(w12[f"I{rt}"].value, KL.TOT_MAN_D, 1e-6) or not near(w12[f"L{rt}"].value, KL.TOT_MACH_S, 1e-6):
+    bad("табл. 12: итоги расходятся")
+for k, q in enumerate(KL.SCHED, start=1):
+    r = 4 + k
+    for c, w in (("E", q["th"]), ("F", q["mach"]), ("I", q["t"]), ("L", q["upt"] / 100)):
+        if not near(w13[f"{c}{r}"].value, w, 1e-6): bad("табл. 13 расходится:", q["name"], c, w13[f"{c}{r}"].value)
+    if not 85 <= q["upt"] <= 110: bad("табл. 13: Уп.т вне 85-110 %:", q["name"], round(float(q["upt"]), 1))
+print(f"Табл. 12-13: {len(KL.ROWS)} процессов, {float(KL.TOT_MAN_D):.2f} чел.-дн, {float(KL.TOT_MACH_S):.2f} маш.-см;"
+      f" график - {len(KL.SCHED)} процессов, {KL.T_ZEML} дн, Уп.т "
+      f"{min(float(q['upt']) for q in KL.SCHED):.1f}-{max(float(q['upt']) for q in KL.SCHED):.1f} %")
+
 # 3. DXF: ЛНР проходит ровно через все точки нулевых работ, подписи на месте -
 #    на черновике (лист 1, y как есть) и на окончательном плане (лист 2, сдвиг OY2)
 class MC:                       # как в make_dxf.py: сдвиг окончательного плана в модели, Мв на разрезах
@@ -189,8 +210,8 @@ hk = f"hк = {round(float(B.K1['HK']) * 1000)}"
 if sum(1 for e in msp if e.dxftype() == "DIMENSION" and e.dxf.get("text", "").replace("<>", "") == "hк = "
        and abs(e.get_measurement() * 1000 / MC.VS - float(B.K1["HK"]) * 1000) < 0.5) != 2:
     bad("на разрезах нет двух размеров", hk)
-LAYOUT_NAMES = ("Лист 1", "Лист 2", "Лист 3", "Лист 4", "Лист 5", "Лист 6", "Лист 7", "Лист 1 (первый)")
-SCHEMES = ("Лист 6", "Лист 7")            # техсхемы без масштаба - целиком в пространстве листа, без видового экрана
+LAYOUT_NAMES = ("Лист 1", "Лист 2", "Лист 3", "Лист 4", "Лист 5", "Лист 6", "Лист 7", "Лист 8", "Лист 1 (первый)")
+SCHEMES = ("Лист 6", "Лист 7", "Лист 8")            # техсхемы без масштаба - целиком в пространстве листа, без видового экрана
 bad_styles = {e.dxf.style for L in (msp, *(doc.paperspace(n) for n in LAYOUT_NAMES), *doc.blocks)
               for e in L if e.dxftype() in ("TEXT", "MTEXT")} - {"ГОСТ тип Б"}
 if bad_styles: bad("текст не ГОСТ тип Б:", bad_styles)

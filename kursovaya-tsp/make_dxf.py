@@ -2001,6 +2001,162 @@ for r, row in enumerate([("Наименование", "Марка", "Кол.", "
             TA.MIDDLE_LEFT if left else TA.MIDDLE_CENTER, "Надписи", NARROW)
         x += CW6[c]
 
+# ================= лист 8: график производства земляных работ (разд. 3, п. 6; табл. 13) =================
+# Форма табл. 13 методички: графы 1-9 - по калькуляции (табл. 12), календарная часть - дни со
+# сменами; горизонтальные линии - продолжительность процессов по сменам, над линией - число
+# исполнителей; вертикальные - технологические связи. Работа в 2 смены (у разравнивания и
+# уплотнения насыпи - в 1 смену). Между планировкой и обратной засыпкой - устройство подземной
+# части здания (вне карты). Без масштаба.
+import kalkulyaciya as KL
+psp = doc.layouts.new("Лист 8")
+a3(psp)
+frame_and_stamp(8, None, "График производства\\Pземляных работ", None)
+image_title("График производства земляных работ", (217.5, TITLE_Y))
+u_ = lambda s: s.replace("м²", M2).replace("м³", M3)
+
+CW8 = [7, 50, 10, 12, 11, 11, 34, 9, 9, 10]            # графы 1-9 (+ №)
+X8 = [22]
+for w_ in CW8:
+    X8.append(X8[-1] + w_)
+XC0, XC1 = X8[-1], 410.0                                # календарная часть
+DAYS1, DAYS2 = list(range(1, KL.BREAK_AFTER + 1)), list(range(KL.BREAK_AFTER + 1, KL.N_DAYS + 1))
+WBR = 6.0                                               # столбец перерыва
+DW = (XC1 - XC0 - WBR) / (len(DAYS1) + len(DAYS2))      # ширина дня, мм
+XB0 = XC0 + len(DAYS1) * DW                             # начало столбца перерыва
+
+
+def xday(d):
+    """Левый край дня d в календаре."""
+    return XC0 + (d - 1) * DW if d <= KL.BREAK_AFTER else XB0 + WBR + (d - KL.BREAK_AFTER - 1) * DW
+
+
+YT8 = 276.0
+HH1, HH2, HH3 = 18.0, 6.0, 5.0                          # шапка: заголовки, дни, номера граф / смены
+RH = 12.0                                               # строка процесса
+YH1, YH2, YH3 = YT8 - HH1, YT8 - HH1 - HH2, YT8 - HH1 - HH2 - HH3
+YB8 = YH3 - RH * len(KL.SCHED)
+
+
+def ln8(p, q, lw=25):
+    psp.add_line(p, q, dxfattribs={"layer": "Штамп", "lineweight": lw})
+
+
+# сетка таблицы: наружная рамка - основная линия, внутренние - тонкие
+pp([(X8[0], YT8), (XC1, YT8), (XC1, YB8), (X8[0], YB8)], "Штамп", True).dxf.lineweight = 50
+for c in range(1, len(X8)):
+    ln8((X8[c], YH1 + 5 if c == 8 else YT8), (X8[c], YB8))
+for k in range(len(KL.SCHED) + 1):
+    ln8((X8[0], YH3 - RH * k), (XC1, YH3 - RH * k))
+ln8((X8[0], YH3), (XC1, YH3), 50)
+ln8((X8[7], YH1 + 5), (X8[9], YH1 + 5))                 # «Время выполнения» над сменами и днями
+ln8((XC0, YH1), (XC1, YH1))                            # календарь: заголовок / дни
+ln8((XC0, YH2), (XC1, YH2))                            # дни / смены
+for d in DAYS1 + DAYS2:
+    x_ = xday(d)
+    ln8((x_, YH1), (x_, YB8), 25 if d != 1 else 25)
+    ln8((x_ + DW / 2, YH2), (x_ + DW / 2, YB8), 13)     # граница смен
+ln8((XB0, YH1), (XB0, YB8))
+# шапка граф 1-9
+HEAD8 = ["№ п/п", "Наименование процессов", "Ед. изм.", "Объем работ", "Затраты труда, чел.-дн",
+         "Затраты машинного времени, маш.-см", "Исполнители", "Смены", "Дни", "Уп.т, %"]
+VERT = {2, 3, 4, 5, 9}                                  # узкие графы - текст вертикально, как в форме
+for c, s_ in enumerate(HEAD8):
+    xm = (X8[c] + X8[c + 1]) / 2
+    if c in (7, 8):
+        lbl(s_, (xm, (YH1 + 5 + YH2) / 2), MA.MIDDLE_CENTER)
+        continue
+    if c in VERT:
+        m = psp.add_mtext(W08 + s_, dxfattribs={"layer": "Надписи", "style": TXT, "char_height": H_TEXT,
+                                                "rotation": 90, "width": HH1 + HH2 - 1})
+        m.set_location((xm, (YT8 + YH2) / 2), attachment_point=MA.MIDDLE_CENTER)
+    else:
+        mt(W08 + s_, (xm, (YT8 + YH2) / 2), H_TEXT, CW8[c] - 1, MA.MIDDLE_CENTER, "Надписи")
+mt(W08 + "Время выполнения работ", ((X8[7] + X8[9]) / 2, (YT8 + YH1 + 5) / 2), H_TEXT, X8[9] - X8[7] - 1,
+   MA.MIDDLE_CENTER, "Надписи")
+lbl("Смены / дни", ((XC0 + XC1) / 2, (YT8 + YH1) / 2), MA.MIDDLE_CENTER, h=H_HEAD)
+for d in DAYS1 + DAYS2:
+    lbl(str(d), (xday(d) + DW / 2, (YH1 + YH2) / 2), MA.MIDDLE_CENTER)
+    for s_ in (1, 2):
+        psp.add_mtext("\\W0.7;" + str(s_), dxfattribs={"layer": "Надписи", "style": TXT, "char_height": 2.0}) \
+            .set_location((xday(d) + DW / 4 + (s_ - 1) * DW / 2, (YH2 + YH3) / 2), attachment_point=MA.MIDDLE_CENTER)
+for c in range(len(HEAD8)):
+    if c:                                               # номера граф 1-9 (№ п/п - без номера, как в форме)
+        lbl(str(c), ((X8[c] + X8[c + 1]) / 2, (YH2 + YH3) / 2), MA.MIDDLE_CENTER)
+ln8((X8[0], YH2), (XC0, YH2))
+# перерыв: устройство подземной части здания
+m = psp.add_mtext(W08 + "устройство подземной части здания (по отдельной технологической карте)",
+                  dxfattribs={"layer": "Надписи", "style": TXT, "char_height": H_TEXT, "rotation": 90,
+                              "width": YH3 - YB8 - 4})
+m.set_location((XB0 + WBR / 2, (YH3 + YB8) / 2), attachment_point=MA.MIDDLE_CENTER)
+hatch_ = psp.add_hatch(dxfattribs={"layer": "Штриховка"})
+hatch_.set_pattern_fill("ANSI31", scale=0.5)
+hatch_.paths.add_polyline_path([(XB0, YH1), (XB0 + WBR, YH1), (XB0 + WBR, YH2), (XB0, YH2)], is_closed=True)
+
+# строки процессов и линии графика
+YROW = []
+for k, q in enumerate(KL.SCHED):
+    y0, y1 = YH3 - RH * (k + 1), YH3 - RH * k
+    ym = (y0 + y1) / 2
+    YROW.append(ym)
+    vals = [str(k + 1), q["name"], u_(q["unit"]), dec(q["vol"], 2), num(q["th"]), num(q["mach"]),
+            ", ".join(f"{p} - {c_}" for p, c_ in q["crew"]), str(q["t"]), str(q["days"]), dec(q["upt"], 1)]
+    for c, v in enumerate(vals):
+        xm = (X8[c] + X8[c + 1]) / 2
+        if c in (1, 6):
+            mt(W08 + v, (X8[c] + 1.2, ym), H_TEXT, CW8[c] - 2, MA.MIDDLE_LEFT, "Надписи")
+        else:
+            lbl(v, (xm, ym), MA.MIDDLE_CENTER)
+    # линия по занятым сменам; смежные смены - одной линией
+    sh = q["shifts"]
+    segs, cur = [], None
+    for d, s_ in sh:
+        xa = xday(d) + (s_ - 1) * DW / 2
+        xb = xa + DW / 2
+        if cur and abs(cur[1] - xa) < 1e-6:
+            cur[1] = xb
+        else:
+            cur = [xa, xb]
+            segs.append(cur)
+    for xa, xb in segs:
+        psp.add_lwpolyline([(xa, ym - 1.0), (xb, ym - 1.0)], dxfattribs={"layer": "Профиль", "const_width": 0.8})
+    lbl(str(q["n"]), (segs[0][0] + 1.6, ym + 0.6), MA.BOTTOM_LEFT)
+
+# технологические связи: (предшествующий, последующий) - вертикальная линия в момент начала последующего
+LINKS = [(0, 1), (1, 2), (0, 3), (3, 4), (2, 5), (5, 6), (4, 7)]
+for a_, b_ in LINKS:
+    d, s_ = KL.SCHED[b_]["shifts"][0]
+    x_ = xday(d) + (s_ - 1) * DW / 2
+    ya, yb = YROW[a_] - 1.0, YROW[b_] - 1.0
+    pp([(x_, ya), (x_, yb + 1.8)], "Перемещения")
+    arr((x_, yb), -90, L=1.8, wd=0.9)
+
+# условные обозначения и примечания
+txt("Условные обозначения", (26, YB8 - 9), H_HEAD, TA.BOTTOM_LEFT, "Надписи", NARROW)
+yl = YB8 - 15
+psp.add_lwpolyline([(26, yl), (40, yl)], dxfattribs={"layer": "Профиль", "const_width": 0.8})
+lbl("4", (27, yl + 1.6), MA.BOTTOM_LEFT)
+txt("- работа процесса по сменам, над линией - число исполнителей", (43, yl), H_TEXT,
+    TA.MIDDLE_LEFT, "Надписи", NARROW)
+yl -= 7
+for xa in (26, 30.5, 35):
+    psp.add_lwpolyline([(xa, yl), (xa + 2.2, yl)], dxfattribs={"layer": "Профиль", "const_width": 0.8})
+txt("- работа в одну смену в сутки", (43, yl), H_TEXT, TA.MIDDLE_LEFT, "Надписи", NARROW)
+yl -= 7
+pp([(33, yl + 3), (33, yl - 1.2)], "Перемещения")
+arr((33, yl - 3), -90, L=1.8, wd=0.9)
+txt("- технологическая связь процессов", (43, yl), H_TEXT, TA.MIDDLE_LEFT, "Надписи", NARROW)
+NOTES8 = [
+    f"1. Затраты труда и машинного времени - по калькуляции (табл. 12, ЕНиР Е2-1); вспомогательные "
+    f"операции включены в основные процессы.",
+    f"2. Продолжительность t = Тр / n с округлением до целой смены (Тр - трудоемкость, чел.-дн; n - число "
+    f"исполнителей); уровень производительности труда Уп.т = Тр / (n х t) = "
+    f"{dec(min(q['upt'] for q in KL.SCHED), 1)}-{dec(max(q['upt'] for q in KL.SCHED), 1)} %.",
+    f"3. Работы ведутся в {MS.M_SM} смены по 8 ч; разравнивание и уплотнение грунта насыпи - в 1 смену.",
+    f"4. Продолжительность земляных работ - {KL.T_ZEML} дней без устройства подземной части здания.",
+]
+txt("Примечания", (140, YB8 - 9), H_HEAD, TA.BOTTOM_LEFT, "Надписи", NARROW)
+mt(W08 + "\\P".join(NOTES8), (140, YB8 - 12), H_TEXT, 88, MA.TOP_LEFT, "Надписи")
+
 # ================= первый чертёж: черновик до котлована - только рабочие отметки и ЛНР =================
 # не входит в комплект листов по разд. 3 методички; оформление - как у листа 1
 psp = doc.layouts.new("Лист 1 (первый)")
