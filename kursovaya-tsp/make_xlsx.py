@@ -985,6 +985,8 @@ cell(w12, f"H{r}", f"=SUM(H6:H{r - 1})", F_B, "0.00")
 cell(w12, f"I{r}", f"=SUM(I6:I{r - 1})", F_B, "0.00")
 cell(w12, f"K{r}", f"=SUM(K6:K{r - 1})", F_B, "0.00")
 cell(w12, f"L{r}", f"=SUM(L6:L{r - 1})", F_B, "0.00")
+for c in "ABCDEFGJ":
+    w12[f"{c}{r}"].border = BOX
 R12_TOT = r
 for c, wd in zip("ABCDEFGHIJKL", (5, 52, 9, 11, 24, 16, 11, 11, 11, 11, 11, 11)):
     w12.column_dimensions[c].width = wd
@@ -1027,9 +1029,13 @@ cell(w13, f"F{r}", f"=SUM(F5:F{r - 1})", F_B, "0.00")
 w13.merge_cells(f"G{r}:J{r}")
 cell(w13, f"G{r}", "Продолжительность земляных работ, дн (без устройства подземной части)", al=LEFT)
 cell(w13, f"K{r}", KL.T_ZEML, F_B)
-for c, wd in zip("ABCDEFGHIJKL", (5, 50, 9, 11, 12, 13, 36, 11, 9, 9, 8, 9)):
+for c in "ABCDGHIJL":                                       # рамки объединённых ячеек итоговой строки
+    w13[f"{c}{r}"].border = BOX
+for c, wd in zip("ABCDEFGHIJKL", (5, 50, 9, 11, 12, 13, 36, 13, 9, 9, 8, 9)):
     w13.column_dimensions[c].width = wd
-w13.row_dimensions[4].height = 48
+w13.row_dimensions[4].height = 64
+for r_ in range(5, 6 + len(KL.SCHED)):                     # длинные «Исполнители» и итог - в две-три строки
+    w13.row_dimensions[r_].height = 32
 
 # ---------- содержание: все таблицы курсовой - в одном файле, каждая на своём листе ----------
 DESCR = {
