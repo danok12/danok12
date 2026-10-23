@@ -92,9 +92,11 @@ w7 = wb["Табл. 3 котлован"]
 for ref, w in (("C6", RS.V_OSN), ("C7", RS.V_S), ("I6", RS.V_PAZ), ("J6", RS.V_PAZ / RS.K_OR), ("I7", RS.V_S),
                ("J7", RS.V_S / RS.K_OR), ("C8", RS.T3_SUM_V), ("J8", RS.T3_SUM_N), ("E6", RS.T3_OTVAL),
                ("E7", RS.T3_TRANSPORT), ("E12", RS.V_PIT_FILL * RS.K_P), ("E13", RS.V_LISH * RS.K_P),
-               ("E15", RS.V_PODS / RS.K_OR)):
+               ("E14", RS.T3_PRIVOZ[0][1]), ("E15", RS.T3_PRIVOZ[1][1]), ("E16", RS.T3_PRIVOZ[2][1])):
     if not near(w7[ref].value, w, 1e-6): bad("табл. 3 расходится:", ref, w7[ref].value, float(w))
-if not near(w7["E16"].value, 0, 1e-6): bad("табл. 3: отвал + транспорт не равны ΣVв·kр")
+if not near(w7["E17"].value, 0, 1e-6): bad("табл. 3: отвал + транспорт не равны ΣVв·kр")
+if B.B0["V_NK"] or RS.V_OTVAL or RS.T3_SUM_N:
+    bad("грунт площадки не песок - засыпка котлована местным грунтом должна быть 0 (лекция 23.10)")
 w8 = wb["Табл. 4 распределение"]
 nrow = 7 + len(RS.FILL)
 col_chk = chr(ord("C") + len(RS.CUT) + 2)          # столбец «Σ по строке − объём» - за выемками, котлованом, недостачей
