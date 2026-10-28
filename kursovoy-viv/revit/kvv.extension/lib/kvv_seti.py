@@ -629,6 +629,12 @@ class Stroitel(object):
                 self.oshibka(u'нет семейства ' + a['fam'] + u' ' + a['tip'], u'')
                 continue
             try:
+                if a.get('wp'):
+                    e = self.na_ploskost(sym, a)
+                    komment(e, metka)
+                    self.arm[a['id']] = e
+                    n += 1
+                    continue
                 e = postavit(self.doc, sym, self.lv[a['ur']], a['x'], a['y'], a['z'], a['th'])
                 if a.get('dn'):
                     self.razmer_armatury(e, a['dn'])
@@ -652,6 +658,96 @@ class Stroitel(object):
             except Exception as ex:
                 self.oshibka(u'арматура', ex)
         self.log(u'арматуры', sys_, n)
+
+    def na_ploskost(self, sym, a):
+        """Кран на вертикальном опуске: семейство на рабочей плоскости (rabochaya_ploskost), экземпляр — на
+        вертикальной плоскости через точку вставки; ось X семейства (вход -> выход) — вниз, нормаль плоскости — norm
+        (ручка смотрит вдоль отвода от стояка)."""
+        doc = self.doc
+        P = kvv.xyz(a['x'], a['y'], a['z'])
+        nx, ny = a.get('norm', [1.0, 0.0])
+        n_ = DB.XYZ(nx, ny, 0).Normalize()
+        if not getattr(self, '_rp_udaleny', False):
+            # опорные плоскости прошлой сборки
+            self._rp_udaleny = True
+            stare = [r.Id for r in DB.FilteredElementCollector(doc).OfClass(DB.ReferencePlane)
+                     if (r.Name or u'').startswith(RP_IMYA)]
+            if stare:
+                doc.Delete(List[DB.ElementId](stare))
+        vid = [v for v in DB.FilteredElementCollector(doc).OfClass(DB.View3D) if not v.IsTemplate][0]
+        vdol = n_.CrossProduct(DB.XYZ.BasisZ)                # горизонталь в плоскости
+        rp = doc.Create.NewReferencePlane(P, P + DB.XYZ.BasisZ, vdol, vid)
+        rp.Name = u'%s %d' % (RP_IMYA, a['id'])
+        if not sym.IsActive:
+            sym.Activate()
+        e = doc.Create.NewFamilyInstance(rp.GetReference(), P, DB.XYZ(0, 0, a['vert']), sym)
+        doc.Regenerate()
+        # плоскость больше не нужна: если кран без неё остаётся на месте — удалить (на видах её не будет)
+        st_ = DB.SubTransaction(doc)
+        st_.Start()
+        doc.Delete(rp.Id)
+        doc.Regenerate()
+        if e.IsValidObject:
+            st_.Commit()
+            self.rp_udaleno = getattr(self, 'rp_udaleno', 0) + 1
+        else:
+            st_.RollBack()
+        if not getattr(self, '_wp_v_zhurnale', False):
+            self._wp_v_zhurnale = True
+            cs = [c for c in soediniteli(e) if c.Domain == DB.Domain.DomainPiping]
+            self.log(u'  кран на плоскости:', sym.FamilyName, u'| плоскость удалена:', getattr(self, 'rp_udaleno', 0),
+                     u'| соединители:',
+                     u'; '.join(u'(%.3f, %.3f, %.3f)' % (c.Origin.X / M, c.Origin.Y / M, c.Origin.Z / M) for c in cs),
+                     u'| вставка (%.3f, %.3f, %.3f)' % (a['x'], a['y'], a['z']))
+        return e
+
+    def gibkie_podvodki(self, metka):
+        """Гибкая подводка (FlexPipe) от резьбы водорозетки к соединителю холодной воды смесителя: умывальник и
+        мойка — от стены к смесителю, ванна — сквозь обшивку короба."""
+        doc = self.doc
+        spisok = self.g.get('gibkie', [])
+        if not spisok:
+            return
+        tipy = list(DB.FilteredElementCollector(doc).OfClass(Plumbing.FlexPipeType))
+        if not tipy:
+            self.log(u'НЕТ типа гибкой трубы — подводки не построены')
+            return
+        ft = tipy[0]
+        st = [t for t in DB.FilteredElementCollector(doc).OfClass(Plumbing.PipingSystemType)
+              if t.SystemClassification == DB.MEPSystemClassification.DomesticColdWater]
+        n, ne = 0, 0
+        for aid, fid, vid_ in spisok:
+            e1, e2 = self.arm.get(aid), self.pr.get(fid)
+            if e1 is None or e2 is None:
+                continue
+            try:
+                c2s = [c for c in soediniteli(e2) if c.Domain == DB.Domain.DomainPiping and not c.IsConnected
+                       and c.PipeSystemType == Plumbing.PipeSystemType.DomesticColdWater]
+                c1s = [c for c in soediniteli(e1) if c.Domain == DB.Domain.DomainPiping and not c.IsConnected]
+                if not c2s or not c1s:
+                    ne += 1
+                    continue
+                c2 = c2s[0]
+                c1 = min(c1s, key=lambda c: c.Origin.DistanceTo(c2.Origin))
+                t1 = c1.CoordinateSystem.BasisZ
+                t2 = c2.CoordinateSystem.BasisZ.Negate()
+                pts = List[DB.XYZ]([c1.Origin, c2.Origin])
+                lv = self.lv[a_ur(self.g, aid)]
+                fp = Plumbing.FlexPipe.Create(doc, st[0].Id, ft.Id, lv.Id, t1, t2, pts)
+                fp.get_Parameter(DB.BuiltInParameter.RBS_PIPE_DIAMETER_PARAM).Set(c1.Radius * 2)
+                doc.Regenerate()
+                for c in fp.ConnectorManager.Connectors:
+                    cel = c1 if c.Origin.DistanceTo(c1.Origin) < c.Origin.DistanceTo(c2.Origin) else c2
+                    try:
+                        c.ConnectTo(cel)
+                    except Exception as ex:
+                        self.oshibka(u'гибкая подводка: присоединение', ex)
+                komment(fp, metka)
+                n += 1
+            except Exception as ex:
+                ne += 1
+                self.oshibka(u'гибкая подводка', ex)
+        self.log(u'гибких подводок', n, u'| не построено', ne, u'| тип', DB.Element.Name.GetValue(ft))
 
     def razmer_armatury(self, e, dn):
         """Условный проход арматуры (обратный клапан ADSK DN15-50 по умолчанию DN25): параметр экземпляра или
@@ -776,6 +872,7 @@ class Stroitel(object):
                 n_pr += 1
             except Exception as ex:
                 self.oshibka(u'арматура встык с прибором', ex)
+        self.gibkie_podvodki(metka)
         if self.g.get('arm_pribor'):
             self.log(u'арматура встык с прибором: соединено', n_pr, u'| не соединено', len(ne_pr))
             for r in sorted(set(ne_pr))[:10]:
@@ -1053,6 +1150,41 @@ class _Perezagruzka(DB.IFamilyLoadOptions):
         source.Value = DB.FamilySource.Family
         overwriteParameterValues.Value = True
         return True
+
+
+RP_IMYA = u'КВВ-В1 узел'     # опорные плоскости кранов на опуске узла учёта
+
+
+def a_ur(g, aid):
+    """Уровень арматуры по её id в geometriya_v3.json."""
+    for a in g['armatura']:
+        if a['id'] == aid:
+            return a['ur']
+    return None
+
+
+def rabochaya_ploskost(doc, imena, log):
+    """Краны VALTEC не поворачиваются на вертикаль (вложенная ручка «на рабочей плоскости»): семейство переводится
+    на рабочую плоскость, экземпляр ставится на вертикальную плоскость (Stroitel.na_ploskost). Вне транзакции."""
+    for fam in [f for f in DB.FilteredElementCollector(doc).OfClass(DB.Family) if f.Name in imena]:
+        imya = fam.Name
+        fd = doc.EditFamily(fam)
+        try:
+            of = fd.OwnerFamily
+            wp = of.get_Parameter(DB.BuiltInParameter.FAMILY_WORK_PLANE_BASED)
+            av = of.get_Parameter(DB.BuiltInParameter.FAMILY_ALWAYS_VERTICAL)
+            if wp is None or wp.AsInteger() == 1:
+                continue
+            t = DB.Transaction(fd, u'На рабочей плоскости')
+            t.Start()
+            if av is not None and av.AsInteger() == 1:
+                av.Set(0)
+            wp.Set(1)
+            t.Commit()
+            fd.LoadFamily(doc, _Perezagruzka())
+            log(u'семейство', imya, u': на рабочей плоскости, перезагружено')
+        finally:
+            fd.Close(False)
 
 
 def ne_vsegda_vertikalno(doc, imena, log):

@@ -95,7 +95,8 @@ def tolko_sistema(v, metka_svoya, log):
             chuzhie.append(e.Id)
     if chuzhie:
         v.HideElements(List[DB.ElementId](chuzhie))
-    for bic in (DB.BuiltInCategory.OST_Levels, DB.BuiltInCategory.OST_Grids):
+    # опорные плоскости кранов узла учёта (kvv_seti.na_ploskost) на листах не нужны
+    for bic in (DB.BuiltInCategory.OST_Levels, DB.BuiltInCategory.OST_Grids, DB.BuiltInCategory.OST_CLines):
         c = doc.Settings.Categories.get_Item(bic)
         if v.CanCategoryBeHidden(c.Id):
             v.SetCategoryHidden(c.Id, True)

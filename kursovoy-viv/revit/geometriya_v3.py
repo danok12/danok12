@@ -495,11 +495,16 @@ def arm(key, p, d, ur):
         zap["perev"] = True
     if key == "filtr25":
         zap["dn"] = 25
+    if vert and key == "kran15vn":
+        # кран VALTEC не поворачивается на вертикаль (вложенная ручка «на рабочей плоскости»): семейство переводится
+        # на рабочую плоскость, экземпляр ставится на вертикальную плоскость (kvv_seti)
+        zap["wp"] = True
     armatura.append(zap)
     return aid, out
 
 
 arm_pribor = []     # арматура и приборы встык: [id арматуры, id прибора, вид соединителя]
+gibkie = []         # гибкие подводки от водорозетки к смесителю: [id водорозетки, id прибора, вид соединителя]
 PODVOD_XY = {}      # прибор -> точки подводки в плане (подъём к водорозетке, кран у бачка): не коллизия с прибором
 VR_DX, VR_DZ = 0.016, 0.012
 
@@ -557,6 +562,7 @@ def podvod_k_priboru(p, conn, fid, xh, z, d, ur, konec=False):
         aid, o = vodorozetka((conn[0] - s_ * T_KOROB, conn[1], conn[2]), (s_, 0.0), d, ur)
         pts = [p, (o[0], conn[1], z), o]
         PODVOD_XY.setdefault(fid, []).extend([o[:2], conn[:2]])
+        gibkie.append([aid, fid, "cold"])
         return pts, aid, False
     vyh = tochka_vr(conn)                                # умывальник, мойка: на стене под смесителем
     w = STENA[ck]
@@ -570,6 +576,7 @@ def podvod_k_priboru(p, conn, fid, xh, z, d, ur, konec=False):
     aid, o = vodorozetka(vyh, (-w[0], -w[1]), d, ur)
     pts = [p, (o[0], p[1], z), (o[0], o[1], z), o]
     PODVOD_XY.setdefault(fid, []).extend([o[:2], conn[:2], (o[0], p[1])])
+    gibkie.append([aid, fid, "cold"])
     return pts, aid, False
 
 
@@ -705,17 +712,19 @@ def kv_v1(k, zf, ur, rs_v, stoyak_xy, napr, nogi_, klyuch=None):
     xr, yr = stoyak_xy
     z1 = zf + Z_UZEL
     y_op = yr + napr[1] * L_UZLA
-    # кран ВР-НР — на отводе от стояка перед опуском: краны VALTEC не ставятся вертикально (вложенная ручка
-    # «на рабочей плоскости» — Revit: «Элемент не может быть повернут в эту позицию»)
-    r0, (ra, _), p = vetka("V1", "ppr", 25, [(xr, yr, z1)], napr, ["kran15vn"], ur, first=0.16)
-    rs_v.append((z1, (r0, 0)))
-    seti[ra]["pts"] = seti[ra]["pts"][:1] + [R((xr, y_op, z1))]
-    items = ["filtr15"] + (["reg15"] if k in ET_REG else []) + ["sch15", "obr15"]
-    # фильтр, регулятор, счётчик (с присоединителями) и обратный клапан — одной сборкой на резьбе; муфты
-    # комбинированные ППР 25 х 1/2" — только над фильтром и под обратным клапаном
+    # как в образце (фото 28.10): отвод от стояка без арматуры, на опуске — кран ВР-НР, фильтр, регулятор,
+    # счётчик, обратный клапан одной сборкой на резьбе; муфты комбинированные ППР 25 х 1/2" — над краном и под
+    # клапаном. Кран VALTEC вертикально ставится на рабочую плоскость (kvv_seti, «wp»)
+    ra = truba("V1", "ppr", 25, [(xr, yr, z1), (xr, y_op, z1)], ur)
+    rs_v.append((z1, (ra, 0)))
+    items = ["kran15vn", "filtr15"] + (["reg15"] if k in ET_REG else []) + ["sch15", "obr15"]
     rv, (rn, _), p = vetka("V1", "ppr", 25, [(xr, y_op, z1)], (0, 0, -1), items, ur, gap=0.16, first=0.15,
                            sborka=True)
     svyaz((ra, 1), (rv, 0))
+    for a_ in reversed(armatura):
+        if a_["key"] == "kran15vn" and a_.get("wp"):
+            a_["norm"] = [napr[0], napr[1]]          # плоскость крана поперёк отвода: ручка — вдоль отвода
+            break
     seti[rn]["pts"] = seti[rn]["pts"][:1] + [R((xr, y_op, zf + Z_RAZV))]
     puti = {}
     starty = [nogi(xr, y_op, zf + Z_RAZV, f, ur, puti=puti) for f in nogi_]
@@ -1682,7 +1691,7 @@ trassa_v3 = dict(stoyaki_v1={nm: [round(v[0], 3), v[1], round(v[5], 3), round(v[
 json.dump(trassa_v3, open(os.path.join(HERE, "..", "calc", "trassa_v3.json"), "w", encoding="utf-8"),
           ensure_ascii=False, indent=1)
 
-geo = dict(pomescheniya=pomescheniya, razdeliteli=razdeliteli, pribory=pribory, seti=seti, troyniki=troyniki, kresty=kresty, kresty2=kresty2, armatura=armatura, svyazi=svyazi, arm_svyazi=arm_svyazi, arm_pribor=arm_pribor,
+geo = dict(pomescheniya=pomescheniya, razdeliteli=razdeliteli, pribory=pribory, seti=seti, troyniki=troyniki, kresty=kresty, kresty2=kresty2, armatura=armatura, svyazi=svyazi, arm_svyazi=arm_svyazi, arm_pribor=arm_pribor, gibkie=gibkie,
            mufty=mufty, stoyaki=stoyaki, oborud=oborud, dveri=dveri, lestnicy=lestnicy,
            zaglushki=zaglushki, krany_pol=krany_pol,
            sistemy=dict(V1="ADSK_Водопровод_В1", K1="ADSK_Канализация_К1"),
