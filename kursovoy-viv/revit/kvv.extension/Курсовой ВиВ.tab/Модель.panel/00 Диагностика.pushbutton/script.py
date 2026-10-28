@@ -51,6 +51,12 @@ def main(log):
         with kvv.Tranzakciya(doc, u'КВВ: метки деталей', log):
             kvv_seti.pometit_avto(doc, log)
         return
+    if rezhim.startswith(u'soed '):
+        kvv_proverka.soed_diag(doc, [x.strip() for x in rezhim[5:].split(u';') if x.strip()], log)
+        return
+    if rezhim.startswith(u'vlozh '):
+        kvv_proverka.vlozhennye(doc, HOST_APP.app, [x.strip() for x in rezhim[6:].split(u';')], log)
+        return
     if rezhim == u'proba':
         kvv_proverka.proba_kombi(doc, log)
         return

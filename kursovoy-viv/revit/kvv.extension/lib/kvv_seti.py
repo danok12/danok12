@@ -617,6 +617,15 @@ class Stroitel(object):
                 continue
             sym = kvv.simvol(self.doc, a['fam'], a['tip'])
             if sym is None:
+                # «20 х 1/2"» у водорозетки ADSK — русская «х»; в других семействах — латинская
+                norm = lambda t: (t or u'').replace(u'\u0445', u'x').replace(u' ', u'')
+                for s_ in DB.FilteredElementCollector(self.doc).OfClass(DB.FamilySymbol):
+                    if s_.FamilyName == a['fam'] and norm(DB.Element.Name.GetValue(s_)) == norm(a['tip']):
+                        sym = s_
+                        if not sym.IsActive:
+                            sym.Activate()
+                        break
+            if sym is None:
                 self.oshibka(u'нет семейства ' + a['fam'] + u' ' + a['tip'], u'')
                 continue
             try:
@@ -628,7 +637,15 @@ class Stroitel(object):
                     # через точку вставки на её отметке (Location.Point до регенерации ещё на отметке уровня)
                     P = kvv.xyz(a['x'], a['y'], a['z'])
                     ax = DB.Line.CreateBound(P, P + DB.XYZ.BasisY)
-                    DB.ElementTransformUtils.RotateElement(self.doc, e.Id, ax, math.pi / 2 * -a['vert'])
+                    # обратный клапан (perev): стрелка семейства — против его оси X, поворот в другую сторону
+                    ugol = math.pi / 2 * (a['vert'] if a.get('perev') else -a['vert'])
+                    DB.ElementTransformUtils.RotateElement(self.doc, e.Id, ax, ugol)
+                else:
+                    # детали-мультипорты (водорозетка) могут не иметь «Смещения»: точка вставки — на отметку
+                    self.doc.Regenerate()
+                    lp = getattr(e.Location, 'Point', None)
+                    if lp is not None and abs(a['z'] * M - lp.Z) > 0.5 * MM:
+                        DB.ElementTransformUtils.MoveElement(self.doc, e.Id, DB.XYZ(0, 0, a['z'] * M - lp.Z))
                 komment(e, metka)
                 self.arm[a['id']] = e
                 n += 1
@@ -647,7 +664,8 @@ class Stroitel(object):
                     continue
                 if not any(k in nm for k in (u'иаметр', u'DN', u'Ду', u'Условный')):
                     continue
-                if abs(pr.AsDouble() / MM - 25.0) > 0.5:      # только условный проход DN25 по умолчанию
+                # условный проход: у обратного клапана по умолчанию DN25, у фильтра DN15
+                if abs(pr.AsDouble() / MM - dn) < 0.5 or u'иаметр условный' not in nm:
                     continue
                 try:
                     pr.Set(dn * MM)
@@ -735,6 +753,32 @@ class Stroitel(object):
             self.log(u'арматура одной сборкой: соединено', n_sb, u'| встык без связи (разные соединители)',
                      len(raznye))
             for r in sorted(set(raznye)):
+                self.log(u'   ', r)
+        # арматура встык с прибором: кран ВР-НР у бачка унитаза, водорозетка у смесителя ванны
+        n_pr, ne_pr = 0, []
+        for aid, fid, vid_ in self.g.get('arm_pribor', []):
+            e1, e2 = self.arm.get(aid), self.pr.get(fid)
+            if e1 is None or e2 is None:
+                continue
+            try:
+                cs2 = [c for c in soediniteli(e2) if c.Domain == DB.Domain.DomainPiping and not c.IsConnected
+                       and c.PipeSystemType == cold]
+                para = None
+                for c2 in cs2:
+                    c1, d = blizhayshiy(e1, c2.Origin)
+                    if c1 is not None and not c1.IsConnected and (para is None or d < para[2]):
+                        para = (c1, c2, d)
+                if para is None or para[2] > 5 * MM or abs(para[0].Radius - para[1].Radius) > 0.3 * MM:
+                    ne_pr.append(u'%s — %s %s' % (e1.Symbol.FamilyName, e2.Symbol.FamilyName,
+                                                  u'%.0f мм' % (para[2] / MM) if para else u'нет соединителя'))
+                    continue
+                para[0].ConnectTo(para[1])
+                n_pr += 1
+            except Exception as ex:
+                self.oshibka(u'арматура встык с прибором', ex)
+        if self.g.get('arm_pribor'):
+            self.log(u'арматура встык с прибором: соединено', n_pr, u'| не соединено', len(ne_pr))
+            for r in sorted(set(ne_pr))[:10]:
                 self.log(u'   ', r)
         # тройники и крестовины
         for t in self.g['troyniki']:
@@ -1009,6 +1053,53 @@ class _Perezagruzka(DB.IFamilyLoadOptions):
         source.Value = DB.FamilySource.Family
         overwriteParameterValues.Value = True
         return True
+
+
+def ne_vsegda_vertikalno(doc, imena, log):
+    """Краны VALTEC VT.214/VT.215: вложенная «Ручка рычаг L» — «Всегда вертикально» и на рабочей плоскости, из-за
+    неё Revit не даёт повернуть кран на опуск узла учёта и спуски («Элемент не может быть повернут в эту позицию»).
+    Флаг снимается у вложенных семейств, кран перезагружается в проект. Вне транзакции."""
+    FLAGI = (DB.BuiltInParameter.FAMILY_ALWAYS_VERTICAL, DB.BuiltInParameter.FAMILY_WORK_PLANE_BASED)
+
+    def flag(f):
+        return any((f.get_Parameter(b_) is not None and f.get_Parameter(b_).AsInteger() == 1) for b_ in FLAGI)
+
+    def snyat(fd_):
+        if not flag(fd_.OwnerFamily):
+            return False
+        t = DB.Transaction(fd_, u'Не всегда вертикально')
+        t.Start()
+        for b_ in FLAGI:
+            pv = fd_.OwnerFamily.get_Parameter(b_)
+            if pv is not None and pv.AsInteger() == 1 and not pv.IsReadOnly:
+                pv.Set(0)
+        t.Commit()
+        return True
+    for fam in [f for f in DB.FilteredElementCollector(doc).OfClass(DB.Family) if f.Name in imena]:
+        imya = fam.Name
+        fd = doc.EditFamily(fam)
+        try:
+            izm = []
+            for f2 in list(DB.FilteredElementCollector(fd).OfClass(DB.Family)):
+                if f2.Id == fd.OwnerFamily.Id or not f2.IsEditable:
+                    continue
+                if not flag(f2):
+                    continue
+                imya2 = f2.Name                             # после перезагрузки объект недействителен
+                nd = fd.EditFamily(f2)
+                try:
+                    if snyat(nd):
+                        nd.LoadFamily(fd, _Perezagruzka())
+                        izm.append(imya2)
+                finally:
+                    nd.Close(False)
+            if snyat(fd):
+                izm.append(imya)
+            if izm:
+                fd.LoadFamily(doc, _Perezagruzka())
+                log(u'семейство', imya, u': «Всегда вертикально» снято у', u', '.join(izm), u'— перезагружено')
+        finally:
+            fd.Close(False)
 
 
 def bez_preduprezhdeniya(doc, fam, log):

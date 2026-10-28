@@ -691,3 +691,82 @@ def vid_diag(doc, imya, log):
     for kat, fam, sist, imya_s, mt, i, c in sorted(chuzhie, key=lambda r: (r[1], r[5])):
         log(u'  ', kat, u'|', fam, u'| сист.', sist, imya_s, u'| метка', mt, u'| id', i,
             u'| (%.2f, %.2f, %.2f)' % (c.X, c.Y, c.Z) if c is not None else u'')
+
+
+def soed_diag(doc, chasti, log):
+    """Соединители семейств, в имени которых есть одна из chasti: для каждого типа — экземпляр в стороне (откат),
+    соединители в локальных координатах экземпляра (мм), направление, диаметр, PartType, габарит."""
+    import kvv_seti
+    M, MM = kvv.M, kvv.MM
+    lv = [l for l in DB.FilteredElementCollector(doc).OfClass(DB.Level) if l.Name == u'Подвал'][0]
+    # «часть@25» — после установки задать условный проход 25 мм (параметры с «иаметр»/«DN»/«Ду» в имени)
+    dn = dict((ch.split(u'@')[0], float(ch.split(u'@')[1])) for ch in chasti if u'@' in ch)
+    chasti = [ch.split(u'@')[0] for ch in chasti]
+    simvoly = [s_ for s_ in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol)
+               if any(ch in s_.FamilyName for ch in chasti)]
+    log(u'типов найдено', len(simvoly), u'по', u' | '.join(chasti))
+    t = DB.Transaction(doc, u'соединители')
+    t.Start()
+    try:
+        for sym in sorted(simvoly, key=lambda x: (x.FamilyName, DB.Element.Name.GetValue(x))):
+            try:
+                pt = sym.Family.get_Parameter(DB.BuiltInParameter.FAMILY_CONTENT_PART_TYPE).AsValueString()
+            except Exception:
+                pt = u'-'
+            try:
+                e = kvv_seti.postavit(doc, sym, lv, -30.0, -30.0, lv.Elevation / M + 1.0, 0.0)
+                doc.Regenerate()
+                d_ = [v for k, v in dn.items() if k in sym.FamilyName]
+                pars = []
+                for el in (e, sym):
+                    for pr in el.Parameters:
+                        nm = pr.Definition.Name
+                        if pr.StorageType == DB.StorageType.Double and any(w in nm for w in (u'иаметр', u'DN', u'Ду')):
+                            if d_ and not pr.IsReadOnly and el is e:
+                                try:
+                                    pr.Set(d_[0] * MM)
+                                except Exception:
+                                    pass
+                            pars.append(u'%s=%.0f%s' % (nm, pr.AsDouble() / MM, u'' if pr.IsReadOnly else u'*'))
+                doc.Regenerate()
+                log(u'    параметры:', u', '.join(pars))
+                tr = e.GetTransform().Inverse
+                cs = []
+                for c in kvv_seti.soediniteli(e):
+                    if c.Domain != DB.Domain.DomainPiping:
+                        continue
+                    o = tr.OfPoint(c.Origin)
+                    d = tr.OfVector(c.CoordinateSystem.BasisZ)
+                    cs.append(u'(%.0f, %.0f, %.0f) dir (%.0f, %.0f, %.0f) D%.1f' % (
+                        o.X / MM, o.Y / MM, o.Z / MM, d.X, d.Y, d.Z, c.Radius * 2 / MM))
+                bb = e.get_BoundingBox(None)
+                gab = u'%.0f x %.0f x %.0f' % ((bb.Max.X - bb.Min.X) / MM, (bb.Max.Y - bb.Min.Y) / MM,
+                                              (bb.Max.Z - bb.Min.Z) / MM) if bb else u'-'
+                log(u'  %s : %s | %s | %s | %s' % (sym.FamilyName, DB.Element.Name.GetValue(sym), pt, gab,
+                                                   u'; '.join(cs)))
+            except Exception as ex:
+                log(u'  %s : %s | не поставлен: %s' % (sym.FamilyName, DB.Element.Name.GetValue(sym), ex))
+    finally:
+        t.RollBack()
+
+
+def vlozhennye(doc, app, imena, log):
+    """Вложенные семейства и флаги («Всегда вертикально», «На основе рабочей плоскости») у семейств проекта imena —
+    почему экземпляр нельзя повернуть на вертикаль."""
+    for fam in [f for f in DB.FilteredElementCollector(doc).OfClass(DB.Family) if f.Name in imena]:
+        fd = doc.EditFamily(fam)
+        try:
+            def flagi(f):
+                return u', '.join(u'%s=%s' % (q.Definition.Name, q.AsValueString()) for q in f.Parameters
+                                 if q.StorageType == DB.StorageType.Integer and (u'ертикал' in q.Definition.Name or
+                                                                                 u'плоскост' in q.Definition.Name))
+            log(fam.Name, u':', flagi(fd.OwnerFamily))
+            for f2 in DB.FilteredElementCollector(fd).OfClass(DB.Family):
+                if f2.Id == fd.OwnerFamily.Id:
+                    continue
+                n = len([e for e in DB.FilteredElementCollector(fd).OfClass(DB.FamilyInstance)
+                         if e.Symbol.Family.Id == f2.Id])
+                log(u'   вложено:', f2.Name, u'| экз.', n, u'|', flagi(f2), u'| категория',
+                    f2.FamilyCategory.Name if f2.FamilyCategory else u'-')
+        finally:
+            fd.Close(False)
