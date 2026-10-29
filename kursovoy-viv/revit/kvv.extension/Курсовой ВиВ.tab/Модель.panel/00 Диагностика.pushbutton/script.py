@@ -57,6 +57,14 @@ def main(log):
     if rezhim.startswith(u'vlozh '):
         kvv_proverka.vlozhennye(doc, HOST_APP.app, [x.strip() for x in rezhim[6:].split(u';')], log)
         return
+    if rezhim == u'sistemy':
+        kvv_proverka.sistemy(doc, log)
+        return
+    if rezhim == u'obedinit':
+        with kvv.Tranzakciya(doc, u'КВВ: одна система В1', log):
+            kvv_proverka.obedinit_sistemy(doc, log)
+        kvv_proverka.sistemy(doc, log)
+        return
     if rezhim == u'proba':
         kvv_proverka.proba_kombi(doc, log)
         return

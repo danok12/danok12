@@ -417,6 +417,179 @@ def vidy_3d(doc, log):
     return vidy
 
 
+def sistemy(doc, log):
+    """Сколько систем трубопроводов в модели и где система «рвётся»: соединённые соединители, у которых разные
+    системы (или у одного нет системы). Сеть В1 должна быть одной системой «В1 1» (29.10 Revit показывал В1 21)."""
+    import collections
+
+    def soed(e):
+        if isinstance(e, (Plumbing.Pipe, Plumbing.FlexPipe)):
+            return list(e.ConnectorManager.Connectors)
+        mm = getattr(e, 'MEPModel', None)
+        if mm is None or mm.ConnectorManager is None:
+            return []
+        return [c for c in mm.ConnectorManager.Connectors if c.Domain == DB.Domain.DomainPiping]
+
+    def imya_sist(c):
+        try:
+            s = c.MEPSystem
+        except Exception:
+            s = None
+        return s.Name if s is not None else u'(нет)'
+
+    def fam(e):
+        if isinstance(e, DB.FamilyInstance):
+            return e.Symbol.FamilyName
+        return e.GetType().Name + u' ' + (DB.Element.Name.GetValue(e) or u'')
+
+    po_tipu = collections.Counter()
+    for s in DB.FilteredElementCollector(doc).OfClass(Plumbing.PipingSystem):
+        tip = doc.GetElement(s.GetTypeId())
+        po_tipu[DB.Element.Name.GetValue(tip) if tip else u'?'] += 1
+    log(u'систем трубопроводов по типам:', dict(po_tipu))
+    kat = (DB.BuiltInCategory.OST_PipeCurves, DB.BuiltInCategory.OST_FlexPipeCurves, DB.BuiltInCategory.OST_PipeFitting,
+           DB.BuiltInCategory.OST_PipeAccessory, DB.BuiltInCategory.OST_PlumbingFixtures,
+           DB.BuiltInCategory.OST_MechanicalEquipment)
+    granicy, primer, razmer = collections.Counter(), {}, collections.Counter()
+    for k in kat:
+        for e in DB.FilteredElementCollector(doc).OfCategory(k).WhereElementIsNotElementType():
+            for c in soed(e):
+                s1 = imya_sist(c)
+                if s1.startswith(u'В1'):
+                    razmer[s1] += 1
+                if not c.IsConnected:
+                    continue
+                for r in c.AllRefs:
+                    if r.Owner is None or r.Owner.Id == e.Id or r.Domain != DB.Domain.DomainPiping:
+                        continue
+                    s2 = imya_sist(r)
+                    if s1 == s2 or not (s1.startswith(u'В1') or s2.startswith(u'В1')):
+                        continue
+                    try:
+                        k1_, k2_ = unicode(c.PipeSystemType), unicode(r.PipeSystemType)
+                    except Exception:
+                        k1_, k2_ = u'?', u'?'
+                    kl = (fam(e), k1_, fam(r.Owner), k2_)
+                    granicy[kl] += 1
+                    primer.setdefault(kl, (e.Id.IntegerValue, s1, s2, c.Origin.X / kvv.M, c.Origin.Y / kvv.M,
+                                           c.Origin.Z / kvv.M))
+    log(u'систем В1:', len(razmer), u'| соединителей по системам (10 крупнейших):', razmer.most_common(10))
+    log(u'границы систем В1 (элемент | классификация соединителя | сосед | классификация — число, пример id, системы, точка):')
+    for kl, n in granicy.most_common(30):
+        pr = primer[kl]
+        log(u'  %4d | %s | %s | %s | %s | id %d %s/%s (%.2f, %.2f, %.2f)' % ((n,) + kl + pr))
+
+
+def obedinit_sistemy(doc, log, tip=u'ADSK_Водопровод_В1'):
+    """Собрать сеть в одну систему (29.10: В1 была разбита на 1547 систем при физически соединённых элементах).
+    Способ 1: удалить все системы этого типа, кроме самой большой, — Revit заново относит соединённые элементы к
+    системе сети. Способ 2: тип системы трубы задаётся заново (SetSystemType) для одной трубы каждой оставшейся
+    системы. Каждый способ — в подтранзакции, откат, если систем не стало меньше. Транзакция — снаружи."""
+    def sist():
+        out = []
+        for s in DB.FilteredElementCollector(doc).OfClass(Plumbing.PipingSystem):
+            t = doc.GetElement(s.GetTypeId())
+            if t is not None and DB.Element.Name.GetValue(t) == tip:
+                out.append(s)
+        return out
+
+    def razmer(s):
+        try:
+            return s.PipingNetwork.Size
+        except Exception:
+            return 0
+    s0 = sist()
+    log(u'систем', tip, u'до:', len(s0))
+    if len(s0) <= 1:
+        return
+    tid = s0[0].GetTypeId()
+    # способ 1
+    st = DB.SubTransaction(doc)
+    st.Start()
+    try:
+        bolshaya = max(s0, key=razmer)
+        doc.Delete(List[DB.ElementId]([s.Id for s in s0 if s.Id != bolshaya.Id]))
+        doc.Regenerate()
+        n1 = len(sist())
+        bez = sum(1 for p in DB.FilteredElementCollector(doc).OfClass(Plumbing.Pipe)
+                  if p.MEPSystem is None and (metka(p) or u'').startswith(u'КВВ-В1'))
+        log(u'  способ 1 (удалить лишние системы): систем', n1, u'| труб В1 без системы', bez)
+        if n1 < len(s0) and bez == 0:
+            st.Commit()
+        else:
+            st.RollBack()
+    except Exception as ex:
+        st.RollBack()
+        log(u'  способ 1 не удался:', ex)
+    # способ 2
+    s1 = sist()
+    if len(s1) > 1:
+        st = DB.SubTransaction(doc)
+        st.Start()
+        try:
+            n_ok = 0
+            for s in s1:
+                if not s.IsValidObject:
+                    continue
+                for e in s.PipingNetwork:
+                    if isinstance(e, Plumbing.Pipe):
+                        e.SetSystemType(tid)
+                        n_ok += 1
+                        break
+            doc.Regenerate()
+            n2 = len(sist())
+            log(u'  способ 2 (SetSystemType): труб', n_ok, u'| систем', n2)
+            if n2 < len(s1):
+                st.Commit()
+            else:
+                st.RollBack()
+        except Exception as ex:
+            st.RollBack()
+            log(u'  способ 2 не удался:', ex)
+    # способ 3: новая система по всем приборам и оборудованию (как «Создать систему» в Revit), до и после удаления
+    # прежних систем
+    def soed_v1():
+        cs = DB.ConnectorSet()
+        n = 0
+        for k in (DB.BuiltInCategory.OST_PlumbingFixtures, DB.BuiltInCategory.OST_MechanicalEquipment):
+            for e in DB.FilteredElementCollector(doc).OfCategory(k).WhereElementIsNotElementType():
+                mm = getattr(e, 'MEPModel', None)
+                if mm is None or mm.ConnectorManager is None:
+                    continue
+                for c in mm.ConnectorManager.Connectors:
+                    if c.Domain == DB.Domain.DomainPiping and c.PipeSystemType == Plumbing.PipeSystemType.DomesticColdWater:
+                        cs.Insert(c)
+                        n += 1
+        return cs, n
+    for udalit in (False, True):
+        if len(sist()) <= 2:
+            break
+        st = DB.SubTransaction(doc)
+        st.Start()
+        try:
+            if udalit:
+                doc.Delete(List[DB.ElementId]([s.Id for s in sist()]))
+                doc.Regenerate()
+            cs, n = soed_v1()
+            ps = Plumbing.PipingSystem.Create(doc, tid, u'В1')
+            ps.Add(cs)
+            doc.Regenerate()
+            n3 = len(sist())
+            bez = sum(1 for p in DB.FilteredElementCollector(doc).OfClass(Plumbing.Pipe)
+                      if p.MEPSystem is None and (metka(p) or u'').startswith(u'КВВ-В1'))
+            log(u'  способ 3%s: соединителей приборов %d | систем %d | размер новой %d | труб В1 без системы %d'
+                % (u' (после удаления систем)' if udalit else u'', n, n3, razmer(ps), bez))
+            if n3 < len(s0) and bez == 0:
+                st.Commit()
+            else:
+                st.RollBack()
+        except Exception as ex:
+            st.RollBack()
+            log(u'  способ 3 не удался:', ex)
+    s2 = sist()
+    log(u'систем', tip, u'после:', len(s2), u'| размеры:', sorted((razmer(s) for s in s2), reverse=True)[:10])
+
+
 def svobodnye(doc, log):
     """Элементы сетей, которые «висят»: свободные соединители у труб, фитингов и арматуры (кроме верха вытяжной
     части стояков К1), элементы без системы и без метки КВВ. Свободный соединитель делится на «касается» (в той же
