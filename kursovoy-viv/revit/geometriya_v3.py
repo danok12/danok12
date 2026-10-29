@@ -938,7 +938,16 @@ def nomera():
 NOM = nomera()
 
 # ---------------- подвал: стояки В1, магистраль, ввод, насосная ----------------
-Z_MAG = -0.6
+Z_MAG = -0.6                            # отметка оси магистрали у тройника насосной (x = X_TR)
+# магистраль — с уклоном 0,002 от тройника насосной к концам, к спускным кранам у оснований крайних стояков (СП 30,
+# п. 11.19; примечание «уклон 0,002 в сторону сливной арматуры», как в образце). Ответвление и основание стояка —
+# на отметке магистрали в точке врезки
+I_MAG = 0.002
+X_TR = 4.0
+
+
+def zm(x):
+    return round(Z_MAG - I_MAG * abs(x - X_TR), 4)
 Y_MAG = 7.20
 UR_P = "Подвал"
 VYTYAZHKA = 0.2                        # вытяжная часть над неэксплуатируемой кровлей (п. 18.18 СП 30)
@@ -948,6 +957,7 @@ VYTYAZHKA = 0.2                        # вытяжная часть над не
 # преподавателя 21.10.2026): кв. А — в обход низа стояка К1 с юга, кв. Б и В — одним ответвлением между стояками К1
 # (тройник и по крану на каждый стояк)
 podvod = {}
+DX_A_, X_PARA_ = 0.35, 15.70            # = DX_A, X_PARA ниже (врезки ответвлений)
 for M in SEKCII:
     for kv in "ABC":
         x, y = M.x(ST_V[kv][0]), ST_V[kv][1]
@@ -956,10 +966,10 @@ for M in SEKCII:
         def d_fun(i, n_uzl):
             return d_ppr_po_n(N_PR * (n_uzl - i) if i > 0 else N_PR * n_uzl, 25, 1.2)
         imya = "Ст.В1-%d" % NOM[(M.s, kv)]
-        runs = stoyak(imya, "V1", x, y, uzly, Z_MAG, max(z for z, _ in uzly), ur_po_z, d_fun, "ppr")
+        x_vr = x + DX_A_ * M.sx() if kv == "A" else M.x(X_PARA_)    # врезка ответвления в магистраль
+        runs = stoyak(imya, "V1", x, y, uzly, zm(x_vr), max(z for z, _ in uzly), ur_po_z, d_fun, "ppr")
         podvod[imya] = [x, y, runs[0], d_fun(0, len(uzly)), N_PR * N_ET, x, kv, M, 0.0, 0.0]
 
-X_TR = 4.0
 DX_A = 0.35                             # кв. А: врезка в магистраль в 0,35 м от оси стояка В1 (за низом стояка К1)
 Y_OBH = 0.37                            # кв. А: подводка южнее оси стояков на 0,37 м — мимо прочистки низа К1
 X_PARA = 15.70                          # кв. Б и В: врезка посередине между стояками К1 (лок. x)
@@ -995,11 +1005,12 @@ def podvod_A(nm):
     x, y, r_st, d_st, n, _, kv, M = podvod[nm][:8]
     x_b, y_o = x + DX_A * M.sx(), y - Y_OBH
     d = dn_po_n(n, 25)
-    r0 = truba("V1", "stal", d, [(x_b, Y_MAG, Z_MAG), (x_b, y_o, Z_MAG)], UR_P)
-    r1, (ra, _), p = vetka("V1", "stal", d, [(x_b, y_o, Z_MAG)], (-M.sx(), 0), [kran_dn(d)], UR_P, first=0.10)
+    z = zm(x_b)
+    r0 = truba("V1", "stal", d, [(x_b, Y_MAG, z), (x_b, y_o, z)], UR_P)
+    r1, (ra, _), p = vetka("V1", "stal", d, [(x_b, y_o, z)], (-M.sx(), 0), [kran_dn(d)], UR_P, first=0.10)
     svyaz((r0, 1), (r1, 0))
     seti[ra]["pt"], seti[ra]["d"] = "ppr", d_st
-    seti[ra]["pts"] = seti[ra]["pts"][:1] + [R((x, y_o, Z_MAG)), R((x, y, Z_MAG))]
+    seti[ra]["pts"] = seti[ra]["pts"][:1] + [R((x, y_o, z)), R((x, y, z))]
     osnovanie(ra, r_st)
     podvod[nm][5], podvod[nm][8], podvod[nm][9] = x_b, 0.0, abs(Y_MAG - y_o) + abs(x_b - x) + Y_OBH
     return r0
@@ -1011,15 +1022,16 @@ def podvod_para(M, nm_b, nm_c):
     y_ = podvod[nm_b][1]
     x_m = M.x(X_PARA)
     n2 = podvod[nm_b][4] + podvod[nm_c][4]
-    r0 = truba("V1", "stal", dn_po_n(n2, 25), [(x_m, Y_MAG, Z_MAG), (x_m, y_, Z_MAG)], UR_P)
+    z = zm(x_m)
+    r0 = truba("V1", "stal", dn_po_n(n2, 25), [(x_m, Y_MAG, z), (x_m, y_, z)], UR_P)
     koncy = []
     for nm in (nm_b, nm_c):
         x, y, r_st, d_st, n = podvod[nm][:5]
         d = dn_po_n(n, 25)
         s_ = 1 if x > x_m else -1
-        r1, (ra, _), p = vetka("V1", "stal", d, [(x_m, y_, Z_MAG)], (s_, 0), [kran_dn(d)], UR_P, first=0.07)
+        r1, (ra, _), p = vetka("V1", "stal", d, [(x_m, y_, z)], (s_, 0), [kran_dn(d)], UR_P, first=0.07)
         seti[ra]["pt"], seti[ra]["d"] = "ppr", d_st
-        seti[ra]["pts"] = seti[ra]["pts"][:1] + [R((x, y, Z_MAG))]
+        seti[ra]["pts"] = seti[ra]["pts"][:1] + [R((x, y, z))]
         osnovanie(ra, r_st)
         koncy.append(r1)
         podvod[nm][5], podvod[nm][8], podvod[nm][9] = x_m, abs(y_ - Y_MAG), abs(x - x_m)
@@ -1042,7 +1054,7 @@ mag_vost = []
 uchastki_mag = []                      # для сверки с расчётом: (откуда, куда, длина, N)
 for i, o in enumerate(vostok):
     x = o[0]
-    r = truba("V1", "stal", dn_mag(ost), [(x_prev, Y_MAG, Z_MAG), (x, Y_MAG, Z_MAG)], UR_P)
+    r = truba("V1", "stal", dn_mag(ost), [(x_prev, Y_MAG, zm(x_prev)), (x, Y_MAG, zm(x))], UR_P)
     uchastki_mag.append((round(x_prev, 3), round(x, 3), round(x - x_prev, 3), ost, dn_mag(ost)))
     mag_vost.append(r)
     ost -= o[1]
@@ -1067,16 +1079,17 @@ def polivochnyy(M_, x_t):
     y_k = Y_POL
     # в подвале — кран перекрытия и спускной кран (замечание 28.10)
     s_ = math.copysign(1.0, x_in - x_t)
-    r0 = truba("V1", "stal", DN_POL, [(x_t, Y_MAG, Z_MAG), (x_t, y_k, Z_MAG)], UR_P)
-    r1, (r2, _), p_ = vetka("V1", "stal", DN_POL, [(x_t, y_k, Z_MAG)], (s_, 0), ["kran%d" % DN_POL], UR_P,
+    z = zm(x_t)
+    r0 = truba("V1", "stal", DN_POL, [(x_t, Y_MAG, z), (x_t, y_k, z)], UR_P)
+    r1, (r2, _), p_ = vetka("V1", "stal", DN_POL, [(x_t, y_k, z)], (s_, 0), ["kran%d" % DN_POL], UR_P,
                             first=0.12)
     svyaz((r0, 1), (r1, 0))
     x_sp = p_[0] + s_ * 0.13
-    seti[r2]["pts"] = seti[r2]["pts"][:1] + [R((x_sp, y_k, Z_MAG))]
-    r_sp = truba("V1", "stal", 15, [(x_sp, y_k, Z_MAG), (x_sp, y_k + 0.12, Z_MAG)], UR_P)
-    a_sp, _ = arm("kran15", (x_sp, y_k + 0.12, Z_MAG), (0, 1), UR_P)
+    seti[r2]["pts"] = seti[r2]["pts"][:1] + [R((x_sp, y_k, z))]
+    r_sp = truba("V1", "stal", 15, [(x_sp, y_k, z), (x_sp, y_k + 0.12, z)], UR_P)
+    a_sp, _ = arm("kran15", (x_sp, y_k + 0.12, z), (0, 1), UR_P)
     svyaz((r_sp, 1), dict(arm=a_sp, side="in"))
-    r = truba("V1", "stal", DN_POL, [(x_sp, y_k, Z_MAG), (x_in, y_k, Z_MAG), (x_in, y_k, Z_POL),
+    r = truba("V1", "stal", DN_POL, [(x_sp, y_k, z), (x_in, y_k, z), (x_in, y_k, Z_POL),
                                      (x_nar, y_k, Z_POL)], UR_P)
     troynik((r2, 1), (r, 0), (r_sp, 0))
     aid = len(armatura)
@@ -1090,13 +1103,14 @@ def polivochnyy(M_, x_t):
 # восточный конец магистрали (секция 2): последний участок — до врезки, после врезки — к ответвлению кв. А
 r_last = prev_end[0]
 x_pol2 = SEKCII[-1].x(X_POL)
-seti[r_last]["pts"][-1] = R((x_pol2, Y_MAG, Z_MAG))
-r_e2 = truba("V1", "stal", seti[r_last]["d"], [(x_pol2, Y_MAG, Z_MAG), (vostok[-1][0], Y_MAG, Z_MAG)], UR_P)
+seti[r_last]["pts"][-1] = R((x_pol2, Y_MAG, zm(x_pol2)))
+r_e2 = truba("V1", "stal", seti[r_last]["d"], [(x_pol2, Y_MAG, zm(x_pol2)), (vostok[-1][0], Y_MAG, zm(vostok[-1][0]))],
+             UR_P)
 troynik((r_last, 1), (r_e2, 0), (polivochnyy(SEKCII[-1], x_pol2), 0))
 svyaz((r_e2, 1), (vostok[-1][2](), 0))
 o_z = zapad[0]
-r_zap = truba("V1", "stal", dn_mag(o_z[1]), [(X_TR, Y_MAG, Z_MAG), (X_POL, Y_MAG, Z_MAG)], UR_P)
-r_zap2 = truba("V1", "stal", dn_mag(o_z[1]), [(X_POL, Y_MAG, Z_MAG), (o_z[0], Y_MAG, Z_MAG)], UR_P)
+r_zap = truba("V1", "stal", dn_mag(o_z[1]), [(X_TR, Y_MAG, Z_MAG), (X_POL, Y_MAG, zm(X_POL))], UR_P)
+r_zap2 = truba("V1", "stal", dn_mag(o_z[1]), [(X_POL, Y_MAG, zm(X_POL)), (o_z[0], Y_MAG, zm(o_z[0]))], UR_P)
 troynik((r_zap, 1), (r_zap2, 0), (polivochnyy(SEKCII[0], X_POL), 0))
 svyaz((r_zap2, 1), (o_z[2](), 0))
 

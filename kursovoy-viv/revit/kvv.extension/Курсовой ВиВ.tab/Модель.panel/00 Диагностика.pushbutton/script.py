@@ -60,6 +60,28 @@ def main(log):
     if rezhim == u'sistemy':
         kvv_proverka.sistemy(doc, log)
         return
+    if rezhim.startswith(u'modul '):
+        kvv_proverka.modul_semeystva(doc, HOST_APP.app, rezhim[6:], log)
+        return
+    if rezhim == u'sobrat':
+        kvv_proverka.sobrat_sistemu(doc, log)
+        kvv_proverka.sistemy(doc, log)
+        return
+    if rezhim == u'naznachit':
+        kvv_proverka.naznachit_sistemu(doc, log)
+        kvv_proverka.sistemy(doc, log)
+        return
+    if rezhim == u'udalit_sist':
+        kvv_proverka.udalit_sistemy(doc, log)
+        kvv_proverka.sistemy(doc, log)
+        return
+    if rezhim == u'perepodkl':
+        kvv_proverka.perepodklyuchit(doc, log)
+        kvv_proverka.sistemy(doc, log)
+        return
+    if rezhim == u'proba_sist':
+        kvv_proverka.proba_sistem(doc, log)
+        return
     if rezhim == u'obedinit':
         with kvv.Tranzakciya(doc, u'КВВ: одна система В1', log):
             kvv_proverka.obedinit_sistemy(doc, log)
