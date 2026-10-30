@@ -71,6 +71,9 @@ def main(log):
     if rezhim.startswith(u'snimok '):
         kvv_proverka.snimok(doc, rezhim[7:], log)
         return
+    if rezhim == u'seti_vidy':
+        kvv_proverka.seti_na_vidah(doc, log)
+        return
     if rezhim == u'fasad':
         kvv_proverka.fasad(doc, log)
         return

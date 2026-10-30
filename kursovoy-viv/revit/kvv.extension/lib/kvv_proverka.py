@@ -401,6 +401,12 @@ def vidy_3d(doc, log):
         if skr:
             v.UnhideElements(List[DB.ElementId](skr))
             log(u'вид', imya, u'| возвращено скрытых элементов здания', len(skr))
+        # чужие фильтры (остались от шаблона ADSK: «Канализация», «Отверстия и ниши»… — скрывали К1) — убрать
+        nashi = set(f.Id.IntegerValue for f, _ in filtry)
+        for fid in list(v.GetFilters()):
+            if fid.IntegerValue not in nashi:
+                log(u'вид', imya, u'| убран фильтр', doc.GetElement(fid).Name)
+                v.RemoveFilter(fid)
         for f, cvet in filtry:
             if not v.IsFilterApplied(f.Id):
                 v.AddFilter(f.Id)
@@ -1504,3 +1510,32 @@ def topo_tochki(doc, zapros, log):
         log(u"   верх: z от %.3f до %.3f" % (min(v[2] for v in verh), max(v[2] for v in verh)) if verh else u"   верха нет")
         for v in sorted(vers, key=lambda t: t[2])[:40]:
             log(u'   x %.2f y %.2f z %.3f | нормаль z %.2f' % v)
+
+
+def seti_na_vidah(doc, log):
+    """По 3D-видам: сколько элементов В1 и К1 (по метке) скрыто на виде по одному, скрыты ли категории сетей."""
+    po_metke = {}
+    for e in DB.FilteredElementCollector(doc).WhereElementIsNotElementType():
+        m = metka(e)
+        if m and (m.startswith(u'КВВ-В1') or m.startswith(u'КВВ-К1')):
+            po_metke.setdefault(m[:6], []).append(e)
+    for v in DB.FilteredElementCollector(doc).OfClass(DB.View3D):
+        if v.IsTemplate:
+            continue
+        skr = dict((k, sum(1 for e in es if e.IsHidden(v))) for k, es in po_metke.items())
+        vidno = {}
+        for e in DB.FilteredElementCollector(doc, v.Id).OfCategory(DB.BuiltInCategory.OST_PipeCurves):
+            m = metka(e)[:6]
+            vidno[m] = vidno.get(m, 0) + 1
+        filtry = []
+        for fid in v.GetFilters():
+            f = doc.GetElement(fid)
+            filtry.append(u'%s%s' % (f.Name, u'' if v.GetFilterVisibility(fid) else u' (СКРЫВАЕТ)'))
+        log(u'   %s: видимых труб по меткам %s | фильтры: %s' % (v.Name, u', '.join(
+            u'%s %d' % kv for kv in sorted(vidno.items())), u'; '.join(filtry)))
+        kat = [doc.Settings.Categories.get_Item(c).Name for c in KAT_SETI
+               if v.GetCategoryHidden(DB.ElementId(c))]
+        log(u'%s | всего %s | скрыто по одному %s | скрытые категории %s | шаблон %s | рамка %s' % (
+            v.Name, u', '.join(u'%s %d' % (k, len(es)) for k, es in sorted(po_metke.items())),
+            u', '.join(u'%s %d' % kv for kv in sorted(skr.items())), u', '.join(kat),
+            v.ViewTemplateId.IntegerValue, v.IsSectionBoxActive))
