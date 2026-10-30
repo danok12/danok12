@@ -307,7 +307,9 @@ KAT_SETI = (DB.BuiltInCategory.OST_PipeCurves, DB.BuiltInCategory.OST_FlexPipeCu
 KAT_ZDANIE = (DB.BuiltInCategory.OST_Walls, DB.BuiltInCategory.OST_Floors, DB.BuiltInCategory.OST_Roofs,
               DB.BuiltInCategory.OST_Stairs)
 KAT_SKRYT = (DB.BuiltInCategory.OST_Levels, DB.BuiltInCategory.OST_Grids, DB.BuiltInCategory.OST_Rooms,
-             DB.BuiltInCategory.OST_Doors, DB.BuiltInCategory.OST_Windows, DB.BuiltInCategory.OST_StairsRailing)
+             DB.BuiltInCategory.OST_Doors, DB.BuiltInCategory.OST_Windows, DB.BuiltInCategory.OST_StairsRailing) + \
+    tuple(getattr(DB.BuiltInCategory, k) for k in (u'OST_Toposolid', u'OST_Topography')
+          if hasattr(DB.BuiltInCategory, k))          # земля (03, zemlya) закрывает ввод и выпуски
 
 
 def _sploshnaya_zalivka(doc):
@@ -392,6 +394,13 @@ def vidy_3d(doc, log):
                     v.SetCategoryHidden(cid, True)
             except Exception:
                 pass
+        # стены и перекрытия, скрытые на виде вручную при осмотре (30.10: стена 9-го этажа по оси А) — вернуть
+        skr = [e.Id for c in KAT_ZDANIE
+               for e in DB.FilteredElementCollector(doc).OfCategory(c).WhereElementIsNotElementType()
+               if e.IsHidden(v)]
+        if skr:
+            v.UnhideElements(List[DB.ElementId](skr))
+            log(u'вид', imya, u'| возвращено скрытых элементов здания', len(skr))
         for f, cvet in filtry:
             if not v.IsFilterApplied(f.Id):
                 v.AddFilter(f.Id)
@@ -1370,3 +1379,128 @@ def klassy_soediniteley(doc, imena, log):
                 pass
         finally:
             fd.Close(False)
+
+
+def fasad(doc, log, e_=0.09, b_=12.8):
+    """Наружные стены по фасадам: по каждому уровню — стены на линиях фасадов (y = −E, y = B+E, x = −E, x = L+E),
+    их длина, низ и верх по габариту (м), привязки; окна и двери на этих стенах; стены, скрытые на 3D-видах."""
+    vidy3d = [v for v in DB.FilteredElementCollector(doc).OfClass(DB.View3D) if not v.IsTemplate]
+    steny = list(DB.FilteredElementCollector(doc).OfClass(DB.Wall))
+    xs = []
+    for w in steny:
+        lc = getattr(w.Location, 'Curve', None)
+        if lc is not None:
+            xs += [lc.GetEndPoint(0).X / kvv.M, lc.GetEndPoint(1).X / kvv.M]
+    x_max = max(xs)
+    linii = {u'А (y=-E)': ('y', -e_), u'Д (y=B+E)': ('y', b_ + e_), u'торец 1 (x=-E)': ('x', -e_),
+             u'торец 22 (x=max)': ('x', x_max)}
+    log(u'x наибольшая по стенам: %.3f' % x_max)
+    po = {}
+    for w in steny:
+        lc = getattr(w.Location, 'Curve', None)
+        if lc is None:
+            continue
+        a, b = lc.GetEndPoint(0), lc.GetEndPoint(1)
+        for nm, (os_, v) in linii.items():
+            ka, kb = (a.Y, b.Y) if os_ == 'y' else (a.X, b.X)
+            if abs(ka / kvv.M - v) < 0.02 and abs(kb / kvv.M - v) < 0.02:
+                try:
+                    ur = DB.Element.Name.GetValue(doc.GetElement(w.LevelId))
+                except Exception:
+                    ur = u'?'
+                bb = w.get_BoundingBox(None)
+                skr = [v3.Name for v3 in vidy3d if w.IsHidden(v3)]
+                po.setdefault((nm, ur), []).append(
+                    (w.Id.IntegerValue, DB.Element.Name.GetValue(w.WallType), round(lc.Length / kvv.M, 3),
+                     round(bb.Min.Z / kvv.M, 3) if bb else None, round(bb.Max.Z / kvv.M, 3) if bb else None,
+                     sorted(set([round(min(a.X, b.X) / kvv.M, 2), round(max(a.X, b.X) / kvv.M, 2)])) if os_ == 'y'
+                     else sorted(set([round(min(a.Y, b.Y) / kvv.M, 2), round(max(a.Y, b.Y) / kvv.M, 2)])), skr))
+    for (nm, ur), ws in sorted(po.items()):
+        log(u'%s | %s | стен %d | длина %.2f' % (nm, ur, len(ws), sum(x[2] for x in ws)))
+        for x in ws:
+            log(u'   id %d | %s | L %.2f | z %s…%s | %s%s' % (x[0], x[1], x[2], x[3], x[4], x[5],
+                                                         (u' | СКРЫТА на ' + u', '.join(x[6])) if x[6] else u''))
+    # окна и двери: хост и уровень
+    for kat in (DB.BuiltInCategory.OST_Windows, DB.BuiltInCategory.OST_Doors):
+        n, bez = 0, []
+        for e in DB.FilteredElementCollector(doc).OfCategory(kat).WhereElementIsNotElementType():
+            if getattr(e, 'SuperComponent', None) is not None:
+                continue                     # вложенные части семейств (створки, подоконники) — основы нет
+            n += 1
+            if e.Host is None:
+                bez.append(e.Id.IntegerValue)
+        log(kat, u'всего (без вложенных)', n, u'без основы', len(bez), bez[:20])
+    # скрытые на 3D-видах элементы архитектуры
+    for v3 in vidy3d:
+        skr = {}
+        for kat in (DB.BuiltInCategory.OST_Walls, DB.BuiltInCategory.OST_Windows, DB.BuiltInCategory.OST_Doors,
+                    DB.BuiltInCategory.OST_Floors, DB.BuiltInCategory.OST_Roofs):
+            for e in DB.FilteredElementCollector(doc).OfCategory(kat).WhereElementIsNotElementType():
+                if e.IsHidden(v3):
+                    skr[str(kat)] = skr.get(str(kat), 0) + 1
+                    if kat == DB.BuiltInCategory.OST_Walls:
+                        lc_ = getattr(e.Location, 'Curve', None)
+                        try:
+                            ur_ = DB.Element.Name.GetValue(doc.GetElement(e.LevelId))
+                        except Exception:
+                            ur_ = u'?'
+                        log(u'   вид', v3.Name, u'| скрыта стена', e.Id.IntegerValue, ur_,
+                            DB.Element.Name.GetValue(e.WallType), u'| %.2f,%.2f → %.2f,%.2f' % (
+                                lc_.GetEndPoint(0).X / kvv.M, lc_.GetEndPoint(0).Y / kvv.M,
+                                lc_.GetEndPoint(1).X / kvv.M, lc_.GetEndPoint(1).Y / kvv.M) if lc_ else u'')
+            try:
+                if v3.GetCategoryHidden(DB.ElementId(kat)):
+                    skr[str(kat) + u' (категория)'] = 1
+            except Exception:
+                pass
+        if skr:
+            log(u'вид 3D', v3.Name, u'| скрыто:', skr, u'| разрез. рамка', v3.IsSectionBoxActive)
+
+
+def snimok(doc, zapros, log):
+    """«snimok <имя вида>; <файл .png>; [пикселей]» — картинка вида (ExportImage) для осмотра без экрана."""
+    chasti = [x.strip() for x in zapros.split(u';')]
+    imya, put = chasti[0], chasti[1]
+    px = int(chasti[2]) if len(chasti) > 2 and chasti[2] else 1600
+    v = [x for x in DB.FilteredElementCollector(doc).OfClass(DB.View) if not x.IsTemplate and x.Name == imya]
+    if not v:
+        log(u'нет вида', imya)
+        return
+    o = DB.ImageExportOptions()
+    o.ExportRange = DB.ExportRange.SetOfViews
+    o.SetViewsAndSheets(List[DB.ElementId]([v[0].Id]))
+    o.FilePath = put
+    o.ZoomType = DB.ZoomFitType.FitToPage
+    o.FitDirection = DB.FitDirectionType.Horizontal
+    o.PixelSize = px
+    o.ImageResolution = DB.ImageResolution.DPI_150
+    o.HLRandWFViewsFileType = DB.ImageFileType.PNG
+    o.ShadowViewsFileType = DB.ImageFileType.PNG
+    doc.ExportImage(o)
+    log(u'снимок вида', imya, u'->', put)
+
+
+def topo_tochki(doc, zapros, log):
+    """«topo x0 y0 x1 y1» — вершины граней топотела (земли) в прямоугольнике плана, м: где поверхность проседает."""
+    x0, y0, x1, y1 = [float(v) for v in zapros.split()]
+    kat = getattr(DB.BuiltInCategory, 'OST_Toposolid')
+    o = DB.Options()
+    o.DetailLevel = DB.ViewDetailLevel.Fine
+    for e in DB.FilteredElementCollector(doc).OfCategory(kat).WhereElementIsNotElementType():
+        vers = set()
+        for g in e.get_Geometry(o):
+            if not isinstance(g, DB.Solid):
+                continue
+            for f in g.Faces:
+                n = f.ComputeNormal(DB.UV(0.5, 0.5))
+                m = f.Triangulate()
+                for i in range(m.Vertices.Count):
+                    p = m.Vertices[i]
+                    x, y, z = p.X / kvv.M, p.Y / kvv.M, p.Z / kvv.M
+                    if x0 <= x <= x1 and y0 <= y <= y1:
+                        vers.add((round(x, 2), round(y, 2), round(z, 3), round(n.Z, 2)))
+        log(u'топотело', e.Id.IntegerValue, u'| вершин в области', len(vers))
+        verh = [v for v in vers if v[3] > 0.01]
+        log(u"   верх: z от %.3f до %.3f" % (min(v[2] for v in verh), max(v[2] for v in verh)) if verh else u"   верха нет")
+        for v in sorted(vers, key=lambda t: t[2])[:40]:
+            log(u'   x %.2f y %.2f z %.3f | нормаль z %.2f' % v)

@@ -65,6 +65,15 @@ def main(log):
                                           u'ADL_Вставка гибкая фланцевая_FC10_DN32-500_PN10_Ф-Ф'], log)
         kvv_proverka.sistemy(doc, log)
         return
+    if rezhim.startswith(u'topo '):
+        kvv_proverka.topo_tochki(doc, rezhim[5:], log)
+        return
+    if rezhim.startswith(u'snimok '):
+        kvv_proverka.snimok(doc, rezhim[7:], log)
+        return
+    if rezhim == u'fasad':
+        kvv_proverka.fasad(doc, log)
+        return
     if rezhim == u'sistemy':
         kvv_proverka.sistemy(doc, log)
         return

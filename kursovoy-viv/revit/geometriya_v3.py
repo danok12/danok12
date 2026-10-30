@@ -293,6 +293,36 @@ perekr = [dict(uroven=u, kontur=kontur_sek(M), tip="perekr", otverstiya=otv_sek[
 perekr += [dict(uroven="Подвал", kontur=kontur_sek(M), tip="pol_podv", otverstiya=[]) for M in SEKCII]
 krovlya = [dict(uroven="Кровля", kontur=kontur_sek(M), tip="krovlya") for M in SEKCII]
 
+# ---------------- благоустройство у здания: земля, крыльца, приямки (03, режим zemlya) ----------------
+# 30.10, замечание «почему двери на втором этаже»: в модели не было земли, подвал (−3,0…0,0) стоял над землёй целиком
+# и входные двери на 0,000 выглядели как на втором этаже. Земля — поверхность по рельефу генплана (genplan_v3.py
+# пишет сетку отметок в genplan_v3.json), отверстие под здание по наружным граням фундаментных стен и под приямки.
+T_FUND = 0.316
+ZD_GAB = [round(-E - T_FUND / 2, 3), round(-E - T_FUND / 2, 3), round(ZERK + E + T_FUND / 2, 3),
+          round(B + E + T_FUND / 2, 3)]            # x0, y0, x1, y1 — наружные грани фундаментных стен
+Y_FAS_A = -E - T_NAR / 2                            # наружная грань стен этажей по оси А
+# крыльцо у входа в подъезд и выхода у лифта (двери x 9,92 и 12,34 по оси А, 1-й этаж): площадка 1,6 м от стены,
+# верх −0,020 (порог), ступени 0,30 м к земле — на всю ширину площадки
+KRYLCO_SEK = dict(x0=9.92 - 0.43 - 0.30, x1=12.34 + 0.68 + 0.30, glub=1.60, verh=-0.02, prostup=0.30)
+# приямок входа в подвал (дверь x 15,1 по оси А на уровне подвала): в свету 1,2 м, площадка у двери 1,0 м,
+# марш к земле на юг; стенки — бетон 200 мм
+PRIYAMOK_SEK = dict(x=15.1, shir=1.20, ploshchadka=1.00, stupen=0.28, t_st=0.20)
+kryltsa, priyamki = [], []
+for M_ in SEKCII:
+    a, b = sorted((M_.x(KRYLCO_SEK["x0"]), M_.x(KRYLCO_SEK["x1"])))
+    kryltsa.append(dict(x0=round(a, 3), x1=round(b, 3), y1=round(Y_FAS_A, 3),
+                        y0=round(Y_FAS_A - KRYLCO_SEK["glub"], 3), verh=KRYLCO_SEK["verh"],
+                        prostup=KRYLCO_SEK["prostup"]))
+    xc = M_.x(PRIYAMOK_SEK["x"])
+    priyamki.append(dict(x=round(xc, 3), shir=PRIYAMOK_SEK["shir"], y_stena=ZD_GAB[1],
+                         ploshchadka=PRIYAMOK_SEK["ploshchadka"], stupen=PRIYAMOK_SEK["stupen"],
+                         t_st=PRIYAMOK_SEK["t_st"], z_niz=Z_P))
+# крыльцо не над приямком, приямок у двери подвала
+for kr_ in kryltsa:
+    for pr_ in priyamki:
+        assert pr_["x"] + pr_["shir"] / 2 + pr_["t_st"] < kr_["x0"] - 0.5 or             pr_["x"] - pr_["shir"] / 2 - pr_["t_st"] > kr_["x1"] + 0.5, ("приямок у крыльца", kr_, pr_)
+zemlya = dict(zdanie=ZD_GAB, kryltsa=kryltsa, priyamki=priyamki)
+
 # ================= ПРИБОРЫ И СЕТИ =================
 P_C = REZ["P"]["c"]
 N_PR = 4
@@ -1193,17 +1223,26 @@ Z_VV = -2.5
 Y_ST_A = -E - T_NAR / 2                 # наружная грань стены по оси А
 r_vv = truba("V1", "pe", 63, [(X_TR, Y_ST_A - 2.0, Z_VV), (X_TR, Y_IN0, Z_VV)], UR_P)
 Z_VU = -2.0
-r_v1 = truba("V1", "stal", 50, [(X_TR, Y_IN0, Z_VV), (X_TR, 1.5, Z_VV), (X_TR, 1.5, Z_VU), (X_TR, 1.8, Z_VU)], UR_P)
+r_v1 = truba("V1", "stal", 50, [(X_TR, Y_IN0, Z_VV), (X_TR, 1.43, Z_VV), (X_TR, 1.43, Z_VU), (X_TR, 1.73, Z_VU)], UR_P)
 svyaz((r_vv, 1), (r_v1, 0))
 # водомерный узел (30.10, по замечанию «собери правильно, все части — из «Семейства ВК»): тройник обвода — задвижка
 # KR11 DN50 и фильтр IS40 DN50 на фланцах встык — переход 50/DN_SCH — счётчик — тройник с контрольно-спускным краном
 # (СП 30, п. 12.9) — переход — задвижка KR11 DN50 — тройник обвода; на обводной линии — задвижка KR11 DN50,
 # опломбированная закрытой (п. 12.10–12.11). Переходы 50/25 Revit ставит сам (муфты ГОСТ 8957)
-Y_OUT = 3.42                            # выходной тройник обвода (до 30.10 — 3,25: узел на фланцевой арматуре длиннее)
-r_a, (r_b, _), p = vetka("V1", "stal", 50, [(X_TR, 1.8, Z_VU)], (0, 1), ["zadv50", "filtr50"], UR_P, first=0.15,
+Y_OUT = 3.46                            # выходной тройник обвода (до 30.10 — 3,25: узел на фланцевой арматуре длиннее)
+r_a, (r_b, _), p = vetka("V1", "stal", 50, [(X_TR, 1.73, Z_VU)], (0, 1), ["zadv50", "filtr50"], UR_P, first=0.10,
                          sborka=True)
-Y_P1 = round(p[1] + 0.06, 3)            # конец участка DN50 после фильтра (переход на DN_SCH)
-seti[r_b]["pts"] = seti[r_b]["pts"][:1] + [R((X_TR, Y_P1, Z_VU))]
+# второй контрольный кран — не далее 0,5 м после первой задвижки (СП 30, п. 12.9): тройник на участке DN50 сразу
+# за фильтром (0,40 м от фланца задвижки), кран 1/2" вбок, штуцер с пробкой; дальше DN50 0,10 м и переход на DN_SCH
+Y_T = round(p[1] + 0.07, 3)
+Y_P1 = round(Y_T + 0.17, 3)            # тройник 50×15 + переход 50/DN_SCH (Revit): при 0,10 оставалось 7,5 мм трубы
+seti[r_b]["pts"] = seti[r_b]["pts"][:1] + [R((X_TR, Y_T, Z_VU))]
+r_b2 = truba("V1", "stal", 50, [(X_TR, Y_T, Z_VU), (X_TR, Y_P1, Z_VU)], UR_P)
+r_k1 = truba("V1", "stal", 15, [(X_TR, Y_T, Z_VU), (X_TR + 0.15, Y_T, Z_VU)], UR_P)     # выход тройника 50×15 длиннее
+a_k1, o_k1 = arm("kran15", (X_TR + 0.15, Y_T, Z_VU), (1, 0), UR_P)
+svyaz((r_k1, 1), dict(arm=a_k1, side="in"))
+probka(a_k1, o_k1, (1, 0))
+troynik((r_b, 1), (r_b2, 0), (r_k1, 0))
 DN_SCH = REZ["schetchik_dom"][0]        # общедомовой счётчик — по расчёту (холодный расход)
 r_sch, (r_sch2, _), p = vetka("V1", "stal", DN_SCH, [(X_TR, Y_P1, Z_VU)], (0, 1), ["sch%d" % DN_SCH], UR_P,
                               first=0.10)
@@ -1216,13 +1255,13 @@ a_ksk, o_ksk = arm("kran15", (X_TR + 0.12, Y_KSK, Z_VU), (1, 0), UR_P)
 svyaz((r_ksk, 1), dict(arm=a_ksk, side="in"))
 probka(a_ksk, o_ksk, (1, 0))
 troynik((r_sch2, 1), (r_sch3, 0), (r_ksk, 0))
-svyaz((r_b, 1), (r_sch, 0))
+svyaz((r_b2, 1), (r_sch, 0))
 r_c, (r_d, _), p = vetka("V1", "stal", 50, [(X_TR, Y_P2, Z_VU)], (0, 1), ["zadv50"], UR_P, first=0.08)
 svyaz((r_sch3, 1), (r_c, 0))
 seti[r_d]["pts"] = seti[r_d]["pts"][:1] + [R((X_TR, Y_OUT, Z_VU))]
 r_vs = truba("V1", "stal", 50, [(X_TR, Y_OUT, Z_VU), (X_TR, p_vs[1], Z_VU), (X_TR, p_vs[1], p_vs[2]), p_vs], UR_P)
 svyaz((r_vs, 1), dict(obor=0, kind="vs"))
-r_o1, (r_o2, _), p = vetka("V1", "stal", 50, [(X_TR, 1.8, Z_VU), (X_TR - 0.2, 1.8, Z_VU)], (0, 1), ["zadv50"],
+r_o1, (r_o2, _), p = vetka("V1", "stal", 50, [(X_TR, 1.73, Z_VU), (X_TR - 0.2, 1.73, Z_VU)], (0, 1), ["zadv50"],
                            UR_P, first=0.4)
 seti[r_o2]["pts"] = seti[r_o2]["pts"][:1] + [R((X_TR - 0.2, Y_OUT, Z_VU)), R((X_TR, Y_OUT, Z_VU))]
 troynik((r_v1, 1), (r_a, 0), (r_o1, 0))
@@ -1786,7 +1825,7 @@ geo = dict(pomescheniya=pomescheniya, razdeliteli=razdeliteli, pribory=pribory, 
                           sml="ADSK_Чугун_Безраструбный SML_DIN EN 877",
                           pe="ADSK_Полиэтилен ПЭ100 SDR17_ГОСТ 18599-2001",
                           ppr="ADSK_Полипропилен_PN20"),
-           urovni=urovni, osi=osi, steny=steny, okna=okna, perekr=perekr, krovlya=krovlya,
+           urovni=urovni, osi=osi, steny=steny, okna=okna, perekr=perekr, krovlya=krovlya, zemlya=zemlya,
            tipy=dict(nar="ADSK_Наружная отделка_Кирпич250_Слоистая кладка330_580",
                      fund="ADSK_Фундамент_Бетон300_Гидроизоляция16_316",
                      nes="ADSK_Внутренняя_Кирпич_250",

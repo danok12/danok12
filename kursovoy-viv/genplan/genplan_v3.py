@@ -93,16 +93,29 @@ def G(y):
     return A_LIN * (Y_DVOR - y) / P_Y + A_VOL * math.sin(2 * math.pi * (y - Y_DVOR) / P_Y)
 
 
+X_K1 = X_NAR1 + 10.0                            # за правым торцом подъём к улице восстанавливается
+
+
+def K(x):
+    """Доля подъёма к улице G(y) по x: 1 у ввода и левее, линейно до 0 у правого торца, за торцом снова до 1.
+    Без неё земля у фасада А в правой секции поднималась выше 0,000 (+0,02 у угла), а у здания она должна быть
+    не ниже −0,15 от пола 1-го этажа (проверка ниже). Линейно — чтобы рельеф оставался монотонным по x."""
+    if x <= X_VV:
+        return 1.0
+    if x <= X_NAR1:
+        return (X_NAR1 - x) / (X_NAR1 - X_VV)
+    return min(1.0, (x - X_NAR1) / (X_K1 - X_NAR1))
+
+
 def zeml(x, y):
-    return F(x) + G(y)
+    return F(x) + G(y) * K(x)
 
 
 def x_po_z(z, y, lo=-200.0, hi=250.0):
-    """Абсцисса точки горизонтали z на ординате y (рельеф монотонен по x)."""
-    c = z - G(y)
+    """Абсцисса точки горизонтали z на ординате y (рельеф монотонен по x — проверяется ниже)."""
     for _ in range(80):
         mid = (lo + hi) / 2
-        if F(mid) < c:
+        if zeml(mid, y) < z:
             lo = mid
         else:
             hi = mid
@@ -113,6 +126,13 @@ def x_po_z(z, y, lo=-200.0, hi=250.0):
 for k in ("ГКК", "ККК", "КК-3", "КК-1"):
     assert abs(zeml(*KOL[k]) - ZEML[k]) < 0.005, (k, zeml(*KOL[k]), ZEML[k])
 assert abs(zeml(*KOL["ГВК"]) - Z_ZEML_GVK) < 0.005
+Z_ZEML_ZD = Z0 - 0.15                           # земля у здания — не выше −0,150 (вход, цоколь)
+for x_ in [X_NAR0 + k * (X_NAR1 - X_NAR0) / 200 for k in range(201)]:
+    for y_ in (Y_NAR0, Y_NAR1):
+        assert round(zeml(x_, y_), 2) <= Z_ZEML_ZD + 1e-9, ("земля у здания выше −0,15", x_, y_, zeml(x_, y_))
+for y_ in [Y_VK - 10 + k * 0.5 for k in range(80)]:
+    zz_ = [zeml(-60 + k * 0.5, y_) for k in range(260)]
+    assert all(b - a > 0 for a, b in zip(zz_, zz_[1:])), ("рельеф не монотонен по x", y_)
 R_VV = 0.0315                                   # наружный радиус ПЭ Ø63
 i_vv = (Z0 + Z_VV_OTN - Z_VV_GVK) / (L_GVK + L_VK)
 proverki = []
@@ -127,6 +147,75 @@ for v in vyp:
     glub = zz - LOT_VYP
     proverki.append(("выпуск x=%.2f" % v["x"], round(zz, 2), LOT_VYP, round(glub, 2), REZ["min_glub"]))
     assert glub >= REZ["min_glub"] - 1e-6, ("выпуск мелко", v, glub)
+
+# ---------------- земля у здания для модели Revit (03, режим zemlya) ----------------
+# крыльца и приямки — из geometriya_v3.json; отметки — по рельефу zeml, относительные (0,000 = Z0)
+GEO_Z = json.load(open(os.path.join(KURS, "revit", "geometriya_v3.json"), encoding="utf-8"))["zemlya"]
+
+
+def z_otn(x, y):
+    return round(zeml(x, y) - Z0, 3)
+
+
+kryltsa_z = []
+for k_ in GEO_Z["kryltsa"]:
+    zg = min(z_otn(k_["x0"] + t * (k_["x1"] - k_["x0"]) / 10, k_["y0"]) for t in range(11))
+    n_st = max(1, math.ceil((k_["verh"] - zg) / 0.15 - 1e-9))        # подступенки не выше 150 мм
+    h_st = (k_["verh"] - zg) / n_st
+    stupeni = [dict(verh=round(k_["verh"] - j * h_st, 3), y0=round(k_["y0"] - j * k_["prostup"], 3),
+                    y1=round(k_["y0"] - (j - 1) * k_["prostup"], 3)) for j in range(1, n_st)]
+    kryltsa_z.append(dict(k_, zeml=zg, n_podst=n_st, h_podst=round(h_st, 3), stupeni=stupeni))
+priyamki_z = []
+for pr_ in GEO_Z["priyamki"]:
+    x0, x1 = pr_["x"] - pr_["shir"] / 2, pr_["x"] + pr_["shir"] / 2
+    zg = max(z_otn(x_, pr_["y_stena"] - d_) for x_ in (x0, x1) for d_ in (0.0, 3.0, 6.0))
+    n_p = math.ceil((zg - pr_["z_niz"]) / 0.18 - 1e-9)                 # подступенки не выше 180 мм
+    y_marsh0 = pr_["y_stena"] - pr_["ploshchadka"]
+    y_marsh1 = y_marsh0 - (n_p - 1) * pr_["stupen"]
+    y_kon = y_marsh1                      # верхний подступенок выходит на землю: торца у приямка нет, стенки по бокам
+    t = pr_["t_st"]
+    priyamki_z.append(dict(pr_, zeml=zg, n_podst=n_p, h_podst=round((zg - pr_["z_niz"]) / n_p, 3),
+                           y_marsh0=round(y_marsh0, 3), y_marsh1=round(y_marsh1, 3), y_kon=round(y_kon, 3),
+                           verh_sten=round(zg + 0.15, 3),
+                           naruzh=[round(x0 - t, 3), round(y_kon, 3), round(x1 + t, 3), pr_["y_stena"]]))
+x0z, y0z, x1z, y1z = GEO_Z["zdanie"]
+otv = [(x0z, y0z)]                                     # контур отверстия: здание с вырезами приямков по фасаду А
+for pr_ in sorted(priyamki_z, key=lambda q: q["x"]):
+    a_, b_, c_, _ = pr_["naruzh"]
+    otv += [(a_, y0z), (a_, b_), (c_, b_), (c_, y0z)]
+otv += [(x1z, y0z), (x1z, y1z), (x0z, y1z)]
+GR_Z = (x0z - 12.0, y0z - 12.0, x1z + 12.0, y1z + 12.0)
+
+
+def v_otverstii(x, y, zapas=0.30):
+    if x0z - zapas <= x <= x1z + zapas and y0z - zapas <= y <= y1z + zapas:
+        return True
+    return any(pr_["naruzh"][0] - zapas <= x <= pr_["naruzh"][2] + zapas and
+               pr_["naruzh"][1] - zapas <= y <= y0z + zapas for pr_ in priyamki_z)
+
+
+tochki = []
+nx_, ny_ = int((GR_Z[2] - GR_Z[0]) / 1.0), int((GR_Z[3] - GR_Z[1]) / 1.0)        # сетка 1 м: грани топотела мельче
+for i in range(nx_ + 1):
+    for j in range(ny_ + 1):
+        x_ = GR_Z[0] + i * (GR_Z[2] - GR_Z[0]) / nx_
+        y_ = GR_Z[1] + j * (GR_Z[3] - GR_Z[1]) / ny_
+        if 0 < i < nx_ and 0 < j < ny_ and not v_otverstii(x_, y_):
+            tochki.append([round(x_, 3), round(y_, 3), z_otn(x_, y_)])
+# точки ровно в вершинах и на рёбрах контуров (отверстие и граница): вершину контура без точки Revit ставит на
+# отметку уровня 0,000 — у углов здания и приямков земля поднималась клином
+gr_kontur = [(GR_Z[0], GR_Z[1]), (GR_Z[2], GR_Z[1]), (GR_Z[2], GR_Z[3]), (GR_Z[0], GR_Z[3])]
+for kontur_ in (otv, gr_kontur):
+    for (xa, ya), (xb, yb) in zip(kontur_, kontur_[1:] + kontur_[:1]):
+        n_ = max(1, int(math.ceil(math.hypot(xb - xa, yb - ya) / 1.0)))
+        for k in range(n_):
+            x_, y_ = xa + (xb - xa) * k / n_, ya + (yb - ya) * k / n_
+            tochki.append([round(x_, 3), round(y_, 3), z_otn(x_, y_)])
+zemlya_revit = dict(granica=[round(v, 3) for v in GR_Z], otverstie=[[round(a, 3), round(b, 3)] for a, b in otv],
+                    tochki=tochki, kryltsa=kryltsa_z, priyamki=priyamki_z,
+                    zeml_min=min(t_[2] for t_ in tochki), zeml_max=max(t_[2] for t_ in tochki))
+for k_ in kryltsa_z:
+    assert k_["zeml"] <= -0.15 + 1e-9 and k_["n_podst"] <= 3, ("крыльцо", k_)
 
 # ---------------- лист: А2 как в образце — генплан 1:500 (по методичке) в левой половине, правая — под профиль --------
 S = 0.5                                         # м модели на 1 мм листа
@@ -258,7 +347,7 @@ while z <= zmax + 1e-9:
     yy = OKNO[1]
     while yy <= OKNO[3] + 1e-9:
         x = x_po_z(z, yy)
-        if OKNO[0] <= x <= OKNO[2]:
+        if OKNO[0] <= x <= OKNO[2] and not (X_NAR0 <= x <= X_NAR1 and Y_NAR0 <= yy <= Y_NAR1):
             tek.append((x, yy))
         elif tek:
             kus.append(tek)
@@ -283,6 +372,12 @@ while z <= zmax + 1e-9:
 # здание
 polilinia([(X_NAR0, Y_NAR0), (X_NAR1, Y_NAR0), (X_NAR1, Y_NAR1), (X_NAR0, Y_NAR1)], "ГП_Здание", zamk=True, ves=50)
 otrezok((X_SHOV, Y_NAR0), (X_SHOV, Y_NAR1), "ГП_Здание", ves=25)                # деформационный шов
+for k_ in kryltsa_z:                                                            # крыльца и приямки (03, zemlya)
+    polilinia([(k_["x0"], k_["y1"]), (k_["x0"], k_["y0"]), (k_["x1"], k_["y0"]), (k_["x1"], k_["y1"])], "ГП_Здание",
+              ves=25)
+for pr_ in priyamki_z:
+    a_, b_, c_, d_ = pr_["naruzh"]
+    polilinia([(a_, Y_NAR0), (a_, b_), (c_, b_), (c_, Y_NAR0)], "ГП_Здание", ves=25)
 tekst(((X_NAR0 + X_NAR1) / 2, Y_NAR0 + 3.6), hm(3.5), "0,000 = %s" % F2(Z0), "ГП_Текст", vyr="M", maska=True)
 
 # городские сети и красная линия
@@ -463,7 +558,7 @@ dannye = dict(
     lotok=REZ["lotok"], uchastki=[dict(ot=a, do=b, L=d_["L"], i=d_["i"], d=160) for d_, (a, b) in zip(DVOR, PARY)],
     vypusk=dict(L=L_VYP, i=U_VYP["i"], lotok_stena=LOT_VYP), vvod=dict(L_vk=L_VK, L_gvk=L_GVK, z_stena=Z0 + Z_VV_OTN,
                                                                         z_gvk=Z_VV_GVK),
-    gorizontali=gorizontali, z0=Z0)
+    gorizontali=gorizontali, z0=Z0, zemlya=zemlya_revit)
 json.dump(dannye, io.open(os.path.join(HERE, "genplan_v3.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@ reload(kvv)
 doc = HOST_APP.doc
 M = kvv.M
 METKA = u'КВВ-здание'
+METKA_Z = u'КВВ-земля'          # земля, крыльца, приямки (режим zemlya)
 TOLSH = {u'nar': 0.58, u'fund': 0.316, u'nes': 0.25, u'per': 0.10, u'beton': 0.20, u'korob': 0.05}   # как в geometriya_v3.py
 
 
@@ -38,7 +39,7 @@ def udalit_seti(log):
             continue
         if p is not None and p.HasValue:
             s_ = p.AsString() or u''
-            if s_.startswith(u'КВВ-') and s_ != METKA:
+            if s_.startswith(u'КВВ-') and s_ not in (METKA, METKA_Z):
                 ids.append(e.Id)
     if ids:
         doc.Delete(List[DB.ElementId](ids))
@@ -421,9 +422,204 @@ def soedinit_steny(log):
     log(u'стыки стен: соединено пар', n, u'| не соединилось', osh)
 
 
+# ---------------- земля, крыльца, приямки (режим zemlya) ----------------
+# 30.10, замечание «почему двери на втором этаже»: без земли подвал стоял над землёй целиком. Земля — по рельефу
+# генплана (genplan/genplan_v3.json, блок zemlya: сетка отметок, отверстие под здание и приямки, крыльца, приямки).
+VID_FASAD = u'КВВ_3D_Фасад'
+VID_VHOD = u'КВВ_3D_Вход'                 # вход в подъезд и приямок секции 1 крупно
+
+
+def pometit_z(e):
+    p = e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+    if p and not p.IsReadOnly:
+        p.Set(METKA_Z)
+
+
+def udalit_zemlyu(log):
+    ids = []
+    for e in DB.FilteredElementCollector(doc).WhereElementIsNotElementType():
+        try:
+            p = e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+        except Exception:
+            continue
+        if p is not None and p.HasValue and p.AsString() == METKA_Z:
+            ids.append(e.Id)
+    if ids:
+        doc.Delete(List[DB.ElementId](ids))
+    log(u'удалено элементов земли, крылец и приямков', len(ids))
+
+
+def tip_grunta(log, tolsh=1.0):
+    """Тип земли толщиной 1,0 м: низ топотела — на 1,0 м ниже уровня «Этаж 01» (−1,000), ниже самой низкой
+    отметки рельефа (−0,67) и выше секущей плоскости плана подвала (−1,8) — на планах земли нет."""
+    imya = u'КВВ_Грунт_1000'
+    tipy = list(DB.FilteredElementCollector(doc).OfClass(DB.ToposolidType))
+    for t in tipy:
+        if DB.Element.Name.GetValue(t) == imya:
+            return t
+    t = tipy[0].Duplicate(imya)
+    cs = t.GetCompoundStructure()            # слои типа — пропорционально до 1,0 м (новая структура не подходит:
+    vse = sum(cs.GetLayerWidth(i) for i in range(cs.LayerCount))       # у земли своё условие торцов)
+    for i in range(cs.LayerCount):
+        cs.SetLayerWidth(i, cs.GetLayerWidth(i) * tolsh * M / vse)
+    t.SetCompoundStructure(cs)
+    log(u'создан тип земли', imya, u'толщиной', tolsh)
+    return t
+
+
+def pryamoug(x0, y0, x1, y1):
+    return kontur([(x0, y0), (x1, y0), (x1, y1), (x0, y1)])
+
+
+def plita(ft, lv_, x0, y0, x1, y1, verh):
+    """Плита (крыльцо, ступень, дно приямка): верх на verh (м) от уровня lv_."""
+    f = DB.Floor.Create(doc, List[DB.CurveLoop]([pryamoug(x0, y0, x1, y1)]), ft.Id, lv_.Id)
+    f.get_Parameter(DB.BuiltInParameter.FLOOR_HEIGHTABOVELEVEL_PARAM).Set(verh * M)
+    pometit_z(f)
+    return f
+
+
+def zemlya(g, gp, lv, log):
+    z = gp['zemlya']
+    l1, lp = lv[u'Этаж 01'], lv[u'Подвал']
+    tt = tip_grunta(log)
+    x0, y0, x1, y1 = z['granica']
+    loops = List[DB.CurveLoop]([pryamoug(x0, y0, x1, y1), kontur(z['otverstie'])])
+    pts = List[DB.XYZ]([DB.XYZ(x * M, y * M, h * M) for x, y, h in z['tochki']])
+    ts = DB.Toposolid.Create(doc, loops, pts, tt.Id, l1.Id)
+    pometit_z(ts)
+    log(u'земля: точек', len(z['tochki']), u'| отметки %.2f…%.2f' % (z['zeml_min'], z['zeml_max']))
+    ft = kvv.po_imeni(doc, DB.FloorType, g['tipy']['pol_podv'])
+    for k in z['kryltsa']:
+        plita(ft, l1, k['x0'], k['y0'], k['x1'], k['y1'], k['verh'])
+        for s_ in k['stupeni']:
+            plita(ft, l1, k['x0'], s_['y0'], k['x1'], s_['y1'], s_['verh'])
+        log(u'крыльцо x %.2f…%.2f: верх %.3f, земля %.3f, подступенков %d по %.3f' % (
+            k['x0'], k['x1'], k['verh'], k['zeml'], k['n_podst'], k['h_podst']))
+    wt = kvv.po_imeni(doc, DB.WallType, g['tipy']['beton'])
+    for p in z['priyamki']:
+        xa, xb = p['x'] - p['shir'] / 2, p['x'] + p['shir'] / 2
+        plita(ft, lp, xa, p['y_kon'], xb, p['y_stena'], 0.0)
+        for xs in (xa - p['t_st'] / 2, xb + p['t_st'] / 2):
+            line = DB.Line.CreateBound(kvv.xyz(xs, p['y_stena']), kvv.xyz(xs, p['y_kon']))
+            w = DB.Wall.Create(doc, line, wt.Id, lp.Id, (p['verh_sten'] - p['z_niz']) * M, 0.0, False, False)
+            w.get_Parameter(DB.BuiltInParameter.WALL_KEY_REF_PARAM).Set(0)
+            pometit_z(w)
+        log(u'приямок x %.2f: земля %.3f, подступенков %d по %.3f, марш %.2f м' % (
+            p['x'], p['zeml'], p['n_podst'], p['h_podst'], p['y_marsh0'] - p['y_marsh1']))
+
+
+def marshi_priyamkov(gp, lv, log):
+    """Марш в приямке: от уровня подвала до земли (верх лестницы — смещение от «Этаж 01»)."""
+    l1, lp = lv[u'Этаж 01'], lv[u'Подвал']
+    for p in gp['zemlya']['priyamki']:
+        scope = DB.StairsEditScope(doc, u'КВВ: марш приямка')
+        try:
+            sid = scope.Start(lp.Id, l1.Id)
+            t = DB.Transaction(doc, u'КВВ: марш приямка')
+            t.Start()
+            st = doc.GetElement(sid)
+            st.get_Parameter(DB.BuiltInParameter.STAIRS_TOP_OFFSET).Set(p['zeml'] * M)
+            for bip, v in ((DB.BuiltInParameter.STAIRS_DESIRED_NUMBER_OF_RISERS, p['n_podst']),
+                           (DB.BuiltInParameter.STAIRS_ACTUAL_TREAD_DEPTH, p['stupen'] * M)):
+                par = st.get_Parameter(bip)
+                if par is not None and not par.IsReadOnly:
+                    par.Set(v)
+            z0 = lp.Elevation
+            line = DB.Line.CreateBound(DB.XYZ(p['x'] * M, p['y_marsh0'] * M, z0),
+                                       DB.XYZ(p['x'] * M, p['y_marsh1'] * M, z0))
+            r = A.StairsRun.CreateStraightRun(doc, sid, line, A.StairsRunJustification.Center)
+            r.ActualRunWidth = (p['shir'] - 0.10) * M        # косоуры (по 50 мм) — внутри приямка
+            pometit_z(st)
+            t.Commit()
+            scope.Commit(Glush())
+            st = doc.GetElement(sid)
+            log(u'марш приямка x %.2f: подступенков %s, высота %.3f, проступь %.3f' % (
+                p['x'], st.ActualRisersNumber, st.Height / M, st.ActualTreadDepth / M))
+            bb = st.get_BoundingBox(None)
+            log(u'   габарит марша: x %.2f…%.2f, y %.2f…%.2f, z %.2f…%.2f' % (
+                bb.Min.X / M, bb.Max.X / M, bb.Min.Y / M, bb.Max.Y / M, bb.Min.Z / M, bb.Max.Z / M))
+            for rid in st.GetAssociatedRailings():
+                rl = doc.GetElement(rid)
+                rb = rl.get_BoundingBox(None)
+                log(u'   ограждение %d: x %.2f…%.2f, y %.2f…%.2f, z %.2f…%.2f' % (
+                    rid.IntegerValue, rb.Min.X / M, rb.Max.X / M, rb.Min.Y / M, rb.Max.Y / M, rb.Min.Z / M,
+                    rb.Max.Z / M))
+        except Exception as ex:
+            log(u'ОШИБКА марша приямка:', ex)
+            try:
+                scope.Cancel()
+            except Exception:
+                pass
+
+
+def vid_fasada(log, imya=VID_FASAD, ramka=None, glaz=(70, -45, 30), cel=(22.6, 6.4, 8)):
+    """3D-вид фасада по оси А с юго-востока: здание с землёй, крыльцами и приямками (для осмотра). ramka —
+    (x0, y0, z0, x1, y1, z1) секущего параллелепипеда, м (вид входа крупно)."""
+    v = None
+    for e in DB.FilteredElementCollector(doc).OfClass(DB.View3D):
+        if not e.IsTemplate and e.Name == imya:
+            v = e
+    if v is None:
+        vft = [t for t in DB.FilteredElementCollector(doc).OfClass(DB.ViewFamilyType)
+               if t.ViewFamily == DB.ViewFamily.ThreeDimensional][0]
+        v = DB.View3D.CreateIsometric(doc, vft.Id)
+        v.Name = imya
+    v.ViewTemplateId = DB.ElementId.InvalidElementId
+    if v.IsLocked:
+        v.Unlock()
+    v.IsSectionBoxActive = False
+    if ramka is not None:
+        sb = DB.BoundingBoxXYZ()
+        sb.Min = DB.XYZ(ramka[0] * M, ramka[1] * M, ramka[2] * M)
+        sb.Max = DB.XYZ(ramka[3] * M, ramka[4] * M, ramka[5] * M)
+        v.IsSectionBoxActive = True
+        v.SetSectionBox(sb)
+    for bic in (DB.BuiltInCategory.OST_Levels, DB.BuiltInCategory.OST_Grids, DB.BuiltInCategory.OST_SectionBox):
+        cid = DB.ElementId(bic)
+        if v.CanCategoryBeHidden(cid):
+            v.SetCategoryHidden(cid, True)
+    v.DisplayStyle = DB.DisplayStyle.ShadingWithEdges
+    v.DetailLevel = DB.ViewDetailLevel.Medium
+    glaz = DB.XYZ(glaz[0] * M, glaz[1] * M, glaz[2] * M)
+    cel = DB.XYZ(cel[0] * M, cel[1] * M, cel[2] * M)
+    vpered = (cel - glaz).Normalize()
+    vverh = vpered.CrossProduct(DB.XYZ.BasisZ).CrossProduct(vpered).Normalize()
+    v.SetOrientation(DB.ViewOrientation3D(glaz, vverh, vpered))
+    for p in v.Parameters:
+        nm = p.Definition.Name
+        if p.StorageType == DB.StorageType.String and not p.IsReadOnly:
+            if u'Назначение' in nm:
+                p.Set(u'Вспомогательные виды')
+            elif u'Раздел' in nm:
+                p.Set(u'3D для осмотра')
+    log(u'вид', imya)
+    return v
+
+
+def rezhim_zemlya(g, log):
+    gp = kvv.load_json('genplan', 'genplan_v3.json')
+    lv = kvv.urovni(doc)
+    with kvv.Tranzakciya(doc, u'КВВ: земля, крыльца, приямки', log):
+        udalit_zemlyu(log)
+        zemlya(g, gp, lv, log)
+    marshi_priyamkov(gp, lv, log)
+    with kvv.Tranzakciya(doc, u'КВВ: вид фасада', log):
+        v = vid_fasada(log)
+        k = gp['zemlya']['kryltsa'][0]
+        xc = (k['x0'] + k['x1']) / 2 + 1.5
+        vid_fasada(log, VID_VHOD, (k['x0'] - 1.5, -8.0, -3.6, k['x1'] + 4.5, 2.0, 4.0),
+                   glaz=(xc + 9.0, -16.0, 10.0), cel=(xc, -2.0, -1.0))
+    try:
+        HOST_APP.uidoc.ActiveView = v
+    except Exception as ex:
+        log(u'вид фасада не открыт:', ex)
+
+
 def rezhim_zapuska():
     """revit/03_rezhim.txt: «podval» — перестроить только подвал (стены и двери) и соединить стыки стен;
-    «styki» — только соединить стыки; иначе — всё здание. Файл после чтения удаляется."""
+    «styki» — только соединить стыки; «zemlya» — только земля, крыльца и приямки (сети не трогаются);
+    иначе — всё здание. Файл после чтения удаляется."""
     put = os.path.join(kvv.REVIT, u'03_rezhim.txt')
     if not os.path.isfile(put):
         return u''
@@ -436,6 +632,9 @@ def rezhim_zapuska():
 def main(log):
     g = kvv.load_json('revit', 'geometriya_v3.json')
     rezhim = rezhim_zapuska()
+    if rezhim == u'zemlya':
+        rezhim_zemlya(g, log)
+        return
     if rezhim in (u'podval', u'styki'):
         log(u'режим:', rezhim)
         lv = kvv.urovni(doc)
@@ -480,6 +679,7 @@ def main(log):
     lestnicy(g, lv, log)
     with kvv.Tranzakciya(doc, u'КВВ: стыки стен', log):
         soedinit_steny(log)
+    rezhim_zemlya(g, log)
 
 
 kvv.run('03_zdanie', main)
