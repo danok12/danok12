@@ -320,10 +320,12 @@ def _sploshnaya_zalivka(doc):
 
 def _filtr_sistemy(doc, imya, metka_):
     """Фильтр вида: элементы сетей с «Комментарием», начинающимся с метки системы (КВВ-В1 / КВВ-К1)."""
+    kat = List[DB.ElementId]([DB.ElementId(c) for c in KAT_SETI])
     for f in DB.FilteredElementCollector(doc).OfClass(DB.ParameterFilterElement):
         if f.Name == imya:
+            # существующий фильтр — с текущими категориями (30.10 добавлены гибкие трубы: подводки были серые)
+            f.SetCategories(kat)
             return f
-    kat = List[DB.ElementId]([DB.ElementId(c) for c in KAT_SETI])
     pravilo = DB.ParameterFilterRuleFactory.CreateBeginsWithRule(
         DB.ElementId(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS), metka_)
     return DB.ParameterFilterElement.Create(doc, imya, kat, DB.ElementParameterFilter(pravilo))
@@ -488,6 +490,25 @@ def sistemy(doc, log):
                     primer.setdefault(kl, (e.Id.IntegerValue, s1, s2, c.Origin.X / kvv.M, c.Origin.Y / kvv.M,
                                            c.Origin.Z / kvv.M))
     log(u'систем В1:', len(razmer), u'| соединителей по системам (10 крупнейших):', razmer.most_common(10))
+    # из чего состоят системы: размер -> сколько систем; пример состава у нескольких систем каждого размера
+    po_razmeru = collections.Counter(razmer.values())
+    log(u'размеры систем В1 (соединителей: систем):', sorted(po_razmeru.items(), key=lambda kv: -kv[1])[:12])
+    sostav = collections.defaultdict(collections.Counter)
+    tochka = {}
+    for k in kat:
+        for e in DB.FilteredElementCollector(doc).OfCategory(k).WhereElementIsNotElementType():
+            for c in soed(e):
+                s1 = imya_sist(c)
+                if s1.startswith(u'В1'):
+                    sostav[s1][fam(e)] += 1
+                    tochka.setdefault(s1, (c.Origin.X / kvv.M, c.Origin.Y / kvv.M, c.Origin.Z / kvv.M))
+    vidano = collections.Counter()
+    for s1, n in sorted(razmer.items(), key=lambda kv: -kv[1]):
+        if vidano[n] >= 2:
+            continue
+        vidano[n] += 1
+        log(u'  %s (%d соед.) у (%.2f, %.2f, %.2f): %s' % ((s1, n) + tochka[s1] + (
+            u'; '.join(u'%s %d' % (f_, m) for f_, m in sostav[s1].most_common(6)),)))
     log(u'границы систем В1 (элемент | классификация соединителя | сосед | классификация — число, пример id, системы, точка):')
     for kl, n in granicy.most_common(30):
         pr = primer[kl]
@@ -1245,6 +1266,18 @@ def vid_uzla(doc, uidoc, zapros, log):
             v.SetCategoryHidden(DB.ElementId(bic), True)
         except Exception:
             pass
+    # окраска сетей — как на «КВВ_3D_Здание и сети»: В1 синим, К1 коричневым
+    zaliv = _sploshnaya_zalivka(doc)
+    for f, cvet in [(_filtr_sistemy(doc, u'КВВ_3D_В1', u'КВВ-В1'), DB.Color(0, 127, 255)),
+                    (_filtr_sistemy(doc, u'КВВ_3D_К1', u'КВВ-К1'), DB.Color(165, 41, 0))]:
+        if not v.IsFilterApplied(f.Id):
+            v.AddFilter(f.Id)
+        o = DB.OverrideGraphicSettings()
+        o.SetProjectionLineColor(cvet)
+        o.SetSurfaceForegroundPatternColor(cvet)
+        if zaliv != DB.ElementId.InvalidElementId:
+            o.SetSurfaceForegroundPatternId(zaliv)
+        v.SetFilterOverrides(f.Id, o)
     tr.Commit()
     uidoc.ActiveView = v
     log(u'вид КВВ_3D_Узел: x %.2f y %.2f z %.2f…%.2f r %.2f' % (x, y, z0, z1, r))
@@ -1273,3 +1306,67 @@ def proba_flex(doc, log, d_mm=20.0):
     finally:
         tr.RollBack()
         log(u'опыт откатан')
+
+
+def tochka_sistemy(doc, zapros, log):
+    """«x y z r» — элементы сетей в радиусе r (м) от точки: семейство, у каждого соединителя — класс, система,
+    соединён ли и с кем (семейство и система соседа). Чтобы найти, где рвётся система."""
+    x, y, z, r = [float(v.replace(u',', u'.')) for v in zapros.split()]
+    M = kvv.M
+    P = DB.XYZ(x * M, y * M, z * M)
+
+    def soed(e):
+        if isinstance(e, (Plumbing.Pipe, Plumbing.FlexPipe)):
+            return list(e.ConnectorManager.Connectors)
+        mm = getattr(e, 'MEPModel', None)
+        if mm is None or mm.ConnectorManager is None:
+            return []
+        return [c for c in mm.ConnectorManager.Connectors if c.Domain == DB.Domain.DomainPiping]
+
+    def sist(c):
+        try:
+            return c.MEPSystem.Name if c.MEPSystem is not None else u'(нет)'
+        except Exception:
+            return u'(ош)'
+    kat = (DB.BuiltInCategory.OST_PipeCurves, DB.BuiltInCategory.OST_FlexPipeCurves, DB.BuiltInCategory.OST_PipeFitting,
+           DB.BuiltInCategory.OST_PipeAccessory, DB.BuiltInCategory.OST_PlumbingFixtures)
+    for k in kat:
+        for e in DB.FilteredElementCollector(doc).OfCategory(k).WhereElementIsNotElementType():
+            cs = soed(e)
+            if not cs or min(c.Origin.DistanceTo(P) for c in cs) > r * M:
+                continue
+            nm = e.Symbol.FamilyName if isinstance(e, DB.FamilyInstance) else e.GetType().Name
+            chasti = []
+            for c in cs:
+                sos = [(r_.Owner.Symbol.FamilyName if isinstance(r_.Owner, DB.FamilyInstance) else r_.Owner.GetType().Name)
+                       + u' ' + sist(r_) for r_ in c.AllRefs if r_.Owner.Id != e.Id and r_.Domain == DB.Domain.DomainPiping]
+                try:
+                    kl = unicode(c.PipeSystemType)
+                except Exception:
+                    kl = u'?'
+                chasti.append(u'[%s %s z=%.3f -> %s]' % (kl, sist(c), c.Origin.Z / M, u', '.join(sos) or u'-'))
+            log(u'%s %d: %s' % (nm, e.Id.IntegerValue, u' '.join(chasti)))
+
+
+def klassy_soediniteley(doc, imena, log):
+    """Классы систем соединителей в семействах (открываются для чтения): почему система не проходит через деталь."""
+    for f in DB.FilteredElementCollector(doc).OfClass(DB.Family):
+        if f.Name not in imena:
+            continue
+        fd = doc.EditFamily(f)
+        try:
+            ce = list(DB.FilteredElementCollector(fd).OfClass(DB.ConnectorElement))
+            log(u'семейство %s: категория %s | соединителей %d' % (f.Name, f.FamilyCategory.Name if f.FamilyCategory else u'-', len(ce)))
+            for c in ce:
+                try:
+                    kl = unicode(c.SystemClassification)
+                except Exception as ex:
+                    kl = u'? ' + unicode(ex)
+                log(u'   соединитель %d: класс %s | домен %s' % (c.Id.IntegerValue, kl, c.Domain))
+            try:
+                pt = fd.OwnerFamily.get_Parameter(DB.BuiltInParameter.FAMILY_CONTENT_PART_TYPE)
+                log(u'   PartType:', pt.AsValueString() if pt else u'-')
+            except Exception:
+                pass
+        finally:
+            fd.Close(False)

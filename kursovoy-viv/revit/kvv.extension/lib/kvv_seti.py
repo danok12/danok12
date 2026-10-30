@@ -1164,6 +1164,38 @@ class _Perezagruzka(DB.IFamilyLoadOptions):
         return True
 
 
+def klass_soediniteley(doc, imena, log, klass=None):
+    """Класс системы у соединителей арматуры — «Глобальный» (в семействах ADL из «Старых систем» — SupplyHydronic,
+    подача отопления: задвижки и фильтр водомерного узла выпадали из системы В1). Семейство правится и
+    загружается обратно с заменой; уже исправленное пропускается."""
+    klass = klass or DB.MEPSystemClassification.Global
+    for imya in imena:
+        # семейство ищется заново: после LoadFamily прежний объект Family недействителен
+        f = [x for x in DB.FilteredElementCollector(doc).OfClass(DB.Family) if x.Name == imya]
+        if not f:
+            continue
+        f = f[0]
+        fd = doc.EditFamily(f)
+        try:
+            ce = [c for c in DB.FilteredElementCollector(fd).OfClass(DB.ConnectorElement)
+                  if c.Domain == DB.Domain.DomainPiping]
+            nado = [c for c in ce if c.SystemClassification != klass]
+            if not nado:
+                log(u'классы соединителей уже', klass, u':', imya)
+                continue
+            t = DB.Transaction(fd, u'КВВ: класс соединителей')
+            t.Start()
+            for c in nado:
+                c.SystemClassification = klass
+            t.Commit()
+            fd.LoadFamily(doc, _Perezagruzka())
+            log(u'классы соединителей -> %s: %s (%d шт.)' % (klass, imya, len(nado)))
+        except Exception as ex:
+            log(u'класс соединителей не изменён:', imya, ex)
+        finally:
+            fd.Close(False)
+
+
 RP_IMYA = u'КВВ-В1 узел'     # опорные плоскости кранов на опуске узла учёта
 
 

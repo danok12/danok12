@@ -57,8 +57,22 @@ def main(log):
     if rezhim.startswith(u'vlozh '):
         kvv_proverka.vlozhennye(doc, HOST_APP.app, [x.strip() for x in rezhim[6:].split(u';')], log)
         return
+    if rezhim == u'klass_adl':
+        import kvv_seti
+        reload(kvv_seti)
+        kvv_seti.klass_soediniteley(doc, [u'ADL_Задвижка_KR11', u'ADL_Фильтр сетчатый фланцевый_IS40',
+                                          u'ADL_Клапан обратный фланцевый_RD16',
+                                          u'ADL_Вставка гибкая фланцевая_FC10_DN32-500_PN10_Ф-Ф'], log)
+        kvv_proverka.sistemy(doc, log)
+        return
     if rezhim == u'sistemy':
         kvv_proverka.sistemy(doc, log)
+        return
+    if rezhim.startswith(u'klassy '):
+        kvv_proverka.klassy_soediniteley(doc, [x.strip() for x in rezhim[7:].split(u';')], log)
+        return
+    if rezhim.startswith(u'tochka '):
+        kvv_proverka.tochka_sistemy(doc, rezhim[7:], log)
         return
     if rezhim == u'proba_flex':
         kvv_proverka.proba_flex(doc, log)

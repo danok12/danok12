@@ -429,6 +429,12 @@ def main(log):
     truby(log)
     detali(log)
     soediniteli(log)
+    # фланцевая арматура ADL из «Старых систем» — соединители SupplyHydronic (отопление): в класс «Глобальный»
+    import kvv_seti
+    reload(kvv_seti)
+    kvv_seti.klass_soediniteley(doc, [u'ADL_Задвижка_KR11', u'ADL_Фильтр сетчатый фланцевый_IS40',
+                                      u'ADL_Клапан обратный фланцевый_RD16',
+                                      u'ADL_Вставка гибкая фланцевая_FC10_DN32-500_PN10_Ф-Ф'], log)
 
 
 kvv.run('02_tipy', main)
