@@ -60,6 +60,9 @@ def main(log):
     if rezhim == u'sistemy':
         kvv_proverka.sistemy(doc, log)
         return
+    if rezhim == u'proba_flex':
+        kvv_proverka.proba_flex(doc, log)
+        return
     if rezhim.startswith(u'uzel '):
         kvv_proverka.vid_uzla(doc, HOST_APP.uidoc, rezhim[5:], log)
         return
@@ -81,6 +84,9 @@ def main(log):
     if rezhim == u'perepodkl':
         kvv_proverka.perepodklyuchit(doc, log)
         kvv_proverka.sistemy(doc, log)
+        return
+    if rezhim == u'proba_sist2':
+        kvv_proverka.proba_sistem(doc, log, s_pravilom=True)
         return
     if rezhim == u'proba_sist':
         kvv_proverka.proba_sistem(doc, log)

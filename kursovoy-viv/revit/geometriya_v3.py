@@ -756,9 +756,12 @@ def kv_v1(k, zf, ur, rs_v, stoyak_xy, napr, nogi_, klyuch=None):
     svyaz((ra, 1), (rv, 0))
     for a_ in armatura[n0:]:
         if a_["key"] == "kran15vn" and a_.get("wp"):
-            a_["norm"] = k_pom                         # ручка крана — к помещению
+            # ручка крана — к помещению: у VT.215 на плоскости ручка смотрит против нормали (снимок 30.10)
+            a_["norm"] = [-k_pom[0], -k_pom[1]]
+        elif a_["key"] == "filtr15" and a_.get("vert"):
+            a_["lico"] = [-k_pom[1], k_pom[0]]         # отросток косого фильтра — вправо от смотрящего (как на фото)
         elif a_.get("vert"):
-            a_["lico"] = k_pom                         # циферблат, отвод фильтра — к помещению (kvv_seti)
+            a_["lico"] = k_pom                         # циферблаты счётчика и регулятора — к помещению (kvv_seti)
     seti[rn]["pts"] = seti[rn]["pts"][:1] + [R((xr, y_op, zf + Z_RAZV))]
     puti = {}
     starty = [nogi(xr, y_op, zf + Z_RAZV, f, ur, puti=puti) for f in nogi_]

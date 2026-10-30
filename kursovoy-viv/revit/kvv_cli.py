@@ -76,6 +76,14 @@ def zapros(put, data=None, timeout=1800):
         sys.exit('Нет связи с Revit (%s): запущен ли Revit и включён ли pyRevit Routes?' % e.reason)
 
 
+def ta_zhe(path):
+    """Открыт ли в Revit именно рабочий файл (тот же файл на диске, а не совпадение строк пути)."""
+    try:
+        return bool(path) and os.path.samefile(path, RABOCHAYA)
+    except OSError:
+        return False
+
+
 def zamok():
     """Межпроцессная блокировка: ждать, пока другой клиент не закончит (до 30 мин)."""
     f = open(LOCK_FILE, 'a+')
@@ -99,16 +107,16 @@ def main():
     _z = zamok()
     if cmd == 'start':
         st = start()
-        ok = os.path.normcase(st.get('path') or '') == os.path.normcase(RABOCHAYA)
+        ok = ta_zhe(st.get('path'))
         print(json.dumps(st | {'ok': ok}, ensure_ascii=False, indent=2))
         sys.exit(0 if ok else 'Открыта не рабочая модель: %s' % st.get('path'))
     st = zapros('status')
     if cmd == 'status':
         res = st
-        if os.path.normcase(st.get('path') or '') != os.path.normcase(RABOCHAYA):
+        if not ta_zhe(st.get('path')):
             res['preduprezhdenie'] = 'открыта не рабочая модель; рабочая — ' + RABOCHAYA
     else:
-        if not lyubaya and os.path.normcase(st.get('path') or '') != os.path.normcase(RABOCHAYA):
+        if not lyubaya and not ta_zhe(st.get('path')):
             sys.exit('Открыта не рабочая модель: %s\nРабочая: %s\n(--lyubaya — запустить всё равно)'
                      % (st.get('path'), RABOCHAYA))
         if cmd == 'run':

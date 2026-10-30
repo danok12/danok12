@@ -742,7 +742,10 @@ class Stroitel(object):
                 pts = List[DB.XYZ]([c1.Origin, c2.Origin])
                 lv = self.lv[a_ur(self.g, aid)]
                 fp = Plumbing.FlexPipe.Create(doc, st[0].Id, ft.Id, lv.Id, t1, t2, pts)
-                fp.get_Parameter(DB.BuiltInParameter.RBS_PIPE_DIAMETER_PARAM).Set(c1.Radius * 2)
+                # диаметр подводки — как у трубы под водорозеткой (Ø20/25), а не по резьбе 1/2": иначе на виде
+                # подводка резко тоньше трубы (замечание 30.10). Соединение с резьбой 1/2" Revit держит (опыт 30.10)
+                d_tr = [c.Radius * 2 for c in soediniteli(e1) if c.Domain == DB.Domain.DomainPiping and c.Id != c1.Id]
+                fp.get_Parameter(DB.BuiltInParameter.RBS_PIPE_DIAMETER_PARAM).Set(max(d_tr + [c1.Radius * 2]))
                 doc.Regenerate()
                 for c in fp.ConnectorManager.Connectors:
                     cel = c1 if c.Origin.DistanceTo(c1.Origin) < c.Origin.DistanceTo(c2.Origin) else c2

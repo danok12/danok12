@@ -494,7 +494,7 @@ def sistemy(doc, log):
         log(u'  %4d | %s | %s | %s | %s | id %d %s/%s (%.2f, %.2f, %.2f)' % ((n,) + kl + pr))
 
 
-def proba_sistem(doc, log):
+def proba_sistem(doc, log, s_pravilom=False):
     """Опыт (всё откатывается): в пустом месте по две трубы с отводом для каждого типа системы трубопроводов и
     каждого типа трубы — одна ли получается система. Ответ: сливает ли Revit системы при соединении."""
     M = kvv.M
@@ -519,7 +519,17 @@ def proba_sistem(doc, log):
                 p2 = Plumbing.Pipe.Create(doc, ts.Id, tt.Id, lv.Id, b, c)
                 c1 = [q for q in p1.ConnectorManager.Connectors if q.Origin.DistanceTo(b) < 1e-6][0]
                 c2 = [q for q in p2.ConnectorManager.Connectors if q.Origin.DistanceTo(b) < 1e-6][0]
+                if s_pravilom:
+                    # как в kvv_seti._popytka: временное правило в типе трубы, затем удалить
+                    gr = DB.RoutingPreferenceRuleGroupType.Elbows
+                    rpm = tt.RoutingPreferenceManager
+                    rid = rpm.GetRule(gr, 0).MEPPartId
+                    rpm.AddRule(gr, DB.RoutingPreferenceRule(rid, u'КВВ'), 0)
+                    doc.Regenerate()
                 f = doc.Create.NewElbowFitting(c1, c2)
+                if s_pravilom:
+                    rpm.RemoveRule(gr, 0)
+                    doc.Regenerate()
                 pary.append((DB.Element.Name.GetValue(ts) + u' + ' + DB.Element.Name.GetValue(tt), p1.Id, p2.Id, f.Id))
             except Exception:
                 pass
@@ -1195,7 +1205,7 @@ def modul_semeystva(doc, app, zapros, log):
 
 
 def vid_uzla(doc, uidoc, zapros, log):
-    """«x y z0 z1 [r]» (м, z — от нуля здания) — 3D-вид «КВВ_3D_Узел» с рамкой вокруг точки (полуширина r, по
+    """«x y z0 z1 [r [fx fy]]» (м, z — от нуля здания; fx fy — направление взгляда в плане) — 3D-вид «КВВ_3D_Узел» с рамкой вокруг точки (полуширина r, по
     умолчанию 0,5 м), «Высокая» детализация, тонированный, делается активным — для осмотра узла."""
     ch = [float(v.replace(u',', u'.')) for v in zapros.split()]
     x, y, z0, z1 = ch[:4]
@@ -1206,10 +1216,11 @@ def vid_uzla(doc, uidoc, zapros, log):
     stare = [v.Id for v in DB.FilteredElementCollector(doc).OfClass(DB.View3D) if v.Name == u'КВВ_3D_Узел']
     vft = [t for t in DB.FilteredElementCollector(doc).OfClass(DB.ViewFamilyType)
            if t.ViewFamily == DB.ViewFamily.ThreeDimensional][0]
-    v = DB.View3D.CreateIsometric(doc, vft.Id)
     if stare:
-        doc.Delete(List[DB.ElementId](stare))
-    v.Name = u'КВВ_3D_Узел'
+        v = doc.GetElement(stare[0])             # открытый вид удалить нельзя — обновить на месте
+    else:
+        v = DB.View3D.CreateIsometric(doc, vft.Id)
+        v.Name = u'КВВ_3D_Узел'
     try:
         v.ViewTemplateId = DB.ElementId.InvalidElementId
     except Exception:
@@ -1221,6 +1232,13 @@ def vid_uzla(doc, uidoc, zapros, log):
     v.DetailLevel = DB.ViewDetailLevel.Fine
     v.DisplayStyle = DB.DisplayStyle.ShadingWithEdges
     v.Scale = 10
+    if len(ch) > 6:
+        # взгляд вдоль (fx, fy) чуть сверху — «как на фото»: из помещения на шахту
+        fx, fy = ch[5], ch[6]
+        c = DB.XYZ(x * M, y * M, (z0 + z1) / 2 * M)
+        fw = DB.XYZ(fx, fy, -0.25).Normalize()
+        up = DB.XYZ(-fw.X * fw.Z, -fw.Y * fw.Z, 1 - fw.Z * fw.Z).Normalize()
+        v.SetOrientation(DB.ViewOrientation3D(c - fw.Multiply(20 * M), up, fw))
     for bic in (DB.BuiltInCategory.OST_Walls, DB.BuiltInCategory.OST_Floors, DB.BuiltInCategory.OST_Levels,
                 DB.BuiltInCategory.OST_Grids, DB.BuiltInCategory.OST_Doors, DB.BuiltInCategory.OST_Windows):
         try:
@@ -1230,3 +1248,28 @@ def vid_uzla(doc, uidoc, zapros, log):
     tr.Commit()
     uidoc.ActiveView = v
     log(u'вид КВВ_3D_Узел: x %.2f y %.2f z %.2f…%.2f r %.2f' % (x, y, z0, z1, r))
+
+
+def proba_flex(doc, log, d_mm=20.0):
+    """Опыт (откат): гибкой подводке задать диаметр d_mm — остаётся ли она присоединённой к водорозетке и смесителю
+    (их резьба 1/2")."""
+    fp = [f for f in DB.FilteredElementCollector(doc).OfClass(Plumbing.FlexPipe)][:3]
+    tr = DB.Transaction(doc, u'КВВ: опыт диаметра подводки')
+    tr.Start()
+    try:
+        for f in fp:
+            p_ = f.get_Parameter(DB.BuiltInParameter.RBS_PIPE_DIAMETER_PARAM)
+            d0 = p_.AsDouble() / kvv.MM
+            try:
+                p_.Set(d_mm * kvv.MM)
+                doc.Regenerate()
+                sost = [(c.IsConnected, round(c.Radius * 2 / kvv.MM, 1)) for c in f.ConnectorManager.Connectors]
+                sos = [(round(r.Radius * 2 / kvv.MM, 1), r.Owner.Name) for c in f.ConnectorManager.Connectors
+                       for r in c.AllRefs if r.Owner.Id != f.Id]
+                log(u'  подводка %d: было %.0f мм, стало %.0f | соединители %s | соседи %s'
+                    % (f.Id.IntegerValue, d0, p_.AsDouble() / kvv.MM, sost, sos))
+            except Exception as ex:
+                log(u'  подводка %d: не задаётся %.0f мм: %s' % (f.Id.IntegerValue, d_mm, ex))
+    finally:
+        tr.RollBack()
+        log(u'опыт откатан')
