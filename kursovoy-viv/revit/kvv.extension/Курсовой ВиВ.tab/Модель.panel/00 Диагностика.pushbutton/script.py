@@ -60,6 +60,9 @@ def main(log):
     if rezhim == u'sistemy':
         kvv_proverka.sistemy(doc, log)
         return
+    if rezhim.startswith(u'uzel '):
+        kvv_proverka.vid_uzla(doc, HOST_APP.uidoc, rezhim[5:], log)
+        return
     if rezhim.startswith(u'modul '):
         kvv_proverka.modul_semeystva(doc, HOST_APP.app, rezhim[6:], log)
         return

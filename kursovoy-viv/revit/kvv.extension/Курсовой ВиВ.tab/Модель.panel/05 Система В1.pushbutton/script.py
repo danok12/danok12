@@ -25,6 +25,7 @@ def main(log):
         tr = kvv.load_json('calc', 'trassa_v3.json')
         if 'x_shov' in tr:
             kvv_seti.gibkaya_vstavka(doc, log, tr['x_shov'], u'КВВ-В1')
+        kvv_seti.probki(doc, g, log)
 
 
 kvv.run('05_v1', main)

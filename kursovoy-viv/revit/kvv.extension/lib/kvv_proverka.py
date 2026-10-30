@@ -302,7 +302,7 @@ def kollizii(doc, log):
 # ---------------- 3D-виды для осмотра модели ----------------
 VID_3D = u'КВВ_3D_Здание и сети'
 VID_3D_PODVAL = u'КВВ_3D_Подвал'
-KAT_SETI = (DB.BuiltInCategory.OST_PipeCurves, DB.BuiltInCategory.OST_PipeFitting,
+KAT_SETI = (DB.BuiltInCategory.OST_PipeCurves, DB.BuiltInCategory.OST_FlexPipeCurves, DB.BuiltInCategory.OST_PipeFitting,
             DB.BuiltInCategory.OST_PipeAccessory, DB.BuiltInCategory.OST_MechanicalEquipment)
 KAT_ZDANIE = (DB.BuiltInCategory.OST_Walls, DB.BuiltInCategory.OST_Floors, DB.BuiltInCategory.OST_Roofs,
               DB.BuiltInCategory.OST_Stairs)
@@ -1192,3 +1192,41 @@ def modul_semeystva(doc, app, zapros, log):
             log(u'  ' + nm)
     finally:
         d2.Close(False)
+
+
+def vid_uzla(doc, uidoc, zapros, log):
+    """«x y z0 z1 [r]» (м, z — от нуля здания) — 3D-вид «КВВ_3D_Узел» с рамкой вокруг точки (полуширина r, по
+    умолчанию 0,5 м), «Высокая» детализация, тонированный, делается активным — для осмотра узла."""
+    ch = [float(v.replace(u',', u'.')) for v in zapros.split()]
+    x, y, z0, z1 = ch[:4]
+    r = ch[4] if len(ch) > 4 else 0.5
+    M = kvv.M
+    tr = DB.Transaction(doc, u'КВВ: 3D-вид узла')
+    tr.Start()
+    stare = [v.Id for v in DB.FilteredElementCollector(doc).OfClass(DB.View3D) if v.Name == u'КВВ_3D_Узел']
+    vft = [t for t in DB.FilteredElementCollector(doc).OfClass(DB.ViewFamilyType)
+           if t.ViewFamily == DB.ViewFamily.ThreeDimensional][0]
+    v = DB.View3D.CreateIsometric(doc, vft.Id)
+    if stare:
+        doc.Delete(List[DB.ElementId](stare))
+    v.Name = u'КВВ_3D_Узел'
+    try:
+        v.ViewTemplateId = DB.ElementId.InvalidElementId
+    except Exception:
+        pass
+    bb = DB.BoundingBoxXYZ()
+    bb.Min = DB.XYZ((x - r) * M, (y - r) * M, z0 * M)
+    bb.Max = DB.XYZ((x + r) * M, (y + r) * M, z1 * M)
+    v.SetSectionBox(bb)
+    v.DetailLevel = DB.ViewDetailLevel.Fine
+    v.DisplayStyle = DB.DisplayStyle.ShadingWithEdges
+    v.Scale = 10
+    for bic in (DB.BuiltInCategory.OST_Walls, DB.BuiltInCategory.OST_Floors, DB.BuiltInCategory.OST_Levels,
+                DB.BuiltInCategory.OST_Grids, DB.BuiltInCategory.OST_Doors, DB.BuiltInCategory.OST_Windows):
+        try:
+            v.SetCategoryHidden(DB.ElementId(bic), True)
+        except Exception:
+            pass
+    tr.Commit()
+    uidoc.ActiveView = v
+    log(u'вид КВВ_3D_Узел: x %.2f y %.2f z %.2f…%.2f r %.2f' % (x, y, z0, z1, r))

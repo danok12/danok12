@@ -354,6 +354,10 @@ PR_FAM = {"vanna": ("ADSK_Ванна стальная эмалированная
           "umyv": ("ADSK_Умывальник со смесителем", "Умывальник"),
           "moyka": ("ADSK_Мойка кухонная со смесителем", "Мойка кухонная со смесителем и сифоном")}
 ARM = {"kran15": ("VALTEC_VT.214.N_КранШаровой ВР", '1/2"', -0.024, 0.024),
+       # водомерный узел (30.10, «Старые системы»): фланцевые задвижка ADL KR11 и фильтр ADL IS40, DN50 — параметр
+       # типа «DN»; соединители по локальной оси Y (OS_Y): 140 и 326 мм между фланцами
+       "zadv50": ("ADL_Задвижка_KR11", "ADL_Задвижка_KR11", -0.070, 0.070),
+       "filtr50": ("ADL_Фильтр сетчатый фланцевый_IS40", "ADL_Фильтр сетчатый фланцевый_IS40", -0.163, 0.163),
        # кран ВР-НР (замечание 28.10): в начале квартирного узла — НР в фильтр; у бачка унитаза — НР в гибкую подводку
        "kran15vn": ("VALTEC_VT.215.N_КранШаровой ВР-НР", '1/2"', -0.024, 0.033),
        # фильтр перед общедомовым счётчиком: в семействе DN15, DN25 задаётся «ADSK_Диаметр условный» (kvv_seti)
@@ -475,13 +479,16 @@ def troynik(m1, m2, b):
     troyniki.append(dict(m1=m1, m2=m2, b=b))
 
 
+OS_Y = ("zadv50", "filtr50")         # семейства с соединителями по локальной оси Y
+
+
 def arm(key, p, d, ur):
     """Арматура с входом в точке p по направлению d (2D — горизонтально, 3D (0, 0, ±1) — вертикально: в Revit
     экземпляр поворачивается вокруг горизонтальной оси, kvv_seti)."""
     fam, tip, xin, xout = ARM[key]
     d = tuple(d) + (0.0,) * (3 - len(d))
     vert = abs(d[2]) > 0.5
-    th = 0.0 if vert else math.degrees(math.atan2(d[1], d[0]))
+    th = 0.0 if vert else math.degrees(math.atan2(d[1], d[0])) - (90.0 if key in OS_Y else 0.0)
     ins = tuple(p[i] - d[i] * xin for i in range(3))
     out = tuple(ins[i] + d[i] * xout for i in range(3))
     aid = len(armatura)
@@ -495,6 +502,8 @@ def arm(key, p, d, ur):
         zap["perev"] = True
     if key == "filtr25":
         zap["dn"] = 25
+    if key in OS_Y:
+        zap["dn"] = 50
     if vert and key == "kran15vn":
         # кран VALTEC не поворачивается на вертикаль (вложенная ручка «на рабочей плоскости»): семейство переводится
         # на рабочую плоскость, экземпляр ставится на вертикальную плоскость (kvv_seti)
@@ -580,6 +589,9 @@ def podvod_k_priboru(p, conn, fid, xh, z, d, ur, konec=False):
     return pts, aid, False
 
 
+L_NIP = 0.03       # ниппель между арматурой узла учёта
+
+
 def vetka(sys_, pt, d, pts_do, napr, items, ur, gap=0.02, first=0.07, sborka=False):
     """Труба до арматуры items по направлению napr. sborka — арматура свинчена одна с другой (вход следующей — в
     выходе предыдущей), труба — только до первой и после последней; иначе между ними отрезки длиной gap."""
@@ -589,12 +601,27 @@ def vetka(sys_, pt, d, pts_do, napr, items, ur, gap=0.02, first=0.07, sborka=Fal
     r0 = truba(sys_, pt, d, pts_do + [p_in], ur)
     prev = (r0, 1)
     pred = None
-    for i, key in enumerate(items):
+    # «nip» в items — ниппель между соседними арматурами (отрезок стальной трубы DN15 длиной L_NIP), как латунные
+    # ниппели между приборами узла учёта на фото образца 28.10
+    seq = []
+    for k_ in items:
+        if k_ == "nip" and seq:
+            seq[-1] = (seq[-1][0], True)
+        else:
+            seq.append((k_, False))
+    items = [k_ for k_, _ in seq]
+    for i, (key, nip) in enumerate(seq):
         aid, out = arm(key, p_in, napr, ur)
         if pred is None:
             svyaz(prev, dict(arm=aid, side="in"))
         else:
             arm_svyazi.append([pred, aid])
+        if nip and i < len(seq) - 1:
+            q = tuple(out[j] + napr[j] * L_NIP for j in range(3))
+            r = truba(sys_, "stal", 15, [out, q], ur)
+            svyaz((r, 0), dict(arm=aid, side="out"))
+            prev, pred, p_in = (r, 1), None, q
+            continue
         if sborka and i < len(items) - 1:
             p_in, pred = out, aid
             continue
@@ -717,14 +744,21 @@ def kv_v1(k, zf, ur, rs_v, stoyak_xy, napr, nogi_, klyuch=None):
     # клапаном. Кран VALTEC вертикально ставится на рабочую плоскость (kvv_seti, «wp»)
     ra = truba("V1", "ppr", 25, [(xr, yr, z1), (xr, y_op, z1)], ur)
     rs_v.append((z1, (ra, 0)))
-    items = ["kran15vn", "filtr15"] + (["reg15"] if k in ET_REG else []) + ["sch15", "obr15"]
+    # как на фото образца: кран — ниппель — косой фильтр — ниппель — регулятор — ниппель — счётчик (присоединители
+    # в комплекте) — обратный клапан; ручка крана, циферблаты счётчика и регулятора — к помещению (замечание 30.10
+    # «кран должен быть расположен к нам»): кв. А и В — в сторону +x секции, кв. Б — −x
+    items = ["kran15vn", "nip", "filtr15", "nip"] + (["reg15", "nip"] if k in ET_REG else []) + ["sch15", "obr15"]
+    sx_ = 1.0 if (klyuch or "0")[0] == "0" else -1.0
+    k_pom = [(-sx_ if (klyuch or "A")[-1] == "B" else sx_), 0.0]
+    n0 = len(armatura)
     rv, (rn, _), p = vetka("V1", "ppr", 25, [(xr, y_op, z1)], (0, 0, -1), items, ur, gap=0.16, first=0.15,
                            sborka=True)
     svyaz((ra, 1), (rv, 0))
-    for a_ in reversed(armatura):
+    for a_ in armatura[n0:]:
         if a_["key"] == "kran15vn" and a_.get("wp"):
-            a_["norm"] = [napr[0], napr[1]]          # плоскость крана поперёк отвода: ручка — вдоль отвода
-            break
+            a_["norm"] = k_pom                         # ручка крана — к помещению
+        elif a_.get("vert"):
+            a_["lico"] = k_pom                         # циферблат, отвод фильтра — к помещению (kvv_seti)
     seti[rn]["pts"] = seti[rn]["pts"][:1] + [R((xr, y_op, zf + Z_RAZV))]
     puti = {}
     starty = [nogi(xr, y_op, zf + Z_RAZV, f, ur, puti=puti) for f in nogi_]
@@ -939,15 +973,16 @@ NOM = nomera()
 
 # ---------------- подвал: стояки В1, магистраль, ввод, насосная ----------------
 Z_MAG = -0.6                            # отметка оси магистрали у тройника насосной (x = X_TR)
-# магистраль — с уклоном 0,002 от тройника насосной к концам, к спускным кранам у оснований крайних стояков (СП 30,
-# п. 11.19; примечание «уклон 0,002 в сторону сливной арматуры», как в образце). Ответвление и основание стояка —
-# на отметке магистрали в точке врезки
+# магистраль — с уклоном 0,002 в одну сторону: от западного конца к восточному, к спускным кранам у основания
+# Ст.В1-5 и у восточного поливочного крана (СП 30, п. 11.19; примечание «уклон 0,002 в сторону сливной арматуры», как
+# в образце). Не «от тройника в обе стороны»: проход тройника насосной должен быть прямым (30.10 Revit не ставил тройник
+# между участками 0,002 вверх и вниз). Ответвление и основание стояка — на отметке магистрали в точке врезки
 I_MAG = 0.002
 X_TR = 4.0
 
 
 def zm(x):
-    return round(Z_MAG - I_MAG * abs(x - X_TR), 4)
+    return round(Z_MAG - I_MAG * (x - X_TR), 4)
 Y_MAG = 7.20
 UR_P = "Подвал"
 VYTYAZHKA = 0.2                        # вытяжная часть над неэксплуатируемой кровлей (п. 18.18 СП 30)
@@ -983,6 +1018,19 @@ def kran_dn(d):
     return {25: "kran25", 32: "kran32", 40: "kran40"}[d]
 
 
+probki = []        # пробки ГОСТ 8963 на спускных кранах: конец штуцера (kvv_seti.probki)
+
+
+def probka(aid, out, napr, L=0.03):
+    """За спускным краном 1/2" — штуцер (отрезок стальной трубы DN15) и пробка на его конце (замечание 30.10:
+    «крышки» на спусках). Пробку ставит 05 (kvv_seti.probki) по точке конца."""
+    napr = tuple(napr) + (0.0,) * (3 - len(napr))
+    q = tuple(out[i] + napr[i] * L for i in range(3))
+    r = truba("V1", "stal", 15, [out, q], UR_P)
+    svyaz((r, 0), dict(arm=aid, side="out"))
+    probki.append(dict(x=round(q[0], 4), y=round(q[1], 4), z=round(q[2], 4)))
+
+
 def osnovanie(ra, r_st):
     """Основание стояка В1: тройник — стояк вверх, вниз — спуск: ППР того же диаметра 0,12 м, переход на Ø20,
     колено и кран шаровой 1/2" горизонтально (замечание 28.10: краны для перекрытия и слива воды; краны VALTEC
@@ -997,6 +1045,7 @@ def osnovanie(ra, r_st):
     svyaz((r1, 1), (r2, 0))
     aid, out = arm("kran15", q3, (0, h), UR_P)
     svyaz((r2, 1), dict(arm=aid, side="in"))
+    probka(aid, out, (0, h))
     troynik((r_st, 0), (r1, 0), (ra, 1))
 
 
@@ -1087,8 +1136,9 @@ def polivochnyy(M_, x_t):
     x_sp = p_[0] + s_ * 0.13
     seti[r2]["pts"] = seti[r2]["pts"][:1] + [R((x_sp, y_k, z))]
     r_sp = truba("V1", "stal", 15, [(x_sp, y_k, z), (x_sp, y_k + 0.12, z)], UR_P)
-    a_sp, _ = arm("kran15", (x_sp, y_k + 0.12, z), (0, 1), UR_P)
+    a_sp, o_sp = arm("kran15", (x_sp, y_k + 0.12, z), (0, 1), UR_P)
     svyaz((r_sp, 1), dict(arm=a_sp, side="in"))
+    probka(a_sp, o_sp, (0, 1))
     r = truba("V1", "stal", DN_POL, [(x_sp, y_k, z), (x_in, y_k, z), (x_in, y_k, Z_POL),
                                      (x_nar, y_k, Z_POL)], UR_P)
     troynik((r2, 1), (r, 0), (r_sp, 0))
@@ -1141,29 +1191,36 @@ r_vv = truba("V1", "pe", 63, [(X_TR, Y_ST_A - 2.0, Z_VV), (X_TR, Y_IN0, Z_VV)], 
 Z_VU = -2.0
 r_v1 = truba("V1", "stal", 50, [(X_TR, Y_IN0, Z_VV), (X_TR, 1.5, Z_VV), (X_TR, 1.5, Z_VU), (X_TR, 1.8, Z_VU)], UR_P)
 svyaz((r_vv, 1), (r_v1, 0))
-r_a, (r_b, _), p = vetka("V1", "stal", 50, [(X_TR, 1.8, Z_VU)], (0, 1), ["kran50"], UR_P, first=0.15)
-seti[r_b]["pts"] = seti[r_b]["pts"][:1] + [R((X_TR, 2.20, Z_VU))]
+# водомерный узел (30.10, по замечанию «собери правильно, все части — из «Семейства ВК»): тройник обвода — задвижка
+# KR11 DN50 и фильтр IS40 DN50 на фланцах встык — переход 50/DN_SCH — счётчик — тройник с контрольно-спускным краном
+# (СП 30, п. 12.9) — переход — задвижка KR11 DN50 — тройник обвода; на обводной линии — задвижка KR11 DN50,
+# опломбированная закрытой (п. 12.10–12.11). Переходы 50/25 Revit ставит сам (муфты ГОСТ 8957)
+Y_OUT = 3.42                            # выходной тройник обвода (до 30.10 — 3,25: узел на фланцевой арматуре длиннее)
+r_a, (r_b, _), p = vetka("V1", "stal", 50, [(X_TR, 1.8, Z_VU)], (0, 1), ["zadv50", "filtr50"], UR_P, first=0.15,
+                         sborka=True)
+Y_P1 = round(p[1] + 0.06, 3)            # конец участка DN50 после фильтра (переход на DN_SCH)
+seti[r_b]["pts"] = seti[r_b]["pts"][:1] + [R((X_TR, Y_P1, Z_VU))]
 DN_SCH = REZ["schetchik_dom"][0]        # общедомовой счётчик — по расчёту (холодный расход)
-# фильтр и счётчик одной сборкой на участке 2,20…2,85 м (переходы 50/DN_SCH — на концах); после счётчика —
-# контрольно-спускной кран на тройнике (СП 30; замечание 28.10: узел — из семейств «Семейства ВК»)
-r_sch, (r_sch2, _), p = vetka("V1", "stal", DN_SCH, [(X_TR, 2.20, Z_VU)], (0, 1), ["filtr%d" % DN_SCH,
-                              "sch%d" % DN_SCH], UR_P, first=0.10, sborka=True)
-Y_KSK = 2.71
+r_sch, (r_sch2, _), p = vetka("V1", "stal", DN_SCH, [(X_TR, Y_P1, Z_VU)], (0, 1), ["sch%d" % DN_SCH], UR_P,
+                              first=0.10)
+Y_KSK = round(p[1] + 0.06, 3)
 seti[r_sch2]["pts"] = seti[r_sch2]["pts"][:1] + [R((X_TR, Y_KSK, Z_VU))]
-r_sch3 = truba("V1", "stal", DN_SCH, [(X_TR, Y_KSK, Z_VU), (X_TR, 2.85, Z_VU)], UR_P)
+Y_P2 = round(Y_KSK + 0.16, 3)          # тройник КСК + переход DN_SCH/50 (Revit) — 0,10 мало, оставалось 3 мм трубы
+r_sch3 = truba("V1", "stal", DN_SCH, [(X_TR, Y_KSK, Z_VU), (X_TR, Y_P2, Z_VU)], UR_P)
 r_ksk = truba("V1", "stal", 15, [(X_TR, Y_KSK, Z_VU), (X_TR + 0.12, Y_KSK, Z_VU)], UR_P)
-a_ksk, _ = arm("kran15", (X_TR + 0.12, Y_KSK, Z_VU), (1, 0), UR_P)
+a_ksk, o_ksk = arm("kran15", (X_TR + 0.12, Y_KSK, Z_VU), (1, 0), UR_P)
 svyaz((r_ksk, 1), dict(arm=a_ksk, side="in"))
+probka(a_ksk, o_ksk, (1, 0))
 troynik((r_sch2, 1), (r_sch3, 0), (r_ksk, 0))
 svyaz((r_b, 1), (r_sch, 0))
-r_c, (r_d, _), p = vetka("V1", "stal", 50, [(X_TR, 2.85, Z_VU)], (0, 1), ["kran50"], UR_P, first=0.12)
+r_c, (r_d, _), p = vetka("V1", "stal", 50, [(X_TR, Y_P2, Z_VU)], (0, 1), ["zadv50"], UR_P, first=0.08)
 svyaz((r_sch3, 1), (r_c, 0))
-seti[r_d]["pts"] = seti[r_d]["pts"][:1] + [R((X_TR, 3.25, Z_VU))]
-r_vs = truba("V1", "stal", 50, [(X_TR, 3.25, Z_VU), (X_TR, p_vs[1], Z_VU), (X_TR, p_vs[1], p_vs[2]), p_vs], UR_P)
+seti[r_d]["pts"] = seti[r_d]["pts"][:1] + [R((X_TR, Y_OUT, Z_VU))]
+r_vs = truba("V1", "stal", 50, [(X_TR, Y_OUT, Z_VU), (X_TR, p_vs[1], Z_VU), (X_TR, p_vs[1], p_vs[2]), p_vs], UR_P)
 svyaz((r_vs, 1), dict(obor=0, kind="vs"))
-r_o1, (r_o2, _), p = vetka("V1", "stal", 50, [(X_TR, 1.8, Z_VU), (X_TR - 0.2, 1.8, Z_VU)], (0, 1), ["kran50"],
+r_o1, (r_o2, _), p = vetka("V1", "stal", 50, [(X_TR, 1.8, Z_VU), (X_TR - 0.2, 1.8, Z_VU)], (0, 1), ["zadv50"],
                            UR_P, first=0.4)
-seti[r_o2]["pts"] = seti[r_o2]["pts"][:1] + [R((X_TR - 0.2, 3.25, Z_VU)), R((X_TR, 3.25, Z_VU))]
+seti[r_o2]["pts"] = seti[r_o2]["pts"][:1] + [R((X_TR - 0.2, Y_OUT, Z_VU)), R((X_TR, Y_OUT, Z_VU))]
 troynik((r_v1, 1), (r_a, 0), (r_o1, 0))
 troynik((r_d, 1), (r_vs, 0), (r_o2, 1))
 
@@ -1718,7 +1775,7 @@ json.dump(trassa_v3, open(os.path.join(HERE, "..", "calc", "trassa_v3.json"), "w
 
 geo = dict(pomescheniya=pomescheniya, razdeliteli=razdeliteli, pribory=pribory, seti=seti, troyniki=troyniki, kresty=kresty, kresty2=kresty2, armatura=armatura, svyazi=svyazi, arm_svyazi=arm_svyazi, arm_pribor=arm_pribor, gibkie=gibkie,
            mufty=mufty, stoyaki=stoyaki, oborud=oborud, dveri=dveri, lestnicy=lestnicy,
-           zaglushki=zaglushki, krany_pol=krany_pol,
+           zaglushki=zaglushki, krany_pol=krany_pol, probki=probki,
            sistemy=dict(V1="ADSK_Водопровод_В1", K1="ADSK_Канализация_К1"),
            tipy_trub=dict(stal="ADSK_Сталь водогазопроводная_Оцинкованная_ГОСТ 3262-75",
                           pp="ADSK_Полипропилен раструбный_ГОСТ 32414-2013",

@@ -646,6 +646,13 @@ class Stroitel(object):
                     # обратный клапан (perev): стрелка семейства — против его оси X, поворот в другую сторону
                     ugol = math.pi / 2 * (a['vert'] if a.get('perev') else -a['vert'])
                     DB.ElementTransformUtils.RotateElement(self.doc, e.Id, ax, ugol)
+                    # «lico» — куда смотрит циферблат/отвод прибора (после поворота выше — в +X): поворот вокруг
+                    # вертикали через точку вставки (замечание 30.10: приборы узла — к помещению)
+                    if a.get('lico'):
+                        ug2 = math.atan2(a['lico'][1], a['lico'][0])
+                        if abs(ug2) > 1e-6:
+                            DB.ElementTransformUtils.RotateElement(
+                                self.doc, e.Id, DB.Line.CreateBound(P, P + DB.XYZ.BasisZ), ug2)
                 else:
                     # детали-мультипорты (водорозетка) могут не иметь «Смещения»: точка вставки — на отметку
                     self.doc.Regenerate()
@@ -713,8 +720,9 @@ class Stroitel(object):
             self.log(u'НЕТ типа гибкой трубы — подводки не построены')
             return
         ft = tipy[0]
-        st = [t for t in DB.FilteredElementCollector(doc).OfClass(Plumbing.PipingSystemType)
-              if t.SystemClassification == DB.MEPSystemClassification.DomesticColdWater]
+        # тип системы — строго В1 (до 30.10 брался первый тип холодной воды в проекте, а в шаблоне ADSK их несколько:
+        # подводки получали «В2» и на 3D-виде были не в цвете В1)
+        st = [self.sistema(u'V1')]
         n, ne = 0, 0
         for aid, fid, vid_ in spisok:
             e1, e2 = self.arm.get(aid), self.pr.get(fid)
@@ -761,7 +769,8 @@ class Stroitel(object):
                 if not any(k in nm for k in (u'иаметр', u'DN', u'Ду', u'Условный')):
                     continue
                 # условный проход: у обратного клапана по умолчанию DN25, у фильтра DN15
-                if abs(pr.AsDouble() / MM - dn) < 0.5 or u'иаметр условный' not in nm:
+                # «DN» — у фланцевой арматуры ADL (задвижка KR11, фильтр IS40, клапан RD16 — параметр типа)
+                if abs(pr.AsDouble() / MM - dn) < 0.5 or (u'иаметр условный' not in nm and nm != u'DN'):
                     continue
                 try:
                     pr.Set(dn * MM)
@@ -1467,6 +1476,47 @@ def zaglushka(doc, t, log):
             st.RollBack()
             oshibki.append(unicode(ex))
     raise Exception(u'; '.join(oshibki))
+
+
+PROBKA = (u'ADSK_ЧугунРезьба_Пробка_ГОСТ8963-59', u'Оцинкованные')
+
+
+def probki(doc, g, log, metka=u'КВВ-В1'):
+    """Пробки ГОСТ 8963 на штуцерах спускных кранов 1/2" (точки — g['probki'] из генератора): спуски у оснований
+    стояков, на подводках к поливочным кранам, контрольно-спускной кран водомерного узла. На арматуру
+    PlaceCapOnOpenEnds не ставит (30.10: «this operation failed»), поэтому за краном — штуцер, пробка — на нём."""
+    sym = kvv.simvol(doc, *PROBKA)
+    if sym is None:
+        log(u'НЕТ семейства пробки', PROBKA[0], u'— запустить 02')
+        return
+    if not sym.IsActive:
+        sym.Activate()
+    n, ne, oshibki = 0, 0, []
+    for z in g.get('probki', []):
+        t = truba_s_koncom(doc, metka, kvv.xyz(z['x'], z['y'], z['z']))
+        if t is None:
+            ne += 1
+            oshibki.append(u'нет штуцера в (%.2f, %.2f, %.2f)' % (z['x'], z['y'], z['z']))
+            continue
+        st = DB.SubTransaction(doc)
+        st.Start()
+        try:
+            do = set(r.Owner.Id.IntegerValue for c in t.ConnectorManager.Connectors for r in c.AllRefs)
+            Plumbing.PlumbingUtils.PlaceCapOnOpenEnds(doc, t.Id, sym.Id)
+            doc.Regenerate()
+            nov = [r.Owner for c in t.ConnectorManager.Connectors for r in c.AllRefs
+                   if r.Owner.Id != t.Id and r.Owner.Id.IntegerValue not in do and isinstance(r.Owner, DB.FamilyInstance)]
+            if not nov:
+                raise Exception(u'пробка не появилась')
+            for o in nov:
+                komment(o, metka)
+            st.Commit()
+            n += 1
+        except Exception as ex:
+            st.RollBack()
+            ne += 1
+            oshibki.append(unicode(ex))
+    log(u'пробок на спускных кранах', n, u'| не встало', ne, (u'| ' + oshibki[0]) if oshibki else u'')
 
 
 def revizia(doc, t, P, sym, log):
