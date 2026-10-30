@@ -25,6 +25,9 @@ def main(log):
             kvv_seti.prochistki_revizii(doc, g, log)
     except Exception as ex:
         log(u'прочистки и ревизии откатены:', ex)
+    # концы труб — точно в соединители (после «Угла» косых тройников оставались зазоры 31–40 мм)
+    with kvv.Tranzakciya(doc, u'КВВ: концы труб К1', log):
+        kvv_seti.podognat_koncy(doc, log, (u'КВВ-К1',))
 
 
 kvv.run('06_k1', main)

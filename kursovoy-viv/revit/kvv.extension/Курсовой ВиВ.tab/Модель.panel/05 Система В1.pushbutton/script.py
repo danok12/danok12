@@ -26,6 +26,12 @@ def main(log):
         if 'x_shov' in tr:
             kvv_seti.gibkaya_vstavka(doc, log, tr['x_shov'], u'КВВ-В1')
         kvv_seti.probki(doc, g, log)
+    # концы труб — точно в соединители (повёрнутая арматура и косые тройники сдвигают соединители)
+    with kvv.Tranzakciya(doc, u'КВВ: концы труб В1', log):
+        kvv_seti.podognat_koncy(doc, log, (u'КВВ-В1',))
+    # тройник в петле водомерного узла (обвод) оставался в двух системах — переподключить, Revit сольёт системы
+    with kvv.Tranzakciya(doc, u'КВВ: фитинги в двух системах', log):
+        kvv_seti.fitingi_v_dvuh_sistemah(doc, log)
 
 
 kvv.run('05_v1', main)

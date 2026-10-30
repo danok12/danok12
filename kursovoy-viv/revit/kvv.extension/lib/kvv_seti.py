@@ -1830,3 +1830,76 @@ def tvm_schetchik(doc, app, log, tip=TVM_TIP):
     finally:
         t.RollBack()
     return sym
+
+
+def podognat_koncy(doc, log, metki=(u'КВВ-В1', u'КВВ-К1'), dopusk=0.0005):
+    """Концы труб — точно в соединители, к которым они присоединены. После смены «Угла» у косого тройника его
+    соединители сдвигаются (у тройника 135° — на 40 мм), а труба остаётся «присоединённой» с видимым зазором
+    (замечание 30.10, сборный К1 в подвале). Конец переносится в точку соединителя и присоединяется заново.
+    В транзакции."""
+    n, osh = 0, []
+    for p in DB.FilteredElementCollector(doc).OfClass(Plumbing.Pipe):
+        pm = p.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+        mt = (pm.AsString() or u'') if pm is not None and pm.HasValue else u''
+        if not any(mt.startswith(m) for m in metki):
+            continue
+        for c in list(p.ConnectorManager.Connectors):
+            if c.ConnectorType != DB.ConnectorType.End or not c.IsConnected:
+                continue
+            drug = [r for r in c.AllRefs if r.Owner.Id != p.Id and r.ConnectorType == DB.ConnectorType.End]
+            if not drug or c.Origin.DistanceTo(drug[0].Origin) < dopusk * M:
+                continue
+            ref = drug[0]
+            lc = p.Location.Curve
+            a, b = lc.GetEndPoint(0), lc.GetEndPoint(1)
+            d_mm = c.Origin.DistanceTo(ref.Origin) / M * 1000
+            try:
+                c.DisconnectFrom(ref)
+                if c.Origin.DistanceTo(a) < c.Origin.DistanceTo(b):
+                    p.Location.Curve = DB.Line.CreateBound(ref.Origin, b)
+                else:
+                    p.Location.Curve = DB.Line.CreateBound(a, ref.Origin)
+                doc.Regenerate()
+                nov = min([x for x in p.ConnectorManager.Connectors if x.ConnectorType == DB.ConnectorType.End],
+                          key=lambda x: x.Origin.DistanceTo(ref.Origin))
+                nov.ConnectTo(ref)
+                n += 1
+                log(u'  конец трубы %d подтянут к %d на %.0f мм (%.2f, %.2f, %.2f)' % (
+                    p.Id.IntegerValue, ref.Owner.Id.IntegerValue, d_mm, ref.Origin.X / M, ref.Origin.Y / M,
+                    ref.Origin.Z / M))
+            except Exception as ex:
+                osh.append((p.Id.IntegerValue, ex))
+    log(u'концов труб подтянуто к соединителям', n, u'| не вышло', len(osh))
+    for o in osh[:20]:
+        log(u'  ОШИБКА подтяжки:', o[0], o[1])
+
+
+def fitingi_v_dvuh_sistemah(doc, log, metka_=u'КВВ-В1'):
+    """Фитинги, у которых соединители в разных системах (30.10: тройник второго контрольного крана водомерного
+    узла — участок задвижка–фильтр–тройник выпал в отдельную систему «В1 …» из 18 соединителей): соединители
+    отсоединяются и присоединяются заново, Revit сливает системы. В транзакции."""
+    n = 0
+    for e in DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_PipeFitting) \
+            .WhereElementIsNotElementType():
+        pm = e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+        if pm is None or not (pm.AsString() or u'').startswith(metka_):
+            continue
+        cs = [c for c in e.MEPModel.ConnectorManager.Connectors if c.Domain == DB.Domain.DomainPiping]
+        sist = set()
+        for c in cs:
+            try:
+                sist.add(c.MEPSystem.Id.IntegerValue if c.MEPSystem else -1)
+            except Exception:
+                sist.add(-1)
+        if len(sist) < 2:
+            continue
+        for c in cs:
+            refs = [r for r in c.AllRefs if r.Owner.Id != e.Id]
+            for r in refs:
+                c.DisconnectFrom(r)
+                doc.Regenerate()
+                c.ConnectTo(r)
+        doc.Regenerate()
+        n += 1
+        log(u'  фитинг %d в системах %s — соединители переподключены' % (e.Id.IntegerValue, sorted(sist)))
+    log(u'фитингов в двух системах переподключено', n)

@@ -71,6 +71,31 @@ def main(log):
     if rezhim.startswith(u'snimok '):
         kvv_proverka.snimok(doc, rezhim[7:], log)
         return
+    if rezhim.startswith(u'el '):
+        kvv_proverka.elementy(doc, rezhim[3:], log)
+        return
+    if rezhim == u'mal_sist':
+        kvv_proverka.malye_sistemy(doc, log)
+        return
+    if rezhim == u'dve_sist':
+        import kvv_seti
+        reload(kvv_seti)
+        with kvv.Tranzakciya(doc, u'КВВ: фитинги в двух системах', log):
+            kvv_seti.fitingi_v_dvuh_sistemah(doc, log)
+        kvv_proverka.sistemy(doc, log)
+        return
+    if rezhim == u'podognat':
+        import kvv_seti
+        reload(kvv_seti)
+        with kvv.Tranzakciya(doc, u'КВВ: концы труб к соединителям', log):
+            kvv_seti.podognat_koncy(doc, log)
+        return
+    if rezhim.startswith(u'fsoed '):
+        kvv_proverka.soed_fitingov(doc, rezhim[6:], log)
+        return
+    if rezhim.startswith(u'zazory'):
+        kvv_proverka.zazory(doc, rezhim[6:], log)
+        return
     if rezhim == u'seti_vidy':
         kvv_proverka.seti_na_vidah(doc, log)
         return

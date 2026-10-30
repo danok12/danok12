@@ -1539,3 +1539,159 @@ def seti_na_vidah(doc, log):
             v.Name, u', '.join(u'%s %d' % (k, len(es)) for k, es in sorted(po_metke.items())),
             u', '.join(u'%s %d' % kv for kv in sorted(skr.items())), u', '.join(kat),
             v.ViewTemplateId.IntegerValue, v.IsSectionBoxActive))
+
+
+def _tela(e, o):
+    out = []
+
+    def obhod(geo):
+        for g in geo:
+            if isinstance(g, DB.Solid) and g.Volume > 1e-9:
+                out.append(g)
+            elif isinstance(g, DB.GeometryInstance):
+                obhod(g.GetInstanceGeometry())
+    geo = e.get_Geometry(o)
+    if geo is not None:
+        obhod(geo)
+    return out
+
+
+def zazory(doc, zapros, log):
+    """«zazory [z_max]» — видимые зазоры у концов труб: отрезок оси 15 мм наружу от конца трубы должен войти в тело
+    присоединённого элемента (фитинга, арматуры, прибора). Трубы ниже z_max (м; по умолчанию 0 — подвал)."""
+    z_max = float(zapros) if zapros.strip() else 0.0
+    o = DB.Options()
+    o.DetailLevel = DB.ViewDetailLevel.Fine
+    o.IncludeNonVisibleObjects = False
+    opt = DB.SolidCurveIntersectionOptions()
+    n, zaz = 0, []
+    kesh = {}
+    for p in DB.FilteredElementCollector(doc).OfClass(DB.Plumbing.Pipe):
+        lc = p.Location.Curve
+        if min(lc.GetEndPoint(0).Z, lc.GetEndPoint(1).Z) / kvv.M > z_max:
+            continue
+        for c in p.ConnectorManager.Connectors:
+            if c.ConnectorType != DB.ConnectorType.End or not c.IsConnected:
+                continue
+            drug = [r for r in c.AllRefs if r.Owner.Id != p.Id and r.ConnectorType == DB.ConnectorType.End]
+            if not drug:
+                continue
+            e = drug[0].Owner
+            n += 1
+            # наружу от трубы: от конца в сторону, противоположную другому концу
+            a, b = lc.GetEndPoint(0), lc.GetEndPoint(1)
+            konec, drugoy = (a, b) if c.Origin.DistanceTo(a) < c.Origin.DistanceTo(b) else (b, a)
+            nap = (konec - drugoy).Normalize()
+            if e.Id.IntegerValue not in kesh:
+                kesh[e.Id.IntegerValue] = _tela(e, o)
+            # зонды вдоль оси и по стенке трубы (0,45 D, с четырёх сторон): у полых тел (заглушки-муфты, краны,
+            # переходные муфты) ось идёт по пустому каналу, а стенка трубы входит в тело
+            u1 = nap.CrossProduct(DB.XYZ.BasisZ if abs(nap.Z) < 0.9 else DB.XYZ.BasisX).Normalize()
+            u2 = nap.CrossProduct(u1).Normalize()
+            rr = p.Diameter * 0.45
+            zondy = [DB.XYZ.Zero, u1 * rr, u1 * (-rr), u2 * rr, u2 * (-rr)]
+            vnutri = False
+            for sm in zondy:
+                otr = DB.Line.CreateBound(konec + sm + nap * (0.002 * kvv.M), konec + sm + nap * (0.015 * kvv.M))
+                for t in kesh[e.Id.IntegerValue]:
+                    try:
+                        if t.IntersectWithCurve(otr, opt).SegmentCount > 0:
+                            vnutri = True
+                            break
+                    except Exception:
+                        pass
+                if vnutri:
+                    break
+            if not vnutri:
+                # величина зазора: где ось наружу (до 0,3 м) впервые входит в тело элемента
+                dlin = None
+                dl = DB.Line.CreateBound(konec, konec + nap * (0.3 * kvv.M))
+                for t in kesh[e.Id.IntegerValue]:
+                    try:
+                        r_ = t.IntersectWithCurve(dl, opt)
+                        for k in range(r_.SegmentCount):
+                            d_ = r_.GetCurveSegment(k).GetEndPoint(0).DistanceTo(konec) / kvv.M
+                            dlin = d_ if dlin is None else min(dlin, d_)
+                    except Exception:
+                        pass
+                fam = getattr(getattr(e, 'Symbol', None), 'FamilyName', None) or e.GetType().Name
+                zaz.append((metka(p), p.Id.IntegerValue, DB.Element.Name.GetValue(p.PipeType), e.Id.IntegerValue,
+                            fam, konec.X / kvv.M, konec.Y / kvv.M, konec.Z / kvv.M,
+                            u'%.0f мм' % (dlin * 1000) if dlin is not None else u'тело не встречено'))
+    log(u'концов труб проверено', n, u'| зазоров', len(zaz))
+    for z in sorted(zaz):
+        log(u'  %s | труба %d %s | к %d %s | (%.2f, %.2f, %.2f) | %s' % z)
+
+
+def soed_fitingov(doc, zapros, log):
+    """«fsoed <часть имени семейства>» — у экземпляров: соединители (точка, направление, угол семейства) и где ось
+    внутрь от соединителя входит в тело самого элемента (0 мм — соединитель на торце тела)."""
+    o = DB.Options()
+    o.DetailLevel = DB.ViewDetailLevel.Fine
+    opt = DB.SolidCurveIntersectionOptions()
+    for e in DB.FilteredElementCollector(doc).OfClass(DB.FamilyInstance):
+        if zapros.strip() not in e.Symbol.FamilyName:
+            continue
+        tela = _tela(e, o)
+        ug = e.LookupParameter(u'Угол')
+        log(u'%d %s | угол %s' % (e.Id.IntegerValue, e.Symbol.FamilyName,
+                                  u'%.1f' % math.degrees(ug.AsDouble()) if ug else u'-'))
+        for c in e.MEPModel.ConnectorManager.Connectors:
+            p, d = c.Origin, c.CoordinateSystem.BasisZ
+            dl = DB.Line.CreateBound(p - d * (0.3 * kvv.M), p + d * (0.05 * kvv.M))
+            vh = []
+            for t in tela:
+                try:
+                    r_ = t.IntersectWithCurve(dl, opt)
+                    for k in range(r_.SegmentCount):
+                        sg = r_.GetCurveSegment(k)
+                        vh.append(max(sg.GetEndPoint(0).DistanceTo(p - d * (0.3 * kvv.M)),
+                                      sg.GetEndPoint(1).DistanceTo(p - d * (0.3 * kvv.M))))
+                except Exception:
+                    pass
+            # дальняя точка тела вдоль оси (от внутренней точки наружу): торец; минус 0,3 м — отступ торца от соединителя
+            tor = (max(vh) / kvv.M - 0.3) * 1000 if vh else None
+            drug = [r.Owner.Id.IntegerValue for r in c.AllRefs if r.Owner.Id != e.Id]
+            log(u'   соед. %d (%.3f, %.3f, %.3f) напр. (%.2f, %.2f, %.2f) | торец тела %s мм от соединителя | к %s' % (
+                c.Id, p.X / kvv.M, p.Y / kvv.M, p.Z / kvv.M, d.X, d.Y, d.Z,
+                u'%+.0f' % tor if tor is not None else u'?', drug))
+
+
+def malye_sistemy(doc, log, porog=200):
+    """Состав систем трубопроводов меньше porog соединителей: элементы (семейство, id, центр)."""
+    for s in DB.FilteredElementCollector(doc).OfClass(DB.Plumbing.PipingSystem):
+        try:
+            els = [e for e in s.PipingNetwork]
+        except Exception as ex:
+            log(u'система', s.Name, u'— состав не прочитан:', ex)
+            continue
+        if len(els) > porog:
+            continue
+        log(u'система', s.Name, u'| элементов', len(els))
+        for e in els:
+            bb = e.get_BoundingBox(None)
+            c = (bb.Min + bb.Max).Multiply(0.5 / kvv.M) if bb else None
+            fam = getattr(getattr(e, 'Symbol', None), 'FamilyName', None) or e.GetType().Name
+            log(u'   %d %s %s' % (e.Id.IntegerValue, fam, u'(%.2f, %.2f, %.2f)' % (c.X, c.Y, c.Z) if c else u''))
+
+
+def elementy(doc, zapros, log):
+    """«el id1 id2 …» — семейство, категория, система, метка и соединители (с кем соединены) у элементов."""
+    for t in zapros.split():
+        e = doc.GetElement(DB.ElementId(int(t)))
+        if e is None:
+            log(t, u'— нет элемента')
+            continue
+        fam = getattr(getattr(e, 'Symbol', None), 'FamilyName', None) or e.GetType().Name
+        log(u'%s | %s | %s | метка %s' % (t, e.Category.Name if e.Category else u'-', fam, metka(e)))
+        cm = getattr(e, 'ConnectorManager', None) or getattr(getattr(e, 'MEPModel', None), 'ConnectorManager', None)
+        if cm is None:
+            continue
+        for c in cm.Connectors:
+            try:
+                s = c.MEPSystem.Name if c.MEPSystem else u'(нет)'
+            except Exception:
+                s = u'?'
+            log(u'   соед. %d (%.3f, %.3f, %.3f) | сист. %s | соединён %s | к %s' % (
+                c.Id, c.Origin.X / kvv.M, c.Origin.Y / kvv.M, c.Origin.Z / kvv.M, s, c.IsConnected,
+                [r.Owner.Id.IntegerValue for r in c.AllRefs if r.Owner.Id != e.Id]))
