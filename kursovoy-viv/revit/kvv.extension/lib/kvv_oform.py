@@ -715,8 +715,8 @@ def zanyatye_mesta(doc, v, ekr, MMv, log):
 
 
 def podpisi_uklonov(doc, v, tnt, g, log):
-    """Уклоны на схеме К1, как в образце: «0,03» со стрелкой по течению — вдоль каждого поэтажного отвода Ø50,
-    «0,02» — вдоль самого длинного сборного трубопровода подвала каждой секции, «0,01» — вдоль выпуска (замечание
+    """Уклоны на схеме К1, как в образце: «0,030» со стрелкой по течению — вдоль каждого поэтажного отвода Ø50,
+    «0,020» — вдоль самого длинного сборного трубопровода подвала каждой секции, «0,01» — вдоль выпуска (замечание
     преподавателя 21.10.2026). Текст повёрнут вдоль трубы;
     место — первое свободное из вариантов (середина отвода и сдвиги вдоль него, под трубой и над ней): подпись не
     задевает трубы К1 и уже стоящие на виде надписи, выноски, марки и отметки."""
@@ -754,7 +754,7 @@ def podpisi_uklonov(doc, v, tnt, g, log):
             otvody.setdefault((round(a.X / M, 2), et), []).extend([a, b])
     nadpisi = zanyatye_mesta(doc, v, ekr, MMv, log)        # и уже поставленные подписи уклонов
 
-    W_CIF, ZAZOR, W_STR = 5.6, 1.0, 2.0                 # ширина «0,03», зазор, ширина стрелки — мм листа
+    W_CIF, ZAZOR, W_STR = 7.0, 1.0, 2.0                 # ширина «0,030», зазор, ширина стрелки — мм листа
     POD_STR = 0.375                                     # стрелку поднять до середины цифр (центр «>» — 0,35 высоты)
     DL = W_CIF + ZAZOR + W_STR
     HL, HH = (DL / 2 + 0.3) * MMv, (1.25 + 0.2) * MMv   # полуразмеры подписи с запасом
@@ -833,7 +833,7 @@ def podpisi_uklonov(doc, v, tnt, g, log):
             rel = ekr(q - mid)
             storona = 1 if rel[0] * nd[0] + rel[1] * nd[1] > 0 else -1     # сосед сверху — подпись снизу
         try:
-            shtraf = postavit(verh, niz, u'0,03', storona, (0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2))
+            shtraf = postavit(verh, niz, u'0,030', storona, (0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2))
             if shtraf >= 100:
                 so_stolkn += 1
             elif shtraf > 0:
@@ -846,7 +846,7 @@ def podpisi_uklonov(doc, v, tnt, g, log):
     for sek, (h, a, b) in sorted(podval.items()):
         verh, niz = (a, b) if a.Z > b.Z else (b, a)
         try:
-            shtraf = postavit(verh, niz, u'0,02', 1, (0.5, 0.4, 0.6, 0.3, 0.7))
+            shtraf = postavit(verh, niz, u'0,020', 1, (0.5, 0.4, 0.6, 0.3, 0.7))
             if shtraf >= 100:
                 so_stolkn += 1
             elif shtraf > 0:
@@ -857,7 +857,7 @@ def podpisi_uklonov(doc, v, tnt, g, log):
     for sek, (h, a, b) in sorted(vypusk.items()):
         verh, niz = (a, b) if a.Z > b.Z else (b, a)
         try:
-            shtraf = postavit(verh, niz, u'0,01', 1, (0.5, 0.4, 0.6, 0.3, 0.7))
+            shtraf = postavit(verh, niz, u'0,010', 1, (0.5, 0.4, 0.6, 0.3, 0.7))
             if shtraf >= 100:
                 so_stolkn += 1
             elif shtraf > 0:
@@ -903,11 +903,11 @@ def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
         vyp_dl = u''
         try:
             u_v = kvv.load_json('genplan', 'genplan_v3.json')['vypusk']       # от наружной стены до КК, как на листе 7
-            vyp_dl = (u'l = %.1f м; i = %.2f' % (u_v['L'], u_v['i'])).replace(u'.', u',')
+            vyp_dl = (u'l = %.1f м; i = %.3f' % (u_v['L'], u_v['i'])).replace(u'.', u',')     # ГОСТ 21.601, п. 4.14
         except Exception as ex:
             log(u'  длина выпуска не прочитана:', ex)
         for t in vypuski:
-            p = tochka_na_y(t, 13.12)
+            p = tochka_na_y(t, 13.18)                         # наружная грань стены по оси Д: лоток −2,000
             ot.postavit(t, p, -1.4, -0.8, lotok=True)          # влево-вниз: вверху подписи «2 этаж»
             # вверх-влево — за конец выпуска, там свободно (вправо-вниз марка ложилась на отвод 1-го этажа
             # стояка кв. А и на «Пр.» опуска у стены)
@@ -919,7 +919,9 @@ def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
                 r_, u_ = napravleniya(v)
                 opt = DB.TextNoteOptions(tnt.Id)
                 opt.HorizontalAlignment = DB.HorizontalTextAlignment.Center
-                DB.TextNote.Create(doc, v.Id, m_.TagHeadPosition - u_.Multiply(0.75 * k_ * M), vyp_dl, opt)
+                # под серединой полки марки (центр текста марки правее точки её головы на ~7 мм листа)
+                DB.TextNote.Create(doc, v.Id, m_.TagHeadPosition + r_.Multiply(0.7 * k_ * M) -
+                                   u_.Multiply(0.75 * k_ * M), vyp_dl, opt)
         doc.Regenerate()
         # подписи уклонов — после марок и отметок выпусков: обходят уже стоящие надписи и выноски
         podpisi_uklonov(doc, v, tnt, g, log)
@@ -968,7 +970,7 @@ def liniya_razreza(doc, v, tnt, g, log):
 
 def podpisi_razreza(doc, v, tnt, g, log):
     """Выноски на разрезе 1-1 по шахте кв. А (вид из 07): узел учёта В1, прослойка и перегородка шахты,
-    крестовина К1 над плитой, сборный К1 под потолком подвала. Справа, за наружной стеной (вне рамки вида), в
+    крестовина К1 над плитой, сборный К1 в верхней зоне подвала. Справа, за наружной стеной (вне рамки вида), в
     пределах её высоты: смещения в долях масштаба, 1,0 = 10 мм листа; на листе 1:50 — 1 м модели = 20 мм. Знаков
     «°» и «Ø» в шрифте текста нет — не писать."""
     st = dict((s_['sys'], s_) for s_ in g['stoyaki'] if s_['x'] < 5.0)
@@ -982,7 +984,9 @@ def podpisi_razreza(doc, v, tnt, g, log):
            (u'Прослойка 50 мм и перегородка 100 мм —\rшахта не у наружной стены', P(x_per, yc, 0.45), 2.8, -0.1),
            (u'Крестовина двухплоскостная 110×50 на +0,055 —\rнад плитой перекрытия, не в ней', P(xk, yk, z_kr),
             2.8, -0.75),
-           (u'Сборный К1 DN100 под потолком подвала', P(xk, yc, -0.95), 2.8, 0.1)]
+           # отметка — по заглушке прочистки низа стояка кв. А (труба режется плоскостью разреза)
+           (u'Сборный К1 DN100 в верхней зоне подвала', P(xk, yc, min(
+               [z_['z'] for z_ in g['zaglushki'] if abs(z_['x'] - xk) < 0.05] or [-1.3])), 2.8, 0.1)]
     n = 0
     for tekst, tochka, dx, dy in vyn:
         if vynoska(doc, v, tnt, tekst, tochka, dx, dy, log) is not None:

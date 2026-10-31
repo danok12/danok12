@@ -441,7 +441,7 @@ for i_, v in enumerate(vyp):
     nom = 1 if v["x"] < ZERK / 2 else 2
     ym = (Y_NAR1 + Y_DVOR - R_KK) / 2
     vynoska((v["x"], ym), (v["x"] + st * 2.2, ym + 0.4), st, "К1 Ø100",
-            "l = %s м; i = %s" % (F2(L_VYP, 1), F2(U_VYP["i"], 2)), sl="ГП_Текст")
+            "l = %s м; i = %s" % (F2(L_VYP, 1), F2(U_VYP["i"], 3)), sl="ГП_Текст")
     vynoska((v["x"], Y_NAR1 - 0.1), (v["x"] + st * 2.2, Y_NAR1 - 2.6), st, "Выпуск К1-%d Ø100" % nom,
             "на отм. %s (%s)" % (F2(LOT_VYP), F2(LOT_VYP - Z0, 3)), sl="ГП_Текст")
 # ввод

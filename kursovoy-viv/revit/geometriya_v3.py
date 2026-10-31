@@ -393,6 +393,8 @@ ARM = {"kran15": ("VALTEC_VT.214.N_КранШаровой ВР", '1/2"', -0.024,
        # фильтр перед общедомовым счётчиком: в семействе DN15, DN25 задаётся «ADSK_Диаметр условный» (kvv_seti)
        "filtr25": ("ADSK_Фильтр механический сетчатый муфтовый ВР", "Фильтр сетчатый муфтовый ВР-ВР", -0.028, 0.028),
        "kran25": ("VALTEC_VT.214.N_КранШаровой ВР", '1"', -0.032, 0.032),
+       # автоматический воздухоотводчик с отсекающим клапаном на верху стояка В1 (СП 30, п. 11.17), вход снизу
+       "vozd15": ("ADSK_АвтоматическийВоздухоудалитель", "DN15_C отсекающим клапаном", 0.0, 0.0),
        # кран пары стояков с ручкой вбок — тот же VT.214 на вертикальной рабочей плоскости (05: семейство переводится
        # на рабочую плоскость; поворот вокруг оси трубы Revit не даёт — вложенная ручка)
        "kran25wp": ("VALTEC_VT.214.N_КранШаровой ВР", '1"', -0.032, 0.032),
@@ -767,6 +769,13 @@ def nogi(xh, y0, z, ftaps, ur, d_vetki=25, puti=None):
     return ids[0]
 
 
+H_VOZD = 0.20                           # стояк В1 выше верхнего ответвления — под воздухоотводчик (п. 11.17)
+vozduhootvodchiki = []
+Z_PK = 0.60         # кран для шланга (п. 8.29) — на опуске узла, +0,600 от пола
+L_PK = 0.12         # отвод к крану от оси опуска в помещение
+krany_pk = []
+
+
 def kv_v1(k, zf, ur, rs_v, stoyak_xy, napr, nogi_, klyuch=None):
     """Квартирный узел ввода — как в образце преподавателя: тройник на стояке на Z_UZEL, шаровой кран на отводе от
     стояка, опуск вдоль стены шахты — фильтр, регулятор давления (этажи ET_REG), счётчик, обратный клапан
@@ -797,7 +806,18 @@ def kv_v1(k, zf, ur, rs_v, stoyak_xy, napr, nogi_, klyuch=None):
             a_["lico"] = [-k_pom[1], k_pom[0]]         # отросток косого фильтра — вправо от смотрящего (как на фото)
         elif a_.get("vert"):
             a_["lico"] = k_pom                         # циферблаты счётчика и регулятора — к помещению (kvv_seti)
-    seti[rn]["pts"] = seti[rn]["pts"][:1] + [R((xr, y_op, zf + Z_RAZV))]
+    # СП 30, п. 8.29: отдельный кран 1/2" для шланга с распылителем (первичное внутриквартирное пожаротушение) —
+    # тройник на опуске после счётчика и обратного клапана, отвод Ø20 в помещение, кран ВР-НР (НР — под шланг)
+    z_pk = zf + Z_PK
+    seti[rn]["pts"] = seti[rn]["pts"][:1] + [R((xr, y_op, z_pk))]
+    rn2 = truba("V1", "ppr", 25, [(xr, y_op, z_pk), (xr, y_op, zf + Z_RAZV)], ur)
+    p_k = (xr + k_pom[0] * L_PK, y_op + k_pom[1] * L_PK, z_pk)
+    r_pk = truba("V1", "ppr", 20, [(xr, y_op, z_pk), p_k], ur)
+    aid_pk, _ = arm("kran15vn", p_k, (k_pom[0], k_pom[1]), ur)
+    svyaz((r_pk, 1), dict(arm=aid_pk, side="in"))
+    troynik((rn, 1), (rn2, 0), (r_pk, 0))
+    krany_pk.append(dict(x=round(p_k[0], 4), y=round(p_k[1], 4), z=round(z_pk, 3)))
+    rn = rn2
     puti = {}
     starty = [nogi(xr, y_op, zf + Z_RAZV, f, ur, puti=puti) for f in nogi_]
     if len(starty) == 1:
@@ -1040,7 +1060,12 @@ for M in SEKCII:
             return d_ppr_po_n(N_PR * (n_uzl - i) if i > 0 else N_PR * n_uzl, 25, 1.2)
         imya = "Ст.В1-%d" % NOM[(M.s, kv)]
         x_vr = x + DX_A_ * M.sx() if kv == "A" else M.x(X_PARA_)    # врезка ответвления в магистраль
-        runs = stoyak(imya, "V1", x, y, uzly, zm(x_vr), max(z for z, _ in uzly), ur_po_z, d_fun, "ppr")
+        # 31.10, СП 30, п. 11.17: стояк выше ответвления 11-го этажа на H_VOZD, наверху — воздухоотводчик
+        z_verh = max(z for z, _ in uzly) + H_VOZD
+        runs = stoyak(imya, "V1", x, y, uzly, zm(x_vr), z_verh, ur_po_z, d_fun, "ppr")
+        aid_v, _ = arm("vozd15", (x, y, z_verh), (1, 0), ur_po_z(z_verh - 0.1))
+        svyaz((stoyaki[-1]["runs"][-1], 1), dict(arm=aid_v, side="in"))
+        vozduhootvodchiki.append(dict(stoyak=imya, x=round(x, 4), y=round(y, 4), z=round(z_verh, 3)))
         podvod[imya] = [x, y, runs[0], d_fun(0, len(uzly)), N_PR * N_ET, x, kv, M, 0.0, 0.0]
 
 DX_A = 0.35                             # кв. А: врезка в магистраль в 0,35 м от оси стояка В1 (за низом стояка К1)
@@ -1291,11 +1316,12 @@ I_VN = 0.02                             # сборные трубопровод�
 I_VYP = 0.01                            # выпуски
 R110 = 0.055
 D45 = 0.2
+D45_OP = 0.16                           # 31.10: косой участок внизу опуска короче — сборные ниже (п. 18.4), вертикали опуска не хватало
 Y_SB = 8.2
 X_V = 3.0                               # ось выпуска от оси 1 (лок.): 3,3 м от наружной грани торцевой стены
-LOT_0 = -0.80                           # лоток у начала сборного трубопровода (у дальнего стояка кв. В)
-# Как в образце преподавателя (лотки −0,67…−1,04 при 12 этажах), решение пользователя 29.10: от крестовины 1-го
-# этажа до перехода стояка в горизонтальный ~0,6–0,98 м < 1 м — отступление от СП 30, п. 18.4 (NORMY.md)
+LOT_0 = -1.22                           # лоток у начала сборного трубопровода (у дальнего стояка кв. В)
+# 31.10, по СП 30, п. 18.4 (здание 11 этажей): от крестовины 1-го этажа до перехода стояка в горизонтальный не менее
+# 1 м — было −0,80 «как в образце» (0,60–0,98 м); при −1,22 — 1,02–1,21 м (проверка perehod_18_4)
 Y_OP = B - 0.2 - 0.25                   # опуск — в 0,25 м от внутренней грани стены по оси Д
 DY_T = 0.45                             # тройник сборного кв. Б, В на линии выпуска — в 0,45 м севернее Y_SB
 
@@ -1315,6 +1341,7 @@ def s_uklonom(tochki, z0, i=I_VN):
 
 
 L_PR = 0.30                             # отрезок за косым тройником против течения — к заглушке-прочистке
+perehod_18_4 = []                       # (x, y, расстояние крестовина 1-го этажа — низ вертикали стояка, м)
 zaglushki = []
 
 
@@ -1327,6 +1354,9 @@ def niz_stoyaka(x, y, plan):
     L_ = math.hypot(ux, uy)
     ux, uy = ux / L_, uy / L_
     r_v = truba("K1", "sml", 100, [(x, y, Z_PP), (x, y, z1 + D45), (x1, y1, z1)], UR_P)
+    # СП 30, п. 18.4 (здание выше 10 этажей): от присоединения приборов 1-го этажа (крестовина, ось +Z_KREST) до
+    # перехода стояка в горизонтальный (низ вертикали) — не менее 1 м
+    perehod_18_4.append((x, y, round(Z_KREST - (z1 + D45), 3)))
     p_pr = (x1 - ux * L_PR, y1 - uy * L_PR, z1 + I_VN * L_PR)
     r_pr = truba("K1", "sml", 100, [p_pr, (x1, y1, z1)], UR_P)
     r_g = truba("K1", "sml", 100, plan, UR_P)
@@ -1374,15 +1404,15 @@ for M in SEKCII:
     p_pr = (xV, Y_OP + 0.15, p_op[2] - I_VN * 0.15)
     r_pr = truba("K1", "sml", 100, [p_op, p_pr], UR_P)
     zaglushki.append(dict(r=r_pr, end=1, x=round(p_pr[0], 3), y=round(p_pr[1], 3), z=round(p_pr[2], 3)))
-    z_b = LOT_ST + R110 + I_VYP * (Y_ST_D - (Y_OP + D45))
+    z_b = LOT_ST + R110 + I_VYP * (Y_ST_D - (Y_OP + D45_OP))
     y_kon = Y_ST_D + 1.0
-    r_op = truba("K1", "sml", 100, [p_op, (xV, Y_OP, z_b + D45), (xV, Y_OP + D45, z_b),
-                                    (xV, y_kon, z_b - I_VYP * (y_kon - Y_OP - D45))], UR_P)
+    r_op = truba("K1", "sml", 100, [p_op, (xV, Y_OP, z_b + D45_OP), (xV, Y_OP + D45_OP, z_b),
+                                    (xV, y_kon, z_b - I_VYP * (y_kon - Y_OP - D45_OP))], UR_P)
     troynik((r_a2, 1), (r_pr, 0), (r_op, 0))
     vypuski.append(dict(sek=M.s, x=round(xV, 3), y_stena=round(Y_ST_D, 3), lotok=round(LOT_ST, 3)))
     k1_podval[M.s] = dict(
         L_CB=round(dlina(plan_C[:4]), 3), L_BT=round(dlina(plan_C[3:]), 3), L_AT=round(dlina(plan_A), 3),
-        L_TO=round(Y_OP - y_t, 3), L_OP=round(p_op[2] - z_b, 3), L_VYP_IN=round(Y_ST_D - Y_OP - D45, 3),
+        L_TO=round(Y_OP - y_t, 3), L_OP=round(p_op[2] - z_b, 3), L_VYP_IN=round(Y_ST_D - Y_OP - D45_OP, 3),
         lot_C=round(pC[0][2] - R110, 3), lot_B=round(pB[0][2] - R110, 3), lot_A=round(pA[0][2] - R110, 3),
         lot_T=round(z_t - R110, 3), lot_OP=round(p_op[2] - R110, 3), lot_niz=round(z_b - R110, 3))
     for kv, (x, y), r_niz in (("A", (xA, yA), r_vA), ("B", (xB, yB), r_vB), ("C", (xC, yC), r_vC)):
@@ -1392,6 +1422,7 @@ for M in SEKCII:
         svyaz((runs[0], 0), (r_niz, 0))
 
 
+assert min(d_ for _, _, d_ in perehod_18_4) >= 1.0 - 1e-6, ("СП 30, п. 18.4: < 1 м", perehod_18_4)
 # ---------------- проверки ----------------
 TOL = 0.002
 TOLSH = {"nar": T_NAR, "fund": 0.316, "nes": T_NES, "per": 0.10, "beton": 0.20, "korob": 0.05}
@@ -1822,7 +1853,7 @@ trassa_v3 = dict(stoyaki_v1={nm: [round(v[0], 3), v[1], round(v[5], 3), round(v[
                  x_troynik=X_TR, y_mag=Y_MAG, z_mag=Z_MAG, vypuski=vypuski, l_nap=L_NAP, n_vse=N_VSE,
                  zerkalo=ZERK, x_shov=round(L_SEK + DSH / 2, 3),
                  stoyaki_k1={s["imya"]: [s["x"], s["y"]] for s in stoyaki if s["sys"] == "K1"},
-                 krany_pol=krany_pol, zaglushki=zaglushki, x_v=X_V, k1_podval=k1_podval[0],
+                 krany_pol=krany_pol, zaglushki=zaglushki, krany_pk=krany_pk, vozduhootvodchiki=vozduhootvodchiki, x_v=X_V, k1_podval=k1_podval[0],
                  uzel=dict(z_uzel=Z_UZEL, z_razv=Z_RAZV, l_uzla=L_UZLA, z_krest=Z_KREST),
                  razvodka=razvodka_kv)
 json.dump(trassa_v3, open(os.path.join(HERE, "..", "calc", "trassa_v3.json"), "w", encoding="utf-8"),

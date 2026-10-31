@@ -311,9 +311,9 @@ def main(log):
         fo = DB.FormatOptions(DB.UnitTypeId.Millimeters)
         fo.Accuracy = 1.0
         u.SetFormatOptions(DB.SpecTypeId.PipeSize, fo)
-        # отметки с точкой «+3.200» — как в образце преподавателя (решение 29.10; ГОСТ Р 21.101, п. 5.4.3 требует
-        # запятую — отступление записано в NORMY.md). 29.10 модель на время переводилась на запятую — вернуть явно
-        u.DecimalSymbol = DB.DecimalSymbol.Dot
+        # отметки с запятой «+3,200» (ГОСТ Р 21.101, п. 5.4.3; 31.10 по просьбе пользователя — было «как в образце»
+        # с точкой)
+        u.DecimalSymbol = DB.DecimalSymbol.Comma
         doc.SetUnits(u)
     with kvv.Tranzakciya(doc, u'КВВ: марки стояков', log):
         # свои марки прошлого запуска
