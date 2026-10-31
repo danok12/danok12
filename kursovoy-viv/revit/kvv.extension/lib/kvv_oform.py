@@ -900,13 +900,26 @@ def oformit_shemu(doc, g, v, sist, tipy, tnt, tip_ot, vvody, vypuski, tr, log):
         raschetnye_tochki(doc, g, kvv.load_json('calc', 'rezultaty_v3.json'), tr, v, tnt, log)
     else:
         prochistki_revizii_podpisi(doc, v, tnt, tr, False, log)
+        vyp_dl = u''
+        try:
+            u_v = kvv.load_json('genplan', 'genplan_v3.json')['vypusk']       # от наружной стены до КК, как на листе 7
+            vyp_dl = (u'l = %.1f м; i = %.2f' % (u_v['L'], u_v['i'])).replace(u'.', u',')
+        except Exception as ex:
+            log(u'  длина выпуска не прочитана:', ex)
         for t in vypuski:
             p = tochka_na_y(t, 13.12)
             ot.postavit(t, p, -1.4, -0.8, lotok=True)          # влево-вниз: вверху подписи «2 этаж»
             # вверх-влево — за конец выпуска, там свободно (вправо-вниз марка ложилась на отвод 1-го этажа
             # стояка кв. А и на «Пр.» опуска у стены)
             q = tochka_na_y(t, 13.12 + 0.6)
-            marka_s_vynoskoy(doc, v, tipy['vypusk'], t, q, -2.4, 1.6, log)
+            m_ = marka_s_vynoskoy(doc, v, tipy['vypusk'], t, q, -2.4, 1.6, log)
+            # длина и уклон выпуска под маркой (ГОСТ 21.601, п. 6.2.7) — как на генплане: «l = 5,0 м; i = 0,01»
+            if m_ is not None and vyp_dl:
+                k_ = v.Scale / 100.0
+                r_, u_ = napravleniya(v)
+                opt = DB.TextNoteOptions(tnt.Id)
+                opt.HorizontalAlignment = DB.HorizontalTextAlignment.Center
+                DB.TextNote.Create(doc, v.Id, m_.TagHeadPosition - u_.Multiply(0.75 * k_ * M), vyp_dl, opt)
         doc.Regenerate()
         # подписи уклонов — после марок и отметок выпусков: обходят уже стоящие надписи и выноски
         podpisi_uklonov(doc, v, tnt, g, log)

@@ -1210,7 +1210,8 @@ troynik((r_zap, 1), (r_zap2, 0), (polivochnyy(SEKCII[0], X_POL), 0))
 svyaz((r_zap2, 1), (o_z[2](), 0))
 
 nas = json.load(open(os.path.join(HERE, "..", "calc", "nasos_v3.json"), encoding="utf-8"))
-XP, YP = 5.0, 4.0                       # установка COR-2 (соединители коллекторов на локальной -X)
+XP, YP = 4.95, 4.0                      # установка COR-2 (соединители коллекторов на локальной -X); 31.10:
+# на 5 см к узлу учёта — от фундамента 800×1000 до восточной стены 0,725 м ≥ 0,7 (СП 30, п. 13.22, заглублённое)
 Z_FUND = 0.27                           # установка на фундаменте 270 мм (как в образце), Revit: kvv_seti.fundament_nasosa
 p_vs = (XP, YP - 0.361, Z_P + Z_FUND + 0.168)
 p_nap = (XP, YP + 0.480, Z_P + Z_FUND + 0.168)

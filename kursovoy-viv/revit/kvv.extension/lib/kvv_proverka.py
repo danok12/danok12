@@ -1702,3 +1702,34 @@ def tipy_semeystva(doc, zapros, log):
     for s in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol):
         if zapros.strip() in s.FamilyName:
             log(u'%s | %s' % (s.FamilyName, DB.Element.Name.GetValue(s)))
+
+
+def gabarity(doc, zapros, log):
+    """«gab <часть имени семейства>» — габариты экземпляров (м)."""
+    for ds in DB.FilteredElementCollector(doc).OfClass(DB.DirectShape):
+        if zapros.strip() in (ds.Name or u''):
+            bb = ds.get_BoundingBox(None)
+            log(u'%d DirectShape %s | x %.3f…%.3f | y %.3f…%.3f | z %.3f…%.3f' % (
+                ds.Id.IntegerValue, ds.Name, bb.Min.X / kvv.M, bb.Max.X / kvv.M, bb.Min.Y / kvv.M, bb.Max.Y / kvv.M,
+                bb.Min.Z / kvv.M, bb.Max.Z / kvv.M))
+    for e in DB.FilteredElementCollector(doc).OfClass(DB.FamilyInstance):
+        if zapros.strip() not in e.Symbol.FamilyName:
+            continue
+        bb = e.get_BoundingBox(None)
+        if bb is None:
+            continue
+        log(u'%d %s | x %.3f…%.3f | y %.3f…%.3f | z %.3f…%.3f' % (
+            e.Id.IntegerValue, e.Symbol.FamilyName, bb.Min.X / kvv.M, bb.Max.X / kvv.M, bb.Min.Y / kvv.M,
+            bb.Max.Y / kvv.M, bb.Min.Z / kvv.M, bb.Max.Z / kvv.M))
+        o = DB.Options()
+        o.DetailLevel = DB.ViewDetailLevel.Fine
+        xs, ys, zs = [], [], []
+        for t in _tela(e, o):
+            for f in t.Faces:
+                m = f.Triangulate()
+                for i in range(m.Vertices.Count):
+                    p_ = m.Vertices[i]
+                    xs.append(p_.X / kvv.M); ys.append(p_.Y / kvv.M); zs.append(p_.Z / kvv.M)
+        if xs:
+            log(u'   тела: x %.3f…%.3f | y %.3f…%.3f | z %.3f…%.3f' % (min(xs), max(xs), min(ys), max(ys), min(zs),
+                                                                       max(zs)))
