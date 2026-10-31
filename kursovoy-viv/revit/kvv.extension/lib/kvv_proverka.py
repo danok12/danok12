@@ -1733,3 +1733,41 @@ def gabarity(doc, zapros, log):
         if xs:
             log(u'   тела: x %.3f…%.3f | y %.3f…%.3f | z %.3f…%.3f' % (min(xs), max(xs), min(ys), max(ys), min(zs),
                                                                        max(zs)))
+
+
+def v_oblasti(doc, zapros, log):
+    """«obl x0 y0 z0 x1 y1 z1» — элементы, центр габарита которых в параллелепипеде (м): категория, семейство, id."""
+    x0, y0, z0, x1, y1, z1 = [float(v) for v in zapros.split()]
+    for e in DB.FilteredElementCollector(doc).WhereElementIsNotElementType():
+        if e.Category is None:
+            continue
+        try:
+            bb = e.get_BoundingBox(None)
+        except Exception:
+            continue
+        if bb is None:
+            continue
+        c = (bb.Min + bb.Max).Multiply(0.5 / kvv.M)
+        if x0 <= c.X <= x1 and y0 <= c.Y <= y1 and z0 <= c.Z <= z1:
+            fam = getattr(getattr(e, 'Symbol', None), 'FamilyName', None) or e.GetType().Name
+            log(u'%d | %s | %s | метка %s | (%.3f, %.3f, %.3f) | габ %.3f×%.3f×%.3f' % (
+                e.Id.IntegerValue, e.Category.Name, fam, metka(e), c.X, c.Y, c.Z,
+                (bb.Max.X - bb.Min.X) / kvv.M, (bb.Max.Y - bb.Min.Y) / kvv.M, (bb.Max.Z - bb.Min.Z) / kvv.M))
+
+
+def na_vide_ryadom(doc, zapros, log):
+    """«ryadom <вид>; x; z; r» — видимые на виде разреза элементы, габарит которых в проекции (вдоль взгляда)
+    задевает квадрат ±r вокруг точки (x, z) модели (м)."""
+    ch = [c.strip() for c in zapros.split(u';')]
+    v = [e for e in DB.FilteredElementCollector(doc).OfClass(DB.View) if not e.IsTemplate and e.Name == ch[0]][0]
+    x, z, r = float(ch[1]), float(ch[2]), float(ch[3])
+    for e in DB.FilteredElementCollector(doc, v.Id).WhereElementIsNotElementType():
+        bb = e.get_BoundingBox(v) or e.get_BoundingBox(None)
+        if bb is None:
+            continue
+        if bb.Min.X / kvv.M <= x + r and bb.Max.X / kvv.M >= x - r and bb.Min.Z / kvv.M <= z + r and \
+                bb.Max.Z / kvv.M >= z - r:
+            fam = getattr(getattr(e, 'Symbol', None), 'FamilyName', None) or e.GetType().Name
+            log(u'%d | %s | %s | %s | x %.2f…%.2f y %.2f…%.2f z %.2f…%.2f' % (
+                e.Id.IntegerValue, e.Category.Name if e.Category else u'-', fam, metka(e), bb.Min.X / kvv.M,
+                bb.Max.X / kvv.M, bb.Min.Y / kvv.M, bb.Max.Y / kvv.M, bb.Min.Z / kvv.M, bb.Max.Z / kvv.M))

@@ -295,6 +295,12 @@ def razrez_shahty(g, log):
             v.SetCategoryHidden(cid, False)
     v.SetCategoryHidden(DB.ElementId(DB.BuiltInCategory.OST_Levels), True)
     v.SetCategoryHidden(DB.ElementId(DB.BuiltInCategory.OST_Grids), True)      # ось 1 тянулась через весь лист
+    # значки систем, помещения, осевые линии труб и земля (03, zemlya) в разрезе не нужны. Крестик «+» в подвале
+    # слева от спуска (31.10) — сечение подводки В1 Ø25 к стояку кв. А, идущей поперёк плоскости разреза: это труба
+    for k in (u'OST_PipingSystem', u'OST_Rooms', u'OST_CenterLines', u'OST_Toposolid', u'OST_Topography'):
+        bic = getattr(DB.BuiltInCategory, k, None)
+        if bic is not None and v.CanCategoryBeHidden(DB.ElementId(bic)):
+            v.SetCategoryHidden(DB.ElementId(bic), True)
     log(u'разрез: снято фильтров вида', len(filtry))
     doc.Regenerate()
     z_kr = min(k['z'] for k in g['kresty2'] if abs(k['x'] - xk) < 1e-3 and abs(k['y'] - yk) < 1e-3)

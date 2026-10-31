@@ -71,6 +71,12 @@ def main(log):
     if rezhim.startswith(u'snimok '):
         kvv_proverka.snimok(doc, rezhim[7:], log)
         return
+    if rezhim.startswith(u'ryadom '):
+        kvv_proverka.na_vide_ryadom(doc, rezhim[7:], log)
+        return
+    if rezhim.startswith(u'obl '):
+        kvv_proverka.v_oblasti(doc, rezhim[4:], log)
+        return
     if rezhim.startswith(u'gab '):
         kvv_proverka.gabarity(doc, rezhim[4:], log)
         return
