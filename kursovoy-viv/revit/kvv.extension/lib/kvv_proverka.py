@@ -1695,3 +1695,10 @@ def elementy(doc, zapros, log):
             log(u'   соед. %d (%.3f, %.3f, %.3f) | сист. %s | соединён %s | к %s' % (
                 c.Id, c.Origin.X / kvv.M, c.Origin.Y / kvv.M, c.Origin.Z / kvv.M, s, c.IsConnected,
                 [r.Owner.Id.IntegerValue for r in c.AllRefs if r.Owner.Id != e.Id]))
+
+
+def tipy_semeystva(doc, zapros, log):
+    """«tipy <часть имени семейства>» — типоразмеры загруженных семейств."""
+    for s in DB.FilteredElementCollector(doc).OfClass(DB.FamilySymbol):
+        if zapros.strip() in s.FamilyName:
+            log(u'%s | %s' % (s.FamilyName, DB.Element.Name.GetValue(s)))

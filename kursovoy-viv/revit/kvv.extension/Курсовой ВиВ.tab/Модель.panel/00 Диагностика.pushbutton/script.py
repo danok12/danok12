@@ -71,6 +71,9 @@ def main(log):
     if rezhim.startswith(u'snimok '):
         kvv_proverka.snimok(doc, rezhim[7:], log)
         return
+    if rezhim.startswith(u'tipy '):
+        kvv_proverka.tipy_semeystva(doc, rezhim[5:], log)
+        return
     if rezhim.startswith(u'el '):
         kvv_proverka.elementy(doc, rezhim[3:], log)
         return

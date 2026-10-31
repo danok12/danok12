@@ -687,7 +687,12 @@ class Stroitel(object):
         rp.Name = u'%s %d' % (RP_IMYA, a['id'])
         if not sym.IsActive:
             sym.Activate()
-        e = doc.Create.NewFamilyInstance(rp.GetReference(), P, DB.XYZ(0, 0, a['vert']), sym)
+        # ось X семейства (вход -> выход): вертикально (опуск) или горизонтально по th (кран пары стояков ручкой вбок)
+        if a.get('vert'):
+            os_ = DB.XYZ(0, 0, a['vert'])
+        else:
+            os_ = DB.XYZ(math.cos(math.radians(a['th'])), math.sin(math.radians(a['th'])), 0)
+        e = doc.Create.NewFamilyInstance(rp.GetReference(), P, os_, sym)
         doc.Regenerate()
         # плоскость больше не нужна: если кран без неё остаётся на месте — удалить (на видах её не будет)
         st_ = DB.SubTransaction(doc)

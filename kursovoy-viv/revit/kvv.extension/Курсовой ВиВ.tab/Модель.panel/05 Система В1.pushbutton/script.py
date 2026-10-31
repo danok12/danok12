@@ -16,7 +16,8 @@ def main(log):
     if kvv_seti.tvm_schetchik(doc, HOST_APP.app, log) is None:
         log(u'ВНИМАНИЕ: счётчик TVM не загружен — водомерный узел встанет без счётчика')
     # кран на опуске узла учёта — семейство на рабочей плоскости (вне транзакции: правка семейства)
-    kvv_seti.rabochaya_ploskost(doc, (u'VALTEC_VT.215.N_КранШаровой ВР-НР',), log)
+    # и кран пары стояков кв. Б, В ручкой вбок (VT.214 на вертикальной плоскости)
+    kvv_seti.rabochaya_ploskost(doc, (u'VALTEC_VT.215.N_КранШаровой ВР-НР', u'VALTEC_VT.214.N_КранШаровой ВР'), log)
     with kvv.Tranzakciya(doc, u'КВВ: система В1', log):
         kvv_seti.udalit(doc, u'КВВ-В1', log)
         # установка на фундамент до трубопроводов: патрубки берутся из модели (поднятые на 270 мм)
