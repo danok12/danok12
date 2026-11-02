@@ -80,6 +80,20 @@ def main(log):
     if rezhim.startswith(u'gab '):
         kvv_proverka.gabarity(doc, rezhim[4:], log)
         return
+    if rezhim.startswith(u'pravila '):
+        kvv_proverka.pravila_tipa(doc, rezhim[8:], log)
+        return
+    if rezhim.startswith(u'krai '):
+        kvv_proverka.krainie_tochki(doc, rezhim[5:], log)
+        return
+    if rezhim.startswith(u'tabl '):
+        kvv_proverka.tablicy_semeystva(doc, rezhim[5:], log)
+        return
+    if rezhim.startswith(u'param '):
+        for ch in rezhim[6:].split(u';'):
+            if ch.strip():
+                kvv_proverka.parametry_semeystva(doc, HOST_APP.app, ch, log)
+        return
     if rezhim.startswith(u'tipy '):
         kvv_proverka.tipy_semeystva(doc, rezhim[5:], log)
         return

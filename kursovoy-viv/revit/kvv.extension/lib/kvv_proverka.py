@@ -1771,3 +1771,133 @@ def na_vide_ryadom(doc, zapros, log):
             log(u'%d | %s | %s | %s | x %.2f…%.2f y %.2f…%.2f z %.2f…%.2f' % (
                 e.Id.IntegerValue, e.Category.Name if e.Category else u'-', fam, metka(e), bb.Min.X / kvv.M,
                 bb.Max.X / kvv.M, bb.Min.Y / kvv.M, bb.Max.Y / kvv.M, bb.Min.Z / kvv.M, bb.Max.Z / kvv.M))
+
+
+def pravila_tipa(doc, zapros, log):
+    """«pravila <часть имени типа трубы>» — правила соединений (routing preferences) типов труб и параметры
+    семейств из этих правил: что Revit поставит на отвод, тройник, крестовину, переход, муфту, заглушку."""
+    grs = [(u'Elbows', u'отвод'), (u'Junctions', u'тройник'), (u'Crosses', u'крестовина'),
+           (u'Transitions', u'переход'), (u'Unions', u'муфта'), (u'Caps', u'заглушка'), (u'Segments', u'сегмент')]
+    for pt in DB.FilteredElementCollector(doc).OfClass(Plumbing.PipeType):
+        nm = DB.Element.Name.GetValue(pt)
+        if zapros.strip() not in nm:
+            continue
+        log(u'тип трубы', nm)
+        rpm = pt.RoutingPreferenceManager
+        for g_, ru in grs:
+            gr = getattr(DB.RoutingPreferenceRuleGroupType, g_)
+            for i in range(rpm.GetNumberOfRules(gr)):
+                r = rpm.GetRule(gr, i)
+                e = doc.GetElement(r.MEPPartId)
+                if e is None:
+                    log(u'   %s %d: -' % (ru, i))
+                    continue
+                if isinstance(e, DB.FamilySymbol):
+                    log(u'   %s %d: %s : %s' % (ru, i, e.FamilyName, DB.Element.Name.GetValue(e)))
+                else:
+                    log(u'   %s %d: %s' % (ru, i, DB.Element.Name.GetValue(e)))
+        if hasattr(rpm, 'PreferredJunctionType'):
+            log(u'   предпочтение соединения:', rpm.PreferredJunctionType)
+
+
+def parametry_semeystva(doc, app, zapros, log):
+    """«param <часть имени семейства>» — параметры семейства (открывается редактор семейства в фоне, без сохранения):
+    имя, экземпляр/тип, формула, значения по типам."""
+    for f in DB.FilteredElementCollector(doc).OfClass(DB.Family):
+        if zapros.strip() not in f.Name:
+            continue
+        log(u'семейство', f.Name)
+        fd = doc.EditFamily(f)
+        try:
+            fm = fd.FamilyManager
+            for p in fm.Parameters:
+                try:
+                    fo = p.Formula or u''
+                except Exception:
+                    fo = u''
+                znach = []
+                for t in fm.Types:
+                    try:
+                        if p.StorageType == DB.StorageType.Double:
+                            v = t.AsDouble(p)
+                            znach.append(u'%.4g' % (v if v is not None else float('nan')))
+                        elif p.StorageType == DB.StorageType.Integer:
+                            znach.append(unicode(t.AsInteger(p)))
+                        elif p.StorageType == DB.StorageType.String:
+                            znach.append(t.AsString(p) or u'')
+                    except Exception:
+                        pass
+                log(u'   %s | %s | %s | %s' % (p.Definition.Name, u'экз' if p.IsInstance else u'тип', fo[:90],
+                                              u'; '.join(znach[:4])))
+            for c in DB.FilteredElementCollector(fd).OfClass(DB.ConnectorElement):
+                o = c.Origin
+                log(u'   соединитель (%.1f, %.1f, %.1f) мм | напр (%.2f, %.2f, %.2f)' % (
+                    o.X / MM, o.Y / MM, o.Z / MM, c.CoordinateSystem.BasisZ.X, c.CoordinateSystem.BasisZ.Y,
+                    c.CoordinateSystem.BasisZ.Z))
+        finally:
+            fd.Close(False)
+
+
+def tablicy_semeystva(doc, zapros, log):
+    """«tabl <часть имени семейства>[; имя таблицы]» — таблицы поиска (size_lookup) семейства: все строки."""
+    ch = [x.strip() for x in zapros.split(u';')]
+    for f in DB.FilteredElementCollector(doc).OfClass(DB.Family):
+        if ch[0] not in f.Name:
+            continue
+        mgr = DB.FamilySizeTableManager.GetFamilySizeTableManager(doc, f.Id)
+        if mgr is None:
+            log(f.Name, u'— таблиц нет')
+            continue
+        for nm in mgr.GetAllSizeTableNames():
+            if len(ch) > 1 and ch[1] and ch[1] != nm:
+                continue
+            t = mgr.GetSizeTable(nm)
+            log(u'%s | таблица %s | строк %d' % (f.Name, nm, t.NumberOfRows))
+            for r in range(t.NumberOfRows):
+                log(u'   ' + u' ; '.join(t.AsValueString(r, c) for c in range(t.NumberOfColumns)))
+
+
+def krainie_tochki(doc, zapros, log):
+    """«krai <часть имени семейства>» — у экземпляров: соединители и крайние точки тел (ниже всех, выше всех,
+    дальше всех от оси между соединителями) — куда смотрит отросток фильтра, ручка крана."""
+    def tochki(geo, tr=None):
+        for o in geo:
+            if isinstance(o, DB.GeometryInstance):
+                for p in tochki(o.GetInstanceGeometry()):
+                    yield p
+            elif isinstance(o, DB.Solid) and o.Volume > 1e-9:
+                for f in o.Faces:
+                    m = f.Triangulate()
+                    for i in range(m.Vertices.Count):
+                        yield m.Vertices[i]
+    opt = DB.Options()
+    opt.DetailLevel = DB.ViewDetailLevel.Fine
+    n = 0
+    for e in DB.FilteredElementCollector(doc).OfClass(DB.FamilyInstance):
+        if zapros.strip() not in e.Symbol.FamilyName:
+            continue
+        n += 1
+        if n > 6:
+            break
+        cs = [c for c in soediniteli_(e)]
+        pts = list(tochki(e.get_Geometry(opt)))
+        if not pts or len(cs) < 2:
+            continue
+        a, b = cs[0].Origin, cs[1].Origin
+        u = (b - a).Normalize()
+        def dalno(p):
+            w = p - a
+            return (w - u.Multiply(w.DotProduct(u))).GetLength()
+        f = lambda p: u'(%.3f, %.3f, %.3f)' % (p.X / M, p.Y / M, p.Z / M)
+        log(u'   направления потока соединителей: ' + u', '.join(u'%s %s' % (f(c.Origin), c.Direction) for c in cs))
+        log(u'%d %s | соед. %s -> %s | ниже всех %s | выше всех %s | дальше всех от оси %s' % (
+            e.Id.IntegerValue, e.Symbol.FamilyName, f(a), f(b), f(min(pts, key=lambda p: p.Z)),
+            f(max(pts, key=lambda p: p.Z)), f(max(pts, key=dalno))))
+
+
+def soediniteli_(e):
+    cm = getattr(e, 'MEPModel', None)
+    cm = cm.ConnectorManager if cm is not None else None
+    if cm is None:
+        return []
+    return [c for c in cm.Connectors if c.Domain == DB.Domain.DomainPiping]

@@ -1262,17 +1262,26 @@ def raschetnye_tochki(doc, g, rez, tr, v, tnt, log):
         return
     st = st[0]
     x, y = st['x'], st['y']
-    zs = [g['seti'][rid]['pts'][-1][2] for rid in st['runs']]
+    # отметки тройников ответвлений (верх стояка — к воздухоотводчику — не тройник)
+    zs = sorted(z for z in (g['seti'][rid]['pts'][-1][2] for rid in st['runs']) if z < st['verh'] - 1e-6)
     k = v.Scale / 100.0
     r, u = napravleniya(v)
     tochki = {}
-    # 4…14 — тройники ответвлений стояка сверху вниз
-    for n in range(4, 4 + len(zs)):
-        tochki[n] = (x, y, zs[-(n - 3)])
-    # 15 — тройник магистрали у стояка, 16…20 — узлы магистрали к насосной (из названий участков расчёта)
+    # номер точки — номер участка расчёта, который из неё начинается (от диктующего прибора к насосной): тройники
+    # стояка сверху вниз, переход ППР — сталь в подвале, основание стояка, тройник магистрали, узлы магистрали
     x_b = tr['stoyaki_v1'][rez['st_dikt']][2]
-    n15 = 4 + len(zs)
-    tochki[n15] = (x_b, tr['y_mag'], tr['z_mag'])
+    n15 = None
+    for u_ in rez['v1']:
+        im = u_['imya']
+        if im.startswith(u'стояк') and u'эт. ' in im:
+            et = int(im.split(u'эт. ')[1].split(u'-')[0].split()[0])
+            tochki[u_['n']] = (x, y, zs[et - 1])
+        elif im.startswith(u'стояк') and u'(сталь)' in im:
+            tochki[u_['n']] = (x, y, tr['z_st_v1'])
+        elif im.startswith(u'подводка к стояку'):
+            tochki[u_['n']] = (x, y, st.get('osn', tr['z_mag']))
+            n15 = u_['n'] + 1
+            tochki[n15] = (x_b, tr['y_mag'], tr['z_mag'])
     for u_ in rez['v1']:
         im = u_['imya']
         if im.startswith(u'магистраль x ='):
@@ -1296,7 +1305,7 @@ def raschetnye_tochki(doc, g, rez, tr, v, tnt, log):
     n_ = 0
     for n, p in sorted(tochki.items()):
         P = DB.XYZ(p[0] * M, p[1] * M, p[2] * M)
-        if 4 <= n <= 3 + len(zs):
+        if 4 <= n < n15:
             sm = - r.Multiply(0.25 * k * M) - u.Multiply(0.15 * k * M)          # у тройника стояка — слева снизу
         elif n == n15:
             sm = - u.Multiply(0.3 * k * M) - r.Multiply(0.2 * k * M)             # под магистралью: над ней отметки

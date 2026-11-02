@@ -408,6 +408,9 @@ class Stroitel(object):
         tipy = [DB.Element.Name.GetValue(o.PipeType) if isinstance(o, Plumbing.Pipe) else u'' for o in (o1, o2)]
         if min(dn) > 90:
             return [PEREHOD_PP_SML]
+        if any(u'Полипропилен_PN' in t for t in tipy) and any(u'Сталь' in t for t in tipy) and soosny:
+            # 02.11: стояк В1 — сталь в подвале, выше ППР: муфта комбинированная (ППР 40 х 1" НР)
+            return [KOMBI_KLYUCH_NR, KOMBI_NR]
         if any(u'Полиэтилен' in t for t in tipy):
             return [KOMBI_KLYUCH_NR]
         if any(u'Полипропилен_PN' in t for t in tipy):
@@ -1382,7 +1385,9 @@ def gibkaya_vstavka(doc, log, x_shov, metka):
             continue
         c = t.Location.Curve
         a, b = c.GetEndPoint(0), c.GetEndPoint(1)
-        if abs(a.Y - b.Y) < 1e-6 and abs(a.Z - b.Z) < 1e-6 and min(a.X, b.X) < X - 1.0 * M and max(a.X, b.X) > X + 1.0 * M:
+        # магистраль — с уклоном 0,002 (30.10): участок вдоль X, наклон не круче 0,01
+        if abs(a.Y - b.Y) < 1e-6 and abs(a.Z - b.Z) < 0.01 * abs(a.X - b.X) and min(a.X, b.X) < X - 1.0 * M and \
+                max(a.X, b.X) > X + 1.0 * M:
             truba = t
             break
     if truba is None:
@@ -1395,12 +1400,13 @@ def gibkaya_vstavka(doc, log, x_shov, metka):
         a, b = c.GetEndPoint(0), c.GetEndPoint(1)
         if a.X > b.X:
             a, b = b, a
-        o = DB.XYZ(X, a.Y, a.Z)
+        zX = a.Z + (b.Z - a.Z) * (X - a.X) / (b.X - a.X)       # отметка оси в точке шва
+        o = DB.XYZ(X, a.Y, zX)
         if not sym.IsActive:
             sym.Activate()
         lv = doc.GetElement(truba.ReferenceLevel.Id)
         e = doc.Create.NewFamilyInstance(DB.XYZ(X, a.Y, lv.Elevation), sym, lv, DB.Structure.StructuralType.NonStructural)
-        e.get_Parameter(DB.BuiltInParameter.INSTANCE_ELEVATION_PARAM).Set(a.Z - lv.Elevation)
+        e.get_Parameter(DB.BuiltInParameter.INSTANCE_ELEVATION_PARAM).Set(zX - lv.Elevation)
         # соединители семейства — вдоль локальной Y: повернуть на 90°, чтобы ось вставки шла вдоль магистрали (X)
         DB.ElementTransformUtils.RotateElement(doc, e.Id, DB.Line.CreateBound(o, o + DB.XYZ.BasisZ), -math.pi / 2)
         d = truba.Diameter
@@ -1451,6 +1457,7 @@ KREST2 = u'ADSK_ППР_Крестовина двухплоскостная ка�
 KREST2_LEV = u'110x50 — 87° левая'
 KREST2_PRAV = u'110x50 — 87° правая'
 REVIZIYA = (u'ADSK_ППР_Ревизия канализационная', u'Ревизия')
+REVIZIYA_SML = (u'ADSK_ЧугунБезраструбный_Ревизия', u'Ревизия круглая DN50—100')
 ET_REVIZIY = (1, 4, 7, 10, 11)      # п. 18.26 СП 30: в нижнем и верхнем этажах и не реже чем через три этажа
 Z_REVIZII = 1.0                     # над полом
 
@@ -1580,6 +1587,95 @@ def revizia(doc, t, P, sym, log):
     return f
 
 
+def truba_cherez_tochku(doc, metka, p, dop=0.005, ot_konca=0.20):
+    """Труба системы (любого направления), ось которой проходит через p (XYZ) не ближе ot_konca к её концам."""
+    for t in DB.FilteredElementCollector(doc).OfClass(Plumbing.Pipe):
+        if not _metka_trub(t).startswith(metka):
+            continue
+        c = t.Location.Curve
+        a, b = c.GetEndPoint(0), c.GetEndPoint(1)
+        L = a.DistanceTo(b)
+        if L < 2 * ot_konca * M:
+            continue
+        u = (b - a).Normalize()
+        s = (p - a).DotProduct(u)
+        if not (ot_konca * M < s < L - ot_konca * M):
+            continue
+        if (a + u.Multiply(s)).DistanceTo(p) < dop * M:
+            return t
+    return None
+
+
+def _kryshka(f, P, u):
+    """Направление на крышку ревизии: от оси трубы (через P по u) к самой дальней от неё точке тел семейства."""
+    opt = DB.Options()
+    opt.DetailLevel = DB.ViewDetailLevel.Fine
+    luchshee, vek = -1.0, None
+
+    def obhod(geo):
+        for o in geo:
+            if isinstance(o, DB.GeometryInstance):
+                for q in obhod(o.GetInstanceGeometry()):
+                    yield q
+            elif isinstance(o, DB.Solid) and o.Volume > 1e-9:
+                for fc in o.Faces:
+                    m = fc.Triangulate()
+                    for i in range(m.Vertices.Count):
+                        yield m.Vertices[i]
+    for q in obhod(f.get_Geometry(opt)):
+        w = q - P
+        w = w - u.Multiply(w.DotProduct(u))
+        if w.GetLength() > luchshee:
+            luchshee, vek = w.GetLength(), w
+    return vek.Normalize() if vek is not None and luchshee > 1e-6 else None
+
+
+def revizii_po_spisku(doc, g, log, metka):
+    """Ревизии SML по g['revizii'] (02.11): в разрыв трубы через точку, крышкой — к lyuk (к лючку шахты на стояках,
+    в проход на линии выпуска в подвале): поворот вокруг оси трубы."""
+    sym = kvv.simvol(doc, *REVIZIYA_SML)
+    if sym is None:
+        log(u'НЕТ семейства ревизии', REVIZIYA_SML)
+        return 0, len(g['revizii'])
+    n, osh, ugly = 0, 0, []
+    for r in g['revizii']:
+        P = kvv.xyz(r['x'], r['y'], r['z'])
+        t = truba_cherez_tochku(doc, metka, P)
+        if t is None:
+            osh += 1
+            log(u'  ревизия: нет трубы через (%.3f, %.3f, %.3f) %s' % (r['x'], r['y'], r['z'], r.get('gde', u'')))
+            continue
+        c = t.Location.Curve
+        u = (c.GetEndPoint(1) - c.GetEndPoint(0)).Normalize()
+        st = DB.SubTransaction(doc)
+        st.Start()
+        try:
+            f = revizia(doc, t, P, sym, log)
+            doc.Regenerate()
+            cel = DB.XYZ(r['lyuk'][0], r['lyuk'][1], 0)
+            cel = (cel - u.Multiply(cel.DotProduct(u))).Normalize()
+            k = _kryshka(f, P, u)
+            if k is None:
+                raise Exception(u'не найдена крышка ревизии')
+            ang = math.atan2(k.CrossProduct(cel).DotProduct(u), k.DotProduct(cel))
+            if abs(ang) > 1e-4:
+                DB.ElementTransformUtils.RotateElement(doc, f.Id, DB.Line.CreateBound(P, P + u), ang)
+                doc.Regenerate()
+            k2 = _kryshka(f, P, u)
+            ugly.append(round(math.degrees(math.acos(max(-1.0, min(1.0, k2.DotProduct(cel))))), 1))
+            komment(f, metka + u'-R')
+            st.Commit()
+            n += 1
+        except Exception as ex:
+            st.RollBack()
+            osh += 1
+            if osh <= 5:
+                log(u'  ревизия не встала:', r.get('gde', u''), u'(%.3f, %.3f, %.3f)' % (r['x'], r['y'], r['z']), ex)
+    log(u'ревизии SML: крышка от заданного направления отклонена не более чем на', max(ugly) if ugly else u'-',
+        u'град.')
+    return n, osh
+
+
 def prochistki_revizii(doc, g, log, metka=u'КВВ-К1'):
     """Прочистки (заглушки в начале горизонтальных участков у оснований стояков) и ревизии на стояках К1."""
     n_z, n_r, osh = 0, 0, 0
@@ -1599,6 +1695,11 @@ def prochistki_revizii(doc, g, log, metka=u'КВВ-К1'):
             osh += 1
             if osh <= 3:
                 log(u'  прочистка не встала (%.3f, %.3f):' % (z['x'], z['y']), ex)
+    if g.get('revizii'):
+        n_r, osh_r = revizii_po_spisku(doc, g, log, metka)
+        log(u'прочисток', n_z, u'из', len(g.get('zaglushki', [])), u'| ревизий', n_r, u'из', len(g['revizii']),
+            u'| не встало', osh + osh_r)
+        return
     sym = kvv.simvol(doc, *REVIZIYA)
     if sym is None:
         log(u'нет семейства ревизии', REVIZIYA)

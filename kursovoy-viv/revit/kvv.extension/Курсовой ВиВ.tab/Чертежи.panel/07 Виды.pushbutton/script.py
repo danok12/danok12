@@ -249,7 +249,7 @@ def obrezka(v, x0, y0, x1, y1):
 def razrez_shahty(g, log):
     """Разрез 1-1 по шахте кв. А секции 1 — показать, что крестовина К1 и отводы над плитой перекрытия, а не в ней
     (преподаватель считал, что канализация «в полу»). Плоскость поперёк здания на 0,1 м за осью стояков (через
-    унитаз), взгляд на юг: наружная стена, прослойка и перегородка шахты, стояки В1 и К1, крестовина 110×50 над
+    унитаз), взгляд на юг: наружная стена, прослойка и перегородка шахты, стояки В1 и К1, крестовина SML 100×100×100 над
     полом, отвод от унитаза, опуск узла учёта В1 с арматурой; внизу — сборный К1 под потолком подвала."""
     st = dict((s_['sys'], s_) for s_ in g['stoyaki'] if s_['x'] < 5.0)
     xk, yk, xv = st['K1']['x'], st['K1']['y'], st['V1']['x']
@@ -311,6 +311,71 @@ def razrez_shahty(g, log):
         u'| взгляд', v.ViewDirection, u'| крестовина на %.3f' % z_kr)
 
 
+METKA_PL = {u'V1': u'КВВ-ПлВ1', u'K1': u'КВВ-ПлК1'}
+PLITA_XY = (0.50, 0.40)       # условная плита перекрытия на схеме: в плане, м (как в образце — брусок у стояка)
+
+
+def plity_shem(g, log):
+    """02.11, «на аксонометрии нарисовать плиты перекрытия, как у преподавателя»: на каждом стояке на каждой плите,
+    которую он проходит, — брусок (обобщённая модель DirectShape) размером PLITA_XY в плане и толщиной плиты. Видны
+    только на схеме своей системы — на остальных видах скрыты (plity_skryt)."""
+    stare = [e.Id for e in DB.FilteredElementCollector(doc).OfClass(DB.DirectShape)
+             if (e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS).AsString() or u'')
+             in METKA_PL.values()]
+    if stare:
+        doc.Delete(List[DB.ElementId](stare))
+    t = g['iznach']['T_PEREKR'] if 'iznach' in g else 0.3
+    urovni = sorted(u['z'] for u in g['urovni'] if u['imya'].startswith(u'Этаж'))
+    verh_pl = urovni + [urovni[-1] + (urovni[-1] - urovni[-2])]       # верх плит: полы этажей и кровля
+    cat = DB.ElementId(DB.BuiltInCategory.OST_GenericModel)
+    n = 0
+    for s_ in g['stoyaki']:
+        for z in verh_pl:
+            if not (s_['niz'] < z - 1e-6 and s_['verh'] > z - t):
+                continue
+            dx, dy = PLITA_XY[0] / 2, PLITA_XY[1] / 2
+            pts = [kvv.xyz(s_['x'] - dx, s_['y'] - dy, z - t), kvv.xyz(s_['x'] + dx, s_['y'] - dy, z - t),
+                   kvv.xyz(s_['x'] + dx, s_['y'] + dy, z - t), kvv.xyz(s_['x'] - dx, s_['y'] + dy, z - t)]
+            loop = DB.CurveLoop()
+            for i in range(4):
+                loop.Append(DB.Line.CreateBound(pts[i], pts[(i + 1) % 4]))
+            tel = DB.GeometryCreationUtilities.CreateExtrusionGeometry(List[DB.CurveLoop]([loop]), DB.XYZ.BasisZ,
+                                                                       t * M)
+            ds = DB.DirectShape.CreateElement(doc, cat)
+            ds.SetShape(List[DB.GeometryObject]([tel]))
+            ds.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS).Set(METKA_PL[s_['sys']])
+            n += 1
+    log(u'плиты перекрытия на схемах (бруски у стояков):', n)
+
+
+def plity_skryt(log):
+    """Бруски плит — только на схеме своей системы."""
+    plity = {}
+    for e in DB.FilteredElementCollector(doc).OfClass(DB.DirectShape):
+        m = e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS).AsString() or u''
+        if m in METKA_PL.values():
+            plity.setdefault(m, []).append(e.Id)
+    if not plity:
+        return
+    svoi = {u'В1_Аксонометрическая схема': METKA_PL[u'V1'], u'К1_Аксонометрическая схема': METKA_PL[u'K1']}
+    n = 0
+    for v in DB.FilteredElementCollector(doc).OfClass(DB.View):
+        if v.IsTemplate or v.ViewType in (DB.ViewType.DrawingSheet, DB.ViewType.Schedule, DB.ViewType.Legend,
+                                          DB.ViewType.ProjectBrowser, DB.ViewType.SystemBrowser, DB.ViewType.Internal):
+            continue
+        skryt = [i for m, ids in plity.items() if svoi.get(v.Name) != m for i in ids]
+        pokaz = plity.get(svoi.get(v.Name), [])
+        try:
+            if skryt:
+                v.HideElements(List[DB.ElementId](skryt))
+                n += 1
+            if pokaz:
+                v.UnhideElements(List[DB.ElementId](pokaz))
+        except Exception:
+            pass
+    log(u'бруски плит скрыты на видах:', n)
+
+
 def main(log):
     g = kvv.load_json('revit', 'geometriya_v3.json')
     lv = kvv.urovni(doc)
@@ -350,6 +415,7 @@ def main(log):
             import traceback
             log(u'ОШИБКА разреза:', traceback.format_exc())
         vft3 = tip_vida(None, DB.ViewFamily.ThreeDimensional)
+        plity_shem(g, log)
         for nm, shab, sist in SHEMY:
             v = vid_po_imeni(nm)
             if v is None:
@@ -412,6 +478,7 @@ def main(log):
             except Exception as ex:
                 log(u'   Outline:', ex)
             log(u'схема', nm, u'| трубы, фитинги, арматура своей системы и сантехприборы (полутон)')
+        plity_skryt(log)
 
 
 kvv.run('07_vidy', main)
