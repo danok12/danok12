@@ -1607,10 +1607,11 @@ def truba_cherez_tochku(doc, metka, p, dop=0.005, ot_konca=0.20):
 
 
 def _kryshka(f, P, u):
-    """Направление на крышку ревизии: от оси трубы (через P по u) к самой дальней от неё точке тел семейства."""
+    """Направление на крышку ревизии: среднее смещение вершин тел семейства от оси трубы (через P по u) — корпус и
+    хомуты симметричны, остаётся смещение крышки (по самой дальней точке выходило и в обратную сторону)."""
     opt = DB.Options()
     opt.DetailLevel = DB.ViewDetailLevel.Fine
-    luchshee, vek = -1.0, None
+    summa, n = DB.XYZ.Zero, 0
 
     def obhod(geo):
         for o in geo:
@@ -1624,18 +1625,20 @@ def _kryshka(f, P, u):
                         yield m.Vertices[i]
     for q in obhod(f.get_Geometry(opt)):
         w = q - P
-        w = w - u.Multiply(w.DotProduct(u))
-        if w.GetLength() > luchshee:
-            luchshee, vek = w.GetLength(), w
-    return vek.Normalize() if vek is not None and luchshee > 1e-6 else None
+        summa = summa + (w - u.Multiply(w.DotProduct(u)))
+        n += 1
+    if n == 0 or summa.GetLength() / n < 1e-4:
+        return None
+    return summa.Normalize()
 
 
 def revizii_po_spisku(doc, g, log, metka):
-    """Ревизии SML по g['revizii'] (02.11): в разрыв трубы через точку, крышкой — к lyuk (к лючку шахты на стояках,
+    """Ревизии по g['revizii'] (02.11): на ПП — ADSK_ППР_Ревизия, на SML — чугунная; в разрыв трубы через точку,
+    крышкой — к lyuk (к лючку шахты на стояках,
     в проход на линии выпуска в подвале): поворот вокруг оси трубы."""
-    sym = kvv.simvol(doc, *REVIZIYA_SML)
-    if sym is None:
-        log(u'НЕТ семейства ревизии', REVIZIYA_SML)
+    sym_sml, sym_pp = kvv.simvol(doc, *REVIZIYA_SML), kvv.simvol(doc, *REVIZIYA)
+    if sym_sml is None or sym_pp is None:
+        log(u'НЕТ семейства ревизии', REVIZIYA_SML if sym_sml is None else REVIZIYA)
         return 0, len(g['revizii'])
     n, osh, ugly = 0, 0, []
     for r in g['revizii']:
@@ -1650,6 +1653,7 @@ def revizii_po_spisku(doc, g, log, metka):
         st = DB.SubTransaction(doc)
         st.Start()
         try:
+            sym = sym_sml if u'SML' in DB.Element.Name.GetValue(t.PipeType) else sym_pp
             f = revizia(doc, t, P, sym, log)
             doc.Regenerate()
             cel = DB.XYZ(r['lyuk'][0], r['lyuk'][1], 0)
@@ -1662,6 +1666,10 @@ def revizii_po_spisku(doc, g, log, metka):
                 DB.ElementTransformUtils.RotateElement(doc, f.Id, DB.Line.CreateBound(P, P + u), ang)
                 doc.Regenerate()
             k2 = _kryshka(f, P, u)
+            if k2.DotProduct(cel) < 0:                     # повернулась не туда — ещё на 180°
+                DB.ElementTransformUtils.RotateElement(doc, f.Id, DB.Line.CreateBound(P, P + u), math.pi)
+                doc.Regenerate()
+                k2 = _kryshka(f, P, u)
             ugly.append(round(math.degrees(math.acos(max(-1.0, min(1.0, k2.DotProduct(cel))))), 1))
             komment(f, metka + u'-R')
             st.Commit()
@@ -1671,8 +1679,8 @@ def revizii_po_spisku(doc, g, log, metka):
             osh += 1
             if osh <= 5:
                 log(u'  ревизия не встала:', r.get('gde', u''), u'(%.3f, %.3f, %.3f)' % (r['x'], r['y'], r['z']), ex)
-    log(u'ревизии SML: крышка от заданного направления отклонена не более чем на', max(ugly) if ugly else u'-',
-        u'град.')
+    log(u'ревизии: крышка от заданного направления отклонена не более чем на', max(ugly) if ugly else u'-',
+        u'град. | по ревизиям:', sorted(set(ugly)))
     return n, osh
 
 
