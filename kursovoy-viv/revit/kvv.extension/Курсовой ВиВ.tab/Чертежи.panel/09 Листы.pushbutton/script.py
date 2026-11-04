@@ -486,8 +486,12 @@ def main(log):
                     DB.TextNote.Create(doc, sh.Id, DB.XYZ(x_pr, bb.Min.Y + 150 * MM, 0),
                                        min(185 * MM, bb.Max.X - 8 * MM - x_pr), prim, opt)
                 else:
-                    DB.TextNote.Create(doc, sh.Id, DB.XYZ(bb.Min.X + 25 * MM, bb.Min.Y + 52 * MM, 0), 200 * MM, prim,
-                                       opt)
+                    # планы: слева от основной надписи на всю ширину до неё (03.11: при 13 пунктах В1 в ширину 200 мм
+                    # нижние строки уходили за рамку), верх — на 100 мм над низом рамки, под выносками плана
+                    # (у К1 — 8 пунктов и на листе 4 правее — разрез 1-1: прежние 200 мм)
+                    x0 = bb.Min.X + 25 * MM
+                    shir = 200 * MM if prim == PRIM_K1 else bb.Max.X - 195 * MM - x0
+                    DB.TextNote.Create(doc, sh.Id, DB.XYZ(x0, bb.Min.Y + 100 * MM, 0), shir, prim, opt)
     log(u'листов', len(LISTY))
     if rezhim == u'listy':
         log(u'режим: только листы, без выгрузки (выгрузка — «pdf N» по одному листу)')

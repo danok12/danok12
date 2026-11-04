@@ -48,6 +48,8 @@ def truby_stoyakov(g, log):
         # крестовины 1-го этажа (+0,055) — 0,4 м
         if abs(a.X - b.X) > 1e-4 or abs(a.Y - b.Y) > 1e-4 or abs(a.Z - b.Z) < 0.02 * M:
             continue
+        if t.Diameter < 0.019 * M:
+            continue                    # спуск DN15 под основанием стояка В1 (03.11: марка в подвале была «Ø15»)
         for s in g['stoyaki']:
             if abs(a.X / M - s['x']) < 0.01 and abs(a.Y / M - s['y']) < 0.01:
                 st.setdefault(s['imya'], []).append(t)
