@@ -311,7 +311,9 @@ def razrez_shahty(g, log):
         u'| взгляд', v.ViewDirection, u'| крестовина на %.3f' % z_kr)
 
 
-METKA_PL = {u'V1': u'КВВ-ПлВ1', u'K1': u'КВВ-ПлК1'}
+# не «КВВ-П…» (04.11): по этому префиксу 04–06 ищут и удаляют сантехприборы («КВВ-П<номер>»)
+METKA_PL = {u'V1': u'КВВ-СхПлВ1', u'K1': u'КВВ-СхПлК1'}
+METKA_PL_STARYE = (u'КВВ-ПлВ1', u'КВВ-ПлК1')
 PLITA_XY = (0.50, 0.40)       # условная плита перекрытия на схеме: в плане, м (как в образце — брусок у стояка)
 
 
@@ -321,7 +323,7 @@ def plity_shem(g, log):
     только на схеме своей системы — на остальных видах скрыты (plity_skryt)."""
     stare = [e.Id for e in DB.FilteredElementCollector(doc).OfClass(DB.DirectShape)
              if (e.get_Parameter(DB.BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS).AsString() or u'')
-             in METKA_PL.values()]
+             in tuple(METKA_PL.values()) + METKA_PL_STARYE]
     if stare:
         doc.Delete(List[DB.ElementId](stare))
     t = g['iznach']['T_PEREKR'] if 'iznach' in g else 0.3

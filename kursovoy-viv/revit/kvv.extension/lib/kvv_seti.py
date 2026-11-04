@@ -214,10 +214,10 @@ class Stroitel(object):
         self.arm = {}             # id арматуры -> экземпляр
         self.otrezki = []         # (труба, id трубопровода, № отрезка, начало, конец) — для проверки после фитингов
         self.perehody = {}        # семейство перехода из модулей -> сколько поставлено
-        self.pr = dict((int(e.LookupParameter(u'Комментарии').AsString()[5:]), e)
-                       for e in po_metke(doc, u'КВВ-П'))
-        self.ob = dict((int(e.LookupParameter(u'Комментарии').AsString()[5:]), e)
-                       for e in po_metke(doc, u'КВВ-О'))
+        # «КВВ-П<номер>» — приборы, «КВВ-О<номер>» — оборудование; метки с буквами после префикса — не они
+        nomer = lambda e: e.LookupParameter(u'Комментарии').AsString()[5:]
+        self.pr = dict((int(nomer(e)), e) for e in po_metke(doc, u'КВВ-П') if nomer(e).isdigit())
+        self.ob = dict((int(nomer(e)), e) for e in po_metke(doc, u'КВВ-О') if nomer(e).isdigit())
 
     def oshibka(self, chto, ex):
         self.oshibki.setdefault(chto, [0, unicode(ex)])
