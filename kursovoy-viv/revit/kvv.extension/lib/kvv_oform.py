@@ -89,12 +89,16 @@ class Zanyato(object):
 
     def __init__(self):
         self.pr = []
+        self.pribory = []         # контуры сантехприборов: марка на них — хуже, чем без марки диаметра совсем
 
     def dobavit(self, x, y, hw, hh):
         self.pr.append((x - hw, y - hh, x + hw, y + hh))
 
-    def svobodno(self, x, y, hw, hh):
-        for (a, b, c, d) in self.pr:
+    def dobavit_pribor(self, x, y, hw, hh):
+        self.pribory.append((x - hw, y - hh, x + hw, y + hh))
+
+    def svobodno(self, x, y, hw, hh, pribory=True):
+        for (a, b, c, d) in self.pr + (self.pribory if pribory else []):
             if x + hw > a and x - hw < c and y + hh > b and y - hh < d:
                 return False
         return True
@@ -145,35 +149,58 @@ def marki_diametrov(doc, v, sist, sym, zan, log, iskl=()):
     radius = (6.0 if podval else 2.2) * M
     bylo = []
     n = 0
-    for L, t, a, b in kand:
-        d = int(round(t.Diameter / MM))
-        mx, my, mz = (a.X + b.X) / 2, (a.Y + b.Y) / 2, (a.Z + b.Z) / 2
-        if any(dd == d and math.hypot(x - mx, y - my) < radius for x, y, dd in bylo):
-            continue
-        ux, uy = (b.X - a.X) / L, (b.Y - a.Y) / L
-        gor = abs(ux) >= abs(uy)
-        nx, ny = (0.0, 1.0) if gor else (-1.0, 0.0)
-        hw, hh = (0.5 * k * M, 0.15 * k * M) if gor else (0.15 * k * M, 0.5 * k * M)     # «В1-Ø15» ≈ 10 x 3 мм
-        mesto = None
-        for s_ in (1, -1):
-            off = 0.45 * k * M
-            x, y = mx + s_ * nx * off, my + s_ * ny * off
-            if zan.svobodno(x, y, hw, hh):
-                mesto = (x, y)
+    # проход 1 — марка не задевает ни надписей, ни сантехприборов; проход 2 — для диаметров, оставшихся без марки
+    # (каждый диаметр на плане подписан хотя бы раз): допускается заход на контур прибора, не на надписи
+    for prohod in (1, 2):
+        est = set(dd for x, y, dd in bylo)
+        for L, t, a, b in kand:
+            d = int(round(t.Diameter / MM))
+            if prohod == 2 and d in est:
+                continue
+            mx, my, mz = (a.X + b.X) / 2, (a.Y + b.Y) / 2, (a.Z + b.Z) / 2
+            if any(dd == d and math.hypot(x - mx, y - my) < radius for x, y, dd in bylo):
+                continue
+            ux, uy = (b.X - a.X) / L, (b.Y - a.Y) / L
+            gor = abs(ux) >= abs(uy)
+            nx, ny = (0.0, 1.0) if gor else (-1.0, 0.0)
+            hw, hh = (0.5 * k * M, 0.15 * k * M) if gor else (0.15 * k * M, 0.5 * k * M)     # «В1-Ø15» ≈ 10 x 3 мм
+            s_pr = prohod == 1
+            mesto = None
+            for s_, off in [(1, 0.45 * k * M), (-1, 0.45 * k * M)] + \
+                    ([(1, 0.9 * k * M), (-1, 0.9 * k * M)] if prohod == 2 else []):
+                x, y = mx + s_ * nx * off, my + s_ * ny * off
+                if not zan.svobodno(x, y, hw, hh, s_pr):
+                    continue
+                gol = DB.XYZ(x, y, mz)
+                try:
+                    m = DB.IndependentTag.Create(doc, sym.Id, v.Id, DB.Reference(t), False,
+                                                 DB.TagOrientation.Horizontal if gor else DB.TagOrientation.Vertical,
+                                                 gol)
+                    m.TagHeadPosition = gol
+                except Exception as ex:
+                    log(u'  марка диаметра не встала:', v.Name, d, ex)
+                    continue
+                # 06.11: текст марки рисуется не симметрично точке вставки — проверка по фактическому габариту
+                doc.Regenerate()
+                bb = m.get_BoundingBox(v)
+                if bb is not None:
+                    cx, cy = (bb.Min.X + bb.Max.X) / 2, (bb.Min.Y + bb.Max.Y) / 2
+                    bw, bh = (bb.Max.X - bb.Min.X) / 2, (bb.Max.Y - bb.Min.Y) / 2
+                    if not zan.svobodno(cx, cy, bw * 0.9, bh * 0.9, s_pr):
+                        doc.Delete(m.Id)
+                        continue
+                    mesto = (cx, cy, bw, bh)
+                else:
+                    mesto = (x, y, hw, hh)
                 break
-        if mesto is None:
-            continue
-        gol = DB.XYZ(mesto[0], mesto[1], mz)
-        try:
-            m = DB.IndependentTag.Create(doc, sym.Id, v.Id, DB.Reference(t), False,
-                                         DB.TagOrientation.Horizontal if gor else DB.TagOrientation.Vertical, gol)
-            m.TagHeadPosition = gol
-        except Exception as ex:
-            log(u'  марка диаметра не встала:', v.Name, d, ex)
-            continue
-        zan.dobavit(mesto[0], mesto[1], hw, hh)
-        bylo.append((mx, my, d))
-        n += 1
+            if mesto is None:
+                continue
+            zan.dobavit(*mesto)
+            bylo.append((mx, my, d))
+            n += 1
+    bez = sorted(set(int(round(t.Diameter / MM)) for L, t, a, b in kand) - set(dd for x, y, dd in bylo))
+    if bez:
+        log(u'  БЕЗ МАРКИ диаметры на', v.Name, bez)
     log(u'  марок диаметров на', v.Name, n, u'(кандидатов', len(kand), u')')
 
 
@@ -518,7 +545,7 @@ def otmetki_stoyakov(doc, g, ot, sist, log):
                     ot.podpis(sd, u'Кровля')
 
 
-def privyazki_stoyakov(doc, v, g, sist, log):
+def privyazki_stoyakov(doc, v, g, sist, log, zan=None):
     """Привязки стояков к ближайшим осям на плане подвала (как в образце — размеры от осей до стояков): у каждого
     стояка — от ближайшей оси по X; два стояка у одной оси — второй от соседней оси, иначе тексты «375» налезают.
     Стояки в коридоре — размер ниже оси В, в помещениях за стеной (как в образце; в коридоре над стояками марки).
@@ -555,6 +582,10 @@ def privyazki_stoyakov(doc, v, g, sist, log):
             # южнее оси В — на 1,0·k ниже стояка
             yd = y - 1.0 * k * M if y < y_v else y_v - 0.5 * k * M
             doc.Create.NewDimension(v, DB.Line.CreateBound(DB.XYZ(0, yd, zl), DB.XYZ(M, yd, zl)), ra)
+            if zan is not None:
+                # размер с текстом — занято для марок диаметров (06.11: «В1-Ø25» ложилась на «410»)
+                gx_x = gx.Curve.GetEndPoint(0).X
+                zan.dobavit((gx_x + x) / 2, yd + 0.15 * k * M, abs(x - gx_x) / 2 + 0.35 * k * M, 0.35 * k * M)
             n += 1
         except Exception as ex:
             log(u'  привязка стояка не встала:', s_['imya'], ex)
@@ -586,12 +617,18 @@ def oformit_plan(doc, g, v, sist, tipy, tnt, zan, vvody, vypuski, tr, log):
                 vynoska(doc, v, tnt, NASOS + u'\r' + u'Wilo ' + DB.Element.Name.GetValue(e.Symbol) +
                         (u'\r' + u'на фундаменте ' + fund if fund else u''),
                         e.Location.Point, 0, 0, log, gol=DB.XYZ(8.6 * M, -4.4 * M, 0))     # три строки — выше
-        krany_podpisi(doc, v, tnt, g, tr, None, log)
+        krany_podpisi(doc, v, tnt, g, tr, None, log, zan=zan)
     # привязки стояков к осям (365…435 мм) — как в образце, только в 1:100: в 1:200 не читаются и ложатся на марки
     if podval and v.Scale <= 100:
-        privyazki_stoyakov(doc, v, g, sist, log)
+        privyazki_stoyakov(doc, v, g, sist, log, zan=zan)
+        # привязка стояка (размер до оси) и сам стояк — занято: 06.11 марка «В1-Ø25» короткого ответвления кв. А
+        # легла на размер «410» и выноску «Подъем В1»
+        k = v.Scale / 100.0
+        for s_ in g['stoyaki']:
+            if s_['sys'] == (u'V1' if sist == u'В1' else u'K1'):
+                zan.dobavit(s_['x'] * M, s_['y'] * M, 0.6 * k * M, 0.6 * k * M)
     if podval and sist == u'К1':
-        prochistki_revizii_podpisi(doc, v, tnt, tr, True, log)
+        prochistki_revizii_podpisi(doc, v, tnt, tr, True, log, zan=zan)
         for t in vypuski:
             p = tochka_na_y(t, 13.12 + 0.6)
             marka_s_vynoskoy(doc, v, tipy['vypusk'], t, p, 1.2 if p.X < 23 * M else -1.2, 0.9, log, zan)
@@ -1023,7 +1060,16 @@ def oformit_vse(doc, g, tr, plany, shemy, tip_marki_stoyaka, log):
                 p = m.TagHeadPosition
             except Exception:
                 p = m.Location.Point
-            zan.dobavit(p.X, p.Y, 0.4 * k * M, 0.12 * k * M)
+            zan.dobavit(p.X, p.Y, 0.4 * k * M, 0.25 * k * M)     # кружок номера помещения (06.11: было 0,12 — мало)
+        # сантехприборы своего этажа (06.11: марки «В1-Ø..» ложились на мойки и умывальники)
+        zl = v.GenLevel.Elevation
+        for e in DB.FilteredElementCollector(doc, v.Id).OfCategory(DB.BuiltInCategory.OST_PlumbingFixtures) \
+                .WhereElementIsNotElementType():
+            bb = e.get_BoundingBox(None)
+            if bb is None or bb.Min.Z > zl + 2.5 * M or bb.Max.Z < zl:
+                continue
+            zan.dobavit_pribor((bb.Min.X + bb.Max.X) / 2, (bb.Min.Y + bb.Max.Y) / 2, (bb.Max.X - bb.Min.X) / 2,
+                               (bb.Max.Y - bb.Min.Y) / 2)
         sist = u'В1' if nm.startswith(u'В1') else u'К1'
         try:
             oformit_plan(doc, g, v, sist, tipy, tnt, zan, vvody, vypuski, tr, log)
@@ -1101,18 +1147,41 @@ def storona_stoyaka(x, zerk):
     return -s_ if sek2 else s_
 
 
-def prochistki_revizii_podpisi(doc, v, tnt, tr, plan, log):
-    """«Пр.» у заглушек-прочисток (план подвала К1 и схема К1), «R» у ревизий (схема К1)."""
+def prochistki_revizii_podpisi(doc, v, tnt, tr, plan, log, zan=None):
+    """«Пр.» у заглушек-прочисток (план подвала К1 и схема К1), «R» у ревизий (схема К1; на плане подвала — у
+    ревизии на линии выпуска)."""
     zerk = tr.get('zerkalo', 45.45)
+    k = v.Scale / 100.0
     n = 0
+
+    def mesto(p, varianty):
+        """Первое свободное положение текста (06.11: «Пр.» на повороте ложилось на марку стояка К1)."""
+        if zan is None:
+            return varianty[0]
+        for dx, dy in varianty:
+            if zan.svobodno(p.X + dx * k * M, p.Y + dy * k * M, 0.35 * k * M, 0.2 * k * M):
+                return dx, dy
+        return varianty[0]
     for e in elementy_s_metkoy(doc, DB.BuiltInCategory.OST_PipeFitting, u'КВВ-К1-Пр'):
         p = tochka_elementa(e)
         s_ = storona_stoyaka(p.X / M, zerk)
         dy = -0.8
         if plan and (p.X / M < 1.0 or p.X / M > zerk - 1.0):
             s_, dy = -s_, -0.3                   # у крайних стояков на плане — внутрь: снаружи размерная цепочка
-        if vynoska(doc, v, tnt, u'Пр.', p, 1.2 * s_ if plan else 1.0 * s_, dy, log) is not None:
+        dx = 1.2 * s_ if plan else 1.0 * s_
+        if plan:
+            dx, dy = mesto(p, [(dx, dy), (dx, -dy), (-dx, dy), (-dx, -dy)])
+        if vynoska(doc, v, tnt, u'Пр.', p, dx, dy, log, zan=zan if plan else None) is not None:
             n += 1
+    if plan:
+        for e in elementy_s_metkoy(doc, DB.BuiltInCategory.OST_PipeFitting, u'КВВ-К1-R'):
+            p = tochka_elementa(e)
+            if p.Z > -0.3 * M:
+                continue                         # ревизии стояков — на этажах, на плане подвала их нет
+            s_ = storona_stoyaka(p.X / M, zerk)
+            dx, dy = mesto(p, [(0.9 * s_, 0.5), (-0.9 * s_, 0.5), (0.9 * s_, -0.5), (-0.9 * s_, -0.5)])
+            if vynoska(doc, v, tnt, u'R', p, dx, dy, log, zan=zan) is not None:
+                n += 1
     if not plan:
         for e in elementy_s_metkoy(doc, DB.BuiltInCategory.OST_PipeFitting, u'КВВ-К1-R'):
             p = tochka_elementa(e)
@@ -1136,7 +1205,7 @@ def g_dn_pol(g):
     return 25
 
 
-def krany_podpisi(doc, v, tnt, g, tr, ot, log):
+def krany_podpisi(doc, v, tnt, g, tr, ot, log, zan=None):
     """«Кран водоразборный со штуцером 1"» у поливочных кранов: на плане подвала В1 — выноской над планом,
     на схеме — выноской и отметкой +0.500."""
     zerk = tr.get('zerkalo', 45.45)
@@ -1150,8 +1219,10 @@ def krany_podpisi(doc, v, tnt, g, tr, ot, log):
             s_ = 1.0 if lev else -1.0
             x_pod = 0.25 if lev else zerk - 0.25
             p_pod = DB.XYZ(x_pod * M, k_['y'] * M, -0.6 * M)
+            # 06.11: полка — ниже подъёма, у торца, в свободной части подвала (на +2,5 м она ложилась на стояк кв. А,
+            # его привязку и марку ответвления)
             vynoska(doc, v, tnt, u'Подъем В1\r⌀%d' % g_dn_pol(g), p_pod, s_, 0, log,
-                    gol=DB.XYZ((x_pod + s_ * 0.35) * M, (k_['y'] + 2.5) * M, 0))
+                    gol=DB.XYZ((x_pod + s_ * 0.35) * M, (k_['y'] - 1.3) * M, 0), zan=zan)
             vynoska(doc, v, tnt, KRAN_POL.replace(u'\r', u' '), p, s_, 0, log,
                     gol=DB.XYZ((-3.9 if lev else zerk + 3.9) * M, 15.6 * M, 0))
         else:
