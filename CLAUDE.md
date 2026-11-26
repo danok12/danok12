@@ -18,6 +18,7 @@ lessons/<тема>/
 
 Вне `lessons/`:
 - `zhurnal-dz/` — журнал домашних заданий (кому выдано, что сдать, до какого числа); исходник страницы-артефакта
+- `site/` — то, что публикуется на https://danok12.github.io/ (GitHub Pages, workflow `pages.yml`): `site/index.html` — сайт-визитка репетитора, `site/zhurnal/` — журнал ДЗ под паролем (https://danok12.github.io/zhurnal/)
 
 ## Правила работы с материалами
 
