@@ -1,0 +1,555 @@
+<title>Журнал ДЗ</title>
+<script>
+var DATA = {"students":[],"rev":0,"savedAt":null};
+function APP(DATA){
+"use strict";
+var FONTS='https://fonts.googleapis.com/css2?family=Spectral:wght@600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap';
+var CSS=`
+:root{
+  --paper:#eff3f2; --surface:#fff; --surface-2:#e6edec; --line:#d4dfdd; --line-2:#b9cac7;
+  --ink:#12262a; --ink-2:#496164; --ink-3:#748c8e;
+  --petrol:#0e5b61; --petrol-2:#0a464b; --petrol-tint:#dbebea;
+  --red:#a32f28; --red-tint:#f8e3e0;
+  --amber:#8f5d09; --amber-tint:#fbeed6;
+  --green:#2b6a46; --green-tint:#dcecdf;
+  --grey:#6a7e81; --grey-tint:#e7eceb;
+  --shadow:0 1px 2px rgba(18,38,42,.06),0 6px 20px -12px rgba(18,38,42,.25);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b1517; --surface:#112225; --surface-2:#172e31; --line:#20383c; --line-2:#2e4c50;
+  --ink:#e4edec; --ink-2:#a6bfbf; --ink-3:#7d9899;
+  --petrol:#5cbdc1; --petrol-2:#8ad8d8; --petrol-tint:#123338;
+  --red:#f0998f; --red-tint:#3b1e1b;
+  --amber:#e3b466; --amber-tint:#352810;
+  --green:#8bcfa3; --green-tint:#13301e;
+  --grey:#93a9ab; --grey-tint:#1a2b2d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -14px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --paper:#0b1517; --surface:#112225; --surface-2:#172e31; --line:#20383c; --line-2:#2e4c50;
+  --ink:#e4edec; --ink-2:#a6bfbf; --ink-3:#7d9899;
+  --petrol:#5cbdc1; --petrol-2:#8ad8d8; --petrol-tint:#123338;
+  --red:#f0998f; --red-tint:#3b1e1b;
+  --amber:#e3b466; --amber-tint:#352810;
+  --green:#8bcfa3; --green-tint:#13301e;
+  --grey:#93a9ab; --grey-tint:#1a2b2d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -14px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  font-family:'Source Sans 3',system-ui,-apple-system,'Segoe UI',sans-serif;font-size:15px;line-height:1.45}
+.wrap{max-width:1140px;margin:0 auto;padding-inline:16px;padding-block:18px 96px}
+.head{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--paper);padding-block:6px 10px}
+.head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--line)}
+.head-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.eyebrow{margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+h1{margin:.1em 0 0;font-family:Spectral,Georgia,serif;font-weight:600;font-size:clamp(24px,4.4vw,32px);letter-spacing:-.01em;text-wrap:balance}
+.meta{margin:3px 0 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;color:var(--ink-3)}
+.saving{display:inline-flex;align-items:center;gap:6px;color:var(--ink-3)}
+.saving b{font-weight:500;color:var(--tone,var(--ink-3))}
+.saving i{width:7px;height:7px;border-radius:50%;background:var(--tone,var(--ink-3));display:inline-block}
+.head-actions{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line-2);
+  background:var(--surface);color:var(--ink);padding:7px 12px;transition:background .12s,border-color .12s}
+button:hover{background:var(--surface-2)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--petrol);outline-offset:2px}
+button.primary{background:var(--petrol);border-color:var(--petrol);color:var(--paper);font-weight:600}
+button.primary:hover{background:var(--petrol-2);border-color:var(--petrol-2)}
+button.ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+button.ghost:hover{background:var(--surface-2)}
+button[disabled]{opacity:.45;cursor:not-allowed}
+button.danger{color:var(--red);border-color:var(--red)}
+.chips{display:flex;gap:7px;margin-top:12px;overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
+.chip{display:flex;align-items:baseline;gap:7px;white-space:nowrap;border-radius:999px;
+  border:1px solid var(--line);background:var(--surface);padding:6px 13px 6px 11px;color:var(--ink-2)}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--tone,var(--grey));align-self:center;flex:none}
+.chip .n{font-family:'JetBrains Mono',monospace;font-weight:500;font-variant-numeric:tabular-nums;color:var(--ink)}
+.chip[aria-pressed="true"]{border-color:var(--tone,var(--petrol));background:var(--tone-tint,var(--petrol-tint));color:var(--ink);font-weight:600}
+.chip[aria-pressed="true"] .n{color:var(--tone,var(--petrol))}
+.toolbar{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+input[type=search],input[type=text],input[type=date],select,textarea{font:inherit;color:var(--ink);
+  background:var(--surface);border:1px solid var(--line-2);border-radius:8px;padding:7px 10px;max-width:100%}
+input[type=search]{flex:1 1 200px;min-width:0}
+.tablewrap{overflow-x:auto;margin-top:14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;min-width:720px}
+thead th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);padding:11px 12px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+tbody tr{border-bottom:1px solid var(--line);--tone:var(--grey);--tone-tint:var(--grey-tint)}
+tbody tr:last-child{border-bottom:0}
+tbody tr[data-tone="red"]{--tone:var(--red);--tone-tint:var(--red-tint)}
+tbody tr[data-tone="amber"]{--tone:var(--amber);--tone-tint:var(--amber-tint)}
+tbody tr[data-tone="petrol"]{--tone:var(--petrol);--tone-tint:var(--petrol-tint)}
+tbody tr[data-tone="green"]{--tone:var(--green);--tone-tint:var(--green-tint)}
+tbody tr.sel{background:var(--petrol-tint)}
+td{padding:11px 12px;vertical-align:middle}
+td.c-check{width:34px;border-left:4px solid var(--tone);padding-left:9px}
+.c-name{font-weight:600}
+.c-name .grp{display:block;font-weight:400;font-size:12.5px;color:var(--ink-3)}
+.c-task{min-width:200px}
+.c-task .note{display:block;font-size:12.5px;color:var(--ink-3)}
+.c-task .nothing{color:var(--ink-3);font-style:italic}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;font-size:13px}
+.c-issued{color:var(--ink-3);white-space:nowrap}
+.c-due{white-space:nowrap}
+.pill{display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;
+  background:var(--tone-tint);color:var(--tone);font-size:12.5px;font-weight:600;white-space:nowrap}
+.c-act{text-align:right;white-space:nowrap}
+.c-act button{padding:5px 11px;font-size:14px}
+.demo-tag{display:inline-block;margin-left:6px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-3);border:1px dashed var(--line-2);border-radius:4px;padding:1px 5px;vertical-align:middle}
+.panel{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;box-shadow:var(--shadow)}
+.panel h2{font-family:Spectral,Georgia,serif;font-size:19px;margin:0 0 6px}
+.panel p{margin:0 0 12px;color:var(--ink-2);max-width:62ch}
+.banner{margin-top:12px;border-radius:10px;padding:10px 14px;font-size:14px;
+  border:1px solid var(--tone,var(--line));background:var(--tone-tint,var(--surface-2));color:var(--ink)}
+.legend{margin-top:16px;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--ink-2)}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend i{width:9px;height:9px;border-radius:50%;background:var(--c);display:inline-block}
+.foot{margin-top:18px;font-size:13px;color:var(--ink-3);max-width:70ch}
+.bulk[hidden]{display:none}
+.bulk{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:40;
+  margin-bottom:calc(14px + env(safe-area-inset-bottom,0px));
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;
+  background:var(--surface);border:1px solid var(--line-2);border-radius:12px;
+  padding:10px 14px;box-shadow:0 8px 30px -10px rgba(0,0,0,.4);max-width:min(94vw,640px)}
+.bulk b{font-variant-numeric:tabular-nums}
+#toast{position:fixed;left:50%;transform:translateX(-50%);z-index:60;
+  bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);
+  padding:9px 16px;border-radius:999px;font-size:14px;box-shadow:var(--shadow);max-width:90vw;text-align:center}
+dialog{border:1px solid var(--line-2);border-radius:14px;background:var(--surface);color:var(--ink);
+  padding:0;width:min(520px,92vw);box-shadow:0 20px 60px -20px rgba(0,0,0,.5)}
+dialog::backdrop{background:rgba(10,24,26,.5)}
+.dlg-body{padding:18px 20px 20px}
+dialog h2{font-family:Spectral,Georgia,serif;font-size:20px;margin:0 0 4px}
+dialog .sub{margin:0 0 14px;color:var(--ink-3);font-size:13.5px}
+.field{display:block;margin-bottom:12px}
+.field span{display:block;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);font-weight:700;margin-bottom:4px}
+.field input,.field textarea,.field select{width:100%}
+.field textarea{min-height:160px;resize:vertical;font-family:'Source Sans 3',sans-serif}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.quick button{padding:4px 10px;font-size:13px;border-radius:999px}
+.dlg-act{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+.hist{margin:0;padding:0;list-style:none;border-top:1px solid var(--line);font-size:13.5px}
+.hist li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);color:var(--ink-2)}
+@media (max-width:760px){
+  .tablewrap{border:0;background:transparent;box-shadow:none;overflow:visible}
+  table{min-width:0}
+  thead{display:none}
+  table,tbody,tr,td{display:block}
+  tbody tr{position:relative;background:var(--surface);border:1px solid var(--line);
+    border-left:4px solid var(--tone);border-radius:12px;margin-bottom:10px;padding:10px 12px 12px;box-shadow:var(--shadow)}
+  td{padding:3px 0;border:0}
+  td.c-check{position:absolute;top:10px;right:10px;width:auto;border-left:0;padding:0}
+  td[data-label]::before{content:attr(data-label);display:block;font-size:10px;font-weight:700;
+    letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin-top:6px}
+  td.c-name{padding-right:34px}
+  .c-act{text-align:left;margin-top:10px;display:flex;gap:8px}
+  .c-act button{flex:1 1 auto;padding:8px 12px}
+  .c-act button.more{flex:0 0 auto}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+`;
+var MARKUP=`
+<div class="wrap">
+  <header class="head">
+    <div class="head-top">
+      <div>
+        <p class="eyebrow">Репетиторство · математика</p>
+        <h1>Журнал ДЗ</h1>
+        <p class="meta"><span id="today"></span><span class="saving" id="save"></span>
+          <button class="ghost" id="save-now" hidden style="padding:2px 8px;font-size:12px">Сохранить сейчас</button></p>
+      </div>
+      <div class="head-actions">
+        <button id="btn-add" class="primary">+ Ученики</button>
+        <button id="btn-csv">Выгрузить CSV</button>
+      </div>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Фильтр по состоянию ДЗ"></div>
+    <div class="toolbar">
+      <input type="search" id="q" placeholder="Поиск по фамилии или группе" aria-label="Поиск ученика">
+      <select id="sort" aria-label="Порядок строк">
+        <option value="urgency">Сначала срочное</option>
+        <option value="name">По алфавиту</option>
+        <option value="group">По группам</option>
+        <option value="due">По дате сдачи</option>
+      </select>
+    </div>
+  </header>
+  <div id="banner"></div>
+  <div id="empty"></div>
+  <div class="tablewrap"><table>
+    <thead><tr>
+      <th><input type="checkbox" id="all" aria-label="Выбрать всех в списке"></th>
+      <th>Ученик</th><th>Что сдать</th><th>Выдано</th><th>Срок</th><th></th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table></div>
+  <div class="legend">
+    <span><i style="--c:var(--red)"></i>просрочено</span>
+    <span><i style="--c:var(--amber)"></i>сдать сегодня или завтра</span>
+    <span><i style="--c:var(--petrol)"></i>в работе</span>
+    <span><i style="--c:var(--green)"></i>сдано</span>
+    <span><i style="--c:var(--grey)"></i>ДЗ не выдано</span>
+  </div>
+  <p class="foot" id="foot"></p>
+</div>
+<div class="bulk" id="bulk" hidden>
+  <b><span id="bulk-n">0</span></b><span id="bulk-word">выбрано</span>
+  <button class="primary" id="bulk-issue">Выдать одно ДЗ</button>
+  <button id="bulk-done">Отметить сдано</button>
+  <button class="ghost" id="bulk-clear">Снять выбор</button>
+</div>
+<dialog id="dlg-issue"><form method="dialog" class="dlg-body" id="form-issue">
+  <h2>Выдать домашнее задание</h2>
+  <p class="sub" id="issue-who"></p>
+  <label class="field"><span>Что сдать</span>
+    <input type="text" id="i-title" list="titles" required placeholder="§1.5 Обратная матрица, № 1–8" autocomplete="off">
+    <datalist id="titles"></datalist></label>
+  <label class="field"><span>Срок сдачи</span><input type="date" id="i-due" required></label>
+  <div class="quick">
+    <button type="button" data-plus="1">завтра</button>
+    <button type="button" data-plus="3">+3 дня</button>
+    <button type="button" data-plus="7">через неделю</button>
+    <button type="button" data-plus="14">через 2 недели</button>
+  </div>
+  <label class="field" style="margin-top:12px"><span>Примечание — необязательно</span>
+    <input type="text" id="i-note" placeholder="прислать фото до занятия" autocomplete="off"></label>
+  <div class="dlg-act"><button type="button" data-close>Отмена</button>
+    <button class="primary">Выдать</button></div>
+</form></dialog>
+<dialog id="dlg-add"><form method="dialog" class="dlg-body" id="form-add">
+  <h2>Добавить учеников</h2>
+  <p class="sub">По одному ФИО в строке — можно вставить весь список разом.</p>
+  <label class="field"><span>Список</span><textarea id="a-names" placeholder="Иванов Пётр
+Петрова Анна
+Сидоров Марк"></textarea></label>
+  <label class="field"><span>Группа — необязательно</span>
+    <input type="text" id="a-group" placeholder="11 класс · ЕГЭ база" autocomplete="off"></label>
+  <div class="dlg-act"><button type="button" data-close>Отмена</button>
+    <button class="primary">Добавить</button></div>
+</form></dialog>
+<dialog id="dlg-card"><div class="dlg-body" id="card-body"></div></dialog>
+`;
+
+/* ── страница ─────────────────────────────────────── */
+var lk=document.createElement('link');lk.rel='stylesheet';lk.href=FONTS;document.head.appendChild(lk);
+var stl=document.createElement('style');stl.textContent=CSS;document.head.appendChild(stl);
+var root=document.createElement('div');root.innerHTML=MARKUP;document.body.appendChild(root);
+var $=function(s){return root.querySelector(s)};
+
+var students=(DATA&&DATA.students)||[];
+var state={filter:'all',q:'',sort:'urgency',sel:new Set(),dirty:false,saving:false,readOnly:false,api:null};
+var saved=JSON.stringify(students);
+var timer=null;
+
+/* ── даты ─────────────────────────────────────────── */
+var WD=['вс','пн','вт','ср','чт','пт','сб'];
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function today(){return iso(new Date())}
+function plusDays(n){var d=new Date();d.setDate(d.getDate()+n);return iso(d)}
+function parseISO(s){var p=String(s||'').split('-').map(Number);return new Date(p[0],(p[1]||1)-1,p[2]||1)}
+function daysUntil(s){var n=new Date(),a=new Date(n.getFullYear(),n.getMonth(),n.getDate());return Math.round((parseISO(s)-a)/86400000)}
+function fmt(s){if(!s)return '—';var d=parseISO(s);
+  return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+', '+WD[d.getDay()]}
+function plur(n,a,b,c){var x=Math.abs(n)%100,y=x%10;if(x>14&&x<20)return c;if(y===1)return a;if(y>1&&y<5)return b;return c}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function uid(){return 's'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+
+/* ── состояние строки ─────────────────────────────── */
+function statusOf(s){
+  var hw=s.hw;
+  if(!hw||!hw.title)return {key:'none',label:'ДЗ не выдано',tone:'grey',rank:5};
+  if(hw.status==='done')return {key:'done',label:'Сдано '+fmt(hw.doneAt),tone:'green',rank:4};
+  var d=daysUntil(hw.due);
+  if(d<0)return {key:'overdue',label:'Просрочено '+(-d)+' '+plur(d,'день','дня','дней'),tone:'red',rank:0};
+  if(d===0)return {key:'today',label:'Сдать сегодня',tone:'amber',rank:1};
+  if(d===1)return {key:'today',label:'Сдать завтра',tone:'amber',rank:1};
+  return {key:'work',label:'Осталось '+d+' '+plur(d,'день','дня','дней'),tone:'petrol',rank:d<=3?2:3};
+}
+var FILTERS=[{key:'all',name:'Все',tone:null},{key:'overdue',name:'Просрочено',tone:'red'},
+  {key:'today',name:'Сегодня–завтра',tone:'amber'},{key:'work',name:'В работе',tone:'petrol'},
+  {key:'done',name:'Сдано',tone:'green'},{key:'none',name:'Без ДЗ',tone:'grey'}];
+
+function demoRows(){return [
+  {id:'d1',demo:true,name:'Абрамова Ника',group:'11 класс · ЕГЭ база',hw:{title:'Задание 14, вариант 3 — № 1–6',due:plusDays(-2),issued:plusDays(-9),status:'issued',note:''}},
+  {id:'d2',demo:true,name:'Гущин Артём',group:'1 курс · линейная алгебра',hw:{title:'§1.5 Обратная матрица, № 1–8',due:today(),issued:plusDays(-7),status:'issued',note:'прислать фото до занятия'}},
+  {id:'d3',demo:true,name:'Кравец Соня',group:'11 класс · ЕГЭ база',hw:{title:'Задание 14, вариант 3 — № 1–6',due:plusDays(5),issued:plusDays(-2),status:'issued',note:''}},
+  {id:'d4',demo:true,name:'Лапин Егор',group:'1 курс · линейная алгебра',hw:{title:'§1.5 Обратная матрица, № 1–8',due:plusDays(-1),issued:plusDays(-8),status:'done',doneAt:plusDays(-1),note:''}},
+  {id:'d5',demo:true,name:'Юсупова Дина',group:'11 класс · ЕГЭ база',hw:null}]}
+function isDemo(){return students.length===0}
+function data(){return students.length?students:demoRows()}
+function byId(id){for(var i=0;i<students.length;i++)if(students[i].id===id)return students[i];return null}
+
+function cmpName(a,b){return (a.s.name||'').localeCompare(b.s.name||'','ru')}
+function view(){
+  var list=data().map(function(s){return {s:s,st:statusOf(s)}});
+  var q=state.q.trim().toLowerCase();
+  if(q)list=list.filter(function(r){
+    return (r.s.name||'').toLowerCase().indexOf(q)>=0||(r.s.group||'').toLowerCase().indexOf(q)>=0});
+  if(state.filter!=='all')list=list.filter(function(r){return r.st.key===state.filter});
+  var by=state.sort;
+  list.sort(function(a,b){
+    if(by==='name')return cmpName(a,b);
+    if(by==='group'){var g=(a.s.group||'я').localeCompare(b.s.group||'я','ru');return g||cmpName(a,b)}
+    if(by==='due'){var da=a.s.hw&&a.s.hw.due||'9999',db=b.s.hw&&b.s.hw.due||'9999';return da<db?-1:da>db?1:cmpName(a,b)}
+    if(a.st.rank!==b.st.rank)return a.st.rank-b.st.rank;
+    var x=a.s.hw&&a.s.hw.due||'9999',y=b.s.hw&&b.s.hw.due||'9999';
+    return x<y?-1:x>y?1:cmpName(a,b)});
+  return list;
+}
+
+/* ── сохранение: страница переиздаёт сама себя ────── */
+function jsonLit(o){return JSON.stringify(o).replace(/</g,'\\u003c')
+  .replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029')}
+function buildDoc(){
+  var payload={students:students,rev:((DATA&&DATA.rev)||0)+1,savedAt:new Date().toISOString()};
+  return '<!doctype html>\n<html lang="ru">\n<head>\n<meta charset="utf-8">\n'+
+    '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'+
+    '<title>Журнал ДЗ</title>\n</head>\n<body>\n<script>\nvar DATA = '+jsonLit(payload)+';\n'+
+    APP.toString()+'\nAPP(DATA);\n<\/script>\n</body>\n</html>';
+}
+function touch(){
+  if(state.readOnly)return;
+  state.dirty=true;renderSave();
+  clearTimeout(timer);timer=setTimeout(flush,2000);
+}
+function flush(){
+  clearTimeout(timer);
+  if(!state.dirty||state.saving||state.readOnly)return;
+  if(!state.api){state.readOnly=true;rollback('Эта копия страницы не сохраняет изменения');return}
+  state.saving=true;renderSave();render();
+  state.api.publish(buildDoc()).then(function(){
+    /* страница перезагрузится на новую версию */
+  }).catch(function(e){
+    state.saving=false;
+    var c=e&&e.code;
+    if(c==='conflict'){toast('Кто-то сохранил раньше — страница обновится на его версию')}
+    else if(c==='not_writer'||c==='not_granted'){state.readOnly=true;rollback('Только просмотр: сохранять изменения может владелец страницы')}
+    else{toast('Сохранить не удалось, попробуйте ещё раз')}
+    renderSave();render();
+  });
+}
+function rollback(msg){
+  students=JSON.parse(saved);state.dirty=false;state.sel.clear();
+  banner('<b>Только просмотр.</b> '+esc(msg)+' Таблица показывает последнюю сохранённую версию.','amber');
+  renderSave();render();
+}
+function renderSave(){
+  var el=$('#save'),btn=$('#save-now');
+  if(state.readOnly){el.innerHTML='<i></i><b>только просмотр</b>';el.style.setProperty('--tone','var(--ink-3)');btn.hidden=true;return}
+  if(state.saving){el.innerHTML='<i></i><b>сохраняю…</b>';el.style.setProperty('--tone','var(--petrol)');btn.hidden=true;return}
+  if(state.dirty){el.innerHTML='<i></i><b>есть несохранённое</b>';el.style.setProperty('--tone','var(--amber)');btn.hidden=false;return}
+  var t=DATA&&DATA.savedAt?new Date(DATA.savedAt):null;
+  el.innerHTML='<i></i><b>сохранено'+(t?' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'):'')+'</b>';
+  el.style.setProperty('--tone','var(--green)');btn.hidden=true;
+}
+
+/* ── отрисовка ────────────────────────────────────── */
+function render(){
+  $('#today').textContent='Сегодня '+fmt(today());
+  var all=data().map(statusOf),counts={all:all.length};
+  FILTERS.forEach(function(f){if(f.key!=='all')counts[f.key]=0});
+  all.forEach(function(st){counts[st.key]=(counts[st.key]||0)+1});
+  $('#chips').innerHTML=FILTERS.map(function(f){
+    var style=f.tone?('--tone:var(--'+f.tone+');--tone-tint:var(--'+f.tone+'-tint)')
+      :'--tone:var(--petrol);--tone-tint:var(--petrol-tint)';
+    return '<button class="chip" data-filter="'+f.key+'" aria-pressed="'+(state.filter===f.key)+'" style="'+style+'">'+
+      (f.tone?'<i class="dot"></i>':'')+esc(f.name)+' <span class="n">'+(counts[f.key]||0)+'</span></button>'}).join('');
+
+  var rows=view(),demo=isDemo(),lock=demo||state.readOnly||state.saving;
+  $('#rows').innerHTML=rows.map(function(r){
+    var s=r.s,st=r.st,hw=s.hw&&s.hw.title?s.hw:null;
+    var act=st.key==='none'?'Выдать ДЗ':st.key==='done'?'Выдать ещё':'Сдал ✓';
+    var an=st.key==='none'||st.key==='done'?'issue':'done';
+    return '<tr data-tone="'+st.tone+'" data-id="'+esc(s.id)+'"'+(state.sel.has(s.id)?' class="sel"':'')+
+      (demo?' style="opacity:.62"':'')+'>'+
+      '<td class="c-check"><input type="checkbox" data-pick="'+esc(s.id)+'" aria-label="Выбрать: '+esc(s.name)+'"'+
+        (state.sel.has(s.id)?' checked':'')+(lock?' disabled':'')+'></td>'+
+      '<td class="c-name">'+esc(s.name)+(demo?'<span class="demo-tag">пример</span>':'')+
+        (s.group?'<span class="grp">'+esc(s.group)+'</span>':'')+'</td>'+
+      '<td class="c-task" data-label="Что сдать">'+(hw?esc(hw.title)+(hw.note?'<span class="note">'+esc(hw.note)+'</span>':'')
+        :'<span class="nothing">задание не выдано</span>')+'</td>'+
+      '<td class="c-issued mono" data-label="Выдано">'+(hw&&hw.issued?fmt(hw.issued):'—')+'</td>'+
+      '<td class="c-due" data-label="Срок">'+(hw?'<div class="mono">'+fmt(hw.due)+'</div>':'')+
+        '<span class="pill">'+esc(st.label)+'</span></td>'+
+      '<td class="c-act"><button data-act="'+an+'" data-id="'+esc(s.id)+'"'+(lock?' disabled':'')+
+        (an==='done'?' class="primary"':'')+'>'+act+'</button>'+
+        '<button class="ghost more" data-act="card" data-id="'+esc(s.id)+'" aria-label="Карточка ученика"'+
+        (demo||state.saving?' disabled':'')+'>⋯</button></td></tr>'}).join('');
+
+  $('#empty').innerHTML=demo
+    ? '<div class="panel"><h2>Пока это пример</h2><p>Пять строк ниже показаны для примера: так выглядит журнал в работе. Нажмите «+ Ученики» и вставьте список ФИО — примеры исчезнут, а строки станут вашими.</p>'+
+      (state.readOnly?'':'<button class="primary" data-open-add>Вставить список учеников</button>')+'</div>'
+    : (rows.length?'':'<div class="panel"><h2>В этом фильтре пусто</h2><p>Ни один ученик не попадает под выбранный фильтр или поиск.</p><button data-reset>Показать всех</button></div>');
+
+  $('#foot').innerHTML=state.readOnly
+    ? 'Страница открыта только для чтения: отметки ставит владелец журнала, здесь видна последняя сохранённая версия.'
+    : 'Отметки сохраняются в самой странице — через пару секунд после последнего изменения она переиздаётся, и все открытые копии обновляются. Строка без цвета слева — человек сидит без задания.';
+
+  var n=state.sel.size;
+  $('#bulk').hidden=n===0;
+  $('#bulk-n').textContent=n;
+  $('#bulk-word').textContent=plur(n,'ученик выбран','ученика выбрано','учеников выбрано');
+  var ids=rows.map(function(r){return r.s.id});
+  $('#all').checked=ids.length>0&&ids.every(function(i){return state.sel.has(i)});
+  $('#all').disabled=lock;
+  $('#btn-add').disabled=state.readOnly||state.saving;
+
+  var seen={},t=[];
+  students.forEach(function(s){
+    if(s.hw&&s.hw.title&&!seen[s.hw.title]){seen[s.hw.title]=1;t.push(s.hw.title)}
+    (s.done||[]).forEach(function(h){if(h.title&&!seen[h.title]){seen[h.title]=1;t.push(h.title)}})});
+  $('#titles').innerHTML=t.slice(0,25).map(function(x){return '<option value="'+esc(x)+'">'}).join('');
+}
+function banner(html,tone){
+  $('#banner').innerHTML=html?'<div class="banner"'+(tone?' style="--tone:var(--'+tone+');--tone-tint:var(--'+tone+'-tint)"':'')+'>'+html+'</div>':''}
+var toastT;
+function toast(msg){
+  var el=document.getElementById('toast');
+  if(!el){el=document.createElement('div');el.id='toast';document.body.appendChild(el)}
+  el.textContent=msg;clearTimeout(toastT);toastT=setTimeout(function(){el.remove()},3600)}
+
+/* ── действия ─────────────────────────────────────── */
+function markDone(id){var s=byId(id);if(!s||!s.hw)return;
+  s.hw.status='done';s.hw.doneAt=today();touch();render()}
+function unDone(id){var s=byId(id);if(!s||!s.hw)return;
+  s.hw.status='issued';delete s.hw.doneAt;touch();render()}
+function shelve(s){
+  if(s.hw&&s.hw.title){s.done=(s.done||[]);
+    s.done.unshift({title:s.hw.title,due:s.hw.due,status:s.hw.status||'issued',doneAt:s.hw.doneAt||null});
+    s.done=s.done.slice(0,15)}}
+function issueTo(ids,d){
+  ids.forEach(function(id){var s=byId(id);if(!s)return;shelve(s);
+    s.hw={title:d.title,due:d.due,note:d.note||'',issued:today(),status:'issued'}});
+  state.sel.clear();touch();render();
+  toast('ДЗ выдано: '+ids.length+' '+plur(ids.length,'ученику','ученикам','ученикам'))}
+function removeHw(id){var s=byId(id);if(!s)return;shelve(s);s.hw=null;touch();render()}
+
+var issueTargets=[];
+function openIssue(ids){
+  if(state.readOnly){toast('Сохранять изменения может только владелец страницы');return}
+  issueTargets=ids;
+  var who=ids.length===1?(byId(ids[0])||{}).name:ids.length+' '+plur(ids.length,'ученик','ученика','учеников');
+  $('#issue-who').textContent='Кому: '+who;
+  $('#i-title').value='';$('#i-note').value='';$('#i-due').value=plusDays(7);
+  $('#dlg-issue').showModal();setTimeout(function(){$('#i-title').focus()},30)}
+var cardId=null;
+function openCard(id){
+  var s=byId(id);if(!s)return;cardId=id;
+  var st=statusOf(s),hw=s.hw&&s.hw.title?s.hw:null;
+  var h='<h2>'+esc(s.name)+'</h2><p class="sub">'+(s.group?esc(s.group):'группа не указана')+'</p>'+
+    '<label class="field"><span>ФИО</span><input type="text" id="c-name" value="'+esc(s.name)+'"></label>'+
+    '<label class="field"><span>Группа</span><input type="text" id="c-group" value="'+esc(s.group||'')+'"></label>';
+  if(hw){h+='<label class="field"><span>Текущее ДЗ</span><input type="text" id="c-title" value="'+esc(hw.title)+'"></label>'+
+    '<label class="field"><span>Срок — сейчас '+esc(st.label.toLowerCase())+'</span><input type="date" id="c-due" value="'+esc(hw.due)+'"></label>'+
+    '<label class="field"><span>Примечание</span><input type="text" id="c-note" value="'+esc(hw.note||'')+'"></label>'+
+    '<div class="quick"><button type="button" data-card="extend" data-d="3">продлить на 3 дня</button>'+
+    '<button type="button" data-card="extend" data-d="7">продлить на неделю</button>'+
+    (hw.status==='done'?'<button type="button" data-card="undone">снять «сдано»</button>'
+      :'<button type="button" data-card="done">отметить сдано</button>')+
+    '<button type="button" data-card="rmhw">убрать ДЗ</button></div>'}
+  else h+='<p class="sub">Сейчас задания нет.</p><div class="quick"><button type="button" data-card="issue">выдать ДЗ</button></div>';
+  var hist=(s.done||[]).filter(function(x){return x&&x.title});
+  if(hist.length)h+='<p class="sub" style="margin-top:16px">Раньше</p><ul class="hist">'+hist.map(function(x){
+    return '<li><span>'+esc(x.title)+'</span><span class="mono">'+(x.status==='done'?'сдано '+fmt(x.doneAt||x.due):'срок '+fmt(x.due))+'</span></li>'}).join('')+'</ul>';
+  h+='<div class="dlg-act"><button type="button" class="danger" data-card="del">Удалить ученика</button>'+
+     '<button type="button" data-close>Закрыть</button>'+
+     '<button type="button" class="primary" data-card="save">Сохранить</button></div>';
+  $('#card-body').innerHTML=h;$('#dlg-card').showModal()}
+
+/* ── события ──────────────────────────────────────── */
+root.addEventListener('click',function(e){
+  var t=e.target.closest('button');if(!t)return;
+  if(t.dataset.close!==undefined){t.closest('dialog').close();return}
+  if(t.dataset.filter){state.filter=t.dataset.filter;remember();render();return}
+  if(t.dataset.openAdd!==undefined){$('#dlg-add').showModal();return}
+  if(t.dataset.reset!==undefined){state.filter='all';state.q='';$('#q').value='';render();return}
+  if(t.dataset.plus){$('#i-due').value=plusDays(+t.dataset.plus);return}
+  var act=t.dataset.act,id=t.dataset.id;
+  if(act==='done')return markDone(id);
+  if(act==='issue')return openIssue([id]);
+  if(act==='card')return openCard(id);
+  var c=t.dataset.card;if(!c)return;
+  var s=byId(cardId);if(!s)return;
+  if(c==='save'){s.name=$('#c-name').value.trim()||s.name;s.group=$('#c-group').value.trim();
+    if(s.hw&&s.hw.title){s.hw.title=$('#c-title').value.trim()||s.hw.title;
+      s.hw.due=$('#c-due').value||s.hw.due;s.hw.note=$('#c-note').value.trim()}
+    touch();render();$('#dlg-card').close();return}
+  if(c==='extend'){var d=parseISO(s.hw.due);d.setDate(d.getDate()+(+t.dataset.d));s.hw.due=iso(d);
+    touch();render();$('#dlg-card').close();toast('Срок сдвинут на '+fmt(s.hw.due));return}
+  if(c==='done'){markDone(cardId);$('#dlg-card').close();return}
+  if(c==='undone'){unDone(cardId);$('#dlg-card').close();return}
+  if(c==='rmhw'){removeHw(cardId);$('#dlg-card').close();return}
+  if(c==='issue'){$('#dlg-card').close();openIssue([cardId]);return}
+  if(c==='del'){if(!confirm('Удалить '+s.name+' вместе с историей ДЗ?'))return;
+    students=students.filter(function(x){return x.id!==cardId});
+    state.sel.delete(cardId);touch();render();$('#dlg-card').close();return}
+});
+root.addEventListener('change',function(e){
+  var el=e.target;
+  if(el.dataset&&el.dataset.pick){el.checked?state.sel.add(el.dataset.pick):state.sel.delete(el.dataset.pick);render();return}
+  if(el.id==='all'){var ids=view().map(function(r){return r.s.id});
+    ids.forEach(function(i){el.checked?state.sel.add(i):state.sel.delete(i)});render();return}
+  if(el.id==='sort'){state.sort=el.value;remember();render()}
+});
+$('#q').addEventListener('input',function(){state.q=this.value;render()});
+$('#save-now').addEventListener('click',flush);
+$('#btn-add').addEventListener('click',function(){
+  if(state.readOnly){toast('Сохранять изменения может только владелец страницы');return}
+  $('#dlg-add').showModal();setTimeout(function(){$('#a-names').focus()},30)});
+$('#bulk-issue').addEventListener('click',function(){openIssue(Array.from(state.sel))});
+$('#bulk-clear').addEventListener('click',function(){state.sel.clear();render()});
+$('#bulk-done').addEventListener('click',function(){
+  var ids=Array.from(state.sel).filter(function(id){var s=byId(id);return s&&s.hw&&s.hw.title&&s.hw.status!=='done'});
+  if(!ids.length){toast('Среди выбранных некому ставить отметку');return}
+  ids.forEach(function(id){var s=byId(id);s.hw.status='done';s.hw.doneAt=today()});
+  state.sel.clear();touch();render();toast('Отмечено сдано: '+ids.length)});
+$('#form-issue').addEventListener('submit',function(e){
+  var title=$('#i-title').value.trim(),due=$('#i-due').value;
+  if(!title||!due){e.preventDefault();return}
+  issueTo(issueTargets.slice(),{title:title,due:due,note:$('#i-note').value.trim()})});
+$('#form-add').addEventListener('submit',function(){
+  var names=$('#a-names').value.split('\n').map(function(x){return x.trim()}).filter(Boolean);
+  var group=$('#a-group').value.trim();$('#a-names').value='';
+  if(!names.length)return;
+  names.forEach(function(n){students.push({id:uid(),name:n,group:group,hw:null,done:[]})});
+  touch();render();toast('Добавлено: '+names.length+' '+plur(names.length,'ученик','ученика','учеников'))});
+$('#btn-csv').addEventListener('click',function(){
+  var rows=[['Ученик','Группа','Что сдать','Выдано','Срок','Состояние','Примечание']];
+  view().forEach(function(r){var s=r.s,hw=s.hw||{};
+    rows.push([s.name||'',s.group||'',hw.title||'',hw.issued||'',hw.due||'',r.st.label,hw.note||''])});
+  var csv='﻿'+rows.map(function(r){return r.map(function(c){
+    return '"'+String(c).replace(/"/g,'""')+'"'}).join(';')}).join('\r\n');
+  (function(){
+    var p=window.claude&&window.claude.use?window.claude.use('downloads'):Promise.resolve(null);
+    p.then(function(dl){
+      if(!dl){toast('Выгрузка файлов в этом просмотре недоступна');return}
+      return dl.save({filename:'zhurnal-dz-'+today()+'.csv',data:csv})
+        .then(function(){toast('Файл сохранён')})
+        .catch(function(e){if(!e||e.code!=='declined')toast('Сохранить файл не удалось')})})})()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&state.sel.size){state.sel.clear();render()}});
+window.addEventListener('beforeunload',function(e){if(state.dirty&&!state.readOnly){e.preventDefault();e.returnValue=''}});
+
+function remember(){try{localStorage.setItem('dz-view',JSON.stringify({f:state.filter,s:state.sort}))}catch(e){}}
+try{var m=JSON.parse(localStorage.getItem('dz-view')||'{}');
+  if(m.f)state.filter=m.f;if(m.s){state.sort=m.s;$('#sort').value=m.s}}catch(e){}
+
+renderSave();render();
+(function(){
+  var p=window.claude&&window.claude.use?window.claude.use('artifact'):Promise.resolve(null);
+  p.then(function(api){
+    state.api=api;
+    if(!api){state.readOnly=true;
+      banner('<b>Только просмотр.</b> Эта копия страницы не может сохранять изменения — открыта последняя сохранённая версия.','amber');
+      renderSave();render()}
+  });
+})();
+}
+APP(DATA);
+</script>

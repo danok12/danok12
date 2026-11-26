@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Даниил Буев — репетитор по математике, ОГЭ и ЕГЭ онлайн</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Подготовка к ОГЭ и ЕГЭ, поступление в лицей, школьная программа. Бесплатное пробное занятие с диагностикой.">
+<meta property="og:title" content="Даниил Буев — репетитор по математике">
+<meta property="og:description" content="ОГЭ, ЕГЭ, поступление в лицей, школьная программа. Онлайн, бесплатное пробное занятие с диагностикой.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://danok12.github.io/danok12/">
+<meta property="og:image" content="https://danok12.github.io/danok12/foto.jpg">
+<link rel="canonical" href="https://danok12.github.io/danok12/">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;0,700;1,500&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+/* Layout: одна колонка ~68ch; hero с «задачей на полях», дальше секции на бумажном фоне, разборы — карточки с решением под <details>, внизу форма записи */
+:root{
+  --paper:#eff3f2; --surface:#fff; --surface-2:#e6edec; --line:#d4dfdd; --line-2:#b9cac7;
+  --ink:#12262a; --ink-2:#496164; --ink-3:#748c8e;
+  --petrol:#0e5b61; --petrol-2:#0a464b; --petrol-tint:#dbebea; --on-petrol:#fff;
+  --red:#a32f28; --red-tint:#f8e3e0;
+  --green:#2b6a46; --green-tint:#dcecdf;
+  --todo:#8f5d09; --todo-tint:#fbeed6;
+  --grid:rgba(14,91,97,.07);
+  --f-display:Spectral,Georgia,'Times New Roman',serif;
+  --f-text:'Source Sans 3',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  --shadow:0 1px 2px rgba(18,38,42,.06),0 8px 24px -14px rgba(18,38,42,.28);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b1517; --surface:#112225; --surface-2:#172e31; --line:#20383c; --line-2:#2e4c50;
+  --ink:#e4edec; --ink-2:#a6bfbf; --ink-3:#7d9899;
+  --petrol:#5cbdc1; --petrol-2:#8ad8d8; --petrol-tint:#123338; --on-petrol:#06201f;
+  --red:#f0998f; --red-tint:#3b1e1b; --green:#8bcfa3; --green-tint:#14301f;
+  --todo:#e3b466; --todo-tint:#352810; --grid:rgba(92,189,193,.07);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -14px rgba(0,0,0,.6);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b1517; --surface:#112225; --surface-2:#172e31; --line:#20383c; --line-2:#2e4c50;
+  --ink:#e4edec; --ink-2:#a6bfbf; --ink-3:#7d9899;
+  --petrol:#5cbdc1; --petrol-2:#8ad8d8; --petrol-tint:#123338; --on-petrol:#06201f;
+  --red:#f0998f; --red-tint:#3b1e1b; --green:#8bcfa3; --green-tint:#14301f;
+  --todo:#e3b466; --todo-tint:#352810; --grid:rgba(92,189,193,.07);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -14px rgba(0,0,0,.6);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-text);font-size:17px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:760px;margin:0 auto}
+a{color:var(--petrol)}
+:focus-visible{outline:2px solid var(--petrol);outline-offset:2px;border-radius:4px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;text-wrap:balance;margin:0;letter-spacing:-.01em}
+h2{font-size:clamp(26px,4.2vw,32px);line-height:1.15}
+h3{font-size:20px;line-height:1.25}
+p{margin:0}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--f-mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+mark.todo{background:var(--todo-tint);color:var(--todo);border:1px dashed currentColor;border-radius:4px;padding:0 .3em;font-weight:600;white-space:nowrap}
+
+/* верхняя полоса */
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:18px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:600;font-size:18px;color:var(--ink);text-decoration:none}
+.top nav{display:flex;gap:18px;flex-wrap:wrap;font-size:15px}
+.top nav a{color:var(--ink-2);text-decoration:none}
+.top nav a:hover{color:var(--petrol)}
+
+/* hero — тетрадная клетка */
+.hero{position:relative;margin-top:8px;padding:40px 0 44px;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;background-position:-1px -1px}
+.hero h1{font-size:clamp(36px,7vw,58px);line-height:1.04;max-width:13ch}
+.hero h1 em{font-style:italic;font-weight:500;color:var(--petrol)}
+.hero .lead{margin-top:18px;font-size:19px;color:var(--ink-2);max-width:52ch}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;font:600 16px/1 var(--f-text);padding:14px 20px;border-radius:10px;
+  border:1px solid var(--petrol);background:var(--petrol);color:var(--on-petrol);text-decoration:none;cursor:pointer}
+.btn:hover{background:var(--petrol-2);border-color:var(--petrol-2)}
+.btn.ghost{background:transparent;color:var(--petrol)}
+.btn.ghost:hover{background:var(--petrol-tint)}
+.hero .note{font-size:14px;color:var(--ink-3)}
+
+/* задача на полях */
+.margin-task{margin-top:34px;max-width:440px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.margin-task .q{font-family:var(--f-mono);font-size:15px;margin-top:6px}
+.margin-task details{margin-top:10px}
+
+section{padding-block:52px;border-top:1px solid var(--line)}
+section > .head{display:grid;gap:8px;margin-bottom:26px}
+section > .head p{color:var(--ink-2);max-width:58ch}
+
+/* направления */
+.subjects{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.subj{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:8px;align-content:start;min-width:0}
+.subj .tag{font-family:var(--f-mono);font-size:12px;color:var(--petrol);background:var(--petrol-tint);border-radius:999px;padding:3px 9px;justify-self:start}
+.subj p{color:var(--ink-2);font-size:15.5px}
+
+/* как проходит */
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:0;counter-reset:s}
+.steps li{display:grid;grid-template-columns:44px 1fr;gap:14px;padding:16px 0;border-bottom:1px dashed var(--line-2);counter-increment:s}
+.steps li:last-child{border-bottom:0}
+.steps li::before{content:counter(s);font-family:var(--f-display);font-size:28px;font-weight:600;color:var(--petrol);line-height:1}
+.steps h3{font-size:18px;margin-bottom:4px}
+.steps p{color:var(--ink-2);font-size:15.5px}
+
+/* формат и цены */
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:480px;font-size:15.5px}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-family:var(--f-mono);font-weight:500;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);background:var(--surface-2)}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.facts{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:16px;color:var(--ink-2);font-size:15.5px}
+
+/* разборы */
+.cases{display:grid;gap:16px}
+.case{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:12px;min-width:0}
+.case .meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.case .cond{font-size:17px}
+.formula{font-family:var(--f-mono);font-size:15px;background:var(--surface-2);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre;line-height:1.6}
+details{border-top:1px solid var(--line);padding-top:10px}
+details summary{cursor:pointer;font-weight:600;color:var(--petrol);list-style:none;display:inline-flex;gap:6px;align-items:center}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"+";font-family:var(--f-mono);width:1.1em}
+details[open] summary::before{content:"−"}
+details .body{display:grid;gap:10px;margin-top:10px;color:var(--ink);font-size:16px}
+.trap{background:var(--red-tint);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:15.5px}
+.trap b{color:var(--red)}
+.ok{background:var(--green-tint);border-radius:8px;padding:10px 12px;font-size:15.5px}
+.ok b{color:var(--green)}
+.wrong{position:relative;border-left:3px solid var(--red);padding-left:12px}
+
+/* о себе */
+.about{display:grid;grid-template-columns:120px 1fr;gap:20px;align-items:start}
+.photo{width:120px;height:auto;aspect-ratio:1;max-width:100%;border-radius:12px;object-fit:cover;border:1px solid var(--line);display:block}
+.about ul{margin:10px 0 0;padding-left:1.1em;color:var(--ink-2)}
+.about li+li{margin-top:4px}
+@media (max-width:520px){.about{grid-template-columns:1fr}}
+
+/* запись */
+.signup{background:var(--surface);border:1px solid var(--line-2);border-radius:14px;padding:22px;box-shadow:var(--shadow);display:grid;gap:16px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.fields{grid-template-columns:1fr}}
+.field{display:grid;gap:6px;min-width:0}
+.field.wide{grid-column:1/-1}
+label{font-size:14px;font-weight:600;color:var(--ink-2)}
+input,select,textarea{font:16px/1.4 var(--f-text);color:var(--ink);background:var(--paper);border:1px solid var(--line-2);border-radius:8px;padding:10px 12px;width:100%}
+textarea{min-height:76px;resize:vertical}
+.preview{font-family:var(--f-mono);font-size:14px;white-space:pre-wrap;background:var(--surface-2);border-radius:8px;padding:12px;color:var(--ink);word-break:break-word}
+.contacts{display:flex;flex-wrap:wrap;gap:10px}
+.status{font-size:14px;color:var(--green);min-height:1.4em}
+
+/* вопросы */
+.faq{display:grid;gap:0}
+.faq details{padding:14px 0;border-top:1px solid var(--line)}
+.faq details:last-child{border-bottom:1px solid var(--line)}
+.faq details .body{color:var(--ink-2)}
+
+footer{padding-block:28px 40px;color:var(--ink-3);font-size:14px;border-top:1px solid var(--line)}
+.draft-banner{margin-top:14px;font-size:14px;background:var(--todo-tint);color:var(--todo);border-radius:8px;padding:8px 12px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="top">
+  <a class="brand" href="#top">Даниил Буев</a>
+  <nav aria-label="Разделы">
+    <a href="#napravleniya">Направления</a>
+    <a href="#format">Формат и цены</a>
+    <a href="#razbory">Разборы</a>
+    <a href="#zapis">Запись</a>
+  </nav>
+</header>
+
+<main id="top">
+<div class="hero">
+  <p class="eyebrow">Репетитор по математике · 5–11 класс · онлайн</p>
+  <h1>Математика, в которой <em>понятно, где ошибка</em></h1>
+  <p class="lead">Готовлю к ОГЭ и ЕГЭ, к вступительным в лицеи и подтягиваю школьную программу. Средний балл моих учеников на ЕГЭ в 2026 году — 82. Первое занятие бесплатное и начинается с короткой диагностики: через 30 минут вы знаете, какие темы проседают и сколько примерно займёт подготовка.</p>
+  <div class="cta-row">
+    <a class="btn" href="#zapis">Записаться на бесплатное пробное</a>
+    <a class="btn ghost" href="#razbory">Посмотреть, как я объясняю</a>
+  </div>
+
+  <div class="margin-task" aria-label="Задача для разминки">
+    <p class="eyebrow">Задача на полях</p>
+    <p class="q">Цену подняли на 25%, а потом снизили на 20%.<br>Как изменилась цена?</p>
+    <details>
+      <summary>Ответ</summary>
+      <div class="body">
+        <p>Никак не изменилась: <span class="mono">1,25 · 0,8 = 1</span>. Проценты считаются каждый раз от новой цены, поэтому «+25% и −20%» не дают «+5%».</p>
+      </div>
+    </details>
+  </div>
+</div>
+
+<section id="napravleniya">
+  <div class="head">
+    <p class="eyebrow">Направления</p>
+    <h2>С чем можно прийти</h2>
+  </div>
+  <div class="subjects">
+    <article class="subj">
+      <span class="tag">9 класс</span>
+      <h3>ОГЭ</h3>
+      <p>Первая часть без потерь, затем задачи второй части с полным оформлением, как требуют эксперты.</p>
+    </article>
+    <article class="subj">
+      <span class="tag">10–11 класс</span>
+      <h3>ЕГЭ: база и профиль</h3>
+      <p>База: надёжные вычисления и преобразования. Профиль: уравнения, неравенства, параметры, стереометрия.</p>
+    </article>
+    <article class="subj">
+      <span class="tag">6–9 класс</span>
+      <h3>Поступление в лицей</h3>
+      <p>Нестандартные задачи, логика, доказательства, текстовые задачи. Разбираем формат вступительных конкретной школы.</p>
+    </article>
+    <article class="subj">
+      <span class="tag">5–11 класс</span>
+      <h3>Школьная программа</h3>
+      <p>Закрываем пробелы в старых темах, на которых держится текущая, и готовимся к контрольным.</p>
+    </article>
+  </div>
+</section>
+
+<section id="kak">
+  <div class="head">
+    <p class="eyebrow">Как проходят занятия</p>
+    <h2>От диагностики до результата</h2>
+  </div>
+  <ol class="steps">
+    <li><div><h3>Диагностика на пробном занятии</h3><p>Несколько коротких заданий по ключевым темам. Видно, что ученик знает, а где теряет баллы.</p></div></li>
+    <li><div><h3>План под цель</h3><p>Какие темы, в каком порядке и сколько примерно занятий. План можно показать родителям.</p></div></li>
+    <li><div><h3>Занятие: теория, задачи, разбор ошибок</h3><p>Отдельно тренируем типичные ошибки. Например, ученик получает готовое неверное решение и ищет, где оно ломается.</p></div></li>
+    <li><div><h3>Домашнее задание с проверкой</h3><p>Каждое ДЗ проверяю и разбираю на следующем занятии. Что задано и к какому сроку, записано в журнале, его видит и ученик, и родитель.</p></div></li>
+  </ol>
+</section>
+
+<section id="format">
+  <div class="head">
+    <p class="eyebrow">Формат и цены</p>
+    <h2>Сколько стоит и как проходит</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Занятие</th><th>Длительность</th><th>Стоимость</th></tr></thead>
+      <tbody>
+        <tr><td>Пробное с диагностикой</td><td class="num">1 час</td><td class="num">бесплатно</td></tr>
+        <tr><td>Обычное занятие: ОГЭ, ЕГЭ, лицей, школьная программа</td><td class="num">от 1 до 3 часов</td><td class="num">от 2 000 ₽ за час</td></tr>
+        <tr><td>Групповое занятие</td><td class="num">от 1 часа</td><td class="num">от 1 200 ₽ за час с ученика</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="facts">
+    <span><b>Где:</b> только онлайн, из любого города</span>
+    <span><b>Длительность:</b> от 1 до 3 часов, по задаче и возрасту ученика</span>
+    <span><b>Площадка:</b> Яндекс Телемост и Mail Доска</span>
+    <span><b>Оплата:</b> абонементом, после бесплатного пробного</span>
+  </div>
+</section>
+
+<section id="razbory">
+  <div class="head">
+    <p class="eyebrow">Примеры разборов</p>
+    <h2>Так выглядит объяснение</h2>
+    <p>Задачи того же типа, что на экзамене, но с собственными числами. Сначала попробуйте решить сами, потом откройте разбор.</p>
+  </div>
+  <div class="cases">
+
+    <article class="case">
+      <div class="meta"><span class="eyebrow">ЕГЭ профиль · логарифмическое уравнение</span></div>
+      <p class="cond">Решите уравнение</p>
+      <div class="formula">log₂(x + 3) + log₂(x − 1) = 5</div>
+      <details>
+        <summary>Разбор</summary>
+        <div class="body">
+          <p>Сначала область допустимых значений: <span class="mono">x + 3 &gt; 0</span> и <span class="mono">x − 1 &gt; 0</span>, то есть <span class="mono">x &gt; 1</span>.</p>
+          <div class="formula">log₂((x + 3)(x − 1)) = 5
+(x + 3)(x − 1) = 32
+x² + 2x − 35 = 0  →  x = 5  или  x = −7</div>
+          <p>Проверка: <span class="mono">log₂8 + log₂4 = 3 + 2 = 5</span>.</p>
+          <p class="trap"><b>Где теряют балл:</b> записывают в ответ оба корня. Число −7 не входит в ОДЗ: под логарифмом оказалось бы отрицательное число.</p>
+          <p class="ok"><b>Ответ:</b> 5.</p>
+        </div>
+      </details>
+    </article>
+
+    <article class="case">
+      <div class="meta"><span class="eyebrow">Найди ошибку · 8–9 класс</span></div>
+      <p class="cond">Ученик решил уравнение <span class="mono">x² = 5x</span> так:</p>
+      <div class="formula wrong">x² = 5x      | : x
+x = 5
+Ответ: 5.</div>
+      <p>Где ошибка?</p>
+      <details>
+        <summary>Разбор</summary>
+        <div class="body">
+          <p>Делить на <span class="mono">x</span> можно, только если <span class="mono">x ≠ 0</span>. Этим делением потерян корень <span class="mono">x = 0</span>.</p>
+          <div class="formula">x² − 5x = 0
+x(x − 5) = 0  →  x = 0  или  x = 5</div>
+          <p class="trap"><b>Как поймать себя:</b> перед делением на выражение с переменной спросить, может ли оно быть нулём. Надёжнее перенести всё в одну сторону и разложить на множители.</p>
+          <p class="ok"><b>Ответ:</b> 0; 5.</p>
+        </div>
+      </details>
+    </article>
+
+    <article class="case">
+      <div class="meta"><span class="eyebrow">Вступительные в лицей · доказательство</span></div>
+      <p class="cond">Докажите, что при любом целом <span class="mono">n</span> число <span class="mono">n³ − n</span> делится на 6.</p>
+      <details>
+        <summary>Разбор</summary>
+        <div class="body">
+          <div class="formula">n³ − n = n(n² − 1) = (n − 1) · n · (n + 1)</div>
+          <p>Это произведение трёх подряд идущих целых чисел. Среди любых двух подряд идущих есть чётное, значит произведение делится на 2. Среди любых трёх подряд идущих есть кратное 3, значит оно делится на 3.</p>
+          <p>Числа 2 и 3 взаимно просты, поэтому произведение делится на <span class="mono">2 · 3 = 6</span>.</p>
+          <p class="trap"><b>Частая ошибка:</b> проверить n = 1, 2, 3 и написать «верно». Несколько примеров не доказывают утверждение для всех n.</p>
+        </div>
+      </details>
+    </article>
+
+  </div>
+</section>
+
+<section id="obo-mne">
+  <div class="head">
+    <p class="eyebrow">О преподавателе</p>
+    <h2>Кто будет заниматься</h2>
+  </div>
+  <div class="about">
+    <img class="photo" src="foto.jpg" width="120" height="120" alt="Даниил Буев">
+    <div>
+      <p><b>Даниил Романович Буев</b>, студент 3 курса НИУ МГСУ, специальность «Строительство уникальных зданий и сооружений». Математика для меня рабочий инструмент: на ней держатся все расчёты конструкций.</p>
+      <ul>
+        <li>Преподаю 3 года</li>
+        <li>Средний балл моих учеников на ЕГЭ в 2026 году: <b>82</b></li>
+        <li>Ученики поступают в ведущие вузы России, двое учатся в университетах Китая</li>
+        <li>Свои материалы к каждой теме: задачи с проверенными ответами и каталог типовых ошибок</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="zapis">
+  <div class="head">
+    <p class="eyebrow">Запись</p>
+    <h2>Записаться на бесплатное пробное занятие</h2>
+    <p>Заполните три поля, скопируйте готовое сообщение и отправьте мне в мессенджер. Отвечаю в течение часа.</p>
+  </div>
+  <form class="signup" id="signup" novalidate>
+    <div class="fields">
+      <div class="field">
+        <label for="f-class">Класс</label>
+        <select id="f-class">
+          <option>5 класс</option><option>6 класс</option><option>7 класс</option><option>8 класс</option>
+          <option selected>9 класс</option><option>10 класс</option><option>11 класс</option><option>Другое</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-goal">Цель</label>
+        <select id="f-goal">
+          <option selected>ОГЭ</option><option>ЕГЭ база</option><option>ЕГЭ профиль</option>
+          <option>Поступление в лицей</option><option>Школьная программа</option>
+        </select>
+      </div>
+      <div class="field wide">
+        <label for="f-note">Удобное время и что беспокоит</label>
+        <textarea id="f-note">Будни после 17:00. Путаемся в процентах и текстовых задачах.</textarea>
+      </div>
+    </div>
+    <div>
+      <p class="eyebrow" style="margin-bottom:6px">Ваше сообщение</p>
+      <div class="preview" id="preview" aria-live="polite"></div>
+    </div>
+    <div class="contacts">
+      <button class="btn" type="submit" id="copy">Скопировать сообщение</button>
+      <a class="btn ghost" id="tg" href="https://t.me/BuevDani" target="_blank" rel="noopener">Открыть Telegram</a>
+    </div>
+    <p class="status" id="status" role="status"></p>
+    <p style="font-size:15px;color:var(--ink-2)">Если кнопка не открывает мессенджер, найдите в Telegram <span class="mono">@BuevDani</span> и вставьте сообщение.</p>
+  </form>
+</section>
+
+<section id="voprosy">
+  <div class="head">
+    <p class="eyebrow">Вопросы</p>
+    <h2>Что обычно спрашивают</h2>
+  </div>
+  <div class="faq">
+    <details><summary>Сколько нужно занятий до экзамена?</summary><div class="body"><p>Зависит от стартового уровня и цели. Честную оценку даю после диагностики на пробном занятии, а не до неё.</p></div></details>
+    <details><summary>Как родитель видит прогресс?</summary><div class="body"><p>По журналу домашних заданий: что задано, к какому сроку и сдано ли. А на любой вопрос о прогрессе отвечу в Telegram.</p></div></details>
+    <details><summary>Почему оплата абонементом?</summary><div class="body"><p>Подготовка даёт результат, когда занятия идут регулярно. Абонемент держит ритм и избавляет от разовых отмен. Сначала бесплатное пробное занятие: вы видите, как я объясняю, и только потом решаете.</p></div></details>
+    <details><summary>Можно ли перенести занятие?</summary><div class="body"><p>Только в критических ситуациях: болезнь или отключение света. В остальных случаях пропущенное занятие не переносится.</p></div></details>
+    <details><summary>Что нужно для онлайн-занятия?</summary><div class="body"><p>Компьютер или планшет, тетрадь и камера, чтобы показывать решение. Занимаемся в Яндекс Телемосте, задачи решаем на общей Mail Доске. Ссылки присылаю заранее, устанавливать ничего не нужно. Очных занятий нет.</p></div></details>
+  </div>
+</section>
+</main>
+
+<footer>
+  <p>Даниил Буев · репетитор по математике · онлайн · <a href="https://t.me/BuevDani">@BuevDani</a></p>
+</footer>
+</div>
+
+<script>
+(function(){
+  // логин Telegram без @
+  var TG_USER = "BuevDani";
+
+  var $ = function(id){ return document.getElementById(id); };
+  function text(){
+    return "Здравствуйте! Хочу записаться на бесплатное пробное занятие.\n" +
+      "Класс: " + $("f-class").value + "\n" +
+      "Цель: " + $("f-goal").value + "\n" +
+      ($("f-note").value.trim() ? "Комментарий: " + $("f-note").value.trim() : "");
+  }
+  function render(){
+    var t = text();
+    $("preview").textContent = t;
+    $("tg").href = "https://t.me/" + TG_USER;
+  }
+  ["f-class","f-goal","f-note"].forEach(function(id){ $(id).addEventListener("input", render); $(id).addEventListener("change", render); });
+  render();
+
+  $("signup").addEventListener("submit", function(e){
+    e.preventDefault();
+    var t = text();
+    function fallback(){
+      var r = document.createRange(); r.selectNodeContents($("preview"));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      $("status").textContent = "Текст выделен. Скопируйте его вручную (Ctrl+C или «Копировать»).";
+    }
+    try{
+      navigator.clipboard.writeText(t).then(function(){
+        $("status").textContent = "Скопировано. Теперь откройте мессенджер и вставьте сообщение.";
+      }, fallback);
+    }catch(err){ fallback(); }
+  });
+})();
+</script>
+
+</body>
+</html>
