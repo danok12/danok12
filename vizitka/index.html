@@ -1,4 +1,4 @@
-<title>Репетитор по математике</title>
+<title>Даниил Буев, математика</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Подготовка к ОГЭ и ЕГЭ, поступление в лицей, школьная программа. Пробное занятие с диагностикой.">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -125,8 +125,7 @@ details .body{display:grid;gap:10px;margin-top:10px;color:var(--ink);font-size:1
 
 /* о себе */
 .about{display:grid;grid-template-columns:120px 1fr;gap:20px;align-items:start}
-.photo{width:120px;aspect-ratio:1;max-width:100%;border-radius:12px;border:1px dashed var(--todo);background:var(--todo-tint);color:var(--todo);
-  display:grid;place-items:center;text-align:center;font-size:13px;font-weight:600;padding:8px}
+.photo{width:120px;height:auto;aspect-ratio:1;max-width:100%;border-radius:12px;object-fit:cover;border:1px solid var(--line);display:block}
 .about ul{margin:10px 0 0;padding-left:1.1em;color:var(--ink-2)}
 .about li+li{margin-top:4px}
 @media (max-width:520px){.about{grid-template-columns:1fr}}
@@ -156,10 +155,10 @@ footer{padding-block:28px 40px;color:var(--ink-3);font-size:14px;border-top:1px 
 
 <div class="wrap">
 
-<p class="draft-banner">Черновик. Жёлтые поля с пунктиром нужно заполнить своими данными перед публикацией.</p>
+<p class="draft-banner">Черновик. Осталось заполнить несколько жёлтых полей с пунктиром.</p>
 
 <header class="top">
-  <a class="brand" href="#top"><mark class="todo">Имя Фамилия</mark></a>
+  <a class="brand" href="#top">Даниил Буев</a>
   <nav aria-label="Разделы">
     <a href="#napravleniya">Направления</a>
     <a href="#format">Формат и цены</a>
@@ -170,7 +169,7 @@ footer{padding-block:28px 40px;color:var(--ink-3);font-size:14px;border-top:1px 
 
 <main id="top">
 <div class="hero">
-  <p class="eyebrow">Репетитор по математике · 5–11 класс</p>
+  <p class="eyebrow">Репетитор по математике · 5–11 класс · онлайн</p>
   <h1>Математика, в которой <em>понятно, где ошибка</em></h1>
   <p class="lead">Готовлю к ОГЭ и ЕГЭ, к вступительным в лицеи и подтягиваю школьную программу. Первое занятие начинается с короткой диагностики: через 30 минут вы знаете, какие темы проседают и сколько примерно займёт подготовка.</p>
   <div class="cta-row">
@@ -241,15 +240,13 @@ footer{padding-block:28px 40px;color:var(--ink-3);font-size:14px;border-top:1px 
     <table>
       <thead><tr><th>Занятие</th><th>Длительность</th><th>Стоимость</th></tr></thead>
       <tbody>
-        <tr><td>Пробное с диагностикой</td><td class="num"><mark class="todo">__ мин</mark></td><td class="num"><mark class="todo">__ ₽</mark></td></tr>
-        <tr><td>ОГЭ, школьная программа</td><td class="num"><mark class="todo">__ мин</mark></td><td class="num"><mark class="todo">__ ₽</mark></td></tr>
-        <tr><td>ЕГЭ база и профиль</td><td class="num"><mark class="todo">__ мин</mark></td><td class="num"><mark class="todo">__ ₽</mark></td></tr>
-        <tr><td>Подготовка в лицей</td><td class="num"><mark class="todo">__ мин</mark></td><td class="num"><mark class="todo">__ ₽</mark></td></tr>
+        <tr><td>Пробное с диагностикой</td><td class="num">1 час</td><td class="num"><mark class="todo">__ ₽</mark></td></tr>
+        <tr><td>Обычное занятие: ОГЭ, ЕГЭ, лицей, школьная программа</td><td class="num">от 1 до 3 часов</td><td class="num">от 1 500 ₽ за час</td></tr>
       </tbody>
     </table>
   </div>
   <div class="facts">
-    <span><b>Где:</b> <mark class="todo">онлайн / очно, район</mark></span>
+    <span><b>Где:</b> только онлайн, из любого города</span>
     <span><b>Площадка:</b> <mark class="todo">Zoom / Telegram / доска</mark></span>
     <span><b>Оплата:</b> <mark class="todo">за занятие / абонемент</mark></span>
   </div>
@@ -323,12 +320,13 @@ x(x − 5) = 0  →  x = 0  или  x = 5</div>
     <h2>Кто будет заниматься</h2>
   </div>
   <div class="about">
-    <div class="photo">Фото</div>
+    <img class="photo" src="foto.jpg" width="120" height="120" alt="Даниил Буев">
     <div>
-      <p><mark class="todo">Имя Фамилия</mark>, <mark class="todo">образование / вуз</mark>.</p>
+      <p><b>Даниил Романович Буев</b>, студент 3 курса НИУ МГСУ, специальность «Строительство уникальных зданий и сооружений». Математика для меня рабочий инструмент: на ней держатся все расчёты конструкций.</p>
       <ul>
-        <li>Опыт репетиторства: <mark class="todo">__ лет</mark></li>
-        <li>Результаты учеников: <mark class="todo">баллы ЕГЭ/ОГЭ, поступления в лицеи</mark></li>
+        <li>Преподаю 3 года</li>
+        <li>Ученики поступают в ведущие вузы России, двое учатся в университетах Китая</li>
+        <li>Средний балл учеников на ЕГЭ: <mark class="todo">__ баллов</mark></li>
         <li>Свои материалы к каждой теме: задачи с проверенными ответами и каталог типовых ошибок</li>
       </ul>
     </div>
@@ -368,11 +366,10 @@ x(x − 5) = 0  →  x = 0  или  x = 5</div>
     </div>
     <div class="contacts">
       <button class="btn" type="submit" id="copy">Скопировать сообщение</button>
-      <a class="btn ghost" id="tg" href="#" target="_blank" rel="noopener">Открыть Telegram</a>
-      <a class="btn ghost" id="wa" href="#" target="_blank" rel="noopener">Открыть WhatsApp</a>
+      <a class="btn ghost" id="tg" href="https://t.me/BuevDani" target="_blank" rel="noopener">Открыть Telegram</a>
     </div>
     <p class="status" id="status" role="status"></p>
-    <p style="font-size:15px;color:var(--ink-2)">Если кнопки не открывают мессенджер, напишите напрямую: Telegram <mark class="todo">@username</mark>, телефон <mark class="todo">+7 ___ ___-__-__</mark>.</p>
+    <p style="font-size:15px;color:var(--ink-2)">Если кнопка не открывает мессенджер, напишите напрямую: Telegram <span class="mono">@BuevDani</span>, телефон <span class="mono">+7 977 303-36-36</span>.</p>
   </form>
 </section>
 
@@ -384,22 +381,21 @@ x(x − 5) = 0  →  x = 0  или  x = 5</div>
   <div class="faq">
     <details><summary>Сколько нужно занятий до экзамена?</summary><div class="body"><p>Зависит от стартового уровня и цели. Честную оценку даю после диагностики на пробном занятии, а не до неё.</p></div></details>
     <details><summary>Как родитель видит прогресс?</summary><div class="body"><p>По журналу домашних заданий: что задано, к какому сроку и сдано ли. Раз в <mark class="todo">месяц</mark> короткий отчёт: какие темы закрыты и что дальше.</p></div></details>
-    <details><summary>Что нужно для онлайн-занятия?</summary><div class="body"><p>Компьютер или планшет, тетрадь и камера, чтобы показывать решение. Ссылку на занятие присылаю заранее.</p></div></details>
+    <details><summary>Что нужно для онлайн-занятия?</summary><div class="body"><p>Компьютер или планшет, тетрадь и камера, чтобы показывать решение. Ссылку на занятие присылаю заранее. Очных занятий нет.</p></div></details>
     <details><summary>Можно ли перенести занятие?</summary><div class="body"><p><mark class="todo">Правило переноса и отмены, например «бесплатно за 24 часа»</mark></p></div></details>
   </div>
 </section>
 </main>
 
 <footer>
-  <p><mark class="todo">Имя Фамилия</mark> · репетитор по математике · <mark class="todo">город / онлайн</mark></p>
+  <p>Даниил Буев · репетитор по математике · онлайн · <a href="https://t.me/BuevDani">@BuevDani</a></p>
 </footer>
 </div>
 
 <script>
 (function(){
-  // ЗАПОЛНИТЬ: логин Telegram без @ и номер WhatsApp только цифрами (7XXXXXXXXXX)
-  var TG_USER = "";
-  var WA_PHONE = "";
+  // логин Telegram без @
+  var TG_USER = "BuevDani";
 
   var $ = function(id){ return document.getElementById(id); };
   function text(){
@@ -411,8 +407,7 @@ x(x − 5) = 0  →  x = 0  или  x = 5</div>
   function render(){
     var t = text();
     $("preview").textContent = t;
-    $("tg").href = TG_USER ? "https://t.me/" + TG_USER : "#zapis";
-    $("wa").href = WA_PHONE ? "https://wa.me/" + WA_PHONE + "?text=" + encodeURIComponent(t) : "#zapis";
+    $("tg").href = "https://t.me/" + TG_USER;
   }
   ["f-class","f-goal","f-note"].forEach(function(id){ $(id).addEventListener("input", render); $(id).addEventListener("change", render); });
   render();
